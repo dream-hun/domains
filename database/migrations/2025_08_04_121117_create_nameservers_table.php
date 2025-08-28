@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('nameservers', function (Blueprint $table) {
             $table->id();
             $table->uuid();
+            $table->foreignId('domain_id')->constrained();
             $table->string('name');
             $table->string('type')->default('default');
             $table->string('ipv4')->nullable();

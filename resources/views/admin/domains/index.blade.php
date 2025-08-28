@@ -63,7 +63,7 @@
                                         </a>
                                     @endcan
 
-                                    @can('domain_update')
+                                    @can('domain_edit')
                                         <a href="{{ route('admin.domains.nameservers.edit', $domain->uuid) }}"
                                            class="btn btn-sm btn-warning">
                                             <i class="fas fa-server"></i> Nameservers

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Domain extends Model
 {
@@ -25,9 +26,9 @@ final class Domain extends Model
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    public function nameservers(): BelongsToMany
+    public function nameservers(): HasMany
     {
-        return $this->belongsToMany(Nameserver::class, 'domain_nameservers');
+        return $this->hasMany(Nameserver::class, 'domain_id');
     }
 
     public function domainPrice(): BelongsTo

@@ -9,6 +9,8 @@ use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Models\Nameserver;
 use App\Services\Domain\DomainRegistrationServiceInterface;
+use App\Services\Domain\EppDomainService;
+use App\Services\Domain\NamecheapDomainService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -152,16 +154,18 @@ final readonly class RegisterDomainAction
 
     /**
      * Prepare contacts for the specific domain service
+     *
+     * @throws Exception
      */
     private function ensureContactsInEppRegistry(DomainRegistrationServiceInterface $domainService, array $contacts): array
     {
         // For EPP service, ensure contacts exist in EPP registry and return contact_ids
-        if ($domainService instanceof \App\Services\Domain\EppDomainService) {
+        if ($domainService instanceof EppDomainService) {
             return $this->prepareEppContacts($contacts);
         }
 
         // For Namecheap service, return full contact data arrays
-        if ($domainService instanceof \App\Services\Domain\NamecheapDomainService) {
+        if ($domainService instanceof NamecheapDomainService) {
             return $this->prepareNamecheapContacts($contacts);
         }
 
@@ -204,6 +208,8 @@ final readonly class RegisterDomainAction
 
     /**
      * Prepare contacts for Namecheap service
+     *
+     * @throws Exception
      */
     private function prepareNamecheapContacts(array $contacts): array
     {
@@ -244,6 +250,8 @@ final readonly class RegisterDomainAction
 
     /**
      * Create domain record in local database
+     *
+     * @throws Exception
      */
     private function createDomainRecord(string $domainName, int $years, array $contacts, string $service): Domain
     {
@@ -318,14 +326,14 @@ final readonly class RegisterDomainAction
                 $domain->nameservers()->attach($existingNs->id);
             } else {
                 // Create new custom nameserver
-                $ns = Nameserver::create([
+                Nameserver::create([
                     'uuid' => (string) Str::uuid(),
+                    'domain_id' => $domain->id,
                     'name' => $nameserver,
                     'type' => 'custom',
                     'priority' => $index + 1,
                     'status' => 'active',
                 ]);
-                $domain->nameservers()->attach($ns->id);
             }
         }
     }

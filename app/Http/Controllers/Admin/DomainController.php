@@ -36,7 +36,6 @@ final class DomainController extends Controller
         abort_if(Gate::denies('domain_show'), 403);
 
         try {
-            // Always load relationships for the domain
             $domain->load(['nameservers', 'contacts']);
 
             return view('admin.domains.domainInfo', [
@@ -81,14 +80,11 @@ final class DomainController extends Controller
     public function showRenewForm(Domain $domain): View
     {
         abort_if(Gate::denies('domain_renew'), 403);
-
-        // Get pricing information for the domain TLD
         $tld = $this->extractTld($domain->name);
         $domainPrice = DomainPrice::where('tld', $tld)->first();
 
         $pricing = [];
         if ($domainPrice) {
-            // Generate pricing for 1-10 years
             for ($i = 1; $i <= 10; $i++) {
                 $pricing[$i] = ($domainPrice->renew_price ?? $domainPrice->register_price) * $i / 100;
             }
@@ -117,7 +113,7 @@ final class DomainController extends Controller
 
     public function showNameserversForm(Domain $domain): View
     {
-        abort_if(Gate::denies('domain_update'), 403);
+        abort_if(Gate::denies('domain_edit'), 403);
 
         $domain->load('nameservers');
 

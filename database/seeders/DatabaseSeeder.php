@@ -18,8 +18,8 @@ final class DatabaseSeeder extends Seeder
             RoleUserSeeder::class,
             DomainPricingSeeder::class,
             SettingSeeder::class,
-            NameserverSeeder::class,
             DomainPriceSeeder::class,
+            DomainSeeder::class,
         ]);
     }
 }

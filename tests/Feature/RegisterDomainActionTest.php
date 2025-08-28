@@ -19,7 +19,9 @@ final class RegisterDomainActionTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Contact $contact;
+
     private DomainPrice $domainPrice;
 
     protected function setUp(): void
@@ -31,7 +33,7 @@ final class RegisterDomainActionTest extends TestCase
         $this->actingAs($this->user);
 
         // Create test country
-        $country = Country::factory()->create(['iso_code' => 'US']);
+        Country::factory()->create(['iso_code' => 'US']);
 
         // Create test contact
         $this->contact = Contact::factory()->create([

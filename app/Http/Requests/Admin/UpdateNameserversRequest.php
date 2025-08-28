@@ -10,7 +10,7 @@ final class UpdateNameserversRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->can('domain_update');
+        return auth()->check() && auth()->user()->can('domain_edit');
     }
 
     public function rules(): array

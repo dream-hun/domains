@@ -189,14 +189,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'GenerateAdminOrderRefId' => 'false',
             ];
 
-            // Add contact details for each role
             $params = $this->addContactDetails($contactInfo, $params);
-
-            // Add TLD-specific parameters
             $tld = $this->extractTld($domain);
             $params = array_merge($params, $this->getTldSpecificParams($tld));
 
-            // Add premium domain pricing if applicable
             $pricing = $this->getDomainPricing($domain);
             if ($pricing['success'] && isset($pricing['is_premium']) && $pricing['is_premium']) {
                 $params['IsPremiumDomain'] = 'true';
@@ -211,6 +207,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'years' => $years,
                 'params' => array_merge($params, ['ApiKey' => '[HIDDEN]']), // Hide API key in logs
             ]);
+            // Add premium domain pricing if applicable
 
             // Make API call
             $xml = $this->makeApiCall($params);
@@ -765,7 +762,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
     public function getDomainPricing(string $domain): array
     {
         $tld = $this->extractTld($domain);
-        $domainPrice = DomainPrice::where('tld', $tld)->first();
+        $domainPrice = DomainPrice::query()->where('tld', $tld)->first();
 
         if (! $domainPrice) {
             return [
@@ -869,8 +866,6 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
      */
     public function createContacts(array $contactData): array
     {
-        // For Namecheap, we just return the contact_id as-is since there's no separate contact registry
-        // The contact is created in the local database and used directly in domain operations
         return [
             'contact_id' => $contactData['contact_id'] ?? 'NC'.mb_strtoupper(Str::random(8)),
             'success' => true,
@@ -889,7 +884,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'ApiKey' => $this->apiKey,
                 'UserName' => $this->username,
                 'ClientIp' => $this->clientIp,
-                'Command' => 'namecheap.domains.dns.setCustom',
+                'Command' => 'namecheap.domains.dns.setDefault',
                 'SLD' => $this->extractSld($domain),
                 'TLD' => mb_ltrim($this->extractTld($domain), '.'),
                 'Nameservers' => implode(',', $nameservers),

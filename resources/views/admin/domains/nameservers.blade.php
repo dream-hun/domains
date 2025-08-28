@@ -28,11 +28,11 @@
                                 Update Nameservers for: {{ $domain->name }}
                             </h3>
                         </div>
-                        
-                        <form action="{{ route('admin.domains.nameservers.update', $domain->id) }}" method="POST" id="nameservers-form">
+
+                        <form action="{{ route('admin.domains.nameservers.update', $domain->uuid) }}" method="POST" id="nameservers-form">
                             @csrf
                             @method('PUT')
-                            
+
                             <div class="card-body">
                                 @if($errors->any())
                                     <div class="alert alert-danger">
@@ -89,7 +89,7 @@
                                                     <ul class="list-unstyled">
                                                         @foreach($domain->nameservers as $nameserver)
                                                             <li class="mb-1">
-                                                                <i class="fas fa-server text-muted mr-2"></i>
+                                                                <i class="bi bi-server text-muted mr-2"></i>
                                                                 {{ $nameserver->name }}
                                                             </li>
                                                         @endforeach
@@ -108,7 +108,7 @@
                                     <small class="form-text text-muted mb-3">
                                         Enter 2-4 nameserver hostnames. These will replace the current nameservers.
                                     </small>
-                                    
+
                                     <div id="nameservers-container">
                                         <!-- Nameserver 1 -->
                                         <div class="nameserver-row mb-3">
@@ -116,10 +116,10 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text">NS1</span>
                                                 </div>
-                                                <input type="text" 
-                                                       class="form-control @error('nameservers.0') is-invalid @enderror" 
-                                                       name="nameservers[]" 
-                                                       value="{{ old('nameservers.0', $domain->nameservers[0]->name ?? '') }}" 
+                                                <input type="text"
+                                                       class="form-control @error('nameservers.0') is-invalid @enderror"
+                                                       name="nameservers[]"
+                                                       value="{{ old('nameservers.0', $domain->nameservers[0]->name ?? '') }}"
                                                        placeholder="ns1.example.com"
                                                        required>
                                                 @error('nameservers.0')
@@ -134,10 +134,10 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text">NS2</span>
                                                 </div>
-                                                <input type="text" 
-                                                       class="form-control @error('nameservers.1') is-invalid @enderror" 
-                                                       name="nameservers[]" 
-                                                       value="{{ old('nameservers.1', $domain->nameservers[1]->name ?? '') }}" 
+                                                <input type="text"
+                                                       class="form-control @error('nameservers.1') is-invalid @enderror"
+                                                       name="nameservers[]"
+                                                       value="{{ old('nameservers.1', $domain->nameservers[1]->name ?? '') }}"
                                                        placeholder="ns2.example.com"
                                                        required>
                                                 @error('nameservers.1')
@@ -152,14 +152,14 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text">NS3</span>
                                                 </div>
-                                                <input type="text" 
-                                                       class="form-control @error('nameservers.2') is-invalid @enderror" 
-                                                       name="nameservers[]" 
-                                                       value="{{ old('nameservers.2', $domain->nameservers[2]->name ?? '') }}" 
+                                                <input type="text"
+                                                       class="form-control @error('nameservers.2') is-invalid @enderror"
+                                                       name="nameservers[]"
+                                                       value="{{ old('nameservers.2', $domain->nameservers[2]->name ?? '') }}"
                                                        placeholder="ns3.example.com (optional)">
                                                 <div class="input-group-append">
                                                     <button class="btn btn-outline-danger remove-nameserver" type="button" title="Remove this nameserver">
-                                                        <i class="fas fa-minus"></i>
+                                                        <i class="bi bi-x-octagon-fill"></i>
                                                     </button>
                                                 </div>
                                                 @error('nameservers.2')
@@ -174,14 +174,14 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text">NS4</span>
                                                 </div>
-                                                <input type="text" 
-                                                       class="form-control @error('nameservers.3') is-invalid @enderror" 
-                                                       name="nameservers[]" 
-                                                       value="{{ old('nameservers.3', $domain->nameservers[3]->name ?? '') }}" 
+                                                <input type="text"
+                                                       class="form-control @error('nameservers.3') is-invalid @enderror"
+                                                       name="nameservers[]"
+                                                       value="{{ old('nameservers.3', $domain->nameservers[3]->name ?? '') }}"
                                                        placeholder="ns4.example.com (optional)">
                                                 <div class="input-group-append">
                                                     <button class="btn btn-outline-danger remove-nameserver" type="button" title="Remove this nameserver">
-                                                        <i class="fas fa-minus"></i>
+                                                        <i class="bi bi-x-octagon-fill"></i>
                                                     </button>
                                                 </div>
                                                 @error('nameservers.3')
@@ -288,7 +288,7 @@
                     const preset = this.closest('.nameserver-preset');
                     const ns1 = preset.dataset.ns1;
                     const ns2 = preset.dataset.ns2;
-                    
+
                     // Fill in the nameserver fields
                     const inputs = document.querySelectorAll('input[name="nameservers[]"]');
                     if (inputs[0]) inputs[0].value = ns1;
@@ -312,7 +312,7 @@
             document.getElementById('nameservers-form').addEventListener('submit', function(e) {
                 const inputs = document.querySelectorAll('input[name="nameservers[]"]');
                 const filledInputs = Array.from(inputs).filter(input => input.value.trim() !== '');
-                
+
                 if (filledInputs.length < 2) {
                     e.preventDefault();
                     alert('At least 2 nameservers are required.');

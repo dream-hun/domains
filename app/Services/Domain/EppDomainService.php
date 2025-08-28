@@ -275,7 +275,12 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 throw new Exception('Failed to get domain information: '.$domainInfo['message']);
             }
 
-            $currentExpiry = $domainInfo['expiry_date'] ?? now()->addYear();
+            // Use exDate from domain info - this is the exact format expected by the registry
+            $currentExpiry = $domainInfo['exDate'] ?? null;
+            if (!$currentExpiry) {
+                throw new Exception('Failed to get current expiry date from domain info');
+            }
+
             $period = $years.'y';
 
             // Create renewal frame
@@ -557,34 +562,26 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             // Send update request
             $response = $this->client->request($frame);
 
-            if (! $response || ! $response->success()) {
-                throw new Exception('Nameserver update failed: '.($response->message() ?? 'Unknown error'));
+            if (!$response || !$response->success()) {
+                throw new Exception('Nameserver update failed: ' . ($response?->message() ?? 'Unknown error'));
             }
 
-            // Update database record
-            $domainModel = Domain::where('name', $domain)->first();
-            if ($domainModel) {
-                // Sync nameservers
-                $domainModel->nameservers()->sync(
-                    collect($nameservers)->map(fn ($ns): array => ['name' => $ns])
-                );
-            }
-
+            // Update was successful
             return [
                 'success' => true,
                 'message' => 'Nameservers updated successfully',
             ];
-
         } catch (Exception $e) {
-            Log::error('Nameserver update failed', [
+            Log::error('EPP nameserver update failed', [
                 'domain' => $domain,
                 'nameservers' => $nameservers,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Nameserver update failed: '.$e->getMessage(),
+                'message' => 'Nameserver update failed: ' . $e->getMessage(),
             ];
         }
     }
@@ -1515,14 +1512,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 return mb_rtrim(mb_trim($ns), '.');
             }, $nameservers), fn (string $ns): bool => $ns !== '' && $ns !== '0');
 
-            //     return mb_rtrim(mb_trim($ns), '.');
-            // }, $nameservers), fn ($ns): bool => $ns !== '' && $ns !== '0');
 
-            // // Filter out empty nameservers and normalize hostnames
-            // $nameservers = array_filter(array_map(function ($ns): string {
-            //     // Normalize nameserver hostname (remove trailing dot if present)
-            //     return rtrim(trim($ns), '.');
-            // }, $nameservers), fn($ns) => ! empty($ns) && $ns !== '0');
 
             // Get current nameservers for the domain
             $infoFrame = new InfoDomain;
@@ -1879,6 +1869,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             // Format and return domain info
             return [
+                'success' => true,
                 'name' => $data['name'],
                 'roid' => $data['roid'] ?? null,
                 'status' => is_array($data['status'] ?? null) ? $data['status'] : [$data['status'] ?? null],
@@ -1898,6 +1889,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'exDate' => $data['exDate'] ?? null,
                 'trDate' => $data['trDate'] ?? null,
                 'authInfo' => $data['authInfo'] ?? null,
+                'message' => 'Domain info retrieved successfully'
             ];
         } catch (Exception $e) {
             Log::error('Failed to get domain info: '.$e->getMessage(), [
@@ -1905,54 +1897,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            throw $e;
-        }
-    }
 
-    /**
-     * Get domain information including auth code
-     *
-     * @throws Exception
-     */
-    public function getDomainInfoData(string $domain): array
-    {
-        try {
-            $this->ensureConnection();
-
-            Log::info('Fetching domain info', [
-                'domain' => $domain,
-                'epp_host' => $this->config['host'],
-            ]);
-
-            $frame = new InfoDomain();
-            $frame->setDomain($domain);
-
-            $client = $this->client;
-            $response = $client->request($frame);
-
-            if (! ($response instanceof Response)) {
-                throw new Exception('Invalid response from registry');
-            }
-
-            $responseData = $response->data();
-            if (! is_array($responseData) || ! isset($responseData['infData'])) {
-                throw new Exception('Unexpected response data format');
-            }
-
-            Log::debug('Domain info retrieved', [
-                'domain' => $domain,
-                'data' => $responseData['infData'],
-            ]);
-
-            return $responseData['infData'];
-        } catch (Exception $e) {
-            Log::error('Failed to fetch domain info: '.$e->getMessage(), [
-                'domain' => $domain,
-                'epp_host' => $this->config['host'],
-                'trace' => $e->getTraceAsString(),
-            ]);
-            $this->connected = false;
-            throw $e;
+            return [
+                'success' => false,
+                'message' => 'Failed to get domain info: '.$e->getMessage()
+            ];
         }
     }
 
@@ -2379,7 +2328,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
         foreach ($namePaths as $path) {
             $value = $this->getNestedValue($item, $path);
-            if ($value !== null && is_string($value) && $value !== '') {
+            if (is_string($value) && $value !== '') {
                 return $value;
             }
         }

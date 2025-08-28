@@ -5,27 +5,26 @@ declare(strict_types=1);
 namespace App\Actions\Domains;
 
 use App\Models\Domain;
-use App\Models\Nameserver;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Throwable;
 
-final class UpdateNameserversAction
+final readonly class UpdateNameserversAction
 {
     public function __construct(
-        private readonly EppDomainService $eppDomainService,
-        private readonly NamecheapDomainService $namecheapDomainService
+        private EppDomainService $eppDomainService,
+        private NamecheapDomainService $namecheapDomainService
     ) {}
 
     public function handle(Domain $domain, array $nameservers): array
     {
         try {
             return DB::transaction(function () use ($domain, $nameservers): array {
-                // Determine which service to use based on TLD
                 $isLocalDomain = $this->isLocalDomain($domain->name);
-
                 if ($isLocalDomain) {
                     return $this->updateWithEpp($domain, $nameservers);
                 }
@@ -45,9 +44,25 @@ final class UpdateNameserversAction
                 'success' => false,
                 'message' => 'Nameserver update failed: '.$e->getMessage(),
             ];
+        } catch (Throwable $e) {
+            Log::error('Nameserver update failed with throwable', [
+                'domain_id' => $domain->id,
+                'domain_name' => $domain->name,
+                'nameservers' => $nameservers,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Nameserver update failed: '.$e->getMessage(),
+            ];
         }
     }
 
+    /**
+     * @throws Exception
+     */
     private function updateWithEpp(Domain $domain, array $nameservers): array
     {
         Log::info('Updating nameservers for local domain via EPP', [
@@ -64,6 +79,9 @@ final class UpdateNameserversAction
         return $result;
     }
 
+    /**
+     * @throws Exception
+     */
     private function updateWithNamecheap(Domain $domain, array $nameservers): array
     {
         Log::info('Updating nameservers for international domain via Namecheap', [
@@ -80,30 +98,28 @@ final class UpdateNameserversAction
         return $result;
     }
 
+    /**
+     * @throws Exception
+     */
     private function syncNameserversInDatabase(Domain $domain, array $nameservers): void
     {
-        // Remove existing nameservers for this domain
+        // Delete existing nameservers for this domain
         $domain->nameservers()->delete();
 
-        // Add new nameservers
+        // Create new nameservers
         foreach ($nameservers as $nameserver) {
-            Nameserver::create([
-                'domain_id' => $domain->id,
-                'name' => mb_trim($nameserver),
-                'created_at' => now(),
-                'updated_at' => now(),
+            $domain->nameservers()->create([
+                'uuid' => Str::uuid(),
+                'name' => mb_strtolower($nameserver),
+                'priority' => 1,
+                'status' => 'active',
             ]);
         }
 
-        // Update domain's last modification timestamp
-        $domain->update([
-            'updated_at' => now(),
-        ]);
-
-        Log::info('Nameservers synced in database', [
+        $domain->touch();
+        Log::info('Nameservers synchronized in database', [
             'domain_id' => $domain->id,
             'domain_name' => $domain->name,
-            'nameservers_count' => count($nameservers),
             'nameservers' => $nameservers,
         ]);
     }
