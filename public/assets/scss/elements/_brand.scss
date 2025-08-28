@@ -1,0 +1,85 @@
+// HOMEPAGE ONE BRAND
+.rts-brand{
+    @media(max-width:576px){
+        padding-top: 60px;
+        padding-bottom: 60px;
+    }
+    &__bg--section{
+        background-image: url('../images/brand/brand-section.png');
+        @include background;
+        background-color: linear-gradient(180deg, #A7A7A7 42.08%, rgba(243, 243, 243, 0.20) 103.37%);
+    }
+    &__wrapper{
+        text-align: center;
+        &--text{
+            h5{
+                font-size: 24px;
+                font-weight: var(--semibold);
+                font-family: var(--font-secondary);
+                margin-bottom: 30px;
+                color: var(--color-secondary-dark);
+                span{
+                    color: var(--color-primary);
+                }
+                @include mq($sm){
+                    line-height: 34px;
+                }
+                @media(max-width:450px){
+                    font-size: 18px;
+                    line-height: 28px;
+                    margin-bottom: 15px;
+                }
+            }
+            &-review{
+                margin-bottom: 50px;
+                display: flex;
+                align-items: center;
+                gap: 25px;
+                justify-content: center;
+                flex-wrap: wrap;
+                @media(max-width:450px){
+                    gap: 15px;
+                }
+                .review .star{
+                    font-size: 22px;
+                    color: var(--color-secondary-dark);
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                    font-weight: var(--medium);
+                    @media(max-width:450px){
+                        font-size: 18px;
+                        line-height: 28px;
+                    }
+                }
+                .review__company{
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-weight: var(--regular);
+                }
+            }
+
+        }
+    }
+    &__slider{
+        overflow: hidden;
+        &--single{
+            img{
+                filter: saturate(0.15);
+                transition: all .3s ease-in;
+            }
+            &:hover{
+                img{
+                    filter: saturate(1);
+                }
+            }
+        }
+    }
+}
+.rts-brand{
+    &.area-3{
+        background: #F6F6F6;
+    }
+}
+

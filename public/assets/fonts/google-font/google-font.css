@@ -1,0 +1,253 @@
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-Black.eot');
+    src: url('Inter-Black.eot?#iefix') format('embedded-opentype'),
+        url('Inter-Black.woff2') format('woff2'),
+        url('Inter-Black.woff') format('woff');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-Bold.eot');
+    src: url('Inter-Bold.eot?#iefix') format('embedded-opentype'),
+        url('Inter-Bold.woff2') format('woff2'),
+        url('Inter-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-ExtraLight.eot');
+    src: url('Inter-ExtraLight.eot?#iefix') format('embedded-opentype'),
+        url('Inter-ExtraLight.woff2') format('woff2'),
+        url('Inter-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-ExtraBold.eot');
+    src: url('Inter-ExtraBold.eot?#iefix') format('embedded-opentype'),
+        url('Inter-ExtraBold.woff2') format('woff2'),
+        url('Inter-ExtraBold.woff') format('woff');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-Light.eot');
+    src: url('Inter-Light.eot?#iefix') format('embedded-opentype'),
+        url('Inter-Light.woff2') format('woff2'),
+        url('Inter-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-Medium.eot');
+    src: url('Inter-Medium.eot?#iefix') format('embedded-opentype'),
+        url('Inter-Medium.woff2') format('woff2'),
+        url('Inter-Medium.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-Regular.eot');
+    src: url('Inter-Regular.eot?#iefix') format('embedded-opentype'),
+        url('Inter-Regular.woff2') format('woff2'),
+        url('Inter-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-Thin.eot');
+    src: url('Inter-Thin.eot?#iefix') format('embedded-opentype'),
+        url('Inter-Thin.woff2') format('woff2'),
+        url('Inter-Thin.woff') format('woff');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-SemiBold.eot');
+    src: url('Inter-SemiBold.eot?#iefix') format('embedded-opentype'),
+        url('Inter-SemiBold.woff2') format('woff2'),
+        url('Inter-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-BoldItalic.eot');
+    src: url('PlusJakartaSans-BoldItalic.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-BoldItalic.woff2') format('woff2'),
+        url('PlusJakartaSans-BoldItalic.woff') format('woff');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-Bold.eot');
+    src: url('PlusJakartaSans-Bold.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-Bold.woff2') format('woff2'),
+        url('PlusJakartaSans-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-ExtraBold.eot');
+    src: url('PlusJakartaSans-ExtraBold.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-ExtraBold.woff2') format('woff2'),
+        url('PlusJakartaSans-ExtraBold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-ExtraBoldItalic.eot');
+    src: url('PlusJakartaSans-ExtraBoldItalic.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-ExtraBoldItalic.woff2') format('woff2'),
+        url('PlusJakartaSans-ExtraBoldItalic.woff') format('woff');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-LightItalic.eot');
+    src: url('PlusJakartaSans-LightItalic.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-LightItalic.woff2') format('woff2'),
+        url('PlusJakartaSans-LightItalic.woff') format('woff');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-Light.eot');
+    src: url('PlusJakartaSans-Light.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-Light.woff2') format('woff2'),
+        url('PlusJakartaSans-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-Italic.eot');
+    src: url('PlusJakartaSans-Italic.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-Italic.woff2') format('woff2'),
+        url('PlusJakartaSans-Italic.woff') format('woff');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-ExtraLightItalic.eot');
+    src: url('PlusJakartaSans-ExtraLightItalic.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-ExtraLightItalic.woff2') format('woff2'),
+        url('PlusJakartaSans-ExtraLightItalic.woff') format('woff');
+    font-weight: 200;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-ExtraLight.eot');
+    src: url('PlusJakartaSans-ExtraLight.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-ExtraLight.woff2') format('woff2'),
+        url('PlusJakartaSans-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-Regular.eot');
+    src: url('PlusJakartaSans-Regular.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-Regular.woff2') format('woff2'),
+        url('PlusJakartaSans-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-Medium.eot');
+    src: url('PlusJakartaSans-Medium.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-Medium.woff2') format('woff2'),
+        url('PlusJakartaSans-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-MediumItalic.eot');
+    src: url('PlusJakartaSans-MediumItalic.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-MediumItalic.woff2') format('woff2'),
+        url('PlusJakartaSans-MediumItalic.woff') format('woff');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-SemiBold.eot');
+    src: url('PlusJakartaSans-SemiBold.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-SemiBold.woff2') format('woff2'),
+        url('PlusJakartaSans-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('PlusJakartaSans-SemiBoldItalic.eot');
+    src: url('PlusJakartaSans-SemiBoldItalic.eot?#iefix') format('embedded-opentype'),
+        url('PlusJakartaSans-SemiBoldItalic.woff2') format('woff2'),
+        url('PlusJakartaSans-SemiBoldItalic.woff') format('woff');
+    font-weight: 600;
+    font-style: italic;
+    font-display: swap;
+}
+

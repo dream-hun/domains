@@ -1,0 +1,78 @@
+@mixin clearfix() {
+    &::after {
+        content: "";
+        clear: both;
+        display: table;
+    }
+}
+
+@mixin config-bg-colors($prefix, $bg-color-...) {
+    @each $i in $bg-color- {
+        .#{$prefix}#{nth($i, 1)} {
+            background: nth($i, 2);
+        }
+    }
+}
+
+@mixin placeholder {
+    &::-webkit-input-placeholder {
+        @content;
+    }
+
+    &:-moz-placeholder {
+        @content;
+    }
+
+    &::-moz-placeholder {
+        @content;
+    }
+
+    &:-ms-input-placeholder {
+        @content;
+    }
+}
+
+// ========== for background image ============
+@mixin background {
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+// ======== Responsive Media Query ==========
+$xxl: "screen and (min-width: 1400px) and (max-width: 1600px)";
+$xl: "screen and (max-width: 1400px)";
+$lg: "screen and (max-width: 1200px)";
+$md: "screen and (max-width: 992px)";
+$sm: "screen and (max-width: 768px)";
+$xs: "screen and (max-width: 576px)";
+$xss: "screen and (max-width: 400px)";
+
+@mixin mq($query) {
+    @media #{$query} {
+        @content;
+    }
+}
+
+@mixin ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+@mixin ph {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    content: '';
+}
+@mixin pb {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 100%;
+    width: 100%;
+    content: '';
+}

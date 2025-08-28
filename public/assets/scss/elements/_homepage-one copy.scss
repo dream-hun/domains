@@ -1,0 +1,446 @@
+// HOMEPAGE ONE CSS
+// HOSTIE HOSTING OPTION CSS
+.rts-hosting-type {
+    position: relative;
+
+    &__section {
+        position: relative;
+        margin-bottom: 60px;
+
+        h3 {
+            font-size: 36px;
+            font-weight: var(--bold);
+        }
+
+        p {
+            font-weight: var(--regular);
+            margin-bottom: 0;
+            font-family: var(--font-secondary);
+        }
+
+        & .rts-slider__btn.hosting-slider {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    }
+
+    &__slider {
+        overflow: hidden;
+    }
+
+    &__single {
+        text-align: center;
+        background: var(--secondary-gradient);
+        padding: 50px 40px;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        position: relative;
+        z-index: 1;
+
+        &:before {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            content: '';
+            border-radius: inherit;
+            background: var(--primary-gradient);
+            opacity: 0;
+            z-index: -1;
+            transition: opacity .3s ease-in;
+        }
+
+        & .hosting-icon {
+            margin-bottom: 40px;
+
+            img {
+                filter: invert(.75);
+                transition: all .3s ease-in;
+                height: 60px;
+                width: 60px;
+            }
+        }
+
+        .title {
+            color: var(--color-secondary);
+            font-size: 22px;
+            font-weight: var(--bold);
+            text-transform: capitalize;
+            margin-bottom: 30px;
+            display: inline-block;
+        }
+
+        p.excerpt {
+            font-family: var(--font-secondary);
+            font-weight: var(--regular);
+            color: var(--btc);
+        }
+
+        h6.price__start {
+            font-weight: var(--bold);
+            font-size: 16px;
+            display: inline-block;
+            margin-bottom: 40px;
+        }
+
+        &:hover {
+            color: var(--body-bg);
+
+            & .hosting-icon img {
+                filter: invert(0);
+            }
+
+            & .title {
+                color: var(--body-bg);
+            }
+
+            & p.excerpt {
+                color: var(--body-bg);
+            }
+
+            & .primary__btn {
+                background: var(--body-bg);
+                color: var(--color-secondary);
+            }
+
+            &::before {
+                opacity: 1;
+            }
+        }
+    }
+}
+
+// HOSTIE DOMAIN CHECKER
+.rts-domain-finder {
+    & .domain-finder-bg {
+        background: var(--primary-gradient);
+        border-radius: 20px;
+        padding: 80px;
+        color: var(--body-bg);
+        text-align: center;
+    }
+
+    &__content {
+        h3 {
+            font-size: 36px;
+            font-weight: var(--bold);
+            display: inline-block;
+            margin-bottom: 60px;
+            text-transform: capitalize;
+        }
+
+        form.domain-checker {
+            position: relative;
+
+            input {
+                background: var(--body-bg);
+                color: var(--btc);
+                padding: 25px 200px 25px 30px;
+                border-radius: 50px;
+                height: 60px;
+                max-width: 870px;
+                margin: 0 auto;
+                position: relative;
+            }
+
+            button[type=submit] {
+                height: 45px;
+                width: 180px;
+                border-radius: 50px;
+                background: var(--color-secondary);
+                color: var(--body-bg);
+                font-weight: var(--bold);
+                text-transform: capitalize;
+                position: absolute;
+                right: 13.5%;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+        }
+
+        & .compare {
+            margin-top: 30px;
+
+            &__list {
+                ul {
+                    @include ul;
+                    display: flex;
+                    justify-content: center;
+                    gap: 35px;
+                    flex-wrap: wrap;
+
+                    li {
+                        &:first-child {
+                            font-weight: var(--medium);
+                        }
+
+                        font-weight: var(--bold);
+
+                        .ext {
+                            text-transform: uppercase;
+                            color: var(--color-third);
+                            text-decoration: underline;
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+// HOSTIE DATA CENTER CSS
+.rts-data-center {
+    position: relative;
+    --data-center-bg: linear-gradient(180deg, #F6F9FF 0%, rgba(246, 249, 255, 0.00) 100%);
+    --data-center-shape-1: linear-gradient(180deg, #FCFDFF 0.14%, #E9EFFF 76.88%);
+    --data-center-shape-2: linear-gradient(179deg, #F9FBFF 0.57%, #E9EFFF 59.7%);
+    --data-center-shape-small: linear-gradient(192deg, #F6F9FF 8.69%, #ECF7FF 43%, #E9EFFF 43%);
+    background: var(--data-center-bg);
+
+    & .rts-section__description {
+        width: 780px;
+    }
+
+    &__location {
+        img {
+            max-height: 580px;
+            width: 100%;
+            object-fit: cover;
+        }
+    }
+
+    & .rts-shape {
+        &__one {
+            height: 330px;
+            width: 65px;
+            background: var(--data-center-shape-small);
+            position: absolute;
+            bottom: 45%;
+            left: -4%;
+            transform: rotate(60deg);
+        }
+
+        &__two {
+            width: 356px;
+            height: 575px;
+            background: var(--data-center-shape-1);
+            position: absolute;
+            top: 30%;
+            left: -10%;
+            transform: rotate(60deg);
+        }
+
+        &__three {
+            width: 356px;
+            height: 575px;
+            background: var(--data-center-shape-1);
+            position: absolute;
+            top: 10%;
+            right: -10%;
+            transform: rotate(-120deg);
+        }
+
+        &__four {
+            height: 330px;
+            width: 65px;
+            background: var(--data-center-shape-small);
+            position: absolute;
+            bottom: 20%;
+            right: -4%;
+            transform: rotate(-120deg);
+        }
+    }
+}
+
+// HOSTIE FLASH SELL AREA CSS
+.rts-flash-sell {
+    &__bg {
+        background-image: url(../images/dotted__element.png);
+        background-color: var(--color-primary);
+        padding: 50px;
+        border-radius: 10px;
+    }
+
+    &__title {
+        h3 {
+            font-size: 36px;
+            font-weight: var(--bold);
+            color: var(--body-bg);
+            margin-bottom: 30px;
+            text-transform: capitalize;
+        }
+
+        p {
+            color: var(--body-bg);
+            font-family: var(--font-secondary);
+            margin-bottom: 30px;
+        }
+
+    }
+
+    & .single__sell {
+        background: var(--single-sell);
+        border-radius: 10px;
+        padding: 35px;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        backdrop-filter: blur(21px);
+        border: 2px solid rgba(255, 255, 255, 0.06);
+        position: relative;
+        z-index: 1;
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            background: var(--single-sell-primary);
+            border-radius: inherit;
+            z-index: -1;
+        }
+
+        &::before {
+            content: '';
+            background-image: url(../images/service/flash-sale.svg);
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -1;
+        }
+
+        &--content {
+            color: var(--body-bg);
+
+            .offer {
+                padding: 7px 10px;
+                border-radius: 25px;
+                background: var(--body-bg);
+                color: var(--color-secondary);
+                font-weight: var(--medium);
+                font-size: 14px;
+                font-family: var(--font-secondary);
+                display: inline-block;
+                text-transform: capitalize;
+                margin-bottom: 20px;
+            }
+
+            .discount {
+                font-size: 36px;
+                font-weight: var(--bold);
+                margin-bottom: 20px;
+            }
+
+            span {}
+        }
+
+        &--image {
+            height: 100px;
+            width: 100px;
+            border-radius: 50%;
+            background: var(--body-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            img {
+                max-height: 60px;
+                max-width: 60px;
+            }
+        }
+    }
+}
+
+// WHY CHOOSE
+.rts-whychoose{
+    position: relative;
+    &__content{
+        &--title{
+            font-size: 36px;
+            font-weight: var(--semibold);
+            color: var(--color-secondary);
+            margin-bottom: 60px;
+            text-transform: capitalize;
+            max-width: 90%;
+            @include mq($xs){
+                max-width: 100%;
+            }
+        }
+        & .single{
+            display: flex;
+            gap: 30px;
+            align-items: safe;
+            &:not(:last-child){
+                margin-bottom: 40px;
+            }
+            &__image{
+                height: 60px;
+                min-width: 60px;
+                border-radius: 10px;
+                background: var(--icon-bg-2);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                img{
+                    height: 40px;
+                    width: 40px;
+                }
+                &.bg1{
+                    background: var(--icon-bg-1);
+                }
+            }
+            &__content{
+                h6{
+                    font-size: 18px;
+                    font-weight: var(--bold);
+                    color: var(--color-secondary);
+                    margin-bottom: 20px;
+                }
+                p{
+                    font-family: var(--font-secondary);
+                    font-weight: var(--regular);
+                    margin-bottom: 0;
+                    max-width: 85%;
+                    @include mq($xs){
+                        max-width: 100%;
+                    }
+                }
+            }
+        }
+    }
+    &__image{
+        background: var(--primary-gradient);
+        border-radius: 20px;
+        min-height: 500px;
+        max-height: 500px;
+        padding: 50px 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    & .rts-shape{
+        &__one{
+            width: 260px;
+            height: 375px;
+            background: linear-gradient(180deg, #FFF 0.01%, #F3F7FF 50.39%, rgba(245, 248, 255, 0.00) 109.92%);
+            transform: rotate(60deg);
+            position: absolute;
+            top: 30%;
+            z-index: -1;
+            left: 10%;
+        }
+    }
+}

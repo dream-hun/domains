@@ -1,0 +1,222 @@
+// HOSTIE CTA AREA CSS
+.rts-cta {
+    &__wrapper {
+        background: var(--primary-gradient);
+        padding: 50px 60px 50px 50px;
+        display: flex;
+        justify-content: space-between;
+        color: var(--body-bg);
+        border-radius: 10px;
+        align-items: center;
+        @include mq($xs) {
+            flex-wrap: wrap;
+            gap: 40px;
+            padding: 50px 20px;
+            
+        }
+    }
+
+    &__left {
+        max-width: 470px;
+        @include mq($sm) {
+            max-width: 350px;
+        }
+
+        @include mq($xs) {
+            max-width: 100%;
+        }
+
+        .cta__title {
+            font-size: 32px;
+            font-weight: var(--bold);
+            line-height: 44px;
+            margin-bottom: 15px;
+            text-transform: capitalize;
+
+            @media(max-width:450px) {
+                font-size: 28px;
+                line-height: 40px;
+            }
+        }
+
+        p {
+            font-family: var(--font-secondary);
+            font-weight: var(--regular);
+            margin-bottom: 0;
+        }
+
+        .primary__btn {
+            margin-top: 35px;
+            padding: 16px 25px;
+            color: var(--color-secondary);
+            text-transform: capitalize;
+            font-family: var(--font-secondary);
+            transition: var(--transition);
+
+            &:hover {
+                background: var(--body-bg);
+            }
+        }
+    }
+
+    &__right {
+        .cta-image {
+            display: flex;
+            gap: 45px;
+        }
+
+    }
+}
+
+// HOSTIE CTA TWO
+.rts-cta-two {
+    &__wrapper {
+        background: var(--cta-two-bg);
+        padding: 58px 80px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
+
+        @include mq($sm) {
+            justify-content: center;
+        }
+
+        @include mq($xs) {
+            padding: 50px;
+        }
+
+        @include mq($sm) {
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        &::before {
+            @include ph;
+            background-image: url(../images/cta/cta__two__bg.png);
+            background-position: 115%;
+            background-repeat: no-repeat;
+            background-size: 80%;
+            z-index: -1;
+        }
+
+        .cta-content {
+            max-width: 360px;
+
+            @include mq($sm) {
+                text-align: center;
+            }
+
+            span {
+                background: rgba(255, 255, 255, 0.10);
+                display: inline-block;
+                padding: 10px 14px;
+                border-radius: 3px;
+                color: var(--color-white);
+                font-weight: var(--semibold);
+                margin-bottom: 15px;
+                line-height: 100%;
+            }
+
+            h4 {
+                font-size: 32px;
+                font-weight: var(--bold);
+                color: var(--color-white);
+                margin-bottom: 0;
+            }
+        }
+
+        .cta-btn {
+            .contact__us {
+                padding: 16px 20px;
+                min-width: 180px;
+                text-align: center;
+            }
+        }
+
+        .cta__shape {
+            @include ph;
+            z-index: -1;
+
+            &::before {
+                width: 50px;
+                height: 160px;
+                background: linear-gradient(180deg, #358EFF 0%, rgb(7 116 255 / 40%) 100%);
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 10%;
+                z-index: 1;
+            }
+
+            &::after {
+                width: 50px;
+                height: 170px;
+                background: linear-gradient(180deg, #378AFF 0%, rgb(7 116 255 / 40%) 100%);
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 20%;
+                z-index: 1;
+            }
+        }
+    }
+}
+
+
+.rts-cta {
+    &.home-three {
+        .rts-cta__wrapper {
+            margin-top: -130px;
+            padding: 65px 80px 65px 80px;
+            position: relative;
+            z-index: 1;
+            @include mq($xs){
+                justify-content: center;
+            }
+            @include mq($sm) {
+                padding: 50px;
+            }
+
+            .rts-cta__left {
+                max-width: 370px;
+                @include mq($sm){
+                    max-width: 300px;
+                }
+                .cta__title {
+                    margin-bottom: 0;
+                    @include mq($xs){
+                        text-align: center;
+                    }
+                }
+            }
+
+            .rts-cta__right {
+                .rts-btn {
+                    border-radius: 4px;
+                    background: var(--color-white);
+                    color: var(--color-secondary);
+                    padding: 14px 30px;
+                }
+            }
+
+            .cta-shape-area {
+                position: absolute;
+                top: 50%;
+                left: 60%;
+                transform: translate(-60%, -50%);
+                z-index: -1;
+
+                @include mq($md) {
+                    left: 70%;
+                }
+
+                @include mq($sm) {
+                    display: none;
+                }
+            }
+        }
+    }
+}

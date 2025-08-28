@@ -1,0 +1,120 @@
+:root {
+
+    // ALL FONTS USED THIS THEME
+    --font-primary: 'Plus Jakarta Sans', sans-serif;
+    --font-secondary: 'Inter', sans-serif;
+    --fontawesome: "Font Awesome 6 Pro";
+    // ALL COLOR OF THIS THEME
+    --body-bg: #fff;
+    --color-white: #fff;
+    --color-primary: #0774FF;                          
+    --color-secondary: #2D3C58;
+    --color-third: #FFC107;
+    --btc: #4C5671; // body text color
+    --color-secondary-dark: #313149;
+    --placeholder: #8D9097;
+
+    // ALL GRADIENT COLOR OF THIS THEME
+    --primary-gradient: linear-gradient(180deg, #308BFF 0%, #1262FF 100%);
+    --secondary-gradient: linear-gradient(180deg, #F3F5FF 0%, rgba(231, 235, 255, 0.00) 100%);
+    --header-top-gradient: linear-gradient(90deg, rgba(255, 255, 255, 0.10) 8.51%, rgba(255, 255, 255, 0.10) 77.02%);
+    --icon-bg-1: linear-gradient(147deg, #E8ECFF 14.12%, #D1FFEF 80.26%);
+    --icon-bg-2: linear-gradient(147deg, #E8ECFF 14.12%, #E3D1FF 80.26%);
+    --border-gradient: linear-gradient(180deg, rgba(212, 220, 255, 0.00) 0%, #D4DCFF 51.04%, rgba(212, 220, 255, 0.00) 100%);
+    --single-sell: linear-gradient(112deg, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0.00) 101.12%);
+    --single-sell-primary: linear-gradient(113deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.10) 110.84%);
+    --banner-one-bg: linear-gradient(180deg, #2D86FF 0%, #033AA7 100%);
+    --pricing-single-bg: linear-gradient(180deg, #2987FF 0%, #0755F0 100%);
+    --cta-two-bg:  linear-gradient(92deg, #3990FF 3.85%, #2C73FE 101.14%);
+    --banner-four-gradient: linear-gradient(90deg, #0441B9 26.56%, rgba(18, 24, 51, 0.00) 83.83%);
+    --banner-most-used-bg: linear-gradient(180deg, #0774FF 0%, #033AA7 100%);
+    --data-center-bg: linear-gradient(180deg, #F6F9FF 0%, rgba(246, 249, 255, 0.00) 100%);
+    --data-center-shape-1: linear-gradient(180deg, #FCFDFF 0.14%, #E9EFFF 76.88%);
+    --data-center-shape-2: linear-gradient(179deg, #F9FBFF 0.57%, #E9EFFF 59.7%);
+    --data-center-shape-small: linear-gradient(192deg, #F6F9FF 8.69%, #ECF7FF 43%, #E9EFFF 43%);
+    // FAQ SECTION
+    --accordion-active: linear-gradient(180deg, rgba(241, 246, 255, 0.00) 0%, #F1F6FF 100%);
+    --accordion-box-shadow: 0px 4px 30px 0px rgba(224, 231, 253, 0.20);
+    --accordion-section: linear-gradient(180deg, #F6F9FF 0%, rgba(246, 249, 255, 0.00) 100%);
+    --footer-style-one: linear-gradient(0deg, #DFEAFF 0%, rgba(246, 249, 255, 0.00) 82.55%);
+    --testimonial-two-bg: linear-gradient(180deg, #0653EC 0%, #0774FF 100%);
+    --feedback-card: linear-gradient(180deg, #D8EAFF 0%, #F6F6F6 100%);
+    // ALL BORDER COLOR OF THIS THEME
+    --border-color: #E9EDFF;
+    --light-border: #D4DCFF;
+    --white-border: #fff;
+    // ALL BOX SHADOW
+    --box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.06);
+
+    // SECTION COLORS
+    --plan-bg: #F6F9FF;
+    --transition: all .4s ease;
+    // notify Colors
+    --color-success: #26CF4B;
+    --color-danger: #FF0003;
+    --color-warning: #FF8F3C;
+    --color-info: #1BA2DB;
+
+
+    //Social icon colors
+    --color-facebook: #3B5997;
+    --color-twitter: #1BA1F2;
+    --color-youtube: #ED4141;
+    --color-linkedin: #0077B5;
+    --color-pinterest: #E60022;
+    --color-instagram: #C231A1;
+    --color-vimeo: #00ADEF;
+    --color-twitch: #6441A3;
+    --color-discord: #7289da;
+
+
+    // Font weight
+    --light: 300;
+    --regular: 400;
+    --medium: 500;
+    --semibold: 600;
+    --bold: 700;
+    --extrabold: 800;
+    --black: 900;
+
+    //Fonts Size
+    --size-default: 16px;
+    --size-small: 14px;
+
+    //Line Height
+    --lh-default: 26px;
+    --lh-h1: 76px;
+    --lh-h2: 58px;
+    --lh-h3: 46px;
+    --lh-h4: 32px;
+
+
+    // Heading Font size
+    --size-h1: 66px;
+    --size-h2: 48px;
+    --size-h3: 36px;
+    --size-h4: 24px;
+    --size-h5: 20px;
+    --size-h6: 18px;
+}
+
+
+[data-theme=dark]{
+
+}
+
+
+
+// Layouts Variation
+$smlg-device: 'only screen and (max-width: 1199px)';
+$extra-device: 'only screen and (min-width: 1600px) and (max-width: 1919px)';
+$laptop-device: 'only screen and (min-width: 1200px) and (max-width: 1599px)';
+$lg-layout: 'only screen and (min-width: 992px) and (max-width: 1199px)';
+$md-layout:'only screen and (min-width: 768px) and (max-width: 991px)';
+$sm-layout:'only screen and (max-width: 767px)';
+$large-mobile: 'only screen and (max-width: 575px)';
+$small-mobile: 'only screen and (max-width: 479px)';
+
+
+
+

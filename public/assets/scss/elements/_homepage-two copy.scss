@@ -1,0 +1,153 @@
+// HOMEPAGE TWO CSS
+.template-two{
+    background: #F6F6F6;
+}
+// DOMAIN CHECKER CSS
+// ds = domain search
+.rts-ds-two{
+    &__wrapper{
+        margin-top: -165px;
+        background: var(--primary-gradient);
+        position: relative;
+        padding: 75px;
+        border-radius: 10px;
+        z-index: 21;
+        color: var(--body-bg);
+        &::after{
+            @include ph;
+            background-image: url(../images/domain/domain__finder__bg.svg);
+            @include background;
+            z-index: -1;
+        }
+        .domain-search{
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+
+            input{
+                background: var(--body-bg);
+                color: var(--color-secondary);
+                padding: 22px 24px;
+                border-radius: 6px;
+                max-width: 600px;
+            }
+            .domain-btn{
+                padding: 22px 35px;
+                color: var(--color-secondary);
+                border-radius: 6px;
+                background: var(--color-third);
+                max-width: 190px;
+            }
+        }
+    }
+    &__domainlist{
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 30px;
+        .single-list{
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 6px;
+            .name{
+                text-decoration: underline;
+                font-size: 20px;
+                font-weight: var(--bold);
+                margin-bottom: 5px;
+            }
+        }
+    }
+}
+
+// HOSTING FEATURE AREA CSS
+.rts-hosting-feature{
+    &__content{
+        .rts-section__two{
+            max-width: 440px;
+            .title{
+                font-size: 40px;
+            }
+            .description{
+                margin-bottom: 0;
+            }
+        }
+        .hosting-feature{
+            margin-top: 50px;
+            ul{
+                @include ul;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                li{
+                    .hosting-feature__single{
+                        display: inline-flex;
+                        gap: 15px;
+                        padding: 10px 20px;
+                        border-radius: 30px;
+                        &.feature__one{
+                            background: linear-gradient(90deg, #FFE4FD -15.91%, rgba(217, 217, 217, 0.00) 82.63%);
+                            border: 1px solid #E8DCFF;
+                        }
+                        &.feature__two{
+                            background: linear-gradient(90deg, #D4E7FF -15.91%, rgba(217, 217, 217, 0.00) 82.63%);
+                            border: 1px solid #D6E8FF;
+                        }
+                        &.feature__three{
+                            background: linear-gradient(90deg, #BFFFE8 -15.91%, rgba(217, 217, 217, 0.00) 82.63%);
+                            border: 1px solid #A7F0CD;
+                        }
+                        .feature-text{
+                            margin: 0;
+                            font-weight: var(--semibold);
+                            color: #2D3C58;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// HOSTING FEATURE TWO CSS
+.rts-hosting-feature-two{
+    &__image{}
+    &__content{
+        .feature{
+            margin-top: 40px;
+            margin-bottom: 50px;
+            &__list{
+    
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                @include ul;
+                .feature__item{
+                    position: relative;
+                    margin-left: 30px;
+                    color: #2D3C58;
+                    font-family: var(--font-secondary);
+                font-weight: var(--medium);
+                    &::before{
+                        position: absolute;
+                        left: -30px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        content: '\f00c';
+                        font-family: var(--fontawesome);
+                        height: 20px;
+                        width: 20px;
+                        font-size: 10px;
+                        display: inline-flex;
+                        justify-content: center;
+                        align-items: center;
+                        border-radius: 50%;
+                        background: var(--color-primary);
+                        color: var(--color-white);
+                    }
+                }
+            }
+        }
+    }
+}

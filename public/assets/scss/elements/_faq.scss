@@ -1,0 +1,148 @@
+// HOSTIE FAQ AREA CSS
+.rts-faq {
+    background: var(--accordion-section);
+    &.bg-white{
+        background: #fff !important;
+    }
+    &__first {
+        position: relative;
+        @media(max-width:991px){
+            margin-bottom: 30px;
+        }
+        .title {
+            font-size: 36px;
+            font-weight: var(--bold);
+            margin-bottom: 30px;
+            max-width: 380px;
+            color: var(--color-secondary);
+            @media(max-width:450px){
+                font-size: 28px;
+            }
+        }
+
+        p {
+            font-family: var(--font-secondary);
+            max-width: 420px;
+            margin-bottom: 30px;
+        }
+
+        img {
+            margin-left: 30px;
+        }
+
+        &--shape {
+            .shape-one,
+            .shape-two {
+                padding: 8px 13px;
+                background: rgba(128, 0, 255, 0.10);
+                border-radius: 30px;
+                color: var(--color-secondary);
+                display: inline-block;
+                line-height: 100%;
+                text-transform: capitalize;
+            }
+            .shape-one {
+                position: absolute;
+                top: 48%;
+                left: 35%;
+            }
+            
+            .shape-two {
+                position: absolute;
+                right: 25%;
+                bottom: 10%;
+            }
+            
+            .img {
+                position: absolute;
+                left: -5%;
+                bottom: 15%;
+            }
+        }
+    }
+
+    &__accordion {        
+        & .accordion {
+            max-width: 925px;
+            margin: auto;
+            .accordion-item {
+                // margin-bottom: 30px;
+                padding: 0 25px 30px 25px;
+                border-bottom: 1px solid var(--light-border);
+                background: none;
+                transition: var(--transition);
+                &:not(:last-child){
+                    margin-bottom: 30px;
+                }
+                @media(max-width:450px){
+                    padding: 23px 15px;
+                }
+                .accordion-header {
+                    .accordion-button {
+                        cursor: pointer;
+                        font-size: 20px;
+                        padding: 0;
+                        font-weight: var(--semibold);
+                        background: transparent;
+                        margin-bottom: 0;
+                        &:not(.collapsed) {
+                            background: transparent;
+                            color: var(--color-secondary);
+                            box-shadow: none;
+
+                            &::after {
+                                content: '\f068';
+                                font-family: var(--fontawesome);
+                            }
+                        }
+
+                        &::after {
+                            content: '\2b';
+                            font-family: var(--fontawesome);
+                            background-image: none;
+                            height: 26px;
+                            width: 26px;
+                            border-radius: 50%;
+                            border: 1px solid var(--border-color);
+                            font-size: 14px;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                        }
+
+                    }
+                }
+
+                .accordion-body {
+                    padding: 0;
+                    padding-top: 15px;
+                }
+
+                &.active {
+                    background: var(--accordion-active);
+                    border-radius: 10px;
+                    border-top: none;
+                    padding-top: 30px;
+                }
+            }
+        }
+    }
+}
+.faq__bg{
+    background: #F6F6F6;
+}
+.rts-hosting-faq{
+    --faq-accordion: linear-gradient(180deg, rgba(255, 255, 255, 0.00) 0%, #F4F9FF 100%);
+    .rts-faq__accordion .accordion .accordion-item.active{
+        background: var(--faq-accordion);
+    }
+    &.wordpress{
+        background: none;
+    }
+}
+.vps-hosting .rts-hosting-faq{
+    background: var(--color-white);
+}
+.template-cloud .rts-hosting-faq{
+    background: var(--color-white);
+}

@@ -1,0 +1,667 @@
+// body color
+.template-game {
+  background: #0b0f21;
+  color: var(--color-white);
+  .rts-section__title {
+    color: var(--color-white);
+  }
+  .mobile-menu-main nav ul li a{
+    color: #121833;
+  }
+  .progress-wrap::before{
+    background: var(--color-third) !important;
+  }
+  .rts-header.header-sticky{
+    background: linear-gradient(90deg, #121833 17.75%, rgba(18, 24, 51, 1) 103.04%) !important;
+    .hostie-menu .hostie-desktop-menu .menu-item 
+    .hostie-dropdown-main-element{
+      color: var(--color-white);
+    }
+    .rts-header__right .login__btn{
+      color: var(--color-white);
+      border-color: var(--color-white);
+      &:hover{
+        border-color: var(--color-third);
+      }
+    }
+  }
+}
+
+
+.rts-hero {
+  &.game-banner {
+    display: flex;
+    align-items: center;
+    padding: 300px 0 220px;
+    @include mq($md) {
+      padding: 200px 0 150px;
+    }
+    @include mq($sm) {
+      padding: 150px 0 100px;
+    }
+    &::before {
+      background-image: url(../images/banner/banner__bg__game.jpg);
+      @include ph;
+      @include background;
+      z-index: -1;
+    }
+    &::after {
+      @include ph;
+      background: linear-gradient(
+        90deg,
+        #121833 17.75%,
+        rgba(18, 24, 51, 0.6) 103.04%
+      );
+      z-index: -1;
+    }
+    .rts-hero__content h1 {
+      font-size: 64px;
+      margin-bottom: -10px;
+      @include mq($md) {
+        max-width: 100%;
+      }
+      @include mq($sm) {
+        font-size: 50px;
+        line-height: 1.2;
+      }
+      @include mq($xs) {
+        font-size: 40px;
+        line-height: 1.2;
+      }
+      &::before {
+        background: none;
+        position: unset;
+      }
+    }
+    .rts-hero-two__content--btn {
+      .secondary__color {
+        color: #121833;
+      }
+      .rts-btn:hover {
+        color: #121833 !important;
+      }
+    }
+  }
+}
+
+.popular-game {
+  background-image: url(../images/game/game__server__bg.svg);
+  @include background;
+  .rts-section__two {
+    margin: 0 auto;
+    h2 {
+      color: var(--color-white);
+      text-align: center  ;
+    }
+  }
+  .rts-section-description {
+    max-width: 450px;
+    margin: 0 auto;
+    @include mq($xs) {
+      margin: 0;
+    }
+  }
+}
+
+.single__server {
+  &--content {
+    &__icon {
+      margin-bottom: 50px;
+    }
+    &__link {
+      a {
+        font-family: var(--font-primary);
+        font-weight: 700;
+        color: var(--color-white);
+      }
+    }
+    &__description {
+      max-width: 330px;
+      color: #d4dcff;
+    }
+  }
+}
+// game banner
+.game-banner {
+}
+.game__banner__content {
+  @include background;
+  border-radius: 10px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  &::after {
+    @include pb;
+    background: linear-gradient(
+      90deg,
+      #121833 18.11%,
+      rgba(18, 24, 51, 0.2) 53.33%
+    );
+    border-radius: inherit;
+    content: "";
+    z-index: -1;
+  }
+  &__box {
+    max-width: 610px;
+    padding-left: 80px;
+    padding-top: 85px;
+    padding-bottom: 90px;
+    @include mq($md) {
+      max-width: 630px;
+    }
+    @include mq($sm) {
+      padding: 50px;
+    }
+    &--purchase {
+      border: 1px solid var(--color-white);
+      border-radius: 25px;
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 12px;
+      margin-bottom: 20px;
+    }
+    &--title {
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    &--description {
+      margin-bottom: 50px;
+    }
+    &--button {
+      .primary__btn {
+        background: var(--color-third);
+        color: #121833;
+        font-weight: 500;
+        padding: 16px 24px;
+      }
+    }
+  }
+  &__image {
+    position: relative;
+    @include mq($md) {
+      display: none;
+    }
+    img {
+      position: relative;
+      top: -50px;
+      height: 108%;
+    }
+  }
+}
+
+// game feature
+.rts-feature {
+}
+.feature__content__box {
+  &--title {
+    font-size: 40px;
+    font-weight: 700;
+    margin-bottom: 60px;
+    @include mq($md) {
+      max-width: 90%;
+    }
+    @include mq($sm) {
+      max-width: 100%;
+    }
+    @include mq($xs) {
+      font-size: 30px;
+    }
+  }
+  &__list {
+    &__single {
+      max-width: 330px;
+      @include mq($md) {
+        max-width: 100%;
+      }
+      display: flex;
+      align-items: center;
+      gap: 50px;
+      @include mq($xs) {
+        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
+        gap: 30px;
+      }
+      &:not(:last-child) {
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #121833;
+      }
+      .icon {
+        height: 56px;
+        width: 56px;
+      }
+      .content {
+        margin-bottom: 0;
+        max-width: 220px;
+        @include mq($md) {
+          max-width: 100%;
+        }
+        line-height: 34px;
+      }
+    }
+  }
+}
+
+// game pricing
+.game-pricing {
+  .rts-section__title {
+    color: var(--color-white);
+  }
+  .rts-pricing-plan__tab .tab__button {
+    background: #121833;
+    box-shadow: none;
+    color: var(--color-third);
+  }
+  .rts-pricing-plan__tab .tab__button__item button.active {
+    background: var(--color-third);
+    color: #121833;
+  }
+  .single-plan {
+    background: transparent !important;
+    border: 1px solid #121833;
+    border-radius: 20px;
+    &::before {
+      background: transparent !important;
+    }
+    &__content {
+      .border-separator {
+        border-color: #121833 !important;
+      }
+      .plan-title {
+        color: var(--color-white) !important;
+      }
+      .buy__plan {
+        background: var(--color-white) !important;
+        color: #121833 !important;
+      }
+    }
+    &:hover,
+    .active {
+      border-color: var(--color-third) !important;
+      .single-plan__content {
+        .border-separator {
+          border-color: var(--color-third) !important;
+        }
+        .buy__plan {
+          background: var(--color-third) !important;
+        }
+      }
+    }
+  }
+}
+
+// game collection
+.game-collection {
+}
+
+.game__tab {
+  nav {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    border-color: transparent;
+    margin-bottom: 50px;
+    .nav-tabs {
+      border: none;
+      gap: 10px;
+    }
+    button.nav-link {
+      padding: 12px 14px;
+      border: 1px solid #121833 !important;
+      border-radius: 4px;
+      max-width: max-content;
+      display: inline-block;
+      line-height: 1;
+      font-weight: 600;
+      color: var(--color-white);
+      margin-bottom: 0;
+      font-size: 14px;
+      &:hover,
+      &.active {
+        background: var(--color-third) !important;
+        color: #121833!important;
+      }
+    }
+  }
+}
+.game__single {
+  &__box {
+    &:hover {
+      .game__single__box__image__meta {
+        opacity: 1;
+      }
+    }
+    &__image {
+      position: relative;
+      overflow: hidden;
+      border-radius: 10px;
+      transition: var(--transition);
+      border: 2px solid transparent;
+      &:hover {
+        border-color: var(--color-third);
+      }
+      img {
+        width: 100%;
+      }
+      &__meta {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        transition: var(--transition);
+        opacity: 0;
+        .cart__btn {
+          bottom: 0;
+          position: absolute;
+          background: var(--color-third);
+          color: #121833;
+          padding: 10px 35px;
+          border-radius: 4px;
+          left: 50%;
+          transform: translateX(-50%);
+          bottom: 35px;
+          display: inline-flex;
+          gap: 15px;
+          min-width: 190px;
+          align-items: center;
+          font-weight: 600;
+        }
+        .off {
+          position: absolute;
+          left: 20px;
+          top: 20px;
+          background: var(--color-third);
+          color: var(--color-secondary);
+          border-radius: 4px;
+          padding: 8px 12px;
+          font-size: 14px;
+          font-family: var(--font-secondary);
+          font-weight: 600;
+          line-height: 1;
+          text-transform: uppercase;
+        }
+      }
+    }
+    &__meta {
+      margin-top: 30px;
+      &--title {
+        margin-bottom: 20px;
+        a {
+          font-weight: 700;
+          color: var(--color-white);
+          transition: var(--transition);
+          &:hover {
+            color: var(--color-third);
+          }
+        }
+      }
+      &--pricing {
+        display: flex;
+        gap: 25px;
+        align-items: center;
+        flex-wrap: wrap;
+        .old__pricing {
+          text-decoration: line-through;
+        }
+        .current__pricing {
+          background: var(--color-third);
+          color: #121833;
+          padding: 6px 9px;
+          border-radius: 4px;
+          font-weight: 500;
+          font-size: 15px;
+          line-height: 1;
+        }
+      }
+      &__flex {
+        display: flex;
+        gap: 25px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      &__rating {
+        i {
+          color: var(--color-third);
+        }
+      }
+    }
+  }
+}
+
+// game testimonial
+.game-testimonial {
+  .rts-section__title,
+  .rts-section__description {
+    color: var(--color-white);
+  }
+  .rts-testimonial__single {
+    background: linear-gradient(115.78deg, #141b39 3.37%, #050712 100.15%);
+    border: none;
+    &::before {
+      background: none;
+    }
+    .content p {
+      color: var(--color-white);
+    }
+    .author__meta--details a {
+      color: var(--color-white);
+    }
+  }
+}
+
+// game faq
+.game-faq {
+  .accordion {
+    .accordion-item {
+      border-bottom-color: #121833 !important;
+      &.active {
+        background: linear-gradient(
+          180deg,
+          #111833 0%,
+          #0b0f21 100%
+        ) !important;
+      }
+      .accordion-header .accordion-button {
+        color: var(--color-white) !important;
+        &:not(.collapsed) {
+          color: var(--color-white) !important;
+        }
+      }
+    }
+  }
+}
+
+// game details
+.template-game-details {
+  .popular-game{
+    background-image: unset;
+  }
+}
+.game__details--img{
+  img{
+    width: 100%;
+    border-radius: 10px;
+  }
+}
+.game__details--content{
+  &__cat{
+    margin-bottom: 20px;
+    a{
+      padding: 4px 15px;
+      border: 1px solid #fff;
+      border-radius: 25px;
+      color: var(--color-white);
+    }
+  }
+  &__title{
+    font-weight: 600;
+  }
+  &__details{
+    max-width: 80%;
+    @include mq($sm){
+      max-width: 100%;
+    }
+  }
+  &__rating{
+    i{
+      color: var(--color-third);
+    }
+  }
+}
+
+// cloud hosting
+.cloud__hosting{
+  .rts-footer{
+    background: var(--color-white) !important;
+  }
+}
+// cloud banner
+.cloud-banner{
+
+}
+.rts-hero.cloud-banner{
+  background: #0045CD;
+  padding: 280px 0 220px;
+  @include mq($md){
+    padding: 200px 0 150px;
+  }
+  @include mq($sm){
+    padding: 160px 0 130px;
+  }
+  .rts-hero__content{
+    h1{
+      @include mq($md){
+        max-width: 100%;
+      }
+    }
+    h6{
+      border-color: var(--color-third) !important;
+      color: var(--color-third) !important;
+    }
+    .heading{
+      span{
+        color: var(--color-third)
+      }
+      &::before{
+        position: unset !important;
+      }
+    }
+    &--description{
+      color: #D4DCFF;
+    }
+    .hosting-feature{
+      display: flex;
+      gap: 80px;
+      align-items: center;
+      margin-top: 40px;
+      @include mq($xs){
+        flex-wrap: wrap;
+        gap: 30px;
+      }
+      &__single{
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        &:not(:last-child){
+          border-right: 1px solid var(--color-white);
+          @include mq($xs){
+            border-right: none;
+          }
+        }
+        .feature-text{
+          font-size: 20px;
+          font-family: var(--font-primary);
+          font-weight: 600;
+        }
+      }
+    }
+  }
+  &::before{
+    background-image: url(../images/banner/banner__eight__shape.svg);
+    @include ph;
+    background-position: left;
+    background-repeat: no-repeat;
+    opacity: 0.6;
+    background-size: contain;
+    @include mq($sm){
+      display: none;
+    }
+  }
+  &::after{
+    background-image: url(../images/banner/banner__eight__image.png);
+    position: absolute;
+    left: -130px;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    content: "";
+    background-position: right;
+    background-repeat: no-repeat;
+    background-size: contain;
+    @include mq($xl){
+      left: 0;
+    }
+    @include mq($lg){
+      display: none;
+    }
+  }
+}
+.cloud__pricing__bg{
+  background: #F4F9FF;
+  .card-plan:hover .card-plan__cartbtn a, 
+  .card-plan.active .card-plan__cartbtn a{
+  background: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  }
+  .card-plan:hover .card-plan__feature--list-trigered, 
+  .card-plan.active .card-plan__feature--list-trigered,
+.card-plan__feature--list-trigered.active{
+    color: var(--color-primary) !important;
+  }
+  .plan__tab .tab__button{
+    border-radius: 6px !important;
+    height: 50px !important;
+    background: var(--color-white) !important;
+  }
+  .tab__button .tab__button__item button{
+    padding: 12px 18px !important;
+    border-radius: 4px !important;
+    color: #0774FF;
+  }
+}
+.cloud__feedback{
+  .feedback-card{
+    background: #FAFBFF !important;
+    border: 1px solid #EAEFFF 
+    !important;
+    &::before{
+      border-bottom: none !important;
+    }
+    &::after{
+      position: unset !important;
+    }
+    
+  }
+  .feedback-card__border{
+    border-bottom: none !important;
+  }
+  .feadback-card__single__rating{
+    margin-bottom: 20px;
+      i{
+        color: var(--color-third);
+      }
+  } 
+}
+.cloud__feature{
+  .support-feature-image{
+    img{
+      min-height: 490px;
+      width: 430px;
+      position: unset !important;
+    }
+  }
+}

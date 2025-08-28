@@ -1,0 +1,165 @@
+// HOSTIE FLASH SELL AREA CSS
+.rts-flash-sell {
+    &__bg {
+        background-image: url(../images/dotted__element.png);
+        background-color: var(--color-primary);
+        padding: 50px;
+        border-radius: 10px;
+
+        @media(max-width:450px) {
+            padding: 50px 15px;
+        }
+    }
+
+    &__title {
+        max-width: 320px;
+
+        @media(max-width:991px) {
+            margin-bottom: 50px;
+        }
+
+        h3 {
+            font-size: 36px;
+            font-weight: var(--bold);
+            color: var(--body-bg);
+            margin-bottom: 15px;
+            text-transform: capitalize;
+
+            @media(max-width:1200px) and (min-width:991px) {
+                font-size: 30px;
+            }
+
+            @media(max-width:450px) {
+                font-size: 30px;
+            }
+        }
+
+        p {
+            color: var(--body-bg);
+            font-family: var(--font-secondary);
+            margin-bottom: 20px;
+        }
+
+        .primary__btn {
+            padding: 14px 15px;
+            min-width: 180px;
+            text-align: center;
+			max-width: max-content;
+        }
+
+    }
+
+    & .single__sell {
+        background: linear-gradient(112deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.05) 101.12%);
+        border-radius: 10px;
+        padding: 30px 35px 30px;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        backdrop-filter: blur(21px);
+        border: 1px solid #69ABFF;
+        position: relative;
+        z-index: 1;
+
+        @media(max-width:1200px) and (min-width:991px) {
+            flex-direction: column;
+        }
+
+        @media(max-width:991px) {
+            padding: 25px;
+        }
+
+        @media(max-width:768px) {
+            margin-bottom: 10px;
+        }
+
+        @media(max-width:450px) {
+            flex-direction: column;
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            background: var(--single-sell-primary);
+            border-radius: inherit;
+            z-index: -1;
+        }
+
+        &::before {
+            content: '';
+            background-image: url(../images/service/flash-sale.svg);
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -1;
+        }
+
+        &--content {
+            color: var(--body-bg);
+
+            @media(max-width:1200px) and (min-width:991px) {
+                order: 2;
+                margin-top: 30px;
+            }
+
+            @media(max-width:450px) {
+                order: 2;
+                margin-top: 30px;
+            }
+
+            .offer {
+                padding: 5px 10px;
+                border-radius: 25px;
+                background: var(--body-bg);
+                color: var(--color-secondary);
+                font-weight: var(--medium);
+                font-size: 14px;
+                font-family: var(--font-secondary);
+                display: inline-block;
+                text-transform: capitalize;
+                margin-bottom: 20px;
+                line-height: 1;
+            }
+
+            .discount {
+                font-size: 36px;
+                font-weight: var(--bold);
+                margin-bottom: 15px;
+                line-height: 100%;
+            }
+            span{
+                font-size: 20px;
+                font-weight: 600;
+                text-transform: capitalize;
+                line-height: 100%;
+            }
+        }
+
+        &--image {
+            height: 100px;
+            width: 100px;
+            border-radius: 50%;
+            background: var(--body-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            img {
+                max-height: 60px;
+                min-width: 60px;
+				max-width: max-content;
+            }
+        }
+    }
+}

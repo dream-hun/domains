@@ -1,0 +1,106 @@
+// HOMEPAGE TWO CSS
+.template-two{
+    background: #F6F6F6;
+}
+// DOMAIN CHECKER CSS
+// ds = domain search
+.rts-ds-two{
+    &__wrapper{
+        margin-top: -165px;
+        background: var(--primary-gradient);
+        position: relative;
+        padding: 75px;
+        border-radius: 10px;
+        z-index: 21;
+        color: var(--body-bg);
+        @include mq($xs){
+            padding: 25px;
+        }
+        &::after{
+            @include ph;
+            background-image: url(../images/domain/domain__finder__bg.svg);
+            @include background;
+            z-index: -1;
+        }
+        .domain-search{
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            @include mq($sm){
+                flex-wrap: wrap;
+                gap: 15px
+            }
+            input{
+                background: var(--body-bg);
+                color: var(--color-secondary);
+                padding: 17px 24px;
+                border-radius: 6px;
+                min-width: 600px;
+				max-width: max-content;
+                line-height: 1;
+                @include mq($sm){
+                    padding: 15px;
+                }
+            }
+            .domain-btn{
+                padding: 17px 35px;
+                border-radius: 6px;
+                min-width: 190px;
+				max-width: max-content;
+				
+                @include mq($sm){
+                    padding: 15px;
+                    min-width: 150px;
+					max-width: max-content;
+                }
+            }
+        }
+    }
+    &__domainlist{
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 30px;
+        flex-wrap: wrap;
+        @include mq($md){
+            gap: 10px;
+        }
+        .single-list{
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 6px;
+            @include mq($xs){
+                padding: 10px 15px;
+            }
+            .name{
+                text-decoration: underline;
+                font-size: 20px;
+                font-weight: var(--bold);
+                margin-bottom: 5px;
+            }
+        }
+    }
+}
+.domain-form{
+    @include mq($xs){
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px !important;
+    }
+    button[type='submit']{
+        min-width: 160px;
+		max-width: max-content;
+        height: 56px;
+        border-radius: 4px;
+        background:var(--color-third);
+        font-family: var(--font-secondary);
+        font-weight: 600;
+        color: var(--color-secondary);
+        &:hover{
+            background: var(--color-secondary);
+            color: var(--color-white);
+        }
+    }
+}
