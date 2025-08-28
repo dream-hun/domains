@@ -14,7 +14,7 @@ final class DomainRenewalRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return auth()->check() && auth()->user()->can('domain_renew');
     }
 
     /**
@@ -25,7 +25,17 @@ final class DomainRenewalRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'period' => 'required|integer|min:1|max:10',
+            'years' => ['required', 'integer', 'min:1', 'max:10'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'years.required' => 'Renewal period is required.',
+            'years.integer' => 'Renewal period must be a number.',
+            'years.min' => 'Minimum renewal period is 1 year.',
+            'years.max' => 'Maximum renewal period is 10 years.',
         ];
     }
 }

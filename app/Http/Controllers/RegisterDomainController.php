@@ -98,6 +98,8 @@ final class RegisterDomainController extends Controller
 
     /**
      * Process contacts from the simplified form structure
+     *
+     * @throws Exception
      */
     private function processContactsFromForm(array $validatedData, bool $useSingleContact): array
     {
@@ -118,7 +120,7 @@ final class RegisterDomainController extends Controller
         } else {
             // Process each contact type individually
             foreach ($contactFields as $type => $fieldName) {
-                if (!empty($validatedData[$fieldName])) {
+                if (! empty($validatedData[$fieldName])) {
                     $processedContacts[$type] = $validatedData[$fieldName];
                 }
             }
@@ -126,8 +128,8 @@ final class RegisterDomainController extends Controller
             // Ensure all required contact types are present
             $requiredTypes = ['registrant', 'admin', 'technical', 'billing'];
             foreach ($requiredTypes as $type) {
-                if (!isset($processedContacts[$type])) {
-                    throw new \Exception("Missing contact for type: $type");
+                if (! isset($processedContacts[$type])) {
+                    throw new Exception("Missing contact for type: $type");
                 }
             }
         }

@@ -29,6 +29,18 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('domains', DomainController::class)->except(['show']);
     Route::get('domains/{domain:uuid}/info', [DomainController::class, 'domainInfo'])->name('domains.info');
 
+    // Domain Transfer Routes
+    Route::get('domains/{domain:uuid}/transfer', [DomainController::class, 'showTransferForm'])->name('domains.transfer');
+    Route::post('domains/{domain:uuid}/transfer', [DomainController::class, 'transferDomain'])->name('domains.transfer.store');
+
+    // Domain Renewal Routes
+    Route::get('domains/{domain:uuid}/renew', [DomainController::class, 'showRenewForm'])->name('domains.renew');
+    Route::post('domains/{domain:uuid}/renew', [DomainController::class, 'renewDomain'])->name('domains.renew.store');
+
+    // Domain Nameservers Routes
+    Route::get('domains/{domain:uuid}/nameservers', [DomainController::class, 'showNameserversForm'])->name('domains.nameservers.edit');
+    Route::put('domains/{domain:uuid}/nameservers', [DomainController::class, 'updateNameservers'])->name('domains.nameservers.update');
+
     Route::resource('permissions', PermissionsController::class);
     Route::resource('roles', RolesController::class);
     Route::resource('users', UsersController::class);
