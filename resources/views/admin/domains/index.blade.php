@@ -55,15 +55,35 @@
                                 {{ $domain->expires_at ?? '' }}
                             </td>
                             <td>
+                                <div class="btn-group" role="group">
+                                    @can('domain_show')
+                                        <a href="{{ route('admin.domains.info',$domain->uuid) }}"
+                                           class="btn btn-sm btn-info">
+                                            <i class="fas fa-info-circle"></i> Info
+                                        </a>
+                                    @endcan
 
-                                @can('domain_show')
+                                    @can('domain_update')
+                                        <a href="{{ route('admin.domains.nameservers.edit', $domain->uuid) }}"
+                                           class="btn btn-sm btn-warning">
+                                            <i class="fas fa-server"></i> Nameservers
+                                        </a>
+                                    @endcan
 
-                                    <a href="{{ route('admin.domains.info',$domain->uuid) }}"
-                                       class="btn btn-md btn-info">
-                                        WHOIS
-                                    </a>
+                                    @can('domain_renew')
+                                        <a href="{{ route('admin.domains.renew', $domain->uuid) }}"
+                                           class="btn btn-sm btn-success">
+                                            <i class="fas fa-redo"></i> Renew
+                                        </a>
+                                    @endcan
 
-                                @endcan
+                                    @can('domain_transfer')
+                                        <a href="{{ route('admin.domains.transfer', $domain->uuid) }}"
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-exchange-alt"></i> Transfer
+                                        </a>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @endforeach
