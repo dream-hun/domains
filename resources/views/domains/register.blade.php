@@ -36,8 +36,10 @@
                             <div class="card-body">
                                 <div x-data="{ useSingleContact: false, registrantContactId: '' }">
                                     <div class="form-check form-check-inline mb-3">
+                                        <!-- Hidden field to ensure a value is always sent -->
+                                        <input type="hidden" name="use_single_contact" value="0">
                                         <input type="checkbox" class="form-check-input" id="use_single_contact"
-                                               name="use_single_contact"
+                                               name="use_single_contact" value="1"
                                                x-model="useSingleContact">
                                         <label class="form-check-label ms-2" for="use_single_contact">
                                             Use the same contact for all roles (Registrant, Admin, Technical, Billing)
@@ -376,7 +378,9 @@
                             @enderror
                             <div class="card-body">
                                 <div class="form-check form-check-inline mb-3">
-                                    <input type="checkbox" class="form-check-input" id="disable_dns" name="disable_dns"
+                                    <!-- Hidden field to ensure a value is always sent -->
+                                    <input type="hidden" name="disable_dns" value="0">
+                                    <input type="checkbox" class="form-check-input" id="disable_dns" name="disable_dns" value="1"
                                            x-model="disableDNS">
                                     <label class="form-check-label ms-2" for="disable_dns">
                                         Don't delegate this domain now

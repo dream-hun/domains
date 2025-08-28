@@ -23,19 +23,19 @@ final class RegisterDomainRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             // Domain information
             'domain_name' => ['required', 'string', 'min:2', 'max:253'],
             'registration_years' => ['required', 'integer', 'min:1', 'max:10'],
 
-            // Contact assignments - using the actual form field names from the controller
+            // Contact assignments - registrant is always required
             'registrant_contact_id' => ['required', 'exists:contacts,id'],
-            'admin_contact_id' => ['required', 'exists:contacts,id'],
-            'tech_contact_id' => ['required', 'exists:contacts,id'],
-            'billing_contact_id' => ['required', 'exists:contacts,id'],
+
+            // Single contact option
+            'use_single_contact' => ['sometimes', 'boolean'],
 
             // Nameserver options
-            'disable_dns' => ['nullable', 'boolean'],
+            'disable_dns' => ['sometimes', 'boolean'],
             'nameservers' => ['required_unless:disable_dns,1', 'array', 'min:2', 'max:4'],
             'nameservers.*' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])*$/'],
 
@@ -43,6 +43,20 @@ final class RegisterDomainRequest extends FormRequest
             'terms_accepted' => ['required', 'accepted'],
             'privacy_policy_accepted' => ['required', 'accepted'],
         ];
+
+        // If not using single contact, require all contact types
+        if (! $this->boolean('use_single_contact')) {
+            $rules['admin_contact_id'] = ['required', 'exists:contacts,id'];
+            $rules['tech_contact_id'] = ['required', 'exists:contacts,id'];
+            $rules['billing_contact_id'] = ['required', 'exists:contacts,id'];
+        } else {
+            // If using single contact, these fields are optional (will be filled automatically)
+            $rules['admin_contact_id'] = ['nullable', 'exists:contacts,id'];
+            $rules['tech_contact_id'] = ['nullable', 'exists:contacts,id'];
+            $rules['billing_contact_id'] = ['nullable', 'exists:contacts,id'];
+        }
+
+        return $rules;
     }
 
     /**

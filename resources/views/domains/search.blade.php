@@ -72,33 +72,81 @@
                 font-weight: 500;
             }
 
-            /* --- New styles for domain type selector --- */
-            .domain-type-selector {
-                margin-top: 15px;
-                display: flex;
-                justify-content: center;
-                gap: 25px;
-                color: #fff;
-                font-weight: 500;
+
+
+
+
+            .domain-result {
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 12px;
+                background-color: #fff;
+                transition: all 0.2s ease;
             }
 
-            .domain-type-selector label {
+            .domain-result:hover {
+                border-color: #3b82f6;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+            }
+
+            .domain-result.primary {
+                border-color: #3b82f6;
+                background-color: #f8fafc;
+            }
+
+            .domain-info-box {
                 display: flex;
-                align-items: center;
+                flex-direction: column;
                 gap: 8px;
-                cursor: pointer;
             }
 
-            .domain-type-badge {
-                display: inline-block;
-                padding: 4px 10px;
-                font-size: 0.8rem;
+            .domain {
+                font-size: 1.1rem;
                 font-weight: 600;
-                border-radius: 12px;
-                margin-left: 10px;
-                vertical-align: middle;
+                color: #1f2937;
+            }
+
+            .domain-status {
+                font-size: 0.875rem;
+                font-weight: 500;
+                padding: 4px 8px;
+                border-radius: 6px;
+                text-align: center;
+                width: fit-content;
+            }
+
+            .domain-status.available {
+                background-color: #dcfce7;
+                color: #166534;
+                border: 1px solid #bbf7d0;
+            }
+
+            .domain-status.taken {
+                background-color: #fef2f2;
+                color: #dc2626;
+                border: 1px solid #fecaca;
             }
         </style>
+    @endpush
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.getElementById('domain-search-form');
+                const searchButton = document.getElementById('search-button');
+                const buttonText = document.querySelector('.button-text');
+
+                form.addEventListener('submit', function() {
+                    // Show loading state
+                    searchButton.disabled = true;
+                    buttonText.textContent = 'Searching...';
+                    searchButton.style.opacity = '0.7';
+                });
+
+
+            });
+        </script>
     @endpush
 
     <section class="rts-hero-three rts-hero__one rts-hosting-banner domain-checker-padding banner-default-height">
@@ -127,19 +175,7 @@
                                 </div>
                             </div>
 
-                            {{-- New Domain Type Selector --}}
-                            <div class="domain-type-selector">
-                                <label>
-                                    <input type="radio" name="domain_type"
-                                           value="local" {{ old('domain_type', isset($domainType) ? $domainType->value : 'local') == 'local' ? 'checked' : '' }}>
-                                    Local (.rw)
-                                </label>
-                                <label>
-                                    <input type="radio" name="domain_type"
-                                           value="international" {{ old('domain_type', isset($domainType) ? $domainType->value : 'local') == 'international' ? 'checked' : '' }}>
-                                    International (.com, .net)
-                                </label>
-                            </div>
+
 
                             @if ($errors->any())
                                 <div class="validation-errors" style="margin-top: 15px;">
@@ -152,13 +188,18 @@
                             @endif
                         </form>
                         <div class="banner-content-tag" data-sal-delay="400" data-sal-duration="800">
-                            <p class="desc">Popular Domain:</p>
+                            <p class="desc">Popular Domains:</p>
                             <ul class="tag-list">
-                                <li><span>.com</span><span>$6.19</span></li>
-                                <li><span>.net</span><span>$6.19</span></li>
-                                <li><span>.org</span><span>$6.19</span></li>
-                                <li><span>.info</span><span>$6.19</span></li>
-                                <li><span>.xyz</span><span>$6.19</span></li>
+                                @if(isset($popularDomains))
+                                    @foreach(array_merge($popularDomains['local'] ?? [], $popularDomains['international'] ?? []) as $domain)
+                                        <li><span>{{ $domain['tld'] }}</span><span>{{ $domain['price'] }}</span></li>
+                                    @endforeach
+                                @else
+                                    <li><span>.com</span><span>$12.99</span></li>
+                                    <li><span>.net</span><span>$14.99</span></li>
+                                    <li><span>.org</span><span>$13.99</span></li>
+                                    <li><span>.rw</span><span>15,000 RWF</span></li>
+                                @endif
                             </ul>
                         </div>
                     </div>
@@ -181,10 +222,6 @@
                                 <div class="domain-info-box">
                                     <span class="domain">
                                         {{ $details['domain'] }}
-                                        @if(isset($domainType))
-                                            <span
-                                                class="domain-type-badge {{ $domainType->color() }}">{{ $domainType->label() }}</span>
-                                        @endif
                                     </span>
                                     <span
                                         class="domain-status {{ $details['available'] === 'true' ? 'available' : 'taken' }}">
@@ -203,7 +240,9 @@
                             @foreach($suggestions as $suggestion)
                                 <div class="domain-result">
                                     <div class="domain-info-box">
-                                        <span class="domain">{{ $suggestion['domain'] }}</span>
+                                        <span class="domain">
+                                            {{ $suggestion['domain'] }}
+                                        </span>
                                         <span
                                             class="domain-status {{ $suggestion['available'] === 'true' ? 'available' : 'taken' }}">
                                             {{ $suggestion['available'] === 'true' ? 'Available' : 'Taken' }}

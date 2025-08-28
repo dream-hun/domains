@@ -820,18 +820,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 $items = isset($data['chkData']['cd'][0]) ? $data['chkData']['cd'] : [$data['chkData']['cd']];
 
                 foreach ($items as $item) {
-                    // Extract domain name - handle both string and array formats
-                    $domainName = $item['name']['_text'] ?? $item['name'];
-
-                    // Extract availability - check both formats
-                    $available = false;
-                    if (isset($item['name']['@name']['avail'])) {
-                        $available = $item['name']['@name']['avail'] === '1' || $item['name']['@name']['avail'] === true;
-                    } elseif (isset($item['@name']['avail'])) {
-                        $available = $item['@name']['avail'] === '1' || $item['@name']['avail'] === true;
-                    } elseif (isset($item['@attributes']['avail'])) {
-                        $available = $item['@attributes']['avail'] === '1' || $item['@attributes']['avail'] === true;
-                    }
+                    // Use improved extraction methods for consistency
+                    $domainName = $this->extractDomainValue($item, 'name');
+                    $available = $this->extractAvailabilityValue($item);
+                    $reason = $this->extractReasonValue($item);
 
                     Log::debug('Processing domain result:', [
                         'domainName' => $domainName,
@@ -841,7 +833,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
                     $results[$domainName] = (object) [
                         'available' => $available,
-                        'reason' => $item['reason'] ?? null,
+                        'reason' => $reason,
                     ];
                 }
             } else {
@@ -2018,16 +2010,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 $items = isset($data['chkData']['cd'][0]) ? $data['chkData']['cd'] : [$data['chkData']['cd']];
 
                 foreach ($items as $item) {
-                    // Extract domain name - handle both string and array formats
-                    $domainName = $item['name']['_text'] ?? $item['name'];
-
-                    // Extract availability - check both formats
-                    $available = false;
-                    if (isset($item['name']['@name']['avail'])) {
-                        $available = $item['name']['@name']['avail'] === '1' || $item['name']['@name']['avail'] === true;
-                    } elseif (isset($item['@name']['avail'])) {
-                        $available = $item['@name']['avail'] === '1' || $item['@name']['avail'] === true;
-                    }
+                    // Use improved extraction methods for consistency
+                    $domainName = $this->extractDomainValue($item, 'name');
+                    $available = $this->extractAvailabilityValue($item);
+                    $reason = $this->extractReasonValue($item);
 
                     Log::debug('Processing domain result:', [
                         'domainName' => $domainName,
@@ -2037,7 +2023,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
                     $results[$domainName] = [
                         'available' => $available,
-                        'reason' => $item['reason'] ?? null,
+                        'reason' => $reason,
                     ];
                 }
             } else {
@@ -2129,19 +2115,27 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
      *
      * @param  string  $searchTerm  Base domain name without TLD
      * @param  array|null  $specificTlds  Optional array of specific TLDs to check
+     * @param  DomainType|null  $domainType  Optional domain type filter for suggestions
      * @return array Array of domain availability results
      *
      * @throws Exception
      */
-    public function searchDomains(string $searchTerm, ?array $specificTlds = null): array
+    public function searchDomains(string $searchTerm, ?array $specificTlds = null, ?DomainType $domainType = null): array
     {
         try {
             $this->ensureConnection();
 
             // Get all active TLDs from DomainPrice if no specific TLDs provided
             if ($specificTlds === null) {
-                $tlds = DomainPrice::where('status', 'active')
-                    ->latest()
+                $query = DomainPrice::where('status', 'active');
+
+                // Filter by domain type if specified
+                if ($domainType instanceof DomainType) {
+                    $query->where('type', $domainType);
+                }
+
+                $tlds = $query->latest()
+                    ->limit(20)
                     ->pluck('tld')
                     ->toArray();
             } else {
@@ -2154,8 +2148,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             // Prepare all domain combinations
             foreach ($tlds as $tld) {
-                $tld = mb_ltrim($tld, '.'); // Remove leading dot if present
-                $domainsToCheck[] = $searchTerm.'.'.$tld;
+                $tld = $this->cleanTld($tld); // Remove leading dot if present
+                if ($tld !== '' && $tld !== '0') {
+                    $domainsToCheck[] = $searchTerm.'.'.$tld;
+                }
             }
 
             // Process domains in batches
@@ -2185,15 +2181,17 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                                 $reason = $this->extractReasonValue($item);
 
                                 // Get pricing information
-                                $tld = mb_substr($domainName, mb_strpos($domainName, '.') + 1);
-                                $priceInfo = DomainPrice::where('tld', $tld)->first();
+                                $tld = $this->extractTld($domainName);
+                                $priceInfo = DomainPrice::where('tld', '.'.$tld)
+                                    ->where('status', 'active')
+                                    ->first();
 
                                 $results[$domainName] = [
                                     'domain' => $domainName,
                                     'available' => $available,
                                     'reason' => $reason,
                                     'price' => $priceInfo?->getFormattedPrice(),
-                                    'type' => $priceInfo?->type->value,
+                                    'type' => $priceInfo?->type->value ?? 'unknown',
                                 ];
                             }
                         }
@@ -2372,7 +2370,31 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
      */
     private function extractDomainValue(array $item, string $key): string
     {
-        return $item[$key]['_text'] ?? $item[$key] ?? '';
+        // Try multiple possible paths for the domain name
+        $namePaths = [
+            "{$key}._text",
+            "{$key}",
+            '_text',
+        ];
+
+        foreach ($namePaths as $path) {
+            $value = $this->getNestedValue($item, $path);
+            if ($value !== null && is_string($value) && $value !== '') {
+                return $value;
+            }
+        }
+
+        // If direct path doesn't work, check if the key itself is the domain name
+        if (is_string($item[$key] ?? null)) {
+            return $item[$key];
+        }
+
+        Log::warning('Unable to extract domain name from EPP response item', [
+            'item' => $item,
+            'key' => $key,
+        ]);
+
+        return '';
     }
 
     /**
@@ -2380,25 +2402,29 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
      */
     private function extractAvailabilityValue(array $item): bool
     {
-        // Check for availability in @name attributes
-        if (isset($item['name']['@name']['avail'])) {
-            return $item['name']['@name']['avail'] === '1';
+        // Log the item structure for debugging
+        Log::debug('Extracting availability value from item:', $item);
+
+        // Check for availability in multiple possible locations
+        $availabilityPaths = [
+            'name.@attributes.avail',
+            '@attributes.avail',
+            'name.@name.avail',
+            '@name.avail',
+            'avail',
+        ];
+
+        foreach ($availabilityPaths as $path) {
+            $value = $this->getNestedValue($item, $path);
+            if ($value !== null) {
+                Log::debug("Found availability value at path {$path}:", ['value' => $value]);
+
+                // Check for both string '1' and boolean true
+                return $value === '1' || $value === 1 || $value === true;
+            }
         }
 
-        // Check for availability in @attributes
-        if (isset($item['@name']['avail'])) {
-            return $item['@name']['avail'] === '1';
-        }
-
-        // Check for availability in @attributes at root level
-        if (isset($item['@attributes']['avail'])) {
-            return $item['@attributes']['avail'] === '1';
-        }
-
-        // Check for availability in name attributes
-        if (isset($item['name']['@attributes']['avail'])) {
-            return $item['name']['@attributes']['avail'] === '1';
-        }
+        Log::warning('No availability value found in EPP response item:', $item);
 
         return false;
     }
@@ -2424,7 +2450,17 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
      */
     private function extractTld(string $domain): string
     {
-        return implode('.', array_slice(explode('.', $domain), -1));
+        $parts = explode('.', $domain);
+
+        return end($parts) ?: '';
+    }
+
+    /**
+     * Clean TLD by removing leading dot and ensuring it's valid
+     */
+    private function cleanTld(string $tld): string
+    {
+        return mb_trim(mb_ltrim($tld, '.'), '.');
     }
 
     /**
@@ -2464,5 +2500,23 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
         }
 
         return 'separator';
+    }
+
+    /**
+     * Helper method to get nested array values using dot notation
+     */
+    private function getNestedValue(array $array, string $path)
+    {
+        $keys = explode('.', $path);
+        $value = $array;
+
+        foreach ($keys as $key) {
+            if (! is_array($value) || ! isset($value[$key])) {
+                return null;
+            }
+            $value = $value[$key];
+        }
+
+        return $value;
     }
 }

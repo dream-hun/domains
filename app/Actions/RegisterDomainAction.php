@@ -43,10 +43,10 @@ final readonly class RegisterDomainAction
             ]);
 
             $processedContacts = $this->processContactsForService($contactInfo, $useSingleContact);
-            // Ensure all contacts exist in the EPP registry before domain registration
-            $processedContacts = $this->ensureContactsInEppRegistry($domainService, $processedContacts);
+            // Prepare contacts for the specific domain service
+            $serviceContacts = $this->ensureContactsInEppRegistry($domainService, $processedContacts);
 
-            $result = $domainService->registerDomain($domainName, $processedContacts, $years);
+            $result = $domainService->registerDomain($domainName, $serviceContacts, $years);
 
             if ($result['success']) {
                 $domain = $this->createDomainRecord($domainName, $years, $processedContacts, $serviceName);
@@ -151,15 +151,29 @@ final readonly class RegisterDomainAction
     }
 
     /**
-     * Ensure all contacts exist in the EPP registry before domain registration
+     * Prepare contacts for the specific domain service
      */
     private function ensureContactsInEppRegistry(DomainRegistrationServiceInterface $domainService, array $contacts): array
     {
-        // If this is not an EPP service, return contacts as-is
-        if (! $domainService instanceof \App\Services\Domain\EppDomainService) {
-            return $contacts;
+        // For EPP service, ensure contacts exist in EPP registry and return contact_ids
+        if ($domainService instanceof \App\Services\Domain\EppDomainService) {
+            return $this->prepareEppContacts($contacts);
         }
 
+        // For Namecheap service, return full contact data arrays
+        if ($domainService instanceof \App\Services\Domain\NamecheapDomainService) {
+            return $this->prepareNamecheapContacts($contacts);
+        }
+
+        // Default: return contacts as-is
+        return $contacts;
+    }
+
+    /**
+     * Prepare contacts for EPP service
+     */
+    private function prepareEppContacts(array $contacts): array
+    {
         $ensuredContacts = [];
 
         foreach ($contacts as $type => $contactData) {
@@ -186,6 +200,46 @@ final readonly class RegisterDomainAction
         }
 
         return $ensuredContacts;
+    }
+
+    /**
+     * Prepare contacts for Namecheap service
+     */
+    private function prepareNamecheapContacts(array $contacts): array
+    {
+        $preparedContacts = [];
+
+        foreach ($contacts as $type => $contactData) {
+            // Extract contact ID from the contact data
+            $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
+
+            if (! $contactId) {
+                throw new Exception("Missing contact ID for type: $type");
+            }
+
+            // Get the contact from the database
+            $contact = Contact::find($contactId);
+            if (! $contact) {
+                throw new Exception("Contact with ID $contactId not found");
+            }
+
+            // Convert contact model to array format expected by Namecheap
+            $preparedContacts[$type] = [
+                'first_name' => $contact->first_name,
+                'last_name' => $contact->last_name,
+                'organization' => $contact->organization,
+                'address_one' => $contact->address_one,
+                'address_two' => $contact->address_two,
+                'city' => $contact->city,
+                'state_province' => $contact->state_province,
+                'postal_code' => $contact->postal_code,
+                'country_code' => $contact->country_code,
+                'phone' => $contact->phone,
+                'email' => $contact->email,
+            ];
+        }
+
+        return $preparedContacts;
     }
 
     /**
@@ -265,6 +319,7 @@ final readonly class RegisterDomainAction
             } else {
                 // Create new custom nameserver
                 $ns = Nameserver::create([
+                    'uuid' => (string) Str::uuid(),
                     'name' => $nameserver,
                     'type' => 'custom',
                     'priority' => $index + 1,

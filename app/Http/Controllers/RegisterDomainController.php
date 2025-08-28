@@ -110,14 +110,24 @@ final class RegisterDomainController extends Controller
         ];
 
         if ($useSingleContact && isset($validatedData['registrant_contact_id'])) {
+            // Use the same contact for all roles when single contact is selected
             $registrantContactId = $validatedData['registrant_contact_id'];
             foreach (array_keys($contactFields) as $type) {
                 $processedContacts[$type] = $registrantContactId;
             }
         } else {
+            // Process each contact type individually
             foreach ($contactFields as $type => $fieldName) {
-                if (isset($validatedData[$fieldName])) {
+                if (!empty($validatedData[$fieldName])) {
                     $processedContacts[$type] = $validatedData[$fieldName];
+                }
+            }
+
+            // Ensure all required contact types are present
+            $requiredTypes = ['registrant', 'admin', 'technical', 'billing'];
+            foreach ($requiredTypes as $type) {
+                if (!isset($processedContacts[$type])) {
+                    throw new \Exception("Missing contact for type: $type");
                 }
             }
         }
@@ -145,14 +155,10 @@ final class RegisterDomainController extends Controller
      */
     private function processNameserversFromForm(array $validatedData): array
     {
-        // Check if DNS is disabled
         if (isset($validatedData['disable_dns']) && $validatedData['disable_dns']) {
-            return []; // Return empty array for default nameservers
+            return [];
         }
-
         $nameservers = array_filter($validatedData['nameservers'] ?? []);
-
-        // If no custom nameservers provided or all are empty, return default ones
         if ($nameservers === []) {
             return Nameserver::where('type', 'default')
                 ->where('status', 'active')

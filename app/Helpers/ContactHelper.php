@@ -11,7 +11,7 @@ final class ContactHelper
     public function mapContacts(): void
     {
         Contact::select('id', (array) 'contact_id', (array) 'first_name', (array) 'last_name', (array) 'email', (array) 'voice')
-            ->orderBy('created_at', 'desc')
+            ->latest()
             ->get();
     }
 }

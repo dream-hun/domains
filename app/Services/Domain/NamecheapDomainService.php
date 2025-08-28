@@ -33,6 +33,17 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
         $this->username = config('services.namecheap.username');
         $this->clientIp = config('services.namecheap.client');
         $this->apiBaseUrl = config('services.namecheap.apiBaseUrl');
+
+        // Validate required configuration
+        if ($this->apiUser === '' || $this->apiUser === '0' || ($this->apiKey === '' || $this->apiKey === '0') || ($this->username === '' || $this->username === '0') || ($this->clientIp === '' || $this->clientIp === '0') || ($this->apiBaseUrl === '' || $this->apiBaseUrl === '0')) {
+            Log::warning('Namecheap API configuration incomplete', [
+                'has_api_user' => $this->apiUser !== '' && $this->apiUser !== '0',
+                'has_api_key' => $this->apiKey !== '' && $this->apiKey !== '0',
+                'has_username' => $this->username !== '' && $this->username !== '0',
+                'has_client_ip' => $this->clientIp !== '' && $this->clientIp !== '0',
+                'has_api_base_url' => $this->apiBaseUrl !== '' && $this->apiBaseUrl !== '0',
+            ]);
+        }
     }
 
     /**
@@ -77,10 +88,19 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 throw new Exception('Namecheap API error: Malformed XML response.', $e->getCode(), $e);
             }
 
-            if (property_exists($xml, 'Errors') && $xml->Errors !== null && $xml->Errors->count() > 0) {
+            // Check for API-level errors
+            if (property_exists($xml, 'Errors') && $xml->Errors !== null && (property_exists($xml->Errors, 'Error') && $xml->Errors->Error !== null)) {
                 $errorMsg = (string) $xml->Errors->Error;
-                if ($errorMsg === '' || $errorMsg === '0') {
-                    $errorMsg = 'Unknown error from Namecheap API.';
+                if ($errorMsg !== '' && $errorMsg !== '0') {
+                    throw new Exception('Namecheap API error: '.$errorMsg);
+                }
+            }
+
+            // Check for response status
+            if (isset($xml['Status']) && mb_strtolower((string) $xml['Status']) === 'error') {
+                $errorMsg = 'API returned error status';
+                if (property_exists($xml, 'Errors') && $xml->Errors !== null) {
+                    $errorMsg = (string) $xml->Errors->Error ?? $errorMsg;
                 }
                 throw new Exception('Namecheap API error: '.$errorMsg);
             }
@@ -94,7 +114,24 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             foreach ($domainCheckResults as $result) {
                 $domainName = (string) $result['Domain'];
                 $available = mb_strtolower((string) $result['Available']) === 'true';
-                $errorMessage = $available ? null : ((string) $result['ErrorMessage'] !== '' && (string) $result['ErrorMessage'] !== '0' ? (string) $result['ErrorMessage'] : 'Domain not available.');
+
+                // Handle various error scenarios
+                $errorMessage = null;
+                if (! $available) {
+                    $errorMessage = (string) $result['ErrorMessage'];
+                    if ($errorMessage === '' || $errorMessage === '0') {
+                        $errorMessage = 'Domain not available.';
+                    }
+                }
+
+                Log::debug('Namecheap domain check result', [
+                    'domain' => $domainName,
+                    'available' => $available,
+                    'raw_available' => (string) $result['Available'],
+                    'error_message' => $errorMessage,
+                    'full_result' => (array) $result,
+                ]);
+
                 $results[$domainName] = (object) [
                     'available' => $available,
                     'error' => $errorMessage,
