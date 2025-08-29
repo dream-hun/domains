@@ -277,7 +277,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             // Use exDate from domain info - this is the exact format expected by the registry
             $currentExpiry = $domainInfo['exDate'] ?? null;
-            if (!$currentExpiry) {
+            if (! $currentExpiry) {
                 throw new Exception('Failed to get current expiry date from domain info');
             }
 
@@ -562,8 +562,8 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             // Send update request
             $response = $this->client->request($frame);
 
-            if (!$response || !$response->success()) {
-                throw new Exception('Nameserver update failed: ' . ($response?->message() ?? 'Unknown error'));
+            if (! $response || ! $response->success()) {
+                throw new Exception('Nameserver update failed: '.($response?->message() ?? 'Unknown error'));
             }
 
             // Update was successful
@@ -581,7 +581,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             return [
                 'success' => false,
-                'message' => 'Nameserver update failed: ' . $e->getMessage(),
+                'message' => 'Nameserver update failed: '.$e->getMessage(),
             ];
         }
     }
@@ -1512,8 +1512,6 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 return mb_rtrim(mb_trim($ns), '.');
             }, $nameservers), fn (string $ns): bool => $ns !== '' && $ns !== '0');
 
-
-
             // Get current nameservers for the domain
             $infoFrame = new InfoDomain;
             $infoFrame->setDomain($domain);
@@ -1889,7 +1887,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'exDate' => $data['exDate'] ?? null,
                 'trDate' => $data['trDate'] ?? null,
                 'authInfo' => $data['authInfo'] ?? null,
-                'message' => 'Domain info retrieved successfully'
+                'message' => 'Domain info retrieved successfully',
             ];
         } catch (Exception $e) {
             Log::error('Failed to get domain info: '.$e->getMessage(), [
@@ -1900,7 +1898,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             return [
                 'success' => false,
-                'message' => 'Failed to get domain info: '.$e->getMessage()
+                'message' => 'Failed to get domain info: '.$e->getMessage(),
             ];
         }
     }

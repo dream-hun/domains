@@ -15,15 +15,17 @@ return new class extends Migration
     {
         Schema::create('transfers', function (Blueprint $table) {
             $table->id();
+            $table->uuid();
+            $table->foreignId('domain_id')->constrained();
+            $table->foreignId('sender_id')->references('id')->on('users');
+            $table->string('auth_code');
+            $table->string('recipient_email');
+            $table->string('token')->unique();
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamp('accepted_at')->nullable();
+            $table->string('status')->default('pending');
+            $table->foreignId('accepted_by')->nullable()->references('id')->on('users');
             $table->timestamps();
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('transfers');
     }
 };

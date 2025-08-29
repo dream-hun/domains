@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DomainController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\TransferController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\LandingController;
@@ -28,6 +29,9 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('contacts', ContactController::class);
     Route::resource('domains', DomainController::class)->except(['show']);
     Route::get('domains/{domain:uuid}/info', [DomainController::class, 'domainInfo'])->name('domains.info');
+
+    // Domain Lock Route
+    Route::post('domains/{domain}/lock', [TransferController::class, 'toggleLock'])->name('domains.lock');
 
     // Domain Transfer Routes
     Route::get('domains/{domain:uuid}/transfer', [DomainController::class, 'showTransferForm'])->name('domains.transfer');
