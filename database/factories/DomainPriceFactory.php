@@ -9,79 +9,38 @@ use App\Models\DomainPrice;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\DomainPrice>
+ * @extends Factory<DomainPrice>
  */
 final class DomainPriceFactory extends Factory
 {
-    protected $model = DomainPrice::class;
-
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            'uuid' => fake()->uuid(),
-            'tld' => '.'.fake()->word(),
+            'tld' => '.' . fake()->randomElement(['com', 'net', 'org', 'rw', 'co.rw']),
+            'register_price' => fake()->numberBetween(1000, 10000),
+            'renew_price' => fake()->numberBetween(1000, 10000),
+            'transfer_price' => fake()->numberBetween(1000, 10000),
             'type' => fake()->randomElement(DomainType::cases()),
-            'register_price' => fake()->numberBetween(1000, 5000), // $10.00 to $50.00 in cents
-            'renewal_price' => fake()->numberBetween(1000, 5000),
-            'transfer_price' => fake()->numberBetween(1000, 3000),
-            'redemption_price' => fake()->numberBetween(3000, 10000),
-            'min_years' => 1,
-            'max_years' => 10,
             'status' => 'active',
-            'description' => fake()->sentence(),
+            'currency' => 'USD',
         ];
     }
 
-    /**
-     * Create a .com domain price.
-     */
-    public function com(): static
+    public function local(): self
     {
         return $this->state(fn (array $attributes) => [
-            'tld' => '.com',
-            'type' => DomainType::International,
-            'register_price' => 1500, // $15.00
-            'renewal_price' => 1500,
-            'transfer_price' => 1200,
-        ]);
-    }
-
-    /**
-     * Create a .rw domain price.
-     */
-    public function rw(): static
-    {
-        return $this->state(fn (array $attributes) => [
+            'type' => DomainType::Local,
             'tld' => '.rw',
-            'type' => DomainType::Local,
-            'register_price' => 2000, // 2000 RWF
-            'renewal_price' => 2000,
-            'transfer_price' => 1500,
+            'currency' => 'RWF',
         ]);
     }
 
-    /**
-     * Create an international domain type.
-     */
-    public function international(): static
+    public function international(): self
     {
         return $this->state(fn (array $attributes) => [
             'type' => DomainType::International,
-        ]);
-    }
-
-    /**
-     * Create a local domain type.
-     */
-    public function local(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'type' => DomainType::Local,
+            'tld' => '.com',
+            'currency' => 'USD',
         ]);
     }
 }

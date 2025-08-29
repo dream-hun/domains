@@ -47,10 +47,22 @@
                                 <tr>
                                     <th>Status</th>
                                     <td>
-                                            <span
-                                                class="badge badge-{{ $domainInfo->status === 'active' ? 'success' : 'warning' }}">
+                                            <span class="badge badge-{{ $domainInfo->status === 'active' ? 'success' : 'warning' }}">
                                                 {{ ucfirst($domainInfo->status) }}
                                             </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Lock Status</th>
+                                    <td>
+                                        <form action="{{ route('admin.domains.lock', $domainInfo) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <input type="hidden" name="lock" value="{{ !$domainInfo->is_locked }}">
+                                            <button type="submit" class="btn btn-sm btn-{{ $domainInfo->is_locked ? 'danger' : 'success' }}">
+                                                <i class="fas fa-{{ $domainInfo->is_locked ? 'unlock' : 'lock' }} mr-1"></i>
+                                                {{ $domainInfo->is_locked ? 'Unlock Domain' : 'Lock Domain' }}
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 <tr>

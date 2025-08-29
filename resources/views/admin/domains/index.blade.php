@@ -80,7 +80,7 @@
                                     @can('domain_transfer')
                                         <a href="{{ route('admin.domains.transfer', $domain->uuid) }}"
                                            class="btn btn-sm btn-primary">
-                                            <i class="fas fa-exchange-alt"></i> Transfer
+                                            <i class="bi bi-send-check"></i> Transfer Domain
                                         </a>
                                     @endcan
                                 </div>
