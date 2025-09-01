@@ -27,13 +27,10 @@ Route::get('/dashboard', function () {
 
 Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' => 'admin.'], function (): void {
     Route::resource('contacts', ContactController::class);
+
     Route::resource('domains', DomainController::class)->except(['show']);
     Route::get('domains/{domain:uuid}/info', [DomainController::class, 'domainInfo'])->name('domains.info');
-
-    // Domain Lock Route
-    Route::post('domains/{domain}/lock', [TransferController::class, 'toggleLock'])->name('domains.lock');
-
-    // Domain Transfer Routes
+    Route::post('domains/{domain}/lock', [DomainController::class, 'toggleLock'])->name('domains.lock');
     Route::get('domains/{domain:uuid}/transfer', [DomainController::class, 'showTransferForm'])->name('domains.transfer');
     Route::post('domains/{domain:uuid}/transfer', [DomainController::class, 'transferDomain'])->name('domains.transfer.store');
 

@@ -54,6 +54,10 @@ final readonly class ToggleDomainLockAction
                 ];
             }
 
+            // Update the database lock status
+            $domain->is_locked = $lock;
+            $domain->save();
+
             return [
                 'success' => true,
                 'message' => $lock ? 'Domain locked successfully' : 'Domain unlocked successfully',

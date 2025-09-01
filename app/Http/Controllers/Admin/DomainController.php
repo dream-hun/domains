@@ -6,12 +6,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Domains\ListDomainAction;
 use App\Actions\Domains\RenewDomainAction;
+use App\Actions\Domains\ToggleDomainLockAction;
 use App\Actions\Domains\TransferDomainAction;
 use App\Actions\Domains\UpdateNameserversAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DomainRenewalRequest;
 use App\Http\Requests\Admin\DomainTransferRequest;
 use App\Http\Requests\Admin\UpdateNameserversRequest;
+use App\Http\Requests\ToggleDomainLockRequest;
 use App\Models\Contact;
 use App\Models\Domain;
 use App\Models\DomainPrice;
@@ -42,7 +44,7 @@ final class DomainController extends Controller
                 'domainInfo' => $domain,
             ]);
         } catch (Exception $e) {
-            Log::error('Failed to get domain info: '.$e->getMessage());
+            Log::error('Failed to get domain info: ' . $e->getMessage());
 
             return view('admin.domains.domainInfo', [
                 'domainInfo' => $domain,
@@ -98,7 +100,7 @@ final class DomainController extends Controller
 
     public function renewDomain(Domain $domain, DomainRenewalRequest $request, RenewDomainAction $action): RedirectResponse
     {
-        $years = (int) $request->validated()['years'];
+        $years = (int)$request->validated()['years'];
         $result = $action->handle($domain, $years);
 
         if ($result['success']) {
@@ -136,10 +138,28 @@ final class DomainController extends Controller
             ->withInput();
     }
 
+    public function toggleLock(
+        ToggleDomainLockRequest  $request,
+        ToggleDomainLockAction $action
+    ): RedirectResponse
+    {
+        abort_if(Gate::denies('domain_update'), 403);
+
+        $domain = Domain::findOrFail($request->validated()['domain_id']);
+        $lock = (bool)$request->validated()['lock'];
+        $result = $action->execute($domain, $lock);
+
+        if ($result['success']) {
+            return redirect()->back()->with('success', $result['message']);
+        }
+
+        return redirect()->back()->withErrors(['error' => $result['message'] ?? 'Failed to update domain lock status']);
+    }
+
     private function extractTld(string $domain): string
     {
         $parts = explode('.', $domain);
 
-        return '.'.end($parts);
+        return '.' . end($parts);
     }
 }

@@ -55,14 +55,21 @@
                                 <tr>
                                     <th>Lock Status</th>
                                     <td>
-                                        <form action="{{ route('admin.domains.lock', $domainInfo) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            <input type="hidden" name="lock" value="{{ !$domainInfo->is_locked }}">
-                                            <button type="submit" class="btn btn-sm btn-{{ $domainInfo->is_locked ? 'danger' : 'success' }}">
-                                                <i class="fas fa-{{ $domainInfo->is_locked ? 'unlock' : 'lock' }} mr-1"></i>
-                                                {{ $domainInfo->is_locked ? 'Unlock Domain' : 'Lock Domain' }}
-                                            </button>
-                                        </form>
+                                        <span class="badge badge-{{ $domainInfo->is_locked ? 'success' : 'warning' }} mr-2">
+                                            {{ $domainInfo->is_locked ? 'Locked' : 'Unlocked' }}
+                                        </span>
+
+                                        @can('domain_transfer')
+                                            <form action="{{ route('admin.domains.lock', $domainInfo) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <input type="hidden" name="lock" value="{{ !$domainInfo->is_locked }}">
+                                                <button type="submit" class="btn btn-sm btn-{{ $domainInfo->is_locked ? 'danger' : 'success' }}">
+                                                    <i class="fas fa-{{ $domainInfo->is_locked ? 'unlock' : 'lock' }} mr-1"></i>
+                                                    {{ $domainInfo->is_locked ? 'Unlock Domain' : 'Lock Domain' }}
+                                                </button>
+                                            </form>
+
+                                        @endcan
                                     </td>
                                 </tr>
                                 <tr>

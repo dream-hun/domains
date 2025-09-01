@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Scopes\DomainScope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+#[ScopedBy([DomainScope::class])]
 final class Domain extends Model
 {
     use HasFactory;
@@ -42,6 +44,7 @@ final class Domain extends Model
             'registered_at' => 'datetime',
             'expires_at' => 'datetime',
             'last_renewed_at' => 'datetime',
+            'is_locked' => 'boolean',
         ];
     }
 }
