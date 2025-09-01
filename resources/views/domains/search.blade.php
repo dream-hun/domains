@@ -13,22 +13,23 @@
                 align-items: center !important;
                 padding: 12px 0 !important;
                 margin: 0 !important;
+                font-size: 16px !important;
             }
 
-            .domain-action-wrapper {
+            .domain-page.domain-action-wrapper {
                 display: flex;
                 align-items: center;
                 gap: 15px;
             }
 
-            .domain-price {
+            .domain-page .domain-price {
                 font-weight: 600;
                 font-size: 1rem;
                 color: #1f2937;
                 white-space: nowrap;
             }
 
-            .loading-overlay {
+           .domain-page .loading-overlay {
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -42,7 +43,7 @@
                 border-radius: 12px;
             }
 
-            .loading-spinner {
+            .domain-page.loading-spinner {
                 width: 40px;
                 height: 40px;
                 border: 4px solid #e5e7eb;
@@ -61,7 +62,7 @@
                 }
             }
 
-            .error-message {
+           .domain-page .error-message {
                 color: #dc2626;
                 font-size: 0.875rem;
                 margin-top: 5px;
@@ -76,7 +77,7 @@
 
 
 
-            .domain-result {
+          .domain-page.domain-result {
                 border: 1px solid #e5e7eb;
                 border-radius: 8px;
                 padding: 16px;
@@ -85,32 +86,32 @@
                 transition: all 0.2s ease;
             }
 
-            .domain-result:hover {
+            .domain-page.domain-result:hover {
                 border-color: #3b82f6;
                 box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
             }
 
-            .domain-result.primary {
+            .domain-page .domain-result .primary {
                 border-color: #3b82f6;
                 background-color: #f8fafc;
             }
 
-            .domain-info-box {
+            .domain-page.domain-info-box {
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
             }
 
-            .domain {
+           .domain-page.domain {
                 font-size: 1.1rem;
                 font-weight: 600;
                 color: #1f2937;
             }
 
             .domain-status {
-                font-size: 0.875rem;
+                font-size: 1rem;
                 font-weight: 500;
-                padding: 4px 8px;
+                padding: 6px 10px;
                 border-radius: 6px;
                 text-align: center;
                 width: fit-content;
@@ -122,32 +123,15 @@
                 border: 1px solid #bbf7d0;
             }
 
-            .domain-status.taken {
+           .domain-status.taken {
                 background-color: #fef2f2;
                 color: #dc2626;
                 border: 1px solid #fecaca;
             }
+
         </style>
     @endpush
 
-    @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const form = document.getElementById('domain-search-form');
-                const searchButton = document.getElementById('search-button');
-                const buttonText = document.querySelector('.button-text');
-
-                form.addEventListener('submit', function() {
-                    // Show loading state
-                    searchButton.disabled = true;
-                    buttonText.textContent = 'Searching...';
-                    searchButton.style.opacity = '0.7';
-                });
-
-
-            });
-        </script>
-    @endpush
 
     <section class="rts-hero-three rts-hero__one rts-hosting-banner domain-checker-padding banner-default-height">
         <div class="container">
@@ -213,7 +197,7 @@
             <div class="container">
                 <div class="domain-results-container" style="position: relative;">
                     <div class="domain-search-results">
-                        <h1 class="results-title" style="font-size: 3rem;">Domain Search Results</h1>
+                        <h1 class="results-title" style="font-size: 3rem; font-family: 'Inter', sans-serif;">Domain Search Results</h1>
                         @if(isset($errorMessage))
                             <div class="error-message" style="margin-bottom: 20px;">{{ $errorMessage }}</div>
                         @endif
@@ -236,7 +220,7 @@
                             </div>
                         @endif
                         @if(isset($suggestions) && count($suggestions) > 0)
-                            <h2 class="suggestions-title">Suggested Domains</h2>
+                            <h2 class="suggestions-title" style="font-family: 'Inter', sans-serif; font-size: 4rem;">Suggested Domains</h2>
                             @foreach($suggestions as $suggestion)
                                 <div class="domain-result">
                                     <div class="domain-info-box">

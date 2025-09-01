@@ -52,6 +52,7 @@ final class TransferController extends Controller
             }
 
             $message = $request->boolean('lock') ? 'Domain locked successfully' : 'Domain unlocked successfully';
+
             return back()->with('success', $message);
 
         } catch (Exception $e) {

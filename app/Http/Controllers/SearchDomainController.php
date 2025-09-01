@@ -10,6 +10,7 @@ use App\Http\Requests\SearchDomainRequest;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
@@ -24,40 +25,36 @@ final class SearchDomainController extends Controller
         ]);
     }
 
-    public function search(SearchDomainRequest $request): View|RedirectResponse
+    public function search(SearchDomainRequest $request): View|RedirectResponse|JsonResponse
     {
         $validated = $request->validated();
         $domain = mb_trim($validated['domain'] ?? '');
 
-        // Enhanced domain validation
         if ($domain === '' || $domain === '0') {
-            return $this->redirectWithError('Please enter a domain name to search.');
+            return $this->handleError('Please enter a domain name to search.', $request);
         }
 
         if (mb_strlen($domain) < 2) {
-            return $this->redirectWithError('Domain name must be at least 2 characters long.');
+            return $this->handleError('Domain name must be at least 2 characters long.', $request);
         }
 
         if (mb_strlen($domain) > 253) {
-            return $this->redirectWithError('Domain name is too long. Maximum length is 253 characters.');
+            return $this->handleError('Domain name is too long. Maximum length is 253 characters.', $request);
         }
 
         // Additional validation using helper
         if (! $this->domainSearchHelper->isValidDomainName($domain)) {
-            return $this->redirectWithError('Invalid domain name format. Please use only letters, numbers, dots, and hyphens.');
+            return $this->handleError('Invalid domain name format. Please use only letters, numbers, dots, and hyphens.', $request);
         }
 
-        // Perform the domain search (domain type is auto-detected)
         try {
             $result = $this->domainSearchHelper->processDomainSearch($domain);
 
-            // If there's a critical error with no results, redirect with error
             if (isset($result['error']) && ! isset($result['details']) && empty($result['suggestions'])) {
-                return $this->redirectWithError($result['error']);
+                return $this->handleError($result['error'], $request);
             }
 
-            // Prepare view data
-            $viewData = [
+            $responseData = [
                 'details' => $result['details'] ?? null,
                 'suggestions' => $result['suggestions'] ?? [],
                 'domainType' => $result['domainType'] ?? null,
@@ -68,69 +65,44 @@ final class SearchDomainController extends Controller
                 'popularDomains' => $this->getPopularDomainsForDisplay(),
             ];
 
-            // Log successful searches for analytics
             Log::info('Domain search completed', [
                 'domain' => $domain,
                 'domainType' => $result['domainType']?->value ?? 'unknown',
                 'hasResults' => ! empty($result['details']) || ! empty($result['suggestions']),
                 'hasErrors' => ! empty($result['error']),
+                'isAjax' => $request->ajax(),
             ]);
 
-            return view('domains.search', $viewData);
+            // Return JSON for AJAX requests
+            if ($request->ajax()) {
+                return response()->json($responseData);
+            }
+
+            return view('domains.search', $responseData);
 
         } catch (Exception $e) {
             Log::error('Domain search controller error', [
                 'domain' => $domain,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'isAjax' => $request->ajax(),
             ]);
 
-            return $this->redirectWithError('An unexpected error occurred while searching. Please try again.');
+            return $this->handleError('An unexpected error occurred while searching. Please try again.', $request);
         }
     }
 
-    /**
-     * Get domain suggestions via AJAX (for future implementation)
-     */
-    public function getSuggestions(SearchDomainRequest $request): JsonResponse
+    private function handleError(string $message, Request $request): RedirectResponse|JsonResponse
     {
-        $validated = $request->validated();
-        $domain = mb_trim($validated['domain'] ?? '');
-
-        if ($domain === '' || $domain === '0' || mb_strlen($domain) < 2) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Please enter a valid domain name.',
-            ]);
+        if ($request->ajax()) {
+            return response()->json(['error' => $message], 400);
         }
 
-        try {
-            $result = $this->domainSearchHelper->processDomainSearch($domain);
-
-            return response()->json([
-                'success' => true,
-                'details' => $result['details'] ?? null,
-                'suggestions' => $result['suggestions'] ?? [],
-                'hasServiceErrors' => $this->hasServiceErrors($result),
-                'errorMessage' => $result['error'] ?? null,
-            ]);
-
-        } catch (Exception $e) {
-            Log::error('AJAX domain search error', [
-                'domain' => $domain,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while searching for domains.',
-            ]);
-        }
+        return back()
+            ->withInput()
+            ->with('error', $message);
     }
 
-    /**
-     * Redirect back with an error message and maintain form state
-     */
     private function redirectWithError(string $message): RedirectResponse
     {
         return back()

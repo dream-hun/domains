@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Domain;
 
+use App\Models\Contact;
+
 interface DomainServiceInterface
 {
     /**
@@ -60,9 +62,9 @@ interface DomainServiceInterface
      * Create a contact
      *
      * @param  array<string, mixed>  $contactData  Contact information
-     * @return \App\Models\Contact The created contact
+     * @return Contact The created contact
      */
-    public function createContact(array $contactData): \App\Models\Contact;
+    public function createContact(array $contactData): Contact;
 
     /**
      * Get domain pricing information
@@ -97,4 +99,6 @@ interface DomainServiceInterface
      * @return array{success: bool, nameservers?: array, message?: string}
      */
     public function getNameservers(string $domain): array;
+
+
 }

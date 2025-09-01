@@ -6,8 +6,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Domain;
+use App\Models\DomainPrice;
 use App\Models\DomainPricing;
 use App\Models\Hosting;
+use App\Models\Scopes\DomainPriceScope;
 use App\Models\Scopes\DomainPricingScope;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -21,10 +23,10 @@ final class DashboardController extends Controller
     public function __invoke(Request $request)
     {
         $tlds = Cache::remember('dashboard.tlds', 3600, function () {
-            return DomainPricing::withoutGlobalScope(DomainPricingScope::class)->count();
+            return DomainPrice::withoutGlobalScope(DomainPriceScope::class)->count();
         });
         $plans = Cache::remember('dashboard.plans', 3600, function () {
-            return Hosting::count();
+            return 0;
         });
 
         $customers = Cache::remember('dashboard.customers', 3600, function () {

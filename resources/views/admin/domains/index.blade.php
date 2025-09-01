@@ -59,14 +59,14 @@
                                     @can('domain_show')
                                         <a href="{{ route('admin.domains.info',$domain->uuid) }}"
                                            class="btn btn-sm btn-info">
-                                            <i class="fas fa-info-circle"></i> Info
+                                            <i class="bi bi-info-circle"></i> Info
                                         </a>
                                     @endcan
 
                                     @can('domain_edit')
                                         <a href="{{ route('admin.domains.nameservers.edit', $domain->uuid) }}"
                                            class="btn btn-sm btn-warning">
-                                            <i class="fas fa-server"></i> Nameservers
+                                            <i class="bi bi-server"></i> Nameservers
                                         </a>
                                     @endcan
 

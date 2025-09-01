@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\Domains;
 
 use App\Actions\Domains\ToggleDomainLockAction;
-use App\Enums\DomainType;
 use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Services\Domain\EppDomainService;
@@ -13,7 +12,7 @@ use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class ToggleDomainLockActionTest extends TestCase
+final class ToggleDomainLockActionTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -86,7 +85,7 @@ class ToggleDomainLockActionTest extends TestCase
             ->with($domain->name, true)
             ->andReturn([
                 'success' => false,
-                'message' => 'Service error'
+                'message' => 'Service error',
             ]);
 
         // Mock Namecheap service (should not be used)

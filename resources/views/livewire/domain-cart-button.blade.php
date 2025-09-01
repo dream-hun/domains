@@ -1,34 +1,35 @@
-<div class="domain-action-wrapper">
-    <span class="domain-price">{{ $price }}</span>
+<div class="domain-action-wrapper"
+     style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; border-radius: 0.375rem;">
+    <span class="domain-price" style="font-size: 16px;">{{ $price }}</span>
 
     @if($available)
         @if($this->isInCart)
             <button
                 wire:click="removeFromCart"
-                class="domain-btn"
-                style="background-color: #dc3545 !important;"
+                class="btn btn-danger"
+                style="font-size: 16px; border-radius: 8px;"
                 wire:loading.attr="disabled"
                 wire:target="removeFromCart"
             >
+                <i class="bi bi-bag-x"></i>
                 <span wire:loading.remove wire:target="removeFromCart">Remove</span>
                 <span wire:loading wire:target="removeFromCart">
-                    <i class="fas fa-spinner fa-spin"></i> Removing...
+                    <i class="bi bi-arrow-repeat"></i> Removing...
                 </span>
             </button>
         @else
-            <button
-                wire:click="addToCart"
-                class="domain-btn"
-                wire:loading.attr="disabled"
-                wire:target="addToCart"
-            >
+            <button wire:click="addToCart" class="btn btn-success" style="font-size: 16px; border-radius: 8px;"
+                    wire:loading.attr="disabled" wire:target="addToCart">
+                <i class="bi bi-cart"></i>
                 <span wire:loading.remove wire:target="addToCart">Add to Cart</span>
                 <span wire:loading wire:target="addToCart">
-                    <i class="fas fa-spinner fa-spin"></i> Adding...
+                    <i class="bi bi-arrow-repeat"></i> Adding...
                 </span>
             </button>
         @endif
     @else
-        <button class="domain-btn" disabled>Unavailable</button>
+        <button class="btn btn-secondary" disabled style="font-size: 16px; border-radius: 8px;">
+            Unavailable
+        </button>
     @endif
 </div>

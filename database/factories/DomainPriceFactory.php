@@ -16,13 +16,13 @@ final class DomainPriceFactory extends Factory
     public function definition(): array
     {
         return [
-            'tld' => '.' . fake()->randomElement(['com', 'net', 'org', 'rw', 'co.rw']),
+            'uuid' => fake()->uuid(),
+            'tld' => '.'.fake()->randomElement(['com', 'net', 'org', 'rw', 'co.rw']),
             'register_price' => fake()->numberBetween(1000, 10000),
-            'renew_price' => fake()->numberBetween(1000, 10000),
+            'renewal_price' => fake()->numberBetween(1000, 10000),
             'transfer_price' => fake()->numberBetween(1000, 10000),
             'type' => fake()->randomElement(DomainType::cases()),
             'status' => 'active',
-            'currency' => 'USD',
         ];
     }
 

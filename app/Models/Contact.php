@@ -28,12 +28,12 @@ final class Contact extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-
     }
 
     public function domains(): BelongsToMany
     {
-        return $this->belongsToMany(Domain::class, 'domain_contacts');
+        return $this->belongsToMany(Domain::class, 'domain_contacts')
+            ->where('contacts.user_id', auth()->id()); // Update the query to specify the table
     }
 
     /**

@@ -34,7 +34,7 @@ final class StoreDomainPricingRequest extends FormRequest
                 'min:-2147483648',
                 'max:2147483647',
             ],
-            'renew_price' => [
+            'renewal_price' => [
                 'required',
                 'integer',
                 'min:-2147483648',

@@ -150,8 +150,8 @@ final class DomainSearchTest extends TestCase
             $this->assertIsArray($result['suggestions']);
 
             // Verify that suggestions contain international TLDs
-            $suggestionDomains = array_keys($result['suggestions']);
-            if ($suggestionDomains !== []) {
+            if ($result['suggestions'] !== []) {
+                $suggestionDomains = array_column($result['suggestions'], 'domain');
                 $hasInternationalTlds = collect($suggestionDomains)->contains(fn ($domain): bool => str_ends_with($domain, '.net') || str_ends_with($domain, '.org')
                 );
                 $this->assertTrue($hasInternationalTlds, 'Should contain international TLD suggestions');

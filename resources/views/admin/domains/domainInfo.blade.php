@@ -47,38 +47,50 @@
                                 <tr>
                                     <th>Status</th>
                                     <td>
+                                        @if($registrarInfo && isset($registrarInfo['status']))
+                                            @foreach($registrarInfo['status'] as $status)
+                                                <span class="badge badge-{{ $status === 'active' ? 'success' : 'warning' }}">
+                                                    {{ ucfirst($status) }}
+                                                </span>
+                                            @endforeach
+                                        @else
+
                                             <span class="badge badge-{{ $domainInfo->status === 'active' ? 'success' : 'warning' }}">
                                                 {{ ucfirst($domainInfo->status) }}
                                             </span>
+                                        @endif
                                     </td>
                                 </tr>
                                 <tr>
                                     <th>Lock Status</th>
                                     <td>
-                                        <span class="badge badge-{{ $domainInfo->is_locked ? 'success' : 'warning' }} mr-2">
-                                            {{ $domainInfo->is_locked ? 'Locked' : 'Unlocked' }}
+                                        @php
+                                            $isLocked = $registrarInfo ? $registrarInfo['locked'] : $domainInfo->is_locked;
+                                        @endphp
+                                        <span class="badge badge-{{ $isLocked ? 'success' : 'warning' }} mr-2">
+                                            {{ $isLocked ? 'Locked' : 'Unlocked' }}
                                         </span>
 
                                         @can('domain_transfer')
                                             <form action="{{ route('admin.domains.lock', $domainInfo) }}" method="POST" class="d-inline">
                                                 @csrf
-                                                <input type="hidden" name="lock" value="{{ !$domainInfo->is_locked }}">
-                                                <button type="submit" class="btn btn-sm btn-{{ $domainInfo->is_locked ? 'danger' : 'success' }}">
-                                                    <i class="fas fa-{{ $domainInfo->is_locked ? 'unlock' : 'lock' }} mr-1"></i>
-                                                    {{ $domainInfo->is_locked ? 'Unlock Domain' : 'Lock Domain' }}
+                                                <input type="hidden" name="lock" value="{{ !$isLocked }}">
+                                                <input type="hidden" name="domain_id" value="{{ $domainInfo->id }}">
+                                                <button type="submit" class="btn btn-sm btn-{{ $isLocked ? 'danger' : 'success' }}">
+                                                    <i class="bi bi-{{ $isLocked ? 'unlock' : 'lock' }} mr-1"></i>
+                                                    {{ $isLocked ? 'Unlock Domain' : 'Lock Domain' }}
                                                 </button>
                                             </form>
-
                                         @endcan
                                     </td>
                                 </tr>
                                 <tr>
                                     <th>Registration Date</th>
-                                    <td>{{ $domainInfo->registered_at->format('M d, Y') }}</td>
+                                    <td>{{ $registrarInfo['created_date'] ?? $domainInfo->registered_at->format('M d, Y') }}</td>
                                 </tr>
                                 <tr>
                                     <th>Expiration Date</th>
-                                    <td>{{ $domainInfo->expires_at->format('M d, Y') }}</td>
+                                    <td>{{ $registrarInfo['expiry_date'] ?? $domainInfo->expires_at->format('M d, Y') }}</td>
                                 </tr>
                                 <tr>
                                     <th>Provider</th>
@@ -87,13 +99,24 @@
                                 <tr>
                                     <th>Auto Renew</th>
                                     <td>
-                                            <span
-                                                class="badge badge-{{ $domainInfo->auto_renew ? 'success' : 'danger' }}">
-                                                {{ $domainInfo->auto_renew ? 'Enabled' : 'Disabled' }}
-                                            </span>
+                                        @php
+                                            $autoRenew = $registrarInfo ? $registrarInfo['auto_renew'] : $domainInfo->auto_renew;
+                                        @endphp
+                                        <span class="badge badge-{{ $autoRenew ? 'success' : 'danger' }}">
+                                            {{ $autoRenew ? 'Enabled' : 'Disabled' }}
+                                        </span>
                                     </td>
                                 </tr>
                             </table>
+
+                            @can('domain_show')
+                                <form action="{{ route('admin.domains.refresh-info', $domainInfo) }}" method="POST" class="mt-3">
+                                    @csrf
+                                    <button type="submit" class="btn btn-info">
+                                        <i class="fas fa-sync-alt mr-1"></i> Refresh Domain Info
+                                    </button>
+                                </form>
+                            @endcan
                         </div>
                     </div>
                 </div>

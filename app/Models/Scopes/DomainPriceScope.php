@@ -8,13 +8,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 
-final class DomainScope implements Scope
+final class DomainPriceScope implements Scope
 {
+    /**
+     * Apply the scope to a given Eloquent query builder.
+     */
     public function apply(Builder $builder, Model $model): void
     {
-        $user = auth()->user();
-        if (! $user->isAdmin()) {
-            $builder->where('owner_id', $user->id);
-        }
+        $builder->where('status', 'active');
     }
 }

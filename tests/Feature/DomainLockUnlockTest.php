@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Enums\DomainType;
 use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Models\User;
-use App\Enums\DomainType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -67,4 +67,3 @@ it('can lock and unlock an international domain', function () {
 
     expect($domain->fresh()->is_locked)->toBeFalse();
 });
-

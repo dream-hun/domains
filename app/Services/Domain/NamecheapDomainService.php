@@ -961,22 +961,37 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainGetInfoResult') || $xml->CommandResponse->DomainGetInfoResult === null) {
+            if (!property_exists($xml->CommandResponse, 'DomainGetInfoResult') || $xml->CommandResponse->DomainGetInfoResult === null) {
                 throw new Exception('Invalid API response: Missing DomainGetInfoResult');
             }
 
             $domainInfo = $xml->CommandResponse->DomainGetInfoResult;
+            $dnsDetails = $domainInfo->DnsDetails;
+            $domainDetails = $domainInfo->DomainDetails;
+
+            // Extract nameservers if they exist
+            $nameservers = [];
+            if (property_exists($dnsDetails, 'Nameserver')) {
+                foreach ($dnsDetails->Nameserver as $ns) {
+                    $nameservers[] = (string) $ns;
+                }
+            }
+
+            $status = (string) $domainInfo['Status'];
+            $createdDate = (string) ($domainDetails->CreatedDate ?? '');
+            $expiredDate = (string) ($domainDetails->ExpiredDate ?? '');
 
             return [
                 'success' => true,
-                'domain' => (string) $domainInfo['Name'],
-                'status' => [(string) $domainInfo['Status']],
-                'registrant' => (string) ($domainInfo->Registrant ?? ''),
-                'created_date' => (string) ($domainInfo->CreatedDate ?? ''),
-                'expiry_date' => (string) ($domainInfo->ExpiredDate ?? ''),
-                'locked' => mb_strtolower((string) ($domainInfo->Locked ?? 'false')) === 'true',
-                'whoisguard_enabled' => mb_strtolower((string) ($domainInfo->WhoisguardEnabled ?? 'false')) === 'true',
-                'auto_renew' => mb_strtolower((string) ($domainInfo->AutoRenew ?? 'false')) === 'true',
+                'domain' => (string) $domainInfo['DomainName'],
+                'status' => [$status],
+                'registrant' => (string) ($domainInfo['OwnerName'] ?? ''),
+                'created_date' => $createdDate,
+                'expiry_date' => $expiredDate,
+                'locked' => mb_strtolower((string) ($domainInfo->LockDetails['locked'] ?? 'false')) === 'true',
+                'whoisguard_enabled' => mb_strtolower((string) ($domainInfo->Whoisguard['Enabled'] ?? 'false')) === 'true',
+                'auto_renew' => false,
+                'nameservers' => $nameservers,
             ];
 
         } catch (Exception $e) {

@@ -3,11 +3,11 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DomainController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\Admin\TransferController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\LandingController;
@@ -21,24 +21,20 @@ Route::get('/shopping-cart', CartController::class)->name('cart.index');
 Route::get('/domains', [SearchDomainController::class, 'index'])->name('domains');
 Route::post('/domains/search', [SearchDomainController::class, 'search'])->name('domains.search');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' => 'admin.'], function (): void {
     Route::resource('contacts', ContactController::class);
 
     Route::resource('domains', DomainController::class)->except(['show']);
     Route::get('domains/{domain:uuid}/info', [DomainController::class, 'domainInfo'])->name('domains.info');
+    Route::post('domains/{domain:uuid}/refresh-info', [DomainController::class, 'refreshDomainInfo'])->name('domains.refresh-info');
+    Route::post('domains/{domain:uuid}/contacts', [DomainController::class, 'updateContacts'])->name('domains.update-contacts');
     Route::post('domains/{domain}/lock', [DomainController::class, 'toggleLock'])->name('domains.lock');
     Route::get('domains/{domain:uuid}/transfer', [DomainController::class, 'showTransferForm'])->name('domains.transfer');
     Route::post('domains/{domain:uuid}/transfer', [DomainController::class, 'transferDomain'])->name('domains.transfer.store');
-
-    // Domain Renewal Routes
     Route::get('domains/{domain:uuid}/renew', [DomainController::class, 'showRenewForm'])->name('domains.renew');
     Route::post('domains/{domain:uuid}/renew', [DomainController::class, 'renewDomain'])->name('domains.renew.store');
-
-    // Domain Nameservers Routes
     Route::get('domains/{domain:uuid}/nameservers', [DomainController::class, 'showNameserversForm'])->name('domains.nameservers.edit');
     Route::put('domains/{domain:uuid}/nameservers', [DomainController::class, 'updateNameservers'])->name('domains.nameservers.update');
 

@@ -8,6 +8,7 @@ use App\Models\Domain;
 use App\Models\User;
 use App\Services\Domain\DomainServiceInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\mock;
 
@@ -64,7 +65,7 @@ it('handles domain service failures', function () {
         ->with($this->domain->name, true)
         ->andReturn([
             'success' => false,
-            'message' => 'Service unavailable'
+            'message' => 'Service unavailable',
         ]);
 
     actingAs($this->user)
