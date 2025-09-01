@@ -6,8 +6,8 @@
             <div class="row">
                 <div class="rts-ht__wrapper">
                     <div class="rts-ht__email">
-                        <a href="{{--mailto:{{ $settings->email }}--}}">
-                            <img src="assets/images/icon/email.svg" alt="" class="icon">{{--{{ $settings->email }}--}}
+                        <a href="mailto:{{ $settings->email }}">
+                            <img src="assets/images/icon/email.svg" alt="" class="icon">{{ $settings->email }}
                         </a>
                     </div>
                     <div class="rts-ht__links">
@@ -138,7 +138,7 @@
                 <div class="rts-header__right">
                     @if (Route::has('login'))
                         @auth
-                            <a href="{{--{{ url('/dashboard') }}--}}" class="login__btn">Dashboard</a>
+                            <a href="{{ url('/dashboard') }}" class="login__btn">Dashboard</a>
                         @else
                             <a href="{{ route('login') }}" class="login__btn">Login</a>
                         @endauth
