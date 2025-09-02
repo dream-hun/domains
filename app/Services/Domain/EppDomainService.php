@@ -26,6 +26,7 @@ use App\Models\Domain;
 use App\Models\DomainPrice;
 use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -188,14 +189,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
         try {
             $this->ensureConnection();
 
-            // Extract contact IDs from contact info
-            // The contactInfo should contain contact IDs (strings), not full contact data
             $registrantContactId = $contactInfo['registrant'] ?? null;
             $adminContactId = $contactInfo['admin'] ?? null;
             $technicalContactId = $contactInfo['technical'] ?? null;
             $billingContactId = $contactInfo['billing'] ?? null;
 
-            // Validate that we have contact IDs
             if (! $registrantContactId || ! $adminContactId || ! $technicalContactId || ! $billingContactId) {
                 throw new Exception('All contact IDs are required for domain registration');
             }
@@ -295,12 +293,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             // Update domain record in database
             $domainModel = Domain::where('name', $domain)->first();
-            if ($domainModel) {
-                $domainModel->update([
-                    'expires_at' => $domainModel->expires_at->addYears($years),
-                    'last_renewed_at' => now(),
-                ]);
-            }
+            $domainModel?->update([
+                'expires_at' => $domainModel->expires_at->addYears($years),
+                'last_renewed_at' => now(),
+            ]);
 
             $newExpiry = $domainModel?->expires_at ?? now()->addYears($years);
 
@@ -349,7 +345,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $billingContact = $this->createContact($contactInfo['billing'] ?? []);
 
             // Create transfer frame
-            $frame = $this->transferDomain($domain, $authCode, '1y');
+            $frame = $this->transferDomain($domain, $authCode);
 
             // Send transfer request
             $response = $this->client->request($frame);
@@ -396,8 +392,9 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     /**
      * Create a contact
      *
-     * @param  array<string, mixed>  $contactData  Contact information
+     * @param array<string, mixed> $contactData Contact information
      * @return Contact The created contact
+     * @throws Exception
      */
     public function createContact(array $contactData): Contact
     {
@@ -1269,7 +1266,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 if (! empty($host)) {
                     // Make sure the host is properly formatted
                     // Ensure $host is a string before passing to mb_trim
-                    $host = is_null($host) ? '' : (string) $host;
+                    $host = (string) $host;
                     $host = mb_trim($host);
                     if ($host !== '' && $host !== '0') {
                         // Log the nameserver being added
@@ -1337,7 +1334,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             // Only format if it's a DateTime object (should be avoided for renewals)
             if ($currentExpirationDate instanceof DateTimeImmutable) {
                 // Use ISO 8601 format with timezone to match registry format
-                $currentExpirationDate = $currentExpirationDate->format(DateTime::ISO8601);
+                $currentExpirationDate = $currentExpirationDate->format(DateTimeInterface::class);
                 Log::warning('Converting DateTime to string for EPP renewal - this may cause issues', [
                     'domain' => $domain,
                     'formatted_date' => $currentExpirationDate,
@@ -1348,7 +1345,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                     'domain' => $domain,
                     'date_type' => gettype($currentExpirationDate),
                 ]);
-                $currentExpirationDate = (new DateTimeImmutable)->format(DateTime::ISO8601);
+                $currentExpirationDate = (new DateTimeImmutable)->format(DateTimeInterface::class);
             } else {
                 // It's already a string - log but don't modify at all
                 Log::info('Using exact registry date string for EPP renewal', [
@@ -1536,7 +1533,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                     // If the host doesn't exist and contains the domain we're updating,
                     // we need to create it as a subordinate host
                     if (mb_strpos($responseXml, '<host:name avail="1">') !== false && mb_strpos($ns, $domain) !== false && (mb_strpos($responseXml, '<host:name avail="1">') !== false && mb_strpos($ns, $domain) !== false)) {
-                        Log::info("Creating subordinate host: {$ns}");
+                        Log::info("Creating subordinate host: $ns");
                         // Create the host
                         $createFrame = new CreateHost;
                         $createFrame->setHost($ns);
@@ -1545,9 +1542,9 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                         $createFrame->addAddr('127.0.0.1');
                         $createResponse = $this->client->request($createFrame);
                         if ($createResponse->code() !== 1000) {
-                            Log::warning("Failed to create host {$ns}: {$createResponse->message()}");
+                            Log::warning("Failed to create host $ns: {$createResponse->message()}");
                         } else {
-                            Log::info("Successfully created host {$ns}");
+                            Log::info("Successfully created host $ns");
                         }
                     }
                 }
@@ -1564,14 +1561,14 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 preg_match_all('/<domain:hostObj>([^<]+)<\/domain:hostObj>/', $responseXml, $matches);
 
                 foreach ($matches[1] as $currentNs) {
-                    Log::info("Removing nameserver: {$currentNs}");
+                    Log::info("Removing nameserver: $currentNs");
                     $frame->removeHostObj($currentNs);
                 }
             }
 
             // Add the new nameservers
             foreach ($nameservers as $ns) {
-                Log::info("Adding nameserver: {$ns}");
+                Log::info("Adding nameserver: $ns");
                 $frame->addHostObj($ns);
             }
 
