@@ -29,7 +29,7 @@
                 white-space: nowrap;
             }
 
-           .domain-page .loading-overlay {
+            .domain-page .loading-overlay {
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -62,7 +62,7 @@
                 }
             }
 
-           .domain-page .error-message {
+            .domain-page .error-message {
                 color: #dc2626;
                 font-size: 0.875rem;
                 margin-top: 5px;
@@ -74,10 +74,7 @@
             }
 
 
-
-
-
-          .domain-page.domain-result {
+            .domain-page.domain-result {
                 border: 1px solid #e5e7eb;
                 border-radius: 8px;
                 padding: 16px;
@@ -102,7 +99,7 @@
                 gap: 8px;
             }
 
-           .domain-page.domain {
+            .domain-page.domain {
                 font-size: 1.1rem;
                 font-weight: 600;
                 color: #1f2937;
@@ -123,7 +120,7 @@
                 border: 1px solid #bbf7d0;
             }
 
-           .domain-status.taken {
+            .domain-status.taken {
                 background-color: #fef2f2;
                 color: #dc2626;
                 border: 1px solid #fecaca;
@@ -158,7 +155,6 @@
                                     </button>
                                 </div>
                             </div>
-
 
 
                             @if ($errors->any())
@@ -197,7 +193,8 @@
             <div class="container">
                 <div class="domain-results-container" style="position: relative;">
                     <div class="domain-search-results">
-                        <h1 class="results-title" style="font-size: 3rem; font-family: 'Inter', sans-serif;">Domain Search Results</h1>
+                        <h1 class="results-title" style="font-size: 3rem; font-family: 'Inter', sans-serif;">Domain
+                            Search Results</h1>
                         @if(isset($errorMessage))
                             <div class="error-message" style="margin-bottom: 20px;">{{ $errorMessage }}</div>
                         @endif
@@ -220,7 +217,8 @@
                             </div>
                         @endif
                         @if(isset($suggestions) && count($suggestions) > 0)
-                            <h2 class="suggestions-title" style="font-family: 'Inter', sans-serif; font-size: 4rem;">Suggested Domains</h2>
+                            <h2 class="suggestions-title" style="font-family: 'Inter', sans-serif; font-size: 4rem;">
+                                Suggested Domains</h2>
                             @foreach($suggestions as $suggestion)
                                 <div class="domain-result">
                                     <div class="domain-info-box">
@@ -244,6 +242,7 @@
                 </div>
             </div>
         </section>
-    @endif
 
+    @endif
+    <livewire:cart-summary/>
 </x-user-layout>
