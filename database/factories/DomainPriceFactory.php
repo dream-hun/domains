@@ -31,7 +31,6 @@ final class DomainPriceFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'type' => DomainType::Local,
             'tld' => '.rw',
-            'currency' => 'RWF',
         ]);
     }
 
@@ -40,7 +39,6 @@ final class DomainPriceFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'type' => DomainType::International,
             'tld' => '.com',
-            'currency' => 'USD',
         ]);
     }
 }

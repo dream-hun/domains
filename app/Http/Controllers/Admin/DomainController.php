@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Domains\GetDomainInfoAction;
 use App\Actions\Domains\ListDomainAction;
+use App\Actions\Domains\ReactivateDomainAction;
 use App\Actions\Domains\RenewDomainAction;
 use App\Actions\Domains\ToggleDomainLockAction;
 use App\Actions\Domains\TransferDomainAction;
@@ -14,6 +15,7 @@ use App\Actions\Domains\UpdateNameserversAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DomainRenewalRequest;
 use App\Http\Requests\Admin\DomainTransferRequest;
+use App\Http\Requests\Admin\ReactivateDomainRequest;
 use App\Http\Requests\Admin\UpdateNameserversRequest;
 use App\Models\Contact;
 use App\Models\Domain;
@@ -198,6 +200,29 @@ final class DomainController extends Controller
 
         return redirect()->back()
             ->withErrors(['error' => $result['message'] ?? 'Failed to update domain contacts']);
+    }
+
+    public function reactivate(ReactivateDomainRequest $request, ReactivateDomainAction $action): RedirectResponse
+    {
+        try {
+            $domain = Domain::where('name', $request->validated('domain'))->firstOrFail();
+
+            $result = $action->handle($domain);
+
+            if (! $result['success']) {
+                return back()->withErrors(['error' => $result['message'] ?? 'Failed to reactivate domain']);
+            }
+
+            return back()->with('success', $result['message'] ?? 'Domain reactivated successfully');
+
+        } catch (Exception $e) {
+            Log::error('Domain reactivation controller error', [
+                'domain' => $request->validated('domain'),
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors(['error' => 'Failed to reactivate domain: '.$e->getMessage()]);
+        }
     }
 
     private function extractTld(string $domain): string

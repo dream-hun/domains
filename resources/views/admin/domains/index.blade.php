@@ -83,6 +83,19 @@
                                             <i class="bi bi-send-check"></i> Transfer Domain
                                         </a>
                                     @endcan
+
+                                    @can('domain_edit')
+                                        @if($domain->status === 'expired')
+                                            <form action="{{ route('admin.domains.reactivate', $domain->uuid) }}" method="POST" style="display: inline-block;">
+                                                @csrf
+                                                <input type="hidden" name="domain" value="{{ $domain->name }}">
+                                                <button type="submit" class="btn btn-sm btn-warning" 
+                                                        onclick="return confirm('Are you sure you want to reactivate this domain? Additional fees may apply.')">
+                                                    <i class="bi bi-arrow-clockwise"></i> Reactivate
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

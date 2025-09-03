@@ -108,4 +108,8 @@ interface DomainServiceInterface
      * @return array{success: bool, message?: string}
      */
     public function setDomainLock(string $domain, bool $lock): array;
+
+    public function setAutoRenew(string $domain, bool $autoRenew): array;
+
+    public function reActivateDomain(string $domain): array;
 }

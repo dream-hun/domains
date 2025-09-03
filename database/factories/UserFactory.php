@@ -28,9 +28,9 @@ final class UserFactory extends Factory
         return [
             'uuid' => (string) Str::uuid(),
             'client_code' => 'CLI'.mb_strtoupper(Str::random(8)),
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'email' => 'john.doe@example.com',
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+            'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => self::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),

@@ -2256,6 +2256,64 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     }
 
     /**
+     * Reactivate an expired domain
+     */
+    public function reActivateDomain(string $domain): array
+    {
+        try {
+            $this->ensureConnection();
+
+            // For EPP, domain reactivation is typically done through renewal
+            // since EPP doesn't have a specific reactivation command
+            Log::info('Reactivating local domain via EPP renewal', [
+                'domain' => $domain,
+            ]);
+
+            // Try to renew the domain for 1 year to reactivate it
+            $result = $this->renewDomainRegistration($domain, 1);
+
+            if ($result['success']) {
+                return [
+                    'success' => true,
+                    'domain' => $domain,
+                    'message' => 'Domain reactivated successfully via renewal',
+                ];
+            }
+
+            return $result;
+
+        } catch (Exception $e) {
+            Log::error('EPP domain reactivation failed', [
+                'domain' => $domain,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Failed to reactivate domain: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Set domain auto-renewal status
+     */
+    public function setAutoRenew(string $domain, bool $autoRenew): array
+    {
+        // EPP doesn't have auto-renewal functionality at the protocol level
+        // This would need to be handled at the application level
+        Log::info('Auto-renewal not supported via EPP protocol', [
+            'domain' => $domain,
+            'auto_renew' => $autoRenew,
+        ]);
+
+        return [
+            'success' => false,
+            'message' => 'Auto-renewal is not supported for local domains via EPP protocol',
+        ];
+    }
+
+    /**
      * Get common TLDs for domain suggestions
      */
     private function getCommonTlds(): array

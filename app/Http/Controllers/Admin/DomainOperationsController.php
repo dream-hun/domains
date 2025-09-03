@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Domains\ReactivateDomainAction;
 use App\Actions\Domains\ToggleDomainLockAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DomainLockRequest;
+use App\Http\Requests\Admin\ReactivateDomainRequest;
 use App\Models\Contact;
 use App\Models\Domain;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
-final class TransferController extends Controller
+final class DomainOperationsController extends Controller
 {
     public function index(Domain $domain)
     {
@@ -57,6 +59,24 @@ final class TransferController extends Controller
 
         } catch (Exception $e) {
             return back()->withErrors(['error' => 'Failed to update domain lock status: '.$e->getMessage()]);
+        }
+    }
+
+    public function reactivate(ReactivateDomainRequest $request, ReactivateDomainAction $action)
+    {
+        try {
+            $domain = Domain::where('name', $request->validated('domain'))->firstOrFail();
+            
+            $result = $action->handle($domain);
+
+            if (! $result['success']) {
+                return back()->withErrors(['error' => $result['message'] ?? 'Failed to reactivate domain']);
+            }
+
+            return back()->with('success', $result['message'] ?? 'Domain reactivated successfully');
+
+        } catch (Exception $e) {
+            return back()->withErrors(['error' => 'Failed to reactivate domain: '.$e->getMessage()]);
         }
     }
 }

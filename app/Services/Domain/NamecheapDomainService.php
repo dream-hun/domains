@@ -1268,6 +1268,56 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
     }
 
     /**
+     * Reactivate an expired domain
+     */
+    public function reActivateDomain(string $domain): array
+    {
+        try {
+            $params = [
+                'ApiUser' => $this->apiUser,
+                'ApiKey' => $this->apiKey,
+                'UserName' => $this->username,
+                'ClientIp' => $this->clientIp,
+                'Command' => 'namecheap.domains.reactivate',
+                'DomainName' => $domain,
+            ];
+
+            $xml = $this->makeApiCall($params);
+
+            if (! property_exists($xml->CommandResponse, 'DomainReactivateResult') || $xml->CommandResponse->DomainReactivateResult === null) {
+                throw new Exception('Invalid API response: Missing DomainReactivateResult');
+            }
+
+            $result = $xml->CommandResponse->DomainReactivateResult;
+            $isSuccess = mb_strtolower((string) $result['IsSuccess']) === 'true';
+
+            if (! $isSuccess) {
+                throw new Exception('Failed to reactivate domain');
+            }
+
+            return [
+                'success' => true,
+                'domain' => (string) $result['Domain'],
+                'charged_amount' => (float) ($result['ChargedAmount'] ?? 0),
+                'order_id' => (string) ($result['OrderID'] ?? ''),
+                'transaction_id' => (string) ($result['TransactionID'] ?? ''),
+                'message' => 'Domain reactivated successfully',
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Namecheap domain reactivation failed', [
+                'domain' => $domain,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Failed to reactivate domain: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Get WhoisGuard ID for a domain
      *
      * @throws Exception

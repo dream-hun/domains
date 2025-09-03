@@ -35,6 +35,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::post('domains/{domain:uuid}/transfer', [DomainController::class, 'transferDomain'])->name('domains.transfer.store');
     Route::get('domains/{domain:uuid}/renew', [DomainController::class, 'showRenewForm'])->name('domains.renew');
     Route::post('domains/{domain:uuid}/renew', [DomainController::class, 'renewDomain'])->name('domains.renew.store');
+    Route::post('domains/{domain:uuid}/reactivate', [DomainController::class, 'reactivate'])->name('domains.reactivate');
     Route::get('domains/{domain:uuid}/nameservers', [DomainController::class, 'showNameserversForm'])->name('domains.nameservers.edit');
     Route::put('domains/{domain:uuid}/nameservers', [DomainController::class, 'updateNameservers'])->name('domains.nameservers.update');
 
