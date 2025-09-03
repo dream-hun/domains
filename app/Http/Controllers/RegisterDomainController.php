@@ -9,7 +9,6 @@ use App\Enums\ContactType;
 use App\Enums\DomainType;
 use App\Http\Requests\RegisterDomainRequest;
 use App\Models\Country;
-use App\Models\Nameserver;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -160,13 +159,11 @@ final class RegisterDomainController extends Controller
         if (isset($validatedData['disable_dns']) && $validatedData['disable_dns']) {
             return [];
         }
+
         $nameservers = array_filter($validatedData['nameservers'] ?? []);
         if ($nameservers === []) {
-            return Nameserver::where('type', 'default')
-                ->where('status', 'active')
-                ->orderBy('priority')
-                ->pluck('name')
-                ->toArray();
+            // Return empty array to let RegisterDomainAction handle default nameservers
+            return [];
         }
 
         return array_values(array_filter($nameservers, fn ($ns): bool => ! in_array(mb_trim($ns), ['', '0'], true)));

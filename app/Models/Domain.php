@@ -21,7 +21,7 @@ final class Domain extends Model
 
     public function contacts(): BelongsToMany
     {
-        return $this->belongsToMany(Contact::class, 'domain_contacts');
+        return $this->belongsToMany(Contact::class, 'domain_contacts', 'domain_id', 'contact_id')->withPivot('type', 'user_id');
     }
 
     public function owner(): BelongsTo

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('domain_id')->constrained('domains');
             $table->foreignId('contact_id')->constrained('contacts');
             $table->string('type');
+            $table->foreignId('user_id')->constrained('users');
         });
     }
 };

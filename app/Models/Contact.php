@@ -32,8 +32,7 @@ final class Contact extends Model
 
     public function domains(): BelongsToMany
     {
-        return $this->belongsToMany(Domain::class, 'domain_contacts')
-            ->where('contacts.user_id', auth()->id()); // Update the query to specify the table
+        return $this->belongsToMany(Domain::class, 'domain_contacts', 'contact_id', 'domain_id')->withPivot('type', 'user_id');
     }
 
     /**
@@ -60,26 +59,5 @@ final class Contact extends Model
         $address .= ' '.$this->postal_code;
 
         return $address.(', '.$this->country_code);
-    }
-
-    /**
-     * Scope to filter by contact type
-     */
-    public function scopeByContactType($query, string $contactType)
-    {
-        return $query->where('contact_type', $contactType);
-    }
-
-    /**
-     * Scope to search contacts by name or email
-     */
-    public function scopeSearch($query, string $search)
-    {
-        return $query->where(function ($q) use ($search): void {
-            $q->where('first_name', 'like', "%$search%")
-                ->orWhere('last_name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%$search%")
-                ->orWhere('organization', 'like', "%$search%");
-        });
     }
 }

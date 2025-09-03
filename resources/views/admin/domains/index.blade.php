@@ -75,7 +75,7 @@
                             <td style="width: 20%;">
                                 <div class="btn-group" role="group">
                                     @can('domain_edit')
-                                        <a href="{{ route('admin.domains.nameservers.edit', $domain->uuid) }}"
+                                        <a href="{{ route('admin.domains.edit', $domain->uuid) }}"
                                            class="btn btn-sm btn-warning">
                                             <i class="bi bi-server"></i> Manage
                                         </a>

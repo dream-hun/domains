@@ -18,6 +18,7 @@ use App\Http\Requests\Admin\DomainTransferRequest;
 use App\Http\Requests\Admin\ReactivateDomainRequest;
 use App\Http\Requests\Admin\UpdateNameserversRequest;
 use App\Models\Contact;
+use App\Models\Country;
 use App\Models\Domain;
 use App\Models\DomainPrice;
 use Exception;
@@ -125,14 +126,34 @@ final class DomainController extends Controller
             ->withInput();
     }
 
-    public function showNameserversForm(Domain $domain): View
+    public function edit(Domain $domain): View
     {
         abort_if(Gate::denies('domain_edit'), 403);
+        $countries = Country::pluck('name', 'iso_code');
+        $domain->load('owner', 'contacts', 'nameservers');
+        $domainContactIds = $domain->contacts->pluck('id')->toArray();
+        $availableContacts = Contact::where('user_id', auth()->id())
+            ->where(function ($query) use ($domainContactIds): void {
+                $query->whereIn('id', $domainContactIds)
+                    ->orWhereHas('domains', function ($q): void {
+                        $q->whereRaw('domain_contacts.type = ?', ['registrant']);
+                    });
+            })->select('id', 'first_name', 'last_name', 'email', 'contact_id')
+            ->get();
+        $contactsByType = ['registrant' => null, 'admin' => null, 'tech' => null, 'billing' => null];
 
-        $domain->load('nameservers');
+        foreach ($domain->contacts as $contact) {
+            $contactType = $contact->pivot->type;
+            if (in_array($contactType, array_keys($contactsByType))) {
+                $contactsByType[$contactType] = $contact;
+                $contact->type = $contactType;
+            }
+        }
 
         return view('admin.domains.nameservers', [
-            'domain' => $domain,
+            'domain' => $domain, 'countries' => $countries,
+            'availableContacts' => $availableContacts,
+            'contactsByType' => $contactsByType,
         ]);
     }
 

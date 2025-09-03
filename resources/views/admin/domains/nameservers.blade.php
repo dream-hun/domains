@@ -6,7 +6,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Manage Domains</h1>
+                    <h1>Manage Domain</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -178,14 +178,36 @@
                             <h6>Domain Contact Information</h6>
                         </div>
                         <div class="card-body">
-                            <p>
-                                The contact information associated with your domain is used for administrative,
-                                technical, and billing purposes. It is important to keep this information accurate and
-                                up-to-date to ensure that you receive important notifications regarding your domain.
-                            </p>
-                            <a href="{{ route('admin.domains.info',$domain->uuid) }}" class="btn btn-info">
-                                <i class="bi bi-info-circle"></i> View Contact Info
-                            </a>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <h6>Registrant</h6>
+                                    <p>{{ $domain->contacts->where('pivot.type', 'registrant')->first()?->full_name ?? 'Not assigned' }}</p>
+                                    @if($domain->contacts->where('pivot.type', 'registrant')->first())
+                                        <a href="{{ route('admin.contacts.edit', $domain->contacts->where('pivot.type', 'registrant')->first()->uuid) }}" class="btn btn-sm btn-primary">Edit</a>
+                                    @endif
+                                </div>
+                                <div class="col-md-3">
+                                    <h6>Admin</h6>
+                                    <p>{{ $domain->contacts->where('pivot.type', 'admin')->first()?->full_name ?? 'Not assigned' }}</p>
+                                    @if($domain->contacts->where('pivot.type', 'admin')->first())
+                                        <a href="{{ route('admin.contacts.edit', $domain->contacts->where('pivot.type', 'admin')->first()->uuid) }}" class="btn btn-sm btn-primary">Edit</a>
+                                    @endif
+                                </div>
+                                <div class="col-md-3">
+                                    <h6>Tech</h6>
+                                    <p>{{ $domain->contacts->where('pivot.type', 'technical')->first()?->full_name ?? 'Not assigned' }}</p>
+                                    @if($domain->contacts->where('pivot.type', 'technical')->first())
+                                        <a href="{{ route('admin.contacts.edit', $domain->contacts->where('pivot.type', 'technical')->first()->uuid) }}" class="btn btn-sm btn-primary">Edit</a>
+                                    @endif
+                                </div>
+                                <div class="col-md-3">
+                                    <h6>Billing</h6>
+                                    <p>{{ $domain->contacts->where('pivot.type', 'billing')->first()?->full_name ?? 'Not assigned' }}</p>
+                                    @if($domain->contacts->where('pivot.type', 'billing')->first())
+                                        <a href="{{ route('admin.contacts.edit', $domain->contacts->where('pivot.type', 'billing')->first()->uuid) }}" class="btn btn-sm btn-primary">Edit</a>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

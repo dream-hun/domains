@@ -66,7 +66,7 @@ final class DomainOperationsController extends Controller
     {
         try {
             $domain = Domain::where('name', $request->validated('domain'))->firstOrFail();
-            
+
             $result = $action->handle($domain);
 
             if (! $result['success']) {

@@ -278,8 +278,6 @@ final readonly class RegisterDomainAction
 
         // Attach existing contacts to domain
         foreach ($contacts as $type => $contactData) {
-            // Extract contact ID from the contact data
-            // contactData can be either a contact ID (string) or an array with contact data
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
             // Ensure we have a valid contact ID
@@ -289,6 +287,7 @@ final readonly class RegisterDomainAction
 
             $domain->contacts()->attach($contactId, [
                 'type' => $type,
+                'user_id' => auth()->id(),
             ]);
         }
 
@@ -301,13 +300,22 @@ final readonly class RegisterDomainAction
     private function processNameservers(Domain $domain, array $nameservers): void
     {
         if ($nameservers === []) {
-            // Use default nameservers
-            Nameserver::where('type', 'default')
-                ->where('status', 'active')
-                ->orderBy('priority')
-                ->get();
+            // Use default nameservers from config
+            $defaultNameservers = config('default-nameservers.default_nameservers', [
+                'ns1.example.com',
+                'ns2.example.com',
+            ]);
 
-            $domain->nameservers()->create();
+            foreach ($defaultNameservers as $index => $nameserver) {
+                Nameserver::create([
+                    'uuid' => (string) Str::uuid(),
+                    'domain_id' => $domain->id,
+                    'name' => $nameserver,
+                    'type' => 'default',
+                    'priority' => $index + 1,
+                    'status' => 'active',
+                ]);
+            }
 
             return;
         }
@@ -318,22 +326,15 @@ final readonly class RegisterDomainAction
                 continue;
             }
 
-            $existingNs = Nameserver::where('name', $nameserver)->first();
-
-            if ($existingNs && $existingNs->type === 'default') {
-                // Attach existing default nameserver
-                $domain->nameservers()->create($existingNs->id);
-            } else {
-                // Create new custom nameserver
-                Nameserver::create([
-                    'uuid' => (string) Str::uuid(),
-                    'domain_id' => $domain->id,
-                    'name' => $nameserver,
-                    'type' => 'custom',
-                    'priority' => $index + 1,
-                    'status' => 'active',
-                ]);
-            }
+            // Create custom nameserver
+            Nameserver::create([
+                'uuid' => (string) Str::uuid(),
+                'domain_id' => $domain->id,
+                'name' => mb_trim($nameserver),
+                'type' => 'custom',
+                'priority' => $index + 1,
+                'status' => 'active',
+            ]);
         }
     }
 
