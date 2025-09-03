@@ -1,10 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Actions\Domains;
 
 use App\Models\Domain;
-
 use App\Services\Domain\NamecheapDomainService;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -13,9 +13,7 @@ final readonly class GetDomainInfoAction
 {
     public function __construct(
         private NamecheapDomainService $domainService
-    )
-    {
-    }
+    ) {}
 
     public function handle(Domain $domain): array
     {
@@ -27,7 +25,7 @@ final readonly class GetDomainInfoAction
                 $domain->update([
                     'expires_at' => $result['expiry_date'],
                     'is_locked' => true,
-                    //'whoisguard_enabled' => $result['whoisguard_enabled'],
+                    // 'whoisguard_enabled' => $result['whoisguard_enabled'],
                     'auto_renew' => $result['auto_renew'],
                 ]);
             }
@@ -41,7 +39,7 @@ final readonly class GetDomainInfoAction
 
             return [
                 'success' => false,
-                'message' => 'Failed to get domain info: ' . $e->getMessage(),
+                'message' => 'Failed to get domain info: '.$e->getMessage(),
             ];
         }
     }

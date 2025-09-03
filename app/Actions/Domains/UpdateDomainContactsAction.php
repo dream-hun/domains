@@ -1,6 +1,9 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Actions\Domains;
+
 use App\Models\Domain;
 use App\Services\Domain\DomainServiceInterface;
 use Exception;
@@ -10,8 +13,7 @@ final readonly class UpdateDomainContactsAction
 {
     public function __construct(
         private DomainServiceInterface $domainService
-    ) {
-    }
+    ) {}
 
     public function handle(Domain $domain, array $contactInfo): array
     {
@@ -37,9 +39,8 @@ final readonly class UpdateDomainContactsAction
 
             return [
                 'success' => false,
-                'message' => 'Failed to update domain contacts: ' . $e->getMessage(),
+                'message' => 'Failed to update domain contacts: '.$e->getMessage(),
             ];
         }
     }
 }
-

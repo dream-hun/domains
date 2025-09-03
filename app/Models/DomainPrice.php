@@ -10,6 +10,7 @@ use Cknow\Money\Money;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 #[ScopedBy(DomainPriceScope::class)]
 final class DomainPrice extends Model
 {

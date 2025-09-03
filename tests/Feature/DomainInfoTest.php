@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Contact;
 use App\Models\Domain;
 use App\Models\Permission;

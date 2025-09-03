@@ -961,7 +961,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (!property_exists($xml->CommandResponse, 'DomainGetInfoResult') || $xml->CommandResponse->DomainGetInfoResult === null) {
+            if (! property_exists($xml->CommandResponse, 'DomainGetInfoResult') || $xml->CommandResponse->DomainGetInfoResult === null) {
                 throw new Exception('Invalid API response: Missing DomainGetInfoResult');
             }
 

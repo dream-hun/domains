@@ -18,7 +18,6 @@ final class UserDataComponent extends Component
         $totalHostingPlans = 0;
         $totalVPS = 0;
 
-
         return view('components.user-data-component', ['totalDomains' => $totalDomains, 'totalSSL' => $totalSSL, 'totalHostingPlans' => $totalHostingPlans, 'totalVPS' => $totalVPS]);
     }
 }

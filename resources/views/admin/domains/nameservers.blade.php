@@ -208,9 +208,9 @@
                                     <label for="lock">Domain Lock</label>
                                     <div>
                                         @if($domain->is_locked)
-                                            <button class="btn btn-sm btn-success"><i class="bi bi-lock"></i>Locked</button>
+                                            <button class="btn btn-sm btn-success"><i class="bi bi-lock"></i> Locked</button>
                                         @else
-                                            <button class="btn btn-sm btn-danger"><i class="bi bi-unlock"></i>Unlocked</button>
+                                            <button class="btn btn-sm btn-danger"><i class="bi bi-unlock"></i> Unlocked</button>
                                         @endif
                                     </div>
                                 </div>

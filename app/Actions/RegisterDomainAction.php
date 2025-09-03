@@ -55,7 +55,7 @@ final readonly class RegisterDomainAction
                 $this->processNameservers($domain, $nameservers);
                 $nsToSet = $domain->nameservers->pluck('name')->toArray();
                 $updateResult = $domainService->updateNameservers($domainName, $nsToSet);
-                if (!$updateResult['success']) {
+                if (! $updateResult['success']) {
                     Log::warning('Failed to update nameservers after registration', [
                         'domain' => $domainName,
                         'message' => $updateResult['message'] ?? 'Unknown error',
@@ -104,7 +104,7 @@ final readonly class RegisterDomainAction
 
             return [
                 'success' => false,
-                'message' => 'An error occurred during domain registration: ' . $errorMessage,
+                'message' => 'An error occurred during domain registration: '.$errorMessage,
             ];
         }
     }
@@ -127,9 +127,8 @@ final readonly class RegisterDomainAction
      */
     private function processContactsForService(
         array $contactInfo,
-        bool  $useSingleContact
-    ): array
-    {
+        bool $useSingleContact
+    ): array {
         $processedContacts = [];
 
         if ($useSingleContact && isset($contactInfo['registrant'])) {
@@ -176,6 +175,7 @@ final readonly class RegisterDomainAction
 
     /**
      * Prepare contacts for EPP service
+     *
      * @throws Exception
      */
     private function prepareEppContacts(array $contacts): array
@@ -186,18 +186,18 @@ final readonly class RegisterDomainAction
             // Extract contact ID from the contact data
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
-            if (!$contactId) {
+            if (! $contactId) {
                 throw new Exception("Missing contact ID for type: $type");
             }
 
             // Get the contact from the database
             $contact = Contact::find($contactId);
-            if (!$contact) {
+            if (! $contact) {
                 throw new Exception("Contact with ID $contactId not found");
             }
 
             // Check if contact has an EPP contact_id
-            if (!$contact->contact_id) {
+            if (! $contact->contact_id) {
                 throw new Exception("Contact '$contact->full_name' (ID: $contactId) does not exist in the EPP registry. Please create this contact first before registering the domain.");
             }
 
@@ -221,13 +221,13 @@ final readonly class RegisterDomainAction
             // Extract contact ID from the contact data
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
-            if (!$contactId) {
+            if (! $contactId) {
                 throw new Exception("Missing contact ID for type: $type");
             }
 
             // Get the contact from the database
             $contact = Contact::find($contactId);
-            if (!$contact) {
+            if (! $contact) {
                 throw new Exception("Contact with ID $contactId not found");
             }
 
@@ -262,7 +262,7 @@ final readonly class RegisterDomainAction
         $domainPrice = DomainPrice::where('tld', $tld)->firstOrFail();
 
         $domain = Domain::create([
-            'uuid' => (string)Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'name' => $domainName,
             'owner_id' => auth()->id(),
             'years' => $years,
@@ -283,7 +283,7 @@ final readonly class RegisterDomainAction
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
             // Ensure we have a valid contact ID
-            if (!$contactId) {
+            if (! $contactId) {
                 throw new Exception("Missing contact ID for type: $type");
             }
 
@@ -307,9 +307,7 @@ final readonly class RegisterDomainAction
                 ->orderBy('priority')
                 ->get();
 
-
             $domain->nameservers()->create();
-
 
             return;
         }
@@ -328,7 +326,7 @@ final readonly class RegisterDomainAction
             } else {
                 // Create new custom nameserver
                 Nameserver::create([
-                    'uuid' => (string)Str::uuid(),
+                    'uuid' => (string) Str::uuid(),
                     'domain_id' => $domain->id,
                     'name' => $nameserver,
                     'type' => 'custom',
@@ -346,6 +344,6 @@ final readonly class RegisterDomainAction
     {
         $parts = explode('.', $domainName);
 
-        return '.' . end($parts);
+        return '.'.end($parts);
     }
 }

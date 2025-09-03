@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class PermissionTest extends TestCase
+final class PermissionTest extends TestCase
 {
     use RefreshDatabase;
 

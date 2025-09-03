@@ -6,7 +6,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDomainContactsRequest extends FormRequest
+final class UpdateDomainContactsRequest extends FormRequest
 {
     public function authorize(): bool
     {
