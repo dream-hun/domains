@@ -1,4 +1,22 @@
 <x-admin-layout>
+    @section('page-title')
+        Domains
+    @endsection
+    <section class="content-header">
+        <div class="container-fluid col-md-12">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Manage Domains</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item active"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Domains</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
     <div style="margin-bottom: 10px;" class="row">
         <div class="col-lg-12">
             <a class="btn btn-success" href="{{ route('domains.register') }}">
@@ -39,34 +57,27 @@
                     @foreach($domains as $key => $domain)
                         <tr data-entry-id="{{ $domain->id }}">
 
-                            <td>
+                            <td style="width: 15%;">
 
                                 {{ $loop->iteration }}
 
                             </td>
 
-                            <td>
+                            <td style="width: 30%;">
                                 {{ $domain->name ?? '' }}
                             </td>
-                            <td>
+                            <td style="width: 15%;">
                                 {{ $domain->status ?? '' }}
                             </td>
-                            <td>
+                            <td style="width: 20%;">
                                 {{ $domain->expires_at ?? '' }}
                             </td>
-                            <td>
+                            <td style="width: 20%;">
                                 <div class="btn-group" role="group">
-                                    @can('domain_show')
-                                        <a href="{{ route('admin.domains.info',$domain->uuid) }}"
-                                           class="btn btn-sm btn-info">
-                                            <i class="bi bi-info-circle"></i> Info
-                                        </a>
-                                    @endcan
-
                                     @can('domain_edit')
                                         <a href="{{ route('admin.domains.nameservers.edit', $domain->uuid) }}"
                                            class="btn btn-sm btn-warning">
-                                            <i class="bi bi-server"></i> Nameservers
+                                            <i class="bi bi-server"></i> Manage
                                         </a>
                                     @endcan
 
@@ -76,20 +87,13 @@
                                             <i class="fas fa-redo"></i> Renew
                                         </a>
                                     @endcan
-
-                                    @can('domain_transfer')
-                                        <a href="{{ route('admin.domains.transfer', $domain->uuid) }}"
-                                           class="btn btn-sm btn-primary">
-                                            <i class="bi bi-send-check"></i> Transfer Domain
-                                        </a>
-                                    @endcan
-
                                     @can('domain_edit')
                                         @if($domain->status === 'expired')
-                                            <form action="{{ route('admin.domains.reactivate', $domain->uuid) }}" method="POST" style="display: inline-block;">
+                                            <form action="{{ route('admin.domains.reactivate', $domain->uuid) }}"
+                                                  method="POST" style="display: inline-block;">
                                                 @csrf
                                                 <input type="hidden" name="domain" value="{{ $domain->name }}">
-                                                <button type="submit" class="btn btn-sm btn-warning" 
+                                                <button type="submit" class="btn btn-sm btn-warning"
                                                         onclick="return confirm('Are you sure you want to reactivate this domain? Additional fees may apply.')">
                                                     <i class="bi bi-arrow-clockwise"></i> Reactivate
                                                 </button>
