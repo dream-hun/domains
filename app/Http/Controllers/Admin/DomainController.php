@@ -200,10 +200,7 @@ final class DomainController extends Controller
             ->withErrors(['error' => $result['message'] ?? 'Failed to update domain contacts']);
     }
 
-    public function updateDomainContact(UpdateUpdateDomainContactsAction $action): RedirectResponse
-    {
-
-    }
+   
 
     private function extractTld(string $domain): string
     {
