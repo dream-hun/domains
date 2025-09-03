@@ -30,7 +30,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::get('domains/{domain:uuid}/info', [DomainController::class, 'domainInfo'])->name('domains.info');
     Route::post('domains/{domain:uuid}/refresh-info', [DomainController::class, 'refreshDomainInfo'])->name('domains.refresh-info');
     Route::post('domains/{domain:uuid}/contacts', [DomainController::class, 'updateContacts'])->name('domains.update-contacts');
-    Route::post('domains/{domain}/lock', [DomainController::class, 'toggleLock'])->name('domains.lock');
+    Route::put('domains/{domain:uuid}/lock', [DomainController::class, 'toggleLock'])->name('domains.lock');
     Route::get('domains/{domain:uuid}/transfer', [DomainController::class, 'showTransferForm'])->name('domains.transfer');
     Route::post('domains/{domain:uuid}/transfer', [DomainController::class, 'transferDomain'])->name('domains.transfer.store');
     Route::get('domains/{domain:uuid}/renew', [DomainController::class, 'showRenewForm'])->name('domains.renew');

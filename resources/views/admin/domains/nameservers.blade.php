@@ -192,21 +192,50 @@
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">
-                            <h6>Domain Locking</h6>
+                            <h6>Transfer Domain Out</h6>
                         </div>
                         <div class="card-body">
-                            <p>
-                                Domain locking is a security feature that helps prevent unauthorized transfers of your
-                                domain name. When a domain is locked, it cannot be transferred to another registrar
-                                without first being unlocked by the domain owner.
+                            <p class="text-sm">
+                                From here, you can transfer your domain name out from BLUHUB to another registrar. To
+                                transfer out, you will need to make sure that Domain Lock is turned OFF and get an Auth
+                                Code. After you place the request here, we'll send your Auth Code to the registrant
+                                email address specified for this domain. It may take up to 5 days for the transfer to be
+                                completed.
                             </p>
-                            @if($domain->is_locked)
-                                <button class="btn btn-sm btn-success">Locked</button>
-                            @else
-                                <button class="btn btn-sm btn-secondary">Unlocked</button>
-                            @endif
-                            <a href="{{ route('admin.domains.info',$domain->uuid) }}" class="btn btn-info">
-                                <i class="bi bi-info-circle"></i> Manage Lock
+
+                            <div class="row">
+                                <div class="form-group col-6">
+                                    <label for="lock">Domain Lock</label>
+                                    <div>
+                                        @if($domain->is_locked)
+                                            <button class="btn btn-sm btn-success"><i class="bi bi-lock"></i>Locked</button>
+                                        @else
+                                            <button class="btn btn-sm btn-danger"><i class="bi bi-unlock"></i>Unlocked</button>
+                                        @endif
+                                    </div>
+                                </div>
+                                <form method="POST" action="{{ route('admin.domains.lock', $domain->uuid) }}" class="col-6 float-right mt-4" style="display: inline;">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="form-group">
+                                        @if($domain->is_locked)
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-unlock"></i> Unlock Domain
+                                            </button>
+                                        @else
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="bi bi-lock"></i> Lock Domain
+                                            </button>
+                                        @endif
+                                    </div>
+                                </form>
+                            </div>
+
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{--{{ route('admin.domains.authcode',$domain->uuid) }}--}}"
+                               class="btn btn-primary">
+                                <i class="bi bi-key"></i> Get Auth Code
                             </a>
                         </div>
                     </div>

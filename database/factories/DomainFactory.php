@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Models\DomainPrice;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -19,6 +20,7 @@ final class DomainFactory extends Factory
             'name' => fake()->domainName(),
             'uuid' => Str::uuid(),
             'owner_id' => User::factory(),
+            'domain_price_id' => DomainPrice::factory(),
             'registered_at' => now(),
             'expires_at' => now()->addYear(),
             'status' => 'active',

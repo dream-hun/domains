@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Helpers\DomainSearchHelper;
 use App\Models\Setting;
 use App\Services\Domain\DomainRegistrationServiceInterface;
+use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use Exception;
@@ -41,6 +42,9 @@ final class AppServiceProvider extends ServiceProvider
         $this->app->bind('namecheap_domain_service', function (): NamecheapDomainService {
             return new NamecheapDomainService();
         });
+
+        // Bind the DomainServiceInterface to NamecheapDomainService by default
+        $this->app->bind(DomainServiceInterface::class, NamecheapDomainService::class);
     }
 
     public function boot(): void

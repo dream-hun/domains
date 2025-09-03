@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Domain;
 
 use App\Models\Domain;
+use App\Models\DomainPrice;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\Domain\DomainServiceInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,9 +18,24 @@ use function Pest\Laravel\mock;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Create permissions and role
+    $permission = Permission::create(['title' => 'domain_edit']);
+    $role = Role::create(['title' => 'Admin']);
+    $role->permissions()->attach($permission->id);
+
     $this->user = User::factory()->create();
+    $this->user->roles()->attach($role->id);
+
+    // Create a domain price first
+    $this->domainPrice = DomainPrice::factory()->create([
+        'tld' => '.com',
+        'register_price' => 1000,
+        'renewal_price' => 1000,
+    ]);
+
     $this->domain = Domain::factory()->create([
         'owner_id' => $this->user->id,
+        'domain_price_id' => $this->domainPrice->id,
         'is_locked' => false,
     ]);
 });
@@ -30,9 +48,7 @@ it('can lock a domain', function () {
         ->andReturn(['success' => true]);
 
     actingAs($this->user)
-        ->post(route('admin.domains.lock', $this->domain), [
-            'lock' => true,
-        ])
+        ->put(route('admin.domains.lock', $this->domain))
         ->assertRedirect()
         ->assertSessionHas('success', 'Domain locked successfully');
 
@@ -49,9 +65,7 @@ it('can unlock a domain', function () {
         ->andReturn(['success' => true]);
 
     actingAs($this->user)
-        ->post(route('admin.domains.lock', $this->domain), [
-            'lock' => false,
-        ])
+        ->put(route('admin.domains.lock', $this->domain))
         ->assertRedirect()
         ->assertSessionHas('success', 'Domain unlocked successfully');
 
@@ -69,9 +83,7 @@ it('handles domain service failures', function () {
         ]);
 
     actingAs($this->user)
-        ->post(route('admin.domains.lock', $this->domain), [
-            'lock' => true,
-        ])
+        ->put(route('admin.domains.lock', $this->domain))
         ->assertRedirect()
         ->assertSessionHasErrors(['error' => 'Service unavailable']);
 

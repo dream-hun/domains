@@ -5,16 +5,14 @@ declare(strict_types=1);
 namespace App\Actions\Domains;
 
 use App\Models\Domain;
-use App\Services\Domain\NamecheapDomainService;
+use App\Services\Domain\DomainServiceInterface;
 use Exception;
-use Illuminate\Support\Facades\Log;
 
 final readonly class ToggleDomainLockAction
 {
     public function __construct(
-        private NamecheapDomainService $namecheapDomainService,
-    ) {
-    }
+        private DomainServiceInterface $domainService,
+    ) {}
 
     /**
      * Execute the domain lock toggle action
@@ -26,20 +24,9 @@ final readonly class ToggleDomainLockAction
     public function execute(Domain $domain, bool $lock): array
     {
         try {
-            Log::info('Toggling domain lock', [
-                'domain' => $domain->name,
-                'lock' => $lock,
-            ]);
-
-            $result = $this->namecheapDomainService->setDomainLock($domain->name, $lock);
+            $result = $this->domainService->setDomainLock($domain->name, $lock);
 
             if (! $result['success']) {
-                Log::error('Failed to toggle domain lock', [
-                    'domain' => $domain->name,
-                    'lock' => $lock,
-                    'error' => $result['message'] ?? 'Unknown error',
-                ]);
-
                 return [
                     'success' => false,
                     'message' => $result['message'] ?? 'Failed to update domain lock status',
@@ -56,12 +43,6 @@ final readonly class ToggleDomainLockAction
             ];
 
         } catch (Exception $e) {
-            Log::error('Domain lock toggle failed', [
-                'domain' => $domain->name,
-                'lock' => $lock,
-                'error' => $e->getMessage(),
-            ]);
-
             return [
                 'success' => false,
                 'message' => 'Failed to update domain lock: '.$e->getMessage(),

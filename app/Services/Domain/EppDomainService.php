@@ -392,8 +392,9 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     /**
      * Create a contact
      *
-     * @param array<string, mixed> $contactData Contact information
+     * @param  array<string, mixed>  $contactData  Contact information
      * @return Contact The created contact
+     *
      * @throws Exception
      */
     public function createContact(array $contactData): Contact
@@ -2189,6 +2190,68 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
+        }
+    }
+
+    /**
+     * Set domain lock status
+     *
+     * @param  string  $domain  The domain name
+     * @param  bool  $lock  True to lock, false to unlock
+     * @return array{success: bool, message?: string}
+     */
+    public function setDomainLock(string $domain, bool $lock): array
+    {
+        try {
+            $this->ensureConnection();
+
+            $frame = new UpdateDomain;
+            $frame->setDomain($domain);
+
+            // Add or remove clientTransferProhibited status
+            if ($lock) {
+                $frame->addStatus('clientTransferProhibited');
+            } else {
+                $frame->removeStatus('clientTransferProhibited');
+            }
+
+            $response = $this->client->request($frame);
+
+            if ($response->code() !== 1000) {
+                Log::error('EPP domain lock update failed', [
+                    'domain' => $domain,
+                    'lock' => $lock,
+                    'response_code' => $response->code(),
+                    'response_message' => $response->message(),
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to update domain lock: '.$response->message(),
+                ];
+            }
+
+            Log::info('EPP domain lock updated successfully', [
+                'domain' => $domain,
+                'lock' => $lock,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => $lock ? 'Domain locked successfully' : 'Domain unlocked successfully',
+            ];
+
+        } catch (Exception $e) {
+            Log::error('EPP domain lock update error', [
+                'domain' => $domain,
+                'lock' => $lock,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Failed to update domain lock: '.$e->getMessage(),
+            ];
         }
     }
 

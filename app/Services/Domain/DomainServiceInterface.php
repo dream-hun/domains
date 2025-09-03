@@ -100,5 +100,12 @@ interface DomainServiceInterface
      */
     public function getNameservers(string $domain): array;
 
-
+    /**
+     * Set domain lock status
+     *
+     * @param  string  $domain  The domain name
+     * @param  bool  $lock  True to lock, false to unlock
+     * @return array{success: bool, message?: string}
+     */
+    public function setDomainLock(string $domain, bool $lock): array;
 }

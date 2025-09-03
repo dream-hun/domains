@@ -15,7 +15,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DomainRenewalRequest;
 use App\Http\Requests\Admin\DomainTransferRequest;
 use App\Http\Requests\Admin\UpdateNameserversRequest;
-use App\Http\Requests\ToggleDomainLockRequest;
 use App\Models\Contact;
 use App\Models\Domain;
 use App\Models\DomainPrice;
@@ -23,8 +22,8 @@ use Exception;
 use Gate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 final class DomainController extends Controller
 {
@@ -149,11 +148,12 @@ final class DomainController extends Controller
             ->withInput();
     }
 
-    public function toggleLock(ToggleDomainLockRequest $request, ToggleDomainLockAction $action): RedirectResponse {
+    public function toggleLock(Domain $domain, ToggleDomainLockAction $action): RedirectResponse
+    {
         abort_if(Gate::denies('domain_edit'), 403);
 
-        $domain = Domain::findOrFail($request->validated()['domain_id']);
-        $lock = (bool) $request->validated()['lock'];
+        // Toggle the current lock status
+        $lock = ! $domain->is_locked;
         $result = $action->execute($domain, $lock);
 
         if ($result['success']) {
@@ -199,8 +199,6 @@ final class DomainController extends Controller
         return redirect()->back()
             ->withErrors(['error' => $result['message'] ?? 'Failed to update domain contacts']);
     }
-
-
 
     private function extractTld(string $domain): string
     {
