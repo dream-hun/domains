@@ -26,7 +26,7 @@
                             {{ $domain->expires_at }}
                         </td>
                         <td>
-                            <a href="{{ route('admin.domains.info',$domain->uuid) }}" class="btn btn-info">Manage Domain</a>
+                            <a href="{{ route('admin.domains.edit',$domain->uuid) }}" class="btn btn-info">Manage Domain</a>
                         </td>
                     </tr>
                 @endforeach
