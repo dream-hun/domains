@@ -1599,21 +1599,16 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
      * Update domain contacts
      *
      * @param  string  $domain  Domain name
-     * @param  array  $contactData  Array of contacts by type (registrant, admin, tech, billing)
-     * @param  array  $contactsToRemove  Array of contact types to remove
-     * @return UpdateDomain EPP frame
+     * @param  array  $contactInfo  Array of contacts by type (registrant, admin, tech, billing)
+     * @return array{success: bool, message?: string}
      *
      * @throws Exception
      */
-    public function updateDomainContacts(string $domain, array $contactData, array $contactsToRemove = []): UpdateDomain
+    public function updateDomainContacts(string $domain, array $contactInfo): array
     {
         try {
             $this->ensureConnection();
-
-            // Normalize domain name (remove trailing dot if present)
             $domain = mb_rtrim($domain, '.');
-
-            // Create update domain frame
             $frame = new UpdateDomain;
             $frame->setDomain($domain);
 
@@ -1625,371 +1620,41 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             if ($infoResponse->code() === 1000) {
                 $responseXml = (string) $infoResponse;
-
-                // Extract current contacts using regex
                 preg_match_all('/<domain:contact type="([^"]+)">([^<]+)<\/domain:contact>/', $responseXml, $matches, PREG_SET_ORDER);
-
                 foreach ($matches as $match) {
                     $contactType = mb_strtolower($match[1]);
                     $contactId = $match[2];
                     $currentContacts[$contactType] = $contactId;
                 }
-
-                // Extract registrant
                 preg_match('/<domain:registrant>([^<]+)<\/domain:registrant>/', $responseXml, $registrantMatch);
                 if (isset($registrantMatch[1]) && ($registrantMatch[1] !== '' && $registrantMatch[1] !== '0')) {
                     $currentContacts['registrant'] = $registrantMatch[1];
                 }
             }
 
-            // Process contacts to add, update, or remove
-            // First, handle the registrant contact if provided
-            if (isset($contactData['registrant'])) {
-                Log::info("Setting registrant contact: {$contactData['registrant']}");
-                $frame->changeRegistrant($contactData['registrant']);
-            }
-
-            // Handle admin contacts
-            if (isset($contactData['admin'])) {
-                Log::info("Adding admin contact: {$contactData['admin']}");
-                $frame->addAdminContact($contactData['admin']);
-            } elseif (in_array('admin', $contactsToRemove) && isset($currentContacts['admin'])) {
-                Log::info("Removing admin contact: {$currentContacts['admin']}");
-                $frame->removeAdminContact($currentContacts['admin']);
-            }
-
-            // Handle tech contacts
-            if (isset($contactData['tech'])) {
-                Log::info("Adding tech contact: {$contactData['tech']}");
-                $frame->addTechContact($contactData['tech']);
-            } elseif (in_array('tech', $contactsToRemove) && isset($currentContacts['tech'])) {
-                Log::info("Removing tech contact: {$currentContacts['tech']}");
-                $frame->removeTechContact($currentContacts['tech']);
-            }
-
-            // Handle billing contacts
-            if (isset($contactData['billing'])) {
-                Log::info("Adding billing contact: {$contactData['billing']}");
-                $frame->addBillingContact($contactData['billing']);
-            } elseif (in_array('billing', $contactsToRemove) && isset($currentContacts['billing'])) {
-                Log::info("Removing billing contact: {$currentContacts['billing']}");
-                $frame->removeBillingContact($currentContacts['billing']);
-            }
-
-            // Change auth info (optional but recommended for security)
-            $authInfo = Str::random(12);
-            $frame->changeAuthInfo($authInfo);
-
-            // Log the frame for debugging
-            Log::debug('EPP update domain contacts frame created', [
-                'domain' => $domain,
-                'contact_data' => $contactData,
-                'contacts_to_remove' => $contactsToRemove,
-                'frame' => (string) $frame,
-            ]);
-
-            return $frame;
-        } catch (Exception $e) {
-            Log::error('EPP update domain contacts error', [
-                'domain' => $domain,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw $e;
-        }
-    }
-
-    /**
-     * Update domain
-     *
-     * @throws Exception
-     */
-    public function updateDomain(string $domain, array $adminContacts, array $techContacts, array $hostObjs, array $hostAttrs, array $statuses, array $removeHostAttrs): array
-    {
-        try {
-            $this->ensureConnection();
-            $frame = new UpdateDomain;
-            $frame->setDomain($domain);
-
-            // Add section
-            $addSection = false;
-
-            if ($adminContacts !== []) {
-                foreach ($adminContacts as $contact) {
-                    $frame->addAdminContact($contact);
+            // Update contacts (registrant, admin, tech, billing)
+            foreach (['registrant', 'admin', 'tech', 'billing'] as $type) {
+                if (isset($contactInfo[$type]) && $contactInfo[$type] !== ($currentContacts[$type] ?? null)) {
+                    if ($type === 'registrant') {
+                        $frame->setRegistrant($contactInfo[$type]);
+                    } else {
+                        $frame->addContact($contactInfo[$type], $type);
+                    }
                 }
-                $addSection = true;
             }
 
-            if ($techContacts !== []) {
-                foreach ($techContacts as $contact) {
-                    $frame->addTechContact($contact);
-                }
-                $addSection = true;
-            }
-
-            foreach ($hostObjs as $host) {
-                $frame->addHostObj($host);
-                $addSection = true;
-            }
-
-            foreach ($hostAttrs as $host => $ips) {
-                $frame->addHostAttr($host, $ips);
-                $addSection = true;
-            }
-
-            foreach ($statuses as $status => $reason) {
-                $frame->addStatus($status, $reason);
-                $addSection = true;
-            }
-
-            // Remove section
-            $removeSection = false;
-
-            foreach ($removeHostAttrs as $host) {
-                $frame->removeHostObj($host);
-                $removeSection = true;
-            }
-
-            // Only change authInfo if we're making changes
-            $pw = null;
-            if ($addSection || $removeSection) {
-                $pw = $frame->changeAuthInfo();
-            }
-
-            Log::debug('EPP update domain frame created', [
-                'domain' => $domain,
-                'add_section' => $addSection,
-                'remove_section' => $removeSection,
-                'host_objs' => $hostObjs,
-                'remove_hosts' => $removeHostAttrs,
-            ]);
-
-            return ['frame' => $frame, 'authInfo' => $pw];
-        } catch (Exception $e) {
-            Log::error('Domain update failed: '.$e->getMessage(), [
-                'domain' => $domain,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            // Try to reconnect on next request
-            $this->connected = false;
-            throw $e;
-        }
-    }
-
-    /**
-     * Get domain info from registry
-     *
-     * @throws Exception
-     */
-    public function getDomainInfo(string $domain): array
-    {
-        try {
-            $this->ensureConnection();
-
-            // Create and send request
-            $frame = new InfoDomain;
-            $frame->setDomain($domain);
-
-            // Log request for debugging
-            Log::debug('Sending domain info request', ['domain' => $domain]);
-
+            // Send update request
             $response = $this->client->request($frame);
-
-            // Validate response
-            if (! ($response instanceof Response) || ! ($result = $response->results()[0])) {
-                throw new Exception('Invalid response from registry');
+            if ($response && $response->code() === 1000) {
+                return ['success' => true, 'message' => 'Domain contacts updated successfully.'];
             }
-
-            // Check response status
-            if ($result->code() < 1000 || $result->code() >= 2000) {
-                Log::error('Registry error in getDomainInfo', [
-                    'domain' => $domain,
-                    'code' => $result->code(),
-                    'message' => $result->message(),
-                ]);
-                throw new Exception("Registry error (code: {$result->code()}): {$result->message()}");
-            }
-
-            // Get response data
-            $data = $response->data();
-
-            // Check if data is nested in 'infData' key (common EPP response format)
-            if (isset($data['infData']) && is_array($data['infData'])) {
-                // Extract data from nested structure
-                $infData = $data['infData'];
-
-                // Log the structure for debugging
-                Log::debug('EPP response has nested infData structure', [
-                    'domain' => $domain,
-                    'infData' => $infData,
-                ]);
-
-                // Merge infData with main data array, giving priority to infData values
-                $data = array_merge($data, $infData);
-            }
-
-            // Use queried domain if name not in response
-            if (empty($data['name'])) {
-                $data['name'] = $domain;
-                Log::warning('Domain name not found in EPP response, using queried name', [
-                    'domain' => $domain,
-                    'response_data' => $data,
-                ]);
-            }
-
-            // Extract nameservers from nested structure if present
-            $nameservers = [];
-            if (! empty($data['ns']['hostObj']) && is_array($data['ns']['hostObj'])) {
-                $nameservers = $data['ns']['hostObj'];
-            } elseif (! empty($data['ns']) && is_array($data['ns'])) {
-                $nameservers = $data['ns'];
-            }
-
-            // Extract contacts from nested structure
-            $adminContacts = $data['contact@admin'] ?? [];
-            $techContacts = $data['contact@tech'] ?? [];
-            $billingContacts = $data['contact@billing'] ?? [];
-
-            // Ensure contacts are in array format
-            if (! is_array($adminContacts)) {
-                $adminContacts = [$adminContacts];
-            }
-            if (! is_array($techContacts)) {
-                $techContacts = [$techContacts];
-            }
-            if (! is_array($billingContacts)) {
-                $billingContacts = [$billingContacts];
-            }
-
-            // Format and return domain info
-            return [
-                'success' => true,
-                'name' => $data['name'],
-                'roid' => $data['roid'] ?? null,
-                'status' => is_array($data['status'] ?? null) ? $data['status'] : [$data['status'] ?? null],
-                'registrant' => $data['registrant'] ?? null,
-                'contacts' => [
-                    'admin' => $adminContacts === [] ? $data['admin'] ?? null : ($adminContacts),
-                    'tech' => $techContacts === [] ? $data['tech'] ?? null : ($techContacts),
-                    'billing' => $billingContacts === [] ? $data['billing'] ?? null : ($billingContacts),
-                ],
-                'nameservers' => $nameservers,
-                'hosts' => is_array($data['host'] ?? null) ? $data['host'] : [],
-                'clID' => $data['clID'] ?? null,
-                'crID' => $data['crID'] ?? null,
-                'crDate' => $data['crDate'] ?? null,
-                'upID' => $data['upID'] ?? null,
-                'upDate' => $data['upDate'] ?? null,
-                'exDate' => $data['exDate'] ?? null,
-                'trDate' => $data['trDate'] ?? null,
-                'authInfo' => $data['authInfo'] ?? null,
-                'message' => 'Domain info retrieved successfully',
-            ];
+            return ['success' => false, 'message' => $response ? $response->message() : 'Unknown error updating contacts.'];
         } catch (Exception $e) {
-            Log::error('Failed to get domain info: '.$e->getMessage(), [
+            Log::error('Domain contact update failed', [
                 'domain' => $domain,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
-
-            return [
-                'success' => false,
-                'message' => 'Failed to get domain info: '.$e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * Check if a domain is available or registered
-     *
-     * @return array{available: bool, reason?: string}
-     *
-     * @throws Exception
-     */
-    /**
-     * Check if a domain is available or registered
-     *
-     * @return array{available: bool, reason?: string}
-     *
-     * @throws Exception
-     */
-    /**
-     * Check if a domain is available or registered
-     *
-     * @return array{available: bool, reason?: string}
-     *
-     * @throws Exception
-     */
-    public function checkDomainForTransfer(string $domain): array
-    {
-        try {
-            $this->ensureConnection();
-
-            Log::info('Checking domain availability', [
-                'domain' => $domain,
-                'epp_host' => $this->config['host'],
-            ]);
-
-            $frame = new CheckDomain();
-            $frame->addDomain($domain);
-
-            $response = $this->client->request($frame);
-            if (! $response) {
-                throw new Exception('No response received from EPP server');
-            }
-
-            Log::debug('Raw EPP response', [
-                'domain' => $domain,
-                'response' => $response->saveXML(),
-            ]);
-
-            $results = [];
-            $data = $response->data();
-
-            Log::debug('Parsed EPP response', ['data' => $data]);
-
-            if (! empty($data) && isset($data['chkData']['cd'])) {
-                // Handle both single and multiple domain responses
-                $items = isset($data['chkData']['cd'][0]) ? $data['chkData']['cd'] : [$data['chkData']['cd']];
-
-                foreach ($items as $item) {
-                    // Use improved extraction methods for consistency
-                    $domainName = $this->extractDomainValue($item, 'name');
-                    $available = $this->extractAvailabilityValue($item);
-                    $reason = $this->extractReasonValue($item);
-
-                    Log::debug('Processing domain result:', [
-                        'domainName' => $domainName,
-                        'available' => $available,
-                        'item' => $item,
-                    ]);
-
-                    $results[$domainName] = [
-                        'available' => $available,
-                        'reason' => $reason,
-                    ];
-                }
-            } else {
-                Log::warning('Unexpected response structure:', ['data' => $data]);
-                throw new Exception('Unexpected response data format: chkData or cd missing');
-            }
-
-            // Return result for the requested domain
-            if (! isset($results[$domain])) {
-                throw new Exception('No result found for domain: '.$domain);
-            }
-
-            return $results[$domain];
-        } catch (Exception $e) {
-            Log::error('Domain check failed: '.$e->getMessage(), [
-                'domain' => $domain,
-                'epp_host' => $this->config['host'],
-                'trace' => $e->getTraceAsString(),
-            ]);
-            $this->connected = false;
-            throw $e;
+            return ['success' => false, 'message' => 'Service error: ' . $e->getMessage()];
         }
     }
 
@@ -2427,6 +2092,71 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'trace' => $e->getTraceAsString(),
             ]);
             throw new Exception('Failed to establish EPP connection: '.$e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Get information about a domain
+     *
+     * @param string $domain The domain name to get information for
+     * @return array{success: bool, domain?: string, status?: array<string>, registrant?: string, created_date?: string, expiry_date?: string, message?: string}
+     */
+    public function getDomainInfo(string $domain): array
+    {
+        try {
+            $this->ensureConnection();
+            $domain = mb_rtrim($domain, '.');
+            $frame = new InfoDomain();
+            $frame->setDomain($domain);
+            $response = $this->client->request($frame);
+
+            if (! $response || $response->code() !== 1000) {
+                return [
+                    'success' => false,
+                    'message' => $response ? $response->message() : 'Failed to retrieve domain info',
+                ];
+            }
+
+            $responseXml = (string) $response;
+            $result = [
+                'success' => true,
+                'domain' => $domain,
+            ];
+
+            // Status
+            preg_match_all('/<domain:status s="([^"]+)"/', $responseXml, $statusMatches);
+            if (!empty($statusMatches[1])) {
+                $result['status'] = $statusMatches[1];
+            }
+
+            // Registrant
+            preg_match('/<domain:registrant>([^<]+)<\/domain:registrant>/', $responseXml, $registrantMatch);
+            if (isset($registrantMatch[1])) {
+                $result['registrant'] = $registrantMatch[1];
+            }
+
+            // Created date
+            preg_match('/<domain:crDate>([^<]+)<\/domain:crDate>/', $responseXml, $createdMatch);
+            if (isset($createdMatch[1])) {
+                $result['created_date'] = $createdMatch[1];
+            }
+
+            // Expiry date
+            preg_match('/<domain:exDate>([^<]+)<\/domain:exDate>/', $responseXml, $expiryMatch);
+            if (isset($expiryMatch[1])) {
+                $result['expiry_date'] = $expiryMatch[1];
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            Log::error('Failed to get domain info', [
+                'domain' => $domain,
+                'error' => $e->getMessage(),
+            ]);
+            return [
+                'success' => false,
+                'message' => 'Service error: ' . $e->getMessage(),
+            ];
         }
     }
 

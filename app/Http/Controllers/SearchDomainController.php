@@ -103,13 +103,6 @@ final class SearchDomainController extends Controller
             ->with('error', $message);
     }
 
-    private function redirectWithError(string $message): RedirectResponse
-    {
-        return back()
-            ->withInput()
-            ->with('error', $message);
-    }
-
     /**
      * Check if any service errors occurred in the search results
      */

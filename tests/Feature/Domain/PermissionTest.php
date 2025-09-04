@@ -13,7 +13,7 @@ final class PermissionTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_create_and_assign_permission()
+    public function test_can_create_and_assign_permission(): void
     {
         $user = User::factory()->create();
         $permission = Permission::create(['title' => 'domain_show']);

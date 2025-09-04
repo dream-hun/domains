@@ -29,6 +29,7 @@
                                 <th>Status</th>
                                 <th>Auto Renew</th>
                                 <th>Expire At</th>
+                                <th>Action</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -48,6 +49,15 @@
                                     @endif
                                 </td>
                                 <td style="width: 25%;">{{ $domain->expires_at->format('M d, Y') }}</td>
+                                <td>
+                                    <form action="{{ route('admin.domain.fetchContacts',$domain->uuid) }}" method="Post" style="display: inline-block;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-arrow-clockwise"></i> Fetch Contacts
+                                        </button>
+
+                                    </form>
+                                </td>
 
                             </tr>
                             </tbody>
@@ -173,43 +183,102 @@
             </div>
             <div class="col-md-12 row">
                 <div class="col-md-6">
-                    <div class="card">
+                    <form class="card" action="{{ route('admin.domains.contacts.update', $domain->uuid) }}" method="POST">
+                        @csrf
+                        @method('PUT')
                         <div class="card-header">
-                            <h6>Domain Contact Information</h6>
+                            <h6>Domain Contact Management</h6>
                         </div>
                         <div class="card-body">
+                            @if($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0">
+                                        @foreach($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
                             <div class="row">
-                                <div class="col-md-3">
-                                    <h6>Registrant</h6>
-                                    <p>{{ $domain->contacts->where('pivot.type', 'registrant')->first()?->full_name ?? 'Not assigned' }}</p>
-                                    @if($domain->contacts->where('pivot.type', 'registrant')->first())
-                                        <a href="{{ route('admin.contacts.edit', $domain->contacts->where('pivot.type', 'registrant')->first()->uuid) }}" class="btn btn-sm btn-primary">Edit</a>
-                                    @endif
+                                <!-- Registrant Contact -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="registrant_contact" class="form-label">Registrant Contact <span class="text-danger">*</span></label>
+                                    <select name="registrant[contact_id]" id="registrant_contact" class="form-control @error('registrant.contact_id') is-invalid @enderror" required>
+                                        <option value="">Select Registrant Contact</option>
+                                        @foreach($availableContacts as $contact)
+                                            <option value="{{ $contact->id }}"
+                                                {{ (old('registrant.contact_id') == $contact->id || $contactsByType['registrant']?->id == $contact->id) ? 'selected' : '' }}>
+                                                {{ $contact->full_name }} ({{ $contact->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('registrant.contact_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                <div class="col-md-3">
-                                    <h6>Admin</h6>
-                                    <p>{{ $domain->contacts->where('pivot.type', 'admin')->first()?->full_name ?? 'Not assigned' }}</p>
-                                    @if($domain->contacts->where('pivot.type', 'admin')->first())
-                                        <a href="{{ route('admin.contacts.edit', $domain->contacts->where('pivot.type', 'admin')->first()->uuid) }}" class="btn btn-sm btn-primary">Edit</a>
-                                    @endif
+
+                                <!-- Admin Contact -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="admin_contact" class="form-label">Admin Contact <span class="text-danger">*</span></label>
+                                    <select name="admin[contact_id]" id="admin_contact" class="form-control @error('admin.contact_id') is-invalid @enderror" required>
+                                        <option value="">Select Admin Contact</option>
+                                        @foreach($availableContacts as $contact)
+                                            <option value="{{ $contact->id }}"
+                                                {{ (old('admin.contact_id') == $contact->id || $contactsByType['admin']?->id == $contact->id) ? 'selected' : '' }}>
+                                                {{ $contact->full_name }} ({{ $contact->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('admin.contact_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                <div class="col-md-3">
-                                    <h6>Tech</h6>
-                                    <p>{{ $domain->contacts->where('pivot.type', 'technical')->first()?->full_name ?? 'Not assigned' }}</p>
-                                    @if($domain->contacts->where('pivot.type', 'technical')->first())
-                                        <a href="{{ route('admin.contacts.edit', $domain->contacts->where('pivot.type', 'technical')->first()->uuid) }}" class="btn btn-sm btn-primary">Edit</a>
-                                    @endif
+
+                                <!-- Technical Contact -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="technical_contact" class="form-label">Technical Contact <span class="text-danger">*</span></label>
+                                    <select name="technical[contact_id]" id="technical_contact" class="form-control @error('technical.contact_id') is-invalid @enderror" required>
+                                        <option value="">Select Technical Contact</option>
+                                        @foreach($availableContacts as $contact)
+                                            <option value="{{ $contact->id }}"
+                                                {{ (old('technical.contact_id') == $contact->id || $contactsByType['tech']?->id == $contact->id) ? 'selected' : '' }}>
+                                                {{ $contact->full_name }} ({{ $contact->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('technical.contact_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                <div class="col-md-3">
-                                    <h6>Billing</h6>
-                                    <p>{{ $domain->contacts->where('pivot.type', 'billing')->first()?->full_name ?? 'Not assigned' }}</p>
-                                    @if($domain->contacts->where('pivot.type', 'billing')->first())
-                                        <a href="{{ route('admin.contacts.edit', $domain->contacts->where('pivot.type', 'billing')->first()->uuid) }}" class="btn btn-sm btn-primary">Edit</a>
-                                    @endif
+
+                                <!-- Billing Contact -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="billing_contact" class="form-label">Billing Contact <span class="text-danger">*</span></label>
+                                    <select name="billing[contact_id]" id="billing_contact" class="form-control @error('billing.contact_id') is-invalid @enderror" required>
+                                        <option value="">Select Billing Contact</option>
+                                        @foreach($availableContacts as $contact)
+                                            <option value="{{ $contact->id }}"
+                                                {{ (old('billing.contact_id') == $contact->id || $contactsByType['billing']?->id == $contact->id) ? 'selected' : '' }}>
+                                                {{ $contact->full_name }} ({{ $contact->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('billing.contact_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-floppy"></i> Update Contacts
+                            </button>
+                            <a href="{{ route('admin.domains.index') }}" class="btn btn-secondary float-right">
+                                <i class="bi bi-dash-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
                 </div>
                 <div class="col-md-6">
                     <div class="card">

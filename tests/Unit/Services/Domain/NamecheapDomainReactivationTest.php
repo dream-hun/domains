@@ -57,7 +57,7 @@ final class NamecheapDomainReactivationTest extends TestCase
         $this->assertEquals('Domain reactivated successfully', $result['message']);
 
         // Verify the correct API call was made
-        Http::assertSent(function (Request $request) {
+        Http::assertSent(function (Request $request): bool {
             $url = $request->url();
 
             return str_contains($url, 'Command=namecheap.domains.reactivate') &&

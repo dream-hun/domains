@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DomainController;
+use App\Http\Controllers\Admin\DomainOperationsController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
@@ -27,9 +28,9 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('contacts', ContactController::class);
 
     Route::resource('domains', DomainController::class)->except(['show']);
-    Route::get('domains/{domain:uuid}/info', [DomainController::class, 'domainInfo'])->name('domains.info');
-    Route::post('domains/{domain:uuid}/refresh-info', [DomainController::class, 'refreshDomainInfo'])->name('domains.refresh-info');
-    Route::post('domains/{domain:uuid}/contacts', [DomainController::class, 'updateContacts'])->name('domains.update-contacts');
+    Route::get('domains/{domain:uuid}/info', [DomainOperationsController::class, 'domainInfo'])->name('domain.info');
+    Route::post('/domains/{domain:uuid}/fetch-contacts', [DomainOperationsController::class, 'getContacts'])->name('domain.fetchContacts');
+    Route::put('domains/{domain:uuid}/contacts', [DomainController::class, 'updateContacts'])->name('domains.contacts.update');
     Route::put('domains/{domain:uuid}/lock', [DomainController::class, 'toggleLock'])->name('domains.lock');
     Route::get('domains/{domain:uuid}/transfer', [DomainController::class, 'showTransferForm'])->name('domains.transfer');
     Route::post('domains/{domain:uuid}/transfer', [DomainController::class, 'transferDomain'])->name('domains.transfer.store');

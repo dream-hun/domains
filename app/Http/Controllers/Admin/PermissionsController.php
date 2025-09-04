@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class PermissionsController extends Controller
 {
-    public function index()
+    public function index(): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('permission_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -22,7 +22,7 @@ final class PermissionsController extends Controller
         return view('admin.permissions.index', ['permissions' => $permissions]);
     }
 
-    public function create()
+    public function create(): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('permission_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -36,7 +36,7 @@ final class PermissionsController extends Controller
         return redirect()->route('admin.permissions.index');
     }
 
-    public function edit(Permission $permission)
+    public function edit(Permission $permission): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('permission_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -50,14 +50,14 @@ final class PermissionsController extends Controller
         return redirect()->route('admin.permissions.index');
     }
 
-    public function show(Permission $permission)
+    public function show(Permission $permission): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('permission_show'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         return view('admin.permissions.show', ['permission' => $permission]);
     }
 
-    public function destroy(Permission $permission)
+    public function destroy(Permission $permission): \Illuminate\Http\RedirectResponse
     {
         abort_if(Gate::denies('permission_delete'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 

@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 
 final class CartController extends Controller
 {
-    public function __invoke()
+    public function __invoke(): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         return view('carts.index');
     }

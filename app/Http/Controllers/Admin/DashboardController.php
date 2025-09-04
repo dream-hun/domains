@@ -17,12 +17,12 @@ final class DashboardController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         $tlds = Cache::remember('dashboard.tlds', 3600, function () {
             return DomainPrice::withoutGlobalScope(DomainPriceScope::class)->count();
         });
-        $plans = Cache::remember('dashboard.plans', 3600, function () {
+        $plans = Cache::remember('dashboard.plans', 3600, function (): int {
             return 0;
         });
 

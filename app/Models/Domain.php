@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[ScopedBy([DomainScope::class])]
+/* #[ScopedBy([DomainScope::class])] */
 final class Domain extends Model
 {
     use HasFactory;

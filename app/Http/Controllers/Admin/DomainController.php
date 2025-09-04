@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DomainRenewalRequest;
 use App\Http\Requests\Admin\DomainTransferRequest;
 use App\Http\Requests\Admin\ReactivateDomainRequest;
+use App\Http\Requests\Admin\UpdateDomainContactsRequest;
 use App\Http\Requests\Admin\UpdateNameserversRequest;
 use App\Models\Contact;
 use App\Models\Country;
@@ -25,12 +26,11 @@ use Exception;
 use Gate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 final class DomainController extends Controller
 {
-    public function index(ListDomainAction $action)
+    public function index(ListDomainAction $action): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('domain_access'), 403);
         $domains = $action->handle();
@@ -48,7 +48,7 @@ final class DomainController extends Controller
 
             // Load relationships
             $domain->load(['nameservers']);
-            $domain->load(['contacts' => function ($query) {
+            $domain->load(['contacts' => function ($query): void {
                 $query->where('contacts.user_id', auth()->id());
             }]);
 
@@ -201,18 +201,11 @@ final class DomainController extends Controller
             ->withErrors(['error' => $result['message'] ?? 'Failed to update domain information']);
     }
 
-    public function updateContacts(Domain $domain, Request $request, UpdateDomainContactsAction $action): RedirectResponse
+    public function updateContacts(Domain $domain, UpdateDomainContactsRequest $request, UpdateDomainContactsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('domain_edit') || $domain->owner_id !== auth()->id(), 403);
 
-        $validated = $request->validate([
-            'registrant.contact_id' => 'required|exists:contacts,id',
-            'admin.contact_id' => 'required|exists:contacts,id',
-            'technical.contact_id' => 'required|exists:contacts,id',
-            'billing.contact_id' => 'required|exists:contacts,id',
-        ]);
-
-        $result = $action->handle($domain, $validated);
+        $result = $action->handle($domain, $request->validated());
 
         if ($result['success']) {
             return redirect()->back()

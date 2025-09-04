@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class SettingController extends Controller
 {
-    public function index()
+    public function index(): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('setting_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -22,7 +22,7 @@ final class SettingController extends Controller
         return view('admin.settings.index', ['settings' => $settings]);
     }
 
-    public function create()
+    public function create(): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('setting_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -36,7 +36,7 @@ final class SettingController extends Controller
         return redirect()->route('admin.settings.index');
     }
 
-    public function edit(Setting $setting)
+    public function edit(Setting $setting): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('setting_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -50,14 +50,14 @@ final class SettingController extends Controller
         return redirect()->route('admin.settings.index');
     }
 
-    public function show(Setting $setting)
+    public function show(Setting $setting): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('setting_show'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         return view('admin.settings.show', ['setting' => $setting]);
     }
 
-    public function destroy(Setting $setting)
+    public function destroy(Setting $setting): \Illuminate\Http\RedirectResponse
     {
         abort_if(Gate::denies('setting_delete'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 

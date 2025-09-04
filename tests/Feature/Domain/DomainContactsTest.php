@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create permissions
     Permission::create(['name' => 'domain_show']);
     Permission::create(['name' => 'domain_edit']);
@@ -40,7 +40,7 @@ beforeEach(function () {
     $this->contacts = Contact::factory()->count(4)->create(['user_id' => $this->user->id]);
 });
 
-test('user can refresh domain info', function () {
+test('user can refresh domain info', function (): void {
     $mockDomainService = mock(DomainServiceInterface::class);
     $mockDomainService->shouldReceive('getDomainInfo')
         ->once()
@@ -67,7 +67,7 @@ test('user can refresh domain info', function () {
     expect($this->domain->auto_renew)->toBeFalse();
 });
 
-test('user can update domain contacts', function () {
+test('user can update domain contacts', function (): void {
     $contactData = [
         'registrant' => ['contact_id' => $this->contacts[0]->id],
         'admin' => ['contact_id' => $this->contacts[1]->id],
@@ -101,7 +101,7 @@ test('user can update domain contacts', function () {
         ->toContain($this->contacts[3]->id);
 });
 
-test('unauthorized user cannot access domain info', function () {
+test('unauthorized user cannot access domain info', function (): void {
     $unauthorizedUser = User::factory()->create(['email' => 'unauthorized@example.com']);
 
     $response = $this->actingAs($unauthorizedUser)
@@ -110,7 +110,7 @@ test('unauthorized user cannot access domain info', function () {
     $response->assertForbidden();
 });
 
-test('unauthorized user cannot update domain contacts', function () {
+test('unauthorized user cannot update domain contacts', function (): void {
     $unauthorizedUser = User::factory()->create(['email' => 'unauthorized2@example.com']);
 
     $response = $this->actingAs($unauthorizedUser)

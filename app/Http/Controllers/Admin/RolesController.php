@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class RolesController extends Controller
 {
-    public function index()
+    public function index(): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('role_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -23,7 +23,7 @@ final class RolesController extends Controller
         return view('admin.roles.index', ['roles' => $roles]);
     }
 
-    public function create()
+    public function create(): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('role_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -40,7 +40,7 @@ final class RolesController extends Controller
         return redirect()->route('admin.roles.index');
     }
 
-    public function edit(Role $role)
+    public function edit(Role $role): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('role_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -59,7 +59,7 @@ final class RolesController extends Controller
         return redirect()->route('admin.roles.index');
     }
 
-    public function show(Role $role)
+    public function show(Role $role): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
     {
         abort_if(Gate::denies('role_show'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
@@ -68,7 +68,7 @@ final class RolesController extends Controller
         return view('admin.roles.show', ['role' => $role]);
     }
 
-    public function destroy(Role $role)
+    public function destroy(Role $role): \Illuminate\Http\RedirectResponse
     {
         abort_if(Gate::denies('role_delete'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 

@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('can lock and unlock a local domain', function () {
+it('can lock and unlock a local domain', function (): void {
     $user = User::factory()->create();
     $price = DomainPrice::factory()->create(['type' => DomainType::Local]);
     $domain = Domain::factory()->create([
@@ -39,7 +39,7 @@ it('can lock and unlock a local domain', function () {
     expect($domain->fresh()->is_locked)->toBeFalse();
 });
 
-it('can lock and unlock an international domain', function () {
+it('can lock and unlock an international domain', function (): void {
     $user = User::factory()->create();
     $price = DomainPrice::factory()->create(['type' => DomainType::International]);
     $domain = Domain::factory()->create([

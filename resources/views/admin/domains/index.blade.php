@@ -107,6 +107,10 @@
                     </tbody>
                 </table>
             </div>
+            {{-- Pagination Controls --}}
+            <div class="d-flex justify-content-center mt-3">
+                {{ $domains->links('vendor.pagination.adminlte') }}
+            </div>
         </div>
     </div>
 </x-admin-layout>

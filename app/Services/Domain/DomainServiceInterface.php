@@ -112,4 +112,13 @@ interface DomainServiceInterface
     public function setAutoRenew(string $domain, bool $autoRenew): array;
 
     public function reActivateDomain(string $domain): array;
+
+    /**
+     * Update domain contacts
+     *
+     * @param  string  $domain  The domain name
+     * @param  array  $contactInfo  Contact information for the domain
+     * @return array{success: bool, message?: string}
+     */
+    public function updateDomainContacts(string $domain, array $contactInfo): array;
 }

@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
-test('can view domain info with contacts', function () {
+test('can view domain info with contacts', function (): void {
     $user = User::factory()->create();
 
     // Create and assign necessary permissions

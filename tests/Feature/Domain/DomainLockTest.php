@@ -17,7 +17,7 @@ use function Pest\Laravel\mock;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create permissions and role
     $permission = Permission::create(['title' => 'domain_edit']);
     $role = Role::create(['title' => 'Admin']);
@@ -40,7 +40,7 @@ beforeEach(function () {
     ]);
 });
 
-it('can lock a domain', function () {
+it('can lock a domain', function (): void {
     $domainService = mock(DomainServiceInterface::class);
     $domainService->shouldReceive('setDomainLock')
         ->once()
@@ -55,7 +55,7 @@ it('can lock a domain', function () {
     expect($this->domain->fresh()->is_locked)->toBeTrue();
 });
 
-it('can unlock a domain', function () {
+it('can unlock a domain', function (): void {
     $this->domain->update(['is_locked' => true]);
 
     $domainService = mock(DomainServiceInterface::class);
@@ -72,7 +72,7 @@ it('can unlock a domain', function () {
     expect($this->domain->fresh()->is_locked)->toBeFalse();
 });
 
-it('handles domain service failures', function () {
+it('handles domain service failures', function (): void {
     $domainService = mock(DomainServiceInterface::class);
     $domainService->shouldReceive('setDomainLock')
         ->once()
