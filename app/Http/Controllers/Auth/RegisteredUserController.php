@@ -10,6 +10,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -31,6 +32,7 @@ final class RegisteredUserController extends Controller
     public function store(RegisterUserRequest $request): RedirectResponse
     {
         User::create([
+            'uuid'=>Str::uuid(),
             'client_code' => User::generateCustomerNumber(),
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
