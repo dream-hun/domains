@@ -34,11 +34,6 @@
                 <table class=" table table-bordered table-striped table-hover datatable datatable-Domain">
                     <thead>
                     <tr>
-
-                        <th>
-                            ID
-                        </th>
-
                         <th>
                             Domain Name
                         </th>
@@ -57,11 +52,7 @@
                     @foreach($domains as $key => $domain)
                         <tr data-entry-id="{{ $domain->id }}">
 
-                            <td style="width: 15%;">
 
-                                {{ $loop->iteration }}
-
-                            </td>
 
                             <td style="width: 30%;">
                                 {{ $domain->name ?? '' }}
@@ -70,7 +61,7 @@
                                 {{ $domain->status ?? '' }}
                             </td>
                             <td style="width: 20%;">
-                                {{ $domain->expires_at ?? '' }}
+                                {{ $domain->expiresAt() ?? '' }}
                             </td>
                             <td style="width: 20%;">
                                 <div class="btn-group" role="group">
@@ -84,7 +75,7 @@
                                     @can('domain_renew')
                                         <a href="{{ route('admin.domains.renew', $domain->uuid) }}"
                                            class="btn btn-sm btn-success">
-                                            <i class="fas fa-redo"></i> Renew
+                                            <i class="bi bi-redo"></i> Renew
                                         </a>
                                     @endcan
                                     @can('domain_edit')
@@ -108,7 +99,7 @@
                 </table>
             </div>
             {{-- Pagination Controls --}}
-            <div class="d-flex justify-content-center mt-3">
+            <div class="d-flex justify-content-center mt-3 float-right">
                 {{ $domains->links('vendor.pagination.adminlte') }}
             </div>
         </div>

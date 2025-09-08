@@ -13,7 +13,7 @@ final class LatestDomains extends Component
     public function render(): View
     {
 
-        $domains = Domain::latest('registered_at')
+        $domains = Domain::query()->latest('registered_at')
             ->limit(10)
             ->get();
 

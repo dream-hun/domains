@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\Domain;
+use App\Models\Scopes\DomainScope;
 use App\Services\Domain\NamecheapDomainService;
 use Carbon\Carbon;
 use Exception;
@@ -23,55 +24,62 @@ final class FetchDomainsJob implements ShouldQueue
 
     public function handle(): void
     {
+        $page = 1;
+        $perPage = 100;
+        $totalFetched = 0;
+
         try {
-            $result = $this->domainService->getDomainList();
-            \Log::debug('Namecheap getDomainList result', ['result' => $result]);
-            if (! ($result['success'] ?? false) || empty($result['domains'])) {
-                Log::warning('No domains fetched from Namecheap.', ['result' => $result]);
+            do {
+                $result = $this->domainService->getDomainList($page, $perPage);
+                \Log::debug('Namecheap getDomainList result', ['page' => $page, 'result' => $result]);
+                if (!($result['success'] ?? false) || empty($result['domains'])) {
+                    if ($page === 1) {
+                        Log::warning('No domains fetched from Namecheap.', ['result' => $result]);
+                    }
+                    break;
+                }
 
-                return;
-            }
+                $count = 0;
+                foreach ($result['domains'] as $domainData) {
+                    $registeredAt = isset($domainData['created_date'])
+                        ? Carbon::parse($domainData['created_date'])
+                        : now();
 
-            $count = 0;
-            foreach ($result['domains'] as $domainData) {
-                // Parse dates properly
-                $registeredAt = isset($domainData['created_date'])
-                    ? Carbon::parse($domainData['created_date'])
-                    : now();
+                    $expiresAt = isset($domainData['expiry_date'])
+                        ? Carbon::parse($domainData['expiry_date'])
+                        : now()->addYear();
 
-                $expiresAt = isset($domainData['expiry_date'])
-                    ? Carbon::parse($domainData['expiry_date'])
-                    : now()->addYear();
+                    $years = $registeredAt->diffInYears($expiresAt) ?: 1;
+                    $uuid = $domainData['uuid'] ?? Str::uuid()->toString();
+                    $status = isset($domainData['status']) ? strtolower(trim($domainData['status'])) : 'active';
 
-                // Calculate years based on registration and expiry dates
-                $years = $registeredAt->diffInYears($expiresAt) ?: 1;
+                    Domain::query()->withoutGlobalScope(DomainScope::class)->updateOrCreate(
+                        ['uuid' => $uuid],
+                        [
+                            'name' => $domainData['name'],
+                            'registered_at' => $registeredAt,
+                            'expires_at' => $expiresAt,
+                            'status' => $status,
+                            'auto_renew' => $domainData['auto_renew'] ?? false,
+                            'is_locked' => $domainData['locked'] ?? false,
+                            'provider' => 'namecheap',
+                            'registrar' => $domainData['registrar'] ?? 'Namecheap',
+                            'owner_id' => $domainData['owner_id'] ?? 1, // Use from API or default
+                            'years' => $years,
+                            'auth_code' => $domainData['auth_code'] ?? null,
+                            'is_premium' => $domainData['is_premium'] ?? false,
+                            'domain_price_id' => $this->getOrCreateDomainPrice($domainData),
+                        ]
+                    );
+                    $count++;
+                }
+                $totalFetched += $count;
+                $page++;
+            } while (count($result['domains']) === $perPage);
 
-                // Ensure uuid is present
-                $uuid = $domainData['uuid'] ?? Str::uuid()->toString();
-
-                Domain::updateOrCreate(
-                    ['uuid' => $uuid],
-                    [
-                        'name' => $domainData['name'],
-                        'registered_at' => $registeredAt,
-                        'expires_at' => $expiresAt,
-                        'status' => $domainData['status'] ?? 'active',
-                        'auto_renew' => $domainData['auto_renew'] ?? false,
-                        'is_locked' => $domainData['locked'] ?? false,
-                        'provider' => 'namecheap',
-                        'registrar' => $domainData['registrar'] ?? 'Namecheap',
-                        'owner_id' => $domainData['owner_id'] ?? 1, // Use from API or default
-                        'years' => $years,
-                        'auth_code' => $domainData['auth_code'] ?? null,
-                        'is_premium' => $domainData['is_premium'] ?? false,
-                        'domain_price_id' => $this->getOrCreateDomainPrice($domainData),
-                    ]
-                );
-                $count++;
-            }
-            Log::info("Fetched and upserted $count domains from Namecheap.");
+            Log::info("Fetched and upserted $totalFetched domains from Namecheap.");
         } catch (Exception $exception) {
-            Log::error('Error fetching or saving domains: '.$exception->getMessage(), [
+            Log::error('Error fetching or saving domains: ' . $exception->getMessage(), [
                 'exception' => $exception,
             ]);
         }
@@ -82,26 +90,9 @@ final class FetchDomainsJob implements ShouldQueue
      */
     private function getOrCreateDomainPrice(array $domainData): int
     {
-        // Extract TLD from domain name
+
         $domainParts = explode('.', $domainData['name']);
         end($domainParts);
-
-        // You might want to create a DomainPrice model and handle this properly
-        // For now, returning a default ID - you should implement this based on your domain_prices table
-        // Example:
-        /*
-        $domainPrice = DomainPrice::firstOrCreate(
-            ['tld' => $tld, 'provider' => 'namecheap'],
-            [
-                'registration_price' => $domainData['price'] ?? 0,
-                'renewal_price' => $domainData['renewal_price'] ?? 0,
-                'years' => 1,
-            ]
-        );
-        return $domainPrice->id;
-        */
-
-        // Temporary fallback - you should replace this with actual logic
-        return 1; // Make sure this ID exists in your domain_prices table
+        return 1;
     }
 }

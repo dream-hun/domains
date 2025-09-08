@@ -20,10 +20,10 @@
                         <td>1.</td>
                         <td>{{$domain->name}}</td>
                         <td>
-                            {{ $domain->registered_at }}
+                            {{ $domain->registeredAt() }}
                         </td>
                         <td>
-                            {{ $domain->expires_at }}
+                            {{ $domain->expiresAt() }}
                         </td>
                         <td>
                             <a href="{{ route('admin.domains.edit',$domain->uuid) }}" class="btn btn-info">Manage Domain</a>

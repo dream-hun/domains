@@ -24,13 +24,14 @@ use App\Models\Domain;
 use App\Models\DomainPrice;
 use Exception;
 use Gate;
+use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 
 final class DomainController extends Controller
 {
-    public function index(ListDomainAction $action): \Illuminate\Contracts\View\View|\Illuminate\Contracts\View\Factory
+    public function index(ListDomainAction $action): View|Factory
     {
         abort_if(Gate::denies('domain_access'), 403);
         $domains = $action->handle();
