@@ -190,30 +190,16 @@
 
                                 <div class="form-group mb-3">
                                     <label for="country_code" class="form-label">Country</label>
-                                    <select class="form-control @error('country_code') is-invalid @enderror"
-                                        id="country_code" name="country_code" required>
-                                        <option value="">Select Country</option>
-                                        @if (isset($countries))
-                                            @foreach ($countries as $code => $name)
-                                                <option value="{{ $code }}"
-                                                    {{ old('country_code', $currentContact->country_code ?? '') == $code ? 'selected' : '' }}>
-                                                    {{ $name }}
-                                                </option>
-                                            @endforeach
-                                        @else
-                                            <option value="RW"
-                                                {{ old('country_code', $currentContact->country_code ?? '') == 'RW' ? 'selected' : '' }}>
-                                                Rwanda</option>
-                                            <option value="US"
-                                                {{ old('country_code', $currentContact->country_code ?? '') == 'US' ? 'selected' : '' }}>
-                                                United States</option>
-                                            <option value="GB"
-                                                {{ old('country_code', $currentContact->country_code ?? '') == 'GB' ? 'selected' : '' }}>
-                                                United Kingdom</option>
-                                            <option value="CA"
-                                                {{ old('country_code', $currentContact->country_code ?? '') == 'CA' ? 'selected' : '' }}>
-                                                Canada</option>
-                                        @endif
+                                    <select name="country_code"
+                                        class="form-control @error('country_code') is-invalid @enderror" required>
+                                        <option value="">Select a country</option>
+                                        @foreach ($countries as $country)
+                                            @php $code = \Illuminate\Support\Str::substr($country->iso_code, 0, -1); @endphp
+                                            <option value="{{ $code }}"
+                                                {{ old('country_code', $currentContact->country_code ?? '') == $code ? 'selected' : '' }}>
+                                                {{ $country->name }} ({{ $code }})
+                                            </option>
+                                        @endforeach
                                     </select>
                                     @error('country_code')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -466,7 +452,7 @@
                         document.getElementById('country_code').value = selectedOption.getAttribute(
                             'data-country-code') || '';
                         document.getElementById('email').value = selectedOption.getAttribute('data-email') ||
-                        '';
+                            '';
 
                         // Handle phone number
                         const phone = selectedOption.getAttribute('data-phone') || '';

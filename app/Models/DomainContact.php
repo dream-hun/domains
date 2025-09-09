@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class DomainContact extends Model
 {
+    public $timestamps = false;
+
     protected $guarded = [];
 
     public function contact(): BelongsTo

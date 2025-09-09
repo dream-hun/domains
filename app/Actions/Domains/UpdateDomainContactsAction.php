@@ -9,6 +9,7 @@ use App\Models\Domain;
 use App\Services\Domain\DomainServiceInterface;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 final readonly class UpdateDomainContactsAction
 {
@@ -52,16 +53,86 @@ final readonly class UpdateDomainContactsAction
         // Get current domain contacts
         $currentContacts = $this->getCurrentDomainContacts($domain);
 
+        // Map the provided contact_type to our canonical keys if needed
+        if ($contactType === 'tech') {
+            $contactType = 'technical';
+        } elseif ($contactType === 'auxbilling') {
+            $contactType = 'billing';
+        }
+
         // Update the specific contact type
         $currentContacts[$contactType] = ['contact_id' => $contact->id];
 
-        // Prepare contact info for domain service
-        $contactInfo = $this->prepareContactData($currentContacts);
+        // Honor checkboxes that indicate this contact should be used for other roles
+        if (! empty($contactData['use_for_registrant'])) {
+            $currentContacts['registrant'] = ['contact_id' => $contact->id];
+        }
+
+        if (! empty($contactData['use_for_admin'])) {
+            $currentContacts['admin'] = ['contact_id' => $contact->id];
+        }
+
+        if (! empty($contactData['use_for_technical'])) {
+            $currentContacts['technical'] = ['contact_id' => $contact->id];
+        }
+
+        // Build a final mapping for required roles ensuring registrant/admin/technical/billing exist
+        $requiredRoles = ['registrant', 'admin', 'technical', 'billing'];
+        $finalContacts = $currentContacts; // start from existing/current mapping
+
+        foreach ($requiredRoles as $role) {
+            if (isset($finalContacts[$role])) {
+                continue;
+            }
+
+            // If the user explicitly checked to use this newly created contact for the role, assign it
+            if ($role === 'registrant' && ! empty($contactData['use_for_registrant'])) {
+                $finalContacts[$role] = ['contact_id' => $contact->id];
+
+                continue;
+            }
+
+            if ($role === 'admin' && ! empty($contactData['use_for_admin'])) {
+                $finalContacts[$role] = ['contact_id' => $contact->id];
+
+                continue;
+            }
+
+            if ($role === 'technical' && ! empty($contactData['use_for_technical'])) {
+                $finalContacts[$role] = ['contact_id' => $contact->id];
+
+                continue;
+            }
+
+            // If the contact_type directly matches this role, assign it
+            if ($contactType === $role) {
+                $finalContacts[$role] = ['contact_id' => $contact->id];
+
+                continue;
+            }
+        }
+
+        // Prepare contact info for domain service using the completed mapping
+        $contactInfo = $this->prepareContactData($finalContacts);
 
         $result = $this->domainService->updateDomainContacts($domain->name, $contactInfo);
 
         if ($result['success']) {
-            $this->syncLocalContacts($domain, $currentContacts);
+            // Only sync the specific contact type that was updated
+            $contactsToSync = [$contactType => ['contact_id' => $contact->id]];
+
+            // Add additional types if checkboxes were checked
+            if (! empty($contactData['use_for_registrant']) && $contactType !== 'registrant') {
+                $contactsToSync['registrant'] = ['contact_id' => $contact->id];
+            }
+            if (! empty($contactData['use_for_admin']) && $contactType !== 'admin') {
+                $contactsToSync['admin'] = ['contact_id' => $contact->id];
+            }
+            if (! empty($contactData['use_for_technical']) && $contactType !== 'technical') {
+                $contactsToSync['technical'] = ['contact_id' => $contact->id];
+            }
+
+            $this->syncLocalContacts($domain, $contactsToSync);
         }
 
         return $result;
@@ -129,8 +200,8 @@ final readonly class UpdateDomainContactsAction
         if ($contact) {
             $contact->update($contactData);
         } else {
-            $contactData['uuid'] = (string) \Illuminate\Support\Str::uuid();
-            $contactData['contact_id'] = 'NC'.mb_strtoupper(\Illuminate\Support\Str::random(8));
+            $contactData['uuid'] = (string) Str::uuid();
+            $contactData['contact_id'] = 'NC'.mb_strtoupper(Str::random(8));
             $contactData['contact_type'] = $data['contact_type'];
             $contact = Contact::create($contactData);
         }
@@ -149,7 +220,7 @@ final readonly class UpdateDomainContactsAction
         // Remove leading + from country code if present
         $countryCode = mb_ltrim($countryCode, '+');
 
-        return "+{$countryCode}.{$number}";
+        return "+$countryCode.$number";
     }
 
     /**
@@ -165,29 +236,61 @@ final readonly class UpdateDomainContactsAction
         }]);
 
         foreach ($domain->contacts as $contact) {
+            // Normalize pivot types to our canonical keys
             $type = $contact->pivot->type;
-            $currentContacts[$type] = ['contact_id' => $contact->id];
+            if ($type === 'tech') {
+                $typeKey = 'technical';
+            } elseif ($type === 'auxbilling') {
+                $typeKey = 'billing';
+            } else {
+                $typeKey = $type;
+            }
+
+            // Only set known allowed keys
+            if (in_array($typeKey, ['registrant', 'admin', 'technical', 'billing'], true)) {
+                $currentContacts[$typeKey] = ['contact_id' => $contact->id];
+            }
         }
 
         return $currentContacts;
     }
 
     /**
-     * Sync local contact relationships
+     * Sync local contact relationships - only update specific contact types
      */
     private function syncLocalContacts(Domain $domain, array $contactIds): void
     {
-        $syncData = [];
-        foreach (['registrant', 'admin', 'technical', 'billing'] as $type) {
-            if (isset($contactIds[$type]['contact_id'])) {
-                $syncData[$contactIds[$type]['contact_id']] = [
-                    'type' => $type,
-                    'user_id' => auth()->id(),
-                ];
+        $allowedTypes = ['registrant', 'admin', 'technical', 'billing'];
+
+        // Normalize desired mapping: type => contact_id
+        $desired = [];
+        foreach ($allowedTypes as $type) {
+            if (! isset($contactIds[$type])) {
+                continue;
+            }
+
+            if (is_array($contactIds[$type]) && isset($contactIds[$type]['contact_id'])) {
+                $desired[$type] = (int) $contactIds[$type]['contact_id'];
+            } elseif (is_int($contactIds[$type]) || ctype_digit((string) $contactIds[$type])) {
+                $desired[$type] = (int) $contactIds[$type];
             }
         }
 
-        $domain->contacts()->sync($syncData);
+        // Use DomainContact model directly to avoid sync() issues
+        foreach ($desired as $type => $newContactId) {
+            // Remove existing contact for this specific type
+            \App\Models\DomainContact::where('domain_id', $domain->id)
+                ->where('type', $type)
+                ->delete();
+
+            // Create new contact relationship for this type
+            \App\Models\DomainContact::create([
+                'domain_id' => $domain->id,
+                'contact_id' => $newContactId,
+                'type' => $type,
+                'user_id' => auth()->id(),
+            ]);
+        }
     }
 
     /**
@@ -197,24 +300,55 @@ final readonly class UpdateDomainContactsAction
     {
         $contactInfo = [];
 
-        foreach (['registrant', 'admin', 'technical', 'billing'] as $type) {
-            if (isset($contactIds[$type]['contact_id'])) {
-                $contact = Contact::findOrFail($contactIds[$type]['contact_id']);
+        $required = ['registrant', 'admin', 'technical', 'billing'];
 
-                $contactInfo[$type] = [
-                    'first_name' => $contact->first_name,
-                    'last_name' => $contact->last_name,
-                    'organization' => $contact->organization,
-                    'email' => $contact->email,
-                    'phone' => $contact->phone,
-                    'address_one' => $contact->address_one,
-                    'address_two' => $contact->address_two,
-                    'city' => $contact->city,
-                    'state_province' => $contact->state_province,
-                    'postal_code' => $contact->postal_code,
-                    'country_code' => $contact->country_code,
-                ];
+        // Build a map of available contact_ids from the provided array
+        $available = [];
+        foreach ($contactIds as $key => $val) {
+            if (is_array($val) && isset($val['contact_id'])) {
+                $available[$key] = (int) $val['contact_id'];
+            } elseif (is_int($val) || ctype_digit((string) $val)) {
+                $available[$key] = (int) $val;
             }
+        }
+
+        // If any required role is missing from the provided mapping, try to fallback to an available contact.
+        // Prefer to use existing registrant -> admin -> technical -> billing ordering for fallbacks.
+        foreach ($required as $role) {
+            $contactId = $available[$role] ?? null;
+
+            if ($contactId === null) {
+                // Find fallback from other available contacts
+                $fallback = null;
+                foreach (['registrant', 'admin', 'technical', 'billing'] as $prefer) {
+                    if (isset($available[$prefer])) {
+                        $fallback = $available[$prefer];
+                        break;
+                    }
+                }
+                $contactId = $fallback;
+            }
+
+            if ($contactId === null) {
+                // no contact available to fill this role; skip (domain service will error if required)
+                continue;
+            }
+
+            $contact = Contact::findOrFail($contactId);
+
+            $contactInfo[$role] = [
+                'first_name' => $contact->first_name,
+                'last_name' => $contact->last_name,
+                'organization' => $contact->organization,
+                'email' => $contact->email,
+                'phone' => $contact->phone,
+                'address_one' => $contact->address_one,
+                'address_two' => $contact->address_two,
+                'city' => $contact->city,
+                'state_province' => $contact->state_province,
+                'postal_code' => $contact->postal_code,
+                'country_code' => $contact->country_code,
+            ];
         }
 
         return $contactInfo;

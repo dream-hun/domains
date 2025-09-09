@@ -39,6 +39,8 @@ final class FetchDomainsJob implements ShouldQueue
                     break;
                 }
 
+                $totalItems = (int) ($result['total'] ?? 0);
+
                 $count = 0;
                 foreach ($result['domains'] as $domainData) {
                     $registeredAt = isset($domainData['created_date'])
@@ -50,21 +52,54 @@ final class FetchDomainsJob implements ShouldQueue
                         : now()->addYear();
 
                     $years = $registeredAt->diffInYears($expiresAt) ?: 1;
-                    $uuid = $domainData['uuid'] ?? Str::uuid()->toString();
-                    $status = isset($domainData['status']) ? strtolower(trim($domainData['status'])) : 'active';
+                    $name = $domainData['name'] ?? '';
+
+                    // Normalize status coming from registrar
+                    $rawStatus = isset($domainData['status']) ? (string) $domainData['status'] : '';
+                    $status = $this->mapRegistrarStatus($rawStatus);
+
+                    // Prefer lock status from the API detailed endpoint when possible
+                    $isLocked = $domainData['locked'] ?? false;
+                    try {
+                        $lockResult = $this->domainService->getDomainLock($name);
+                        if (!empty($lockResult['success']) && array_key_exists('locked', $lockResult)) {
+                            $isLocked = (bool) $lockResult['locked'];
+                        }
+                    } catch (Exception $e) {
+                        Log::warning('Failed to fetch lock status for domain', ['domain' => $name, 'error' => $e->getMessage()]);
+                    }
+
+                    // Optional: toggle lock state on the registrar if configured.
+                    // Set 'toggle_locks' => true under services.namecheap in config/services.php to enable.
+                    try {
+                        $shouldToggle = config('services.namecheap.toggle_locks', false);
+                        if ($shouldToggle) {
+                            $newLockState = ! $isLocked; // flip
+                            $toggleResult = $this->domainService->setDomainLock($name, $newLockState);
+                            if (!empty($toggleResult['success'])) {
+                                Log::info('Toggled lock state for domain', ['domain' => $name, 'locked' => $newLockState]);
+                                $isLocked = (bool) $newLockState;
+                            } else {
+                                Log::warning('Failed to toggle lock state for domain', ['domain' => $name, 'result' => $toggleResult]);
+                            }
+                        }
+                    } catch (Exception $e) {
+                        Log::warning('Error while attempting to toggle domain lock', ['domain' => $name, 'error' => $e->getMessage()]);
+                    }
 
                     Domain::query()->withoutGlobalScope(DomainScope::class)->updateOrCreate(
-                        ['uuid' => $uuid],
+                        ['name' => $name],
                         [
-                            'name' => $domainData['name'],
+                            'uuid' => $domainData['uuid'] ?? \Illuminate\Support\Str::uuid()->toString(),
+                            'name' => $name,
                             'registered_at' => $registeredAt,
                             'expires_at' => $expiresAt,
                             'status' => $status,
                             'auto_renew' => $domainData['auto_renew'] ?? false,
-                            'is_locked' => $domainData['locked'] ?? false,
+                            'is_locked' => $isLocked,
                             'provider' => 'namecheap',
                             'registrar' => $domainData['registrar'] ?? 'Namecheap',
-                            'owner_id' => $domainData['owner_id'] ?? 1, // Use from API or default
+                            'owner_id' => $domainData['owner_id'] ?? 1,
                             'years' => $years,
                             'auth_code' => $domainData['auth_code'] ?? null,
                             'is_premium' => $domainData['is_premium'] ?? false,
@@ -75,7 +110,13 @@ final class FetchDomainsJob implements ShouldQueue
                 }
                 $totalFetched += $count;
                 $page++;
-            } while (count($result['domains']) === $perPage);
+
+                // Stop if we've fetched all reported items
+                if ($totalItems > 0 && $totalFetched >= $totalItems) {
+                    break;
+                }
+
+            } while (count($result['domains']) > 0);
 
             Log::info("Fetched and upserted $totalFetched domains from Namecheap.");
         } catch (Exception $exception) {
@@ -83,6 +124,40 @@ final class FetchDomainsJob implements ShouldQueue
                 'exception' => $exception,
             ]);
         }
+    }
+
+    /**
+     * Map registrar status to internal normalized status
+     */
+    private function mapRegistrarStatus(string $rawStatus): string
+    {
+        $s = mb_strtolower(trim($rawStatus));
+        if ($s === '') {
+            return 'active';
+        }
+
+        // Common Namecheap/Registrar statuses mapping
+        if (str_contains($s, 'active') || str_contains($s, 'ok')) {
+            return 'active';
+        }
+
+        if (str_contains($s, 'expired')) {
+            return 'expired';
+        }
+
+        if (str_contains($s, 'redemption') || str_contains($s, 'redemptionperiod')) {
+            return 'redemption';
+        }
+
+        if (str_contains($s, 'pending') || str_contains($s, 'pendingdelete') || str_contains($s, 'pendingtransfer')) {
+            return 'pending';
+        }
+
+        if (str_contains($s, 'clienthold') || str_contains($s, 'serverhold')) {
+            return 'on_hold';
+        }
+
+        return $s;
     }
 
     /**

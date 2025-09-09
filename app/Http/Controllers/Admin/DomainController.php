@@ -128,34 +128,25 @@ final class DomainController extends Controller
     public function edit(Domain $domain): View
     {
         abort_if(Gate::denies('domain_edit'), 403);
-        $countries = Country::pluck('name', 'iso_code');
-
-        // Load domain with all its relationships
+        $countries = Country::select('name', 'iso_code')->get();
         $domain->load(['owner', 'nameservers']);
-
-        // Load contacts with pivot data, without global scopes to get all domain contacts
         $domain->load(['contacts' => function ($query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
-
-        // Get available contacts - include user's own contacts and domain-specific contacts
         $user = auth()->user();
         if ($user->isAdmin()) {
-            // Admins can see all contacts
             $availableContacts = Contact::withoutGlobalScopes()->get();
         } else {
-            // Regular users can see their own contacts and contacts attached to their domains
             $availableContacts = Contact::withoutGlobalScopes()
                 ->where(function ($query) use ($user, $domain) {
                     $query->where('user_id', $user->id)
                         ->orWhereHas('domains', function ($q) use ($domain) {
                             $q->where('domains.id', $domain->id);
                         })
-                        ->orWhereNull('user_id'); // Include contacts with no specific owner
+                        ->orWhereNull('user_id');
                 })->get();
         }
 
-        // Map contact types - handle the actual types from your database
         $contactsByType = [
             'registrant' => null,
             'admin' => null,
@@ -196,8 +187,6 @@ final class DomainController extends Controller
     public function toggleLock(Domain $domain, ToggleDomainLockAction $action): RedirectResponse
     {
         abort_if(Gate::denies('domain_edit'), 403);
-
-        // Toggle the current lock status
         $lock = ! $domain->is_locked;
         $result = $action->execute($domain, $lock);
 
@@ -208,37 +197,17 @@ final class DomainController extends Controller
         return redirect()->back()->withErrors(['error' => $result['message'] ?? 'Failed to update domain lock status']);
     }
 
-    public function refreshDomainInfo(Domain $domain, GetDomainInfoAction $action): RedirectResponse
-    {
-        abort_if(Gate::denies('domain_show') || $domain->owner_id !== auth()->id(), 403);
-
-        $result = $action->handle($domain);
-
-        if ($result['success']) {
-            return redirect()->back()
-                ->with('success', 'Domain information updated successfully');
-        }
-
-        return redirect()->back()
-            ->withErrors(['error' => $result['message'] ?? 'Failed to update domain information']);
-    }
 
     public function editContact(Domain $domain, string $type): View
     {
         abort_if(Gate::denies('domain_edit'), 403);
-
-        // Validate contact type
         $validTypes = ['registrant', 'admin', 'technical', 'billing'];
         if (! in_array($type, $validTypes)) {
             abort(404, 'Invalid contact type');
         }
-
-        // Load domain with contacts
         $domain->load(['contacts' => function ($query) {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
-
-        // Get available contacts
         $user = auth()->user();
         if ($user->isAdmin()) {
             $availableContacts = Contact::withoutGlobalScopes()->get();
@@ -252,12 +221,9 @@ final class DomainController extends Controller
                         ->orWhereNull('user_id');
                 })->get();
         }
-
-        // Get current contact for this type
         $currentContact = null;
         foreach ($domain->contacts as $contact) {
             $contactType = $contact->pivot->type;
-            // Handle type mapping
             if ($contactType === $type ||
                 ($type === 'technical' && $contactType === 'tech') ||
                 ($type === 'billing' && $contactType === 'auxbilling')) {
@@ -266,7 +232,7 @@ final class DomainController extends Controller
             }
         }
 
-        $countries = Country::pluck('name', 'iso_code');
+        $countries = Country::select('name', 'iso_code')->get();
 
         return view('admin.domains.contacts.edit', [
             'domain' => $domain,
