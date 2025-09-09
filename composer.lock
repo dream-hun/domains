@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c408287a5a832ea6574696f1b60d174b",
+    "content-hash": "79287ea09a6757c7b3a56bb9bb475c3b",
     "packages": [
         {
             "name": "africc/php-epp2",
@@ -7123,16 +7123,16 @@
         },
         {
             "name": "laravel/boost",
-            "version": "v1.0.20",
+            "version": "v1.1.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/boost.git",
-                "reference": "c2ac67ce42c39ffe6c3c073c9202d54a96eaa5b5"
+                "reference": "70f909465bf73dad7e791fad8b7716b3b2712076"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/boost/zipball/c2ac67ce42c39ffe6c3c073c9202d54a96eaa5b5",
-                "reference": "c2ac67ce42c39ffe6c3c073c9202d54a96eaa5b5",
+                "url": "https://api.github.com/repos/laravel/boost/zipball/70f909465bf73dad7e791fad8b7716b3b2712076",
+                "reference": "70f909465bf73dad7e791fad8b7716b3b2712076",
                 "shasum": ""
             },
             "require": {
@@ -7143,7 +7143,7 @@
                 "illuminate/support": "^10.0|^11.0|^12.0",
                 "laravel/mcp": "^0.1.1",
                 "laravel/prompts": "^0.1.9|^0.3",
-                "laravel/roster": "^0.2.4",
+                "laravel/roster": "^0.2.5",
                 "php": "^8.1"
             },
             "require-dev": {
@@ -7184,7 +7184,7 @@
                 "issues": "https://github.com/laravel/boost/issues",
                 "source": "https://github.com/laravel/boost"
             },
-            "time": "2025-08-28T14:46:17+00:00"
+            "time": "2025-09-04T12:16:09+00:00"
         },
         {
             "name": "laravel/mcp",

@@ -11,7 +11,7 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.domains.index') }}">Domains</a></li>
-                        <li class="breadcrumb-item active">{{$domain->name}}</li>
+                        <li class="breadcrumb-item active">{{ $domain->name }}</li>
                     </ol>
                 </div>
             </div>
@@ -24,42 +24,43 @@
                     <div class="card-body">
                         <table class="table table-bordered-0 table-sm">
                             <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Status</th>
-                                <th>Auto Renew</th>
-                                <th>Expire At</th>
-                                <th>Action</th>
-                            </tr>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Auto Renew</th>
+                                    <th>Expire At</th>
+                                    <th>Action</th>
+                                </tr>
                             </thead>
                             <tbody>
-                            <tr>
-                                <td style="width: 25%;">{{ $domain->name }}</td>
-                                <td>
-                                    <button
-                                        class="btn btn-sm btn-{{ $domain->status === 'active' ? 'success' : 'warning' }}">
-                                        <i class="bi bi-check-circle"></i> {{ ucfirst($domain->status) }}
-                                    </button>
-                                </td>
-                                <td style="width: 25%;">
-                                    @if($domain->auto_renew)
-                                        <button class="btn btn-sm btn-success">Enabled</button>
-                                    @else
-                                        <button class="btn btn-sm btn-secondary">Disabled</button>
-                                    @endif
-                                </td>
-                                <td style="width: 25%;">{{ $domain->expires_at->format('M d, Y') }}</td>
-                                <td>
-                                    <form action="{{ route('admin.domain.fetchContacts',$domain->uuid) }}" method="Post" style="display: inline-block;">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-primary">
-                                            <i class="bi bi-arrow-clockwise"></i> Fetch Contacts
+                                <tr>
+                                    <td style="width: 25%;">{{ $domain->name }}</td>
+                                    <td>
+                                        <button
+                                            class="btn btn-sm btn-{{ $domain->status === 'active' ? 'success' : 'warning' }}">
+                                            <i class="bi bi-check-circle"></i> {{ ucfirst($domain->status) }}
                                         </button>
+                                    </td>
+                                    <td style="width: 25%;">
+                                        @if ($domain->auto_renew)
+                                            <button class="btn btn-sm btn-success">Enabled</button>
+                                        @else
+                                            <button class="btn btn-sm btn-secondary">Disabled</button>
+                                        @endif
+                                    </td>
+                                    <td style="width: 25%;">{{ $domain->expires_at->format('M d, Y') }}</td>
+                                    <td>
+                                        <form action="{{ route('admin.domain.fetchContacts', $domain->uuid) }}"
+                                            method="Post" style="display: inline-block;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-arrow-clockwise"></i> Fetch Contacts
+                                            </button>
 
-                                    </form>
-                                </td>
+                                        </form>
+                                    </td>
 
-                            </tr>
+                                </tr>
                             </tbody>
 
                         </table>
@@ -69,16 +70,17 @@
             <div class="col-md-12 row">
                 <div class="col-md-6">
                     <form class="card" action="{{ route('admin.domains.nameservers.update', $domain->uuid) }}"
-                          method="POST"
-                          id="nameservers-form">
+                        method="POST" id="nameservers-form">
                         @csrf
                         @method('PUT')
-                        <div class="card-header"><h6>Nameserver management</h6></div>
+                        <div class="card-header">
+                            <h6>Nameserver management</h6>
+                        </div>
                         <div class="card-body">
-                            @if($errors->any())
+                            @if ($errors->any())
                                 <div class="alert alert-danger">
                                     <ul class="mb-0">
-                                        @foreach($errors->all() as $error)
+                                        @foreach ($errors->all() as $error)
                                             <li>{{ $error }}</li>
                                         @endforeach
                                     </ul>
@@ -99,13 +101,12 @@
                                                 <span class="input-group-text">NS1</span>
                                             </div>
                                             <input type="text"
-                                                   class="form-control @error('nameservers.0') is-invalid @enderror"
-                                                   name="nameservers[]"
-                                                   value="{{ old('nameservers.0', $domain->nameservers[0]->name ?? '') }}"
-                                                   placeholder="ns1.example.com"
-                                                   required>
+                                                class="form-control @error('nameservers.0') is-invalid @enderror"
+                                                name="nameservers[]"
+                                                value="{{ old('nameservers.0', $domain->nameservers[0]->name ?? '') }}"
+                                                placeholder="ns1.example.com" required>
                                             @error('nameservers.0')
-                                            <div class="invalid-feedback">{{ $message }}</div>
+                                                <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
                                     </div>
@@ -117,13 +118,12 @@
                                                 <span class="input-group-text">NS2</span>
                                             </div>
                                             <input type="text"
-                                                   class="form-control @error('nameservers.1') is-invalid @enderror"
-                                                   name="nameservers[]"
-                                                   value="{{ old('nameservers.1', $domain->nameservers[1]->name ?? '') }}"
-                                                   placeholder="ns2.example.com"
-                                                   required>
+                                                class="form-control @error('nameservers.1') is-invalid @enderror"
+                                                name="nameservers[]"
+                                                value="{{ old('nameservers.1', $domain->nameservers[1]->name ?? '') }}"
+                                                placeholder="ns2.example.com" required>
                                             @error('nameservers.1')
-                                            <div class="invalid-feedback">{{ $message }}</div>
+                                                <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
                                     </div>
@@ -153,24 +153,25 @@
                                 address below. This will send an email to the recipient with instructions on how to
                                 accept the domain transfer.
                             </p>
-                            <form method="POST" action="{{ route('admin.domains.transfer.store',$domain->uuid) }}">
+                            <form method="POST" action="{{ route('admin.domains.transfer.store', $domain->uuid) }}">
                                 @csrf
                                 <div class="form-group">
                                     <label for="auth_code">Enter Email Account <span
                                             class="text-danger">*</span></label>
                                     <input type="email" class="form-control @error('email') is-invalid @enderror"
-                                           id="email" name="email" value="{{ old('email') }}"
-                                           placeholder="Enter email" required>
+                                        id="email" name="email" value="{{ old('email') }}"
+                                        placeholder="Enter email" required>
 
                                     @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </form>
                         </div>
                         <div class="card-footer">
-                            <a href="{{ route('admin.domains.transfer.store',$domain->uuid) }}"
-                               onclick="event.preventDefault(); this.closest('form').submit();" class="btn btn-primary">
+                            <a href="{{ route('admin.domains.transfer.store', $domain->uuid) }}"
+                                onclick="event.preventDefault(); this.closest('form').submit();"
+                                class="btn btn-primary">
                                 <i class="bi bi-send-check"></i> Change ownership
                             </a>
                             <a href="{{ route('admin.domains.index') }}" class="btn btn-secondary float-right">
@@ -183,17 +184,18 @@
             </div>
             <div class="col-md-12 row">
                 <div class="col-md-6">
-                    <form class="card" action="{{ route('admin.domains.contacts.update', $domain->uuid) }}" method="POST">
+                    <form class="card" action="{{ route('admin.domains.contacts.update', $domain->uuid) }}"
+                        method="POST">
                         @csrf
                         @method('PUT')
                         <div class="card-header">
                             <h6>Domain Contact Management</h6>
                         </div>
                         <div class="card-body">
-                            @if($errors->any())
+                            @if ($errors->any())
                                 <div class="alert alert-danger">
                                     <ul class="mb-0">
-                                        @foreach($errors->all() as $error)
+                                        @foreach ($errors->all() as $error)
                                             <li>{{ $error }}</li>
                                         @endforeach
                                     </ul>
@@ -203,69 +205,81 @@
                             <div class="row">
                                 <!-- Registrant Contact -->
                                 <div class="col-md-6 mb-3">
-                                    <label for="registrant_contact" class="form-label">Registrant Contact <span class="text-danger">*</span></label>
-                                    <select name="registrant[contact_id]" id="registrant_contact" class="form-control @error('registrant.contact_id') is-invalid @enderror" required>
+                                    <label for="registrant_contact" class="form-label">Registrant Contact <span
+                                            class="text-danger">*</span></label>
+                                    <select name="registrant[contact_id]" id="registrant_contact"
+                                        class="form-control @error('registrant.contact_id') is-invalid @enderror"
+                                        required>
                                         <option value="">Select Registrant Contact</option>
-                                        @foreach($availableContacts as $contact)
+                                        @foreach ($availableContacts as $contact)
                                             <option value="{{ $contact->id }}"
-                                                {{ (old('registrant.contact_id') == $contact->id || $contactsByType['registrant']?->id == $contact->id) ? 'selected' : '' }}>
+                                                {{ old('registrant.contact_id') == $contact->id || $contactsByType['registrant']?->id == $contact->id ? 'selected' : '' }}>
                                                 {{ $contact->full_name }} ({{ $contact->email }})
                                             </option>
                                         @endforeach
                                     </select>
                                     @error('registrant.contact_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <!-- Admin Contact -->
                                 <div class="col-md-6 mb-3">
-                                    <label for="admin_contact" class="form-label">Admin Contact <span class="text-danger">*</span></label>
-                                    <select name="admin[contact_id]" id="admin_contact" class="form-control @error('admin.contact_id') is-invalid @enderror" required>
+                                    <label for="admin_contact" class="form-label">Admin Contact <span
+                                            class="text-danger">*</span></label>
+                                    <select name="admin[contact_id]" id="admin_contact"
+                                        class="form-control @error('admin.contact_id') is-invalid @enderror" required>
                                         <option value="">Select Admin Contact</option>
-                                        @foreach($availableContacts as $contact)
+                                        @foreach ($availableContacts as $contact)
                                             <option value="{{ $contact->id }}"
-                                                {{ (old('admin.contact_id') == $contact->id || $contactsByType['admin']?->id == $contact->id) ? 'selected' : '' }}>
+                                                {{ old('admin.contact_id') == $contact->id || $contactsByType['admin']?->id == $contact->id ? 'selected' : '' }}>
                                                 {{ $contact->full_name }} ({{ $contact->email }})
                                             </option>
                                         @endforeach
                                     </select>
                                     @error('admin.contact_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <!-- Technical Contact -->
                                 <div class="col-md-6 mb-3">
-                                    <label for="technical_contact" class="form-label">Technical Contact <span class="text-danger">*</span></label>
-                                    <select name="technical[contact_id]" id="technical_contact" class="form-control @error('technical.contact_id') is-invalid @enderror" required>
+                                    <label for="technical_contact" class="form-label">Technical Contact <span
+                                            class="text-danger">*</span></label>
+                                    <select name="technical[contact_id]" id="technical_contact"
+                                        class="form-control @error('technical.contact_id') is-invalid @enderror"
+                                        required>
                                         <option value="">Select Technical Contact</option>
-                                        @foreach($availableContacts as $contact)
+                                        @foreach ($availableContacts as $contact)
                                             <option value="{{ $contact->id }}"
-                                                {{ (old('technical.contact_id') == $contact->id || $contactsByType['tech']?->id == $contact->id) ? 'selected' : '' }}>
+                                                {{ old('technical.contact_id') == $contact->id || ($contactsByType['tech']?->id == $contact->id || $contactsByType['technical']?->id == $contact->id) ? 'selected' : '' }}>
                                                 {{ $contact->full_name }} ({{ $contact->email }})
                                             </option>
                                         @endforeach
                                     </select>
                                     @error('technical.contact_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <!-- Billing Contact -->
                                 <div class="col-md-6 mb-3">
-                                    <label for="billing_contact" class="form-label">Billing Contact <span class="text-danger">*</span></label>
-                                    <select name="billing[contact_id]" id="billing_contact" class="form-control @error('billing.contact_id') is-invalid @enderror" required>
+                                    <label for="billing_contact" class="form-label">Billing Contact <span
+                                            class="text-danger">*</span></label>
+                                    <select name="billing[contact_id]" id="billing_contact"
+                                        class="form-control @error('billing.contact_id') is-invalid @enderror"
+                                        required>
                                         <option value="">Select Billing Contact</option>
-                                        @foreach($availableContacts as $contact)
+                                        @foreach ($availableContacts as $contact)
                                             <option value="{{ $contact->id }}"
-                                                {{ (old('billing.contact_id') == $contact->id || $contactsByType['billing']?->id == $contact->id) ? 'selected' : '' }}>
-                                                {{ $contact->full_name }} ({{ $contact->email }})
+                                                {{ old('billing.contact_id') == $contact->id || ($contactsByType['billing']?->id == $contact->id || $contactsByType['auxbilling']?->id == $contact->id) ? 'selected' : '' }}>
+                                                {{ $contact->first_name }} {{ $contact->last_name }}
+                                                ({{ $contact->email }})
                                             </option>
                                         @endforeach
                                     </select>
                                     @error('billing.contact_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
@@ -298,18 +312,21 @@
                                 <div class="form-group col-6">
                                     <label for="lock">Domain Lock</label>
                                     <div>
-                                        @if($domain->is_locked)
-                                            <button class="btn btn-sm btn-success"><i class="bi bi-lock"></i> Locked</button>
+                                        @if ($domain->is_locked)
+                                            <button class="btn btn-sm btn-success"><i class="bi bi-lock"></i>
+                                                Locked</button>
                                         @else
-                                            <button class="btn btn-sm btn-danger"><i class="bi bi-unlock"></i> Unlocked</button>
+                                            <button class="btn btn-sm btn-danger"><i class="bi bi-unlock"></i>
+                                                Unlocked</button>
                                         @endif
                                     </div>
                                 </div>
-                                <form method="POST" action="{{ route('admin.domains.lock', $domain->uuid) }}" class="col-6 float-right mt-4" style="display: inline;">
+                                <form method="POST" action="{{ route('admin.domains.lock', $domain->uuid) }}"
+                                    class="col-6 float-right mt-4" style="display: inline;">
                                     @csrf
                                     @method('PUT')
                                     <div class="form-group">
-                                        @if($domain->is_locked)
+                                        @if ($domain->is_locked)
                                             <button type="submit" class="btn btn-danger">
                                                 <i class="bi bi-unlock"></i> Unlock Domain
                                             </button>
@@ -324,8 +341,7 @@
 
                         </div>
                         <div class="card-footer">
-                            <a href="{{--{{ route('admin.domains.authcode',$domain->uuid) }}--}}"
-                               class="btn btn-primary">
+                            <a href="{{-- {{ route('admin.domains.authcode',$domain->uuid) }} --}}" class="btn btn-primary">
                                 <i class="bi bi-key"></i> Get Auth Code
                             </a>
                         </div>

@@ -1,9 +1,9 @@
 {
     "mcpServers": {
         "laravel-boost": {
-            "command": "php",
+            "command": "/home/dreamchaser/.config/herd-lite/bin/php",
             "args": [
-                "artisan",
+                "/home/dreamchaser/Codes/project/artisan",
                 "boost:mcp"
             ]
         }

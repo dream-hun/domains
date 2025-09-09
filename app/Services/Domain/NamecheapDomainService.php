@@ -436,26 +436,51 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             $result = $xml->CommandResponse->DomainContactsResult;
             $contacts = [];
 
-            $contactTypes = ['Registrant', 'Admin', 'Tech', 'AuxBilling'];
+            // Map API contact types to our internal naming convention
+            $contactTypeMapping = [
+                'Registrant' => 'registrant',
+                'Admin' => 'admin',
+                'Tech' => 'tech',
+                'AuxBilling' => 'auxbilling',
+            ];
 
-            foreach ($contactTypes as $type) {
-                if (isset($result->{$type})) {
-                    $contact = $result->{$type};
-                    $contacts[mb_strtolower($type)] = [
-                        'first_name' => (string) ($contact->FirstName ?? ''),
-                        'last_name' => (string) ($contact->LastName ?? ''),
-                        'organization' => (string) ($contact->OrganizationName ?? ''),
-                        'address_one' => (string) ($contact->Address1 ?? ''),
-                        'address_two' => (string) ($contact->Address2 ?? ''),
-                        'city' => (string) ($contact->City ?? ''),
-                        'state_province' => (string) ($contact->StateProvince ?? ''),
-                        'postal_code' => (string) ($contact->PostalCode ?? ''),
-                        'country_code' => (string) ($contact->Country ?? ''),
-                        'phone' => (string) ($contact->Phone ?? ''),
-                        'email' => (string) ($contact->EmailAddress ?? ''),
+            foreach ($contactTypeMapping as $apiType => $internalType) {
+                if (isset($result->{$apiType})) {
+                    $contact = $result->{$apiType};
+
+                    // Normalize contact data structure
+                    $contacts[$internalType] = [
+                        'first_name' => mb_trim((string) ($contact->FirstName ?? '')),
+                        'last_name' => mb_trim((string) ($contact->LastName ?? '')),
+                        'organization' => mb_trim((string) ($contact->OrganizationName ?? '')),
+                        'address_one' => mb_trim((string) ($contact->Address1 ?? '')),
+                        'address_two' => mb_trim((string) ($contact->Address2 ?? '')),
+                        'city' => mb_trim((string) ($contact->City ?? '')),
+                        'state_province' => mb_trim((string) ($contact->StateProvince ?? '')),
+                        'postal_code' => mb_trim((string) ($contact->PostalCode ?? '')),
+                        'country_code' => mb_strtoupper(mb_trim((string) ($contact->Country ?? ''))),
+                        'phone' => mb_trim((string) ($contact->Phone ?? '')),
+                        'email' => mb_trim((string) ($contact->EmailAddress ?? '')),
                     ];
+
+                    Log::debug("Retrieved contact for type '{$internalType}'", [
+                        'domain' => $domain,
+                        'type' => $internalType,
+                        'email' => $contacts[$internalType]['email'],
+                        'name' => $contacts[$internalType]['first_name'].' '.$contacts[$internalType]['last_name'],
+                    ]);
                 }
             }
+
+            if (empty($contacts)) {
+                throw new Exception('No contact information found for domain');
+            }
+
+            Log::info('Successfully retrieved domain contacts', [
+                'domain' => $domain,
+                'contact_types' => array_keys($contacts),
+                'total_contacts' => count($contacts),
+            ]);
 
             return [
                 'success' => true,
@@ -464,6 +489,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             ];
 
         } catch (Exception $e) {
+            Log::error('Failed to get domain contacts from Namecheap', [
+                'domain' => $domain,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return [
                 'success' => false,
                 'message' => 'Failed to get domain contacts: '.$e->getMessage(),
@@ -836,7 +867,6 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
         $dbData = [
             'uuid' => (string) Str::uuid(),
             'contact_id' => $contactId,
-            'provider' => 'namecheap',
             'contact_type' => $contactData['contact_type'] ?? 'registrant',
             'first_name' => $contactData['first_name'] ?? $this->extractFirstName($contactData['name'] ?? ''),
             'last_name' => $contactData['last_name'] ?? $this->extractLastName($contactData['name'] ?? ''),

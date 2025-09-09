@@ -44,13 +44,11 @@ final class DomainController extends Controller
         abort_if(Gate::denies('domain_show'), 403);
 
         try {
-            // Get latest info from registrar
-            $registrarInfo = $action->handle($domain);
 
-            // Load relationships
+            $registrarInfo = $action->handle($domain);
             $domain->load(['nameservers']);
             $domain->load(['contacts' => function ($query): void {
-                $query->where('contacts.user_id', auth()->id());
+                $query->withPivot('type', 'user_id')->withoutGlobalScopes();
             }]);
 
             return view('admin.domains.domainInfo', [
@@ -131,28 +129,51 @@ final class DomainController extends Controller
     {
         abort_if(Gate::denies('domain_edit'), 403);
         $countries = Country::pluck('name', 'iso_code');
-        $domain->load('owner', 'contacts', 'nameservers');
-        $domainContactIds = $domain->contacts->pluck('id')->toArray();
-        $availableContacts = Contact::where('user_id', auth()->id())
-            ->where(function ($query) use ($domainContactIds): void {
-                $query->whereIn('id', $domainContactIds)
-                    ->orWhereHas('domains', function ($q): void {
-                        $q->whereRaw('domain_contacts.type = ?', ['registrant']);
-                    });
-            })->select('id', 'first_name', 'last_name', 'email', 'contact_id')
-            ->get();
-        $contactsByType = ['registrant' => null, 'admin' => null, 'tech' => null, 'billing' => null];
+
+        // Load domain with all its relationships
+        $domain->load(['owner', 'nameservers']);
+
+        // Load contacts with pivot data, without global scopes to get all domain contacts
+        $domain->load(['contacts' => function ($query): void {
+            $query->withPivot('type', 'user_id')->withoutGlobalScopes();
+        }]);
+
+        // Get available contacts - include user's own contacts and domain-specific contacts
+        $user = auth()->user();
+        if ($user->isAdmin()) {
+            // Admins can see all contacts
+            $availableContacts = Contact::withoutGlobalScopes()->get();
+        } else {
+            // Regular users can see their own contacts and contacts attached to their domains
+            $availableContacts = Contact::withoutGlobalScopes()
+                ->where(function ($query) use ($user, $domain) {
+                    $query->where('user_id', $user->id)
+                          ->orWhereHas('domains', function ($q) use ($domain) {
+                              $q->where('domains.id', $domain->id);
+                          })
+                          ->orWhereNull('user_id'); // Include contacts with no specific owner
+                })->get();
+        }
+
+        // Map contact types - handle the actual types from your database
+        $contactsByType = [
+            'registrant' => null,
+            'admin' => null,
+            'tech' => null,
+            'technical' => null,
+            'billing' => null,
+            'auxbilling' => null
+        ];
 
         foreach ($domain->contacts as $contact) {
             $contactType = $contact->pivot->type;
-            if (in_array($contactType, array_keys($contactsByType))) {
-                $contactsByType[$contactType] = $contact;
-                $contact->type = $contactType;
-            }
+            $contactsByType[$contactType] = $contact;
+            $contact->type = $contactType;
         }
 
         return view('admin.domains.nameservers', [
-            'domain' => $domain, 'countries' => $countries,
+            'domain' => $domain,
+            'countries' => $countries,
             'availableContacts' => $availableContacts,
             'contactsByType' => $contactsByType,
         ]);
