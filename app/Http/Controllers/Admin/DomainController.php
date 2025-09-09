@@ -148,10 +148,10 @@ final class DomainController extends Controller
             $availableContacts = Contact::withoutGlobalScopes()
                 ->where(function ($query) use ($user, $domain) {
                     $query->where('user_id', $user->id)
-                          ->orWhereHas('domains', function ($q) use ($domain) {
-                              $q->where('domains.id', $domain->id);
-                          })
-                          ->orWhereNull('user_id'); // Include contacts with no specific owner
+                        ->orWhereHas('domains', function ($q) use ($domain) {
+                            $q->where('domains.id', $domain->id);
+                        })
+                        ->orWhereNull('user_id'); // Include contacts with no specific owner
                 })->get();
         }
 
@@ -162,7 +162,7 @@ final class DomainController extends Controller
             'tech' => null,
             'technical' => null,
             'billing' => null,
-            'auxbilling' => null
+            'auxbilling' => null,
         ];
 
         foreach ($domain->contacts as $contact) {
@@ -223,6 +223,60 @@ final class DomainController extends Controller
             ->withErrors(['error' => $result['message'] ?? 'Failed to update domain information']);
     }
 
+    public function editContact(Domain $domain, string $type): View
+    {
+        abort_if(Gate::denies('domain_edit'), 403);
+
+        // Validate contact type
+        $validTypes = ['registrant', 'admin', 'technical', 'billing'];
+        if (! in_array($type, $validTypes)) {
+            abort(404, 'Invalid contact type');
+        }
+
+        // Load domain with contacts
+        $domain->load(['contacts' => function ($query) {
+            $query->withPivot('type', 'user_id')->withoutGlobalScopes();
+        }]);
+
+        // Get available contacts
+        $user = auth()->user();
+        if ($user->isAdmin()) {
+            $availableContacts = Contact::withoutGlobalScopes()->get();
+        } else {
+            $availableContacts = Contact::withoutGlobalScopes()
+                ->where(function ($query) use ($user, $domain) {
+                    $query->where('user_id', $user->id)
+                        ->orWhereHas('domains', function ($q) use ($domain) {
+                            $q->where('domains.id', $domain->id);
+                        })
+                        ->orWhereNull('user_id');
+                })->get();
+        }
+
+        // Get current contact for this type
+        $currentContact = null;
+        foreach ($domain->contacts as $contact) {
+            $contactType = $contact->pivot->type;
+            // Handle type mapping
+            if ($contactType === $type ||
+                ($type === 'technical' && $contactType === 'tech') ||
+                ($type === 'billing' && $contactType === 'auxbilling')) {
+                $currentContact = $contact;
+                break;
+            }
+        }
+
+        $countries = Country::pluck('name', 'iso_code');
+
+        return view('admin.domains.contacts.edit', [
+            'domain' => $domain,
+            'contactType' => $type,
+            'availableContacts' => $availableContacts,
+            'currentContact' => $currentContact,
+            'countries' => $countries,
+        ]);
+    }
+
     public function updateContacts(Domain $domain, UpdateDomainContactsRequest $request, UpdateDomainContactsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('domain_edit') || $domain->owner_id !== auth()->id(), 403);
@@ -230,7 +284,7 @@ final class DomainController extends Controller
         $result = $action->handle($domain, $request->validated());
 
         if ($result['success']) {
-            return redirect()->back()
+            return redirect()->route('admin.domains.edit', $domain->uuid)
                 ->with('success', 'Domain contacts updated successfully');
         }
 

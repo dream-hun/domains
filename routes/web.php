@@ -30,6 +30,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('domains', DomainController::class)->except(['show']);
     Route::get('domains/{domain:uuid}/info', [DomainOperationsController::class, 'domainInfo'])->name('domain.info');
     Route::post('/domains/{domain:uuid}/fetch-contacts', [DomainOperationsController::class, 'getContacts'])->name('domain.fetchContacts');
+    Route::get('domains/{domain:uuid}/contacts/{type}/edit', [DomainController::class, 'editContact'])->name('domains.contacts.edit');
     Route::put('domains/{domain:uuid}/contacts', [DomainController::class, 'updateContacts'])->name('domains.contacts.update');
     Route::put('domains/{domain:uuid}/lock', [DomainController::class, 'toggleLock'])->name('domains.lock');
     Route::get('domains/{domain:uuid}/transfer', [DomainController::class, 'showTransferForm'])->name('domains.transfer');
