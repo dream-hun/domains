@@ -98,7 +98,6 @@
                     </tbody>
                 </table>
             </div>
-            {{-- Pagination Controls --}}
             <div class="d-flex justify-content-center mt-3 float-right">
                 {{ $domains->links('vendor.pagination.adminlte') }}
             </div>

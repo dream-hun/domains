@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
- #[ScopedBy([DomainScope::class])]
+#[ScopedBy([DomainScope::class])]
 final class Domain extends Model
 {
     use HasFactory;
@@ -48,18 +48,20 @@ final class Domain extends Model
             'is_locked' => 'boolean',
         ];
     }
+
     public function registeredAt(): ?string
     {
         return $this->registered_at ? $this->registered_at->format('d-m-Y') : null;
 
     }
+
     public function expiresAt(): ?string
     {
         return $this->expires_at ? $this->expires_at->format('d-m-Y') : null;
     }
+
     public function lastRenewedAt(): ?string
     {
         return $this->last_renewed_at ? $this->last_renewed_at->format('d-m-Y') : null;
     }
-
 }

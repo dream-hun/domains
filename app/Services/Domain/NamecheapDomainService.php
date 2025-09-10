@@ -472,7 +472,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 }
             }
 
-            if (empty($contacts)) {
+            if ($contacts === []) {
                 throw new Exception('No contact information found for domain');
             }
 

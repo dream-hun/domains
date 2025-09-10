@@ -32,7 +32,7 @@ final class FetchDomainsJob implements ShouldQueue
             do {
                 $result = $this->domainService->getDomainList($page, $perPage);
                 \Log::debug('Namecheap getDomainList result', ['page' => $page, 'result' => $result]);
-                if (!($result['success'] ?? false) || empty($result['domains'])) {
+                if (! ($result['success'] ?? false) || empty($result['domains'])) {
                     if ($page === 1) {
                         Log::warning('No domains fetched from Namecheap.', ['result' => $result]);
                     }
@@ -62,7 +62,7 @@ final class FetchDomainsJob implements ShouldQueue
                     $isLocked = $domainData['locked'] ?? false;
                     try {
                         $lockResult = $this->domainService->getDomainLock($name);
-                        if (!empty($lockResult['success']) && array_key_exists('locked', $lockResult)) {
+                        if (! empty($lockResult['success']) && array_key_exists('locked', $lockResult)) {
                             $isLocked = (bool) $lockResult['locked'];
                         }
                     } catch (Exception $e) {
@@ -76,9 +76,9 @@ final class FetchDomainsJob implements ShouldQueue
                         if ($shouldToggle) {
                             $newLockState = ! $isLocked; // flip
                             $toggleResult = $this->domainService->setDomainLock($name, $newLockState);
-                            if (!empty($toggleResult['success'])) {
+                            if (! empty($toggleResult['success'])) {
                                 Log::info('Toggled lock state for domain', ['domain' => $name, 'locked' => $newLockState]);
-                                $isLocked = (bool) $newLockState;
+                                $isLocked = $newLockState;
                             } else {
                                 Log::warning('Failed to toggle lock state for domain', ['domain' => $name, 'result' => $toggleResult]);
                             }
@@ -90,7 +90,7 @@ final class FetchDomainsJob implements ShouldQueue
                     Domain::query()->withoutGlobalScope(DomainScope::class)->updateOrCreate(
                         ['name' => $name],
                         [
-                            'uuid' => $domainData['uuid'] ?? \Illuminate\Support\Str::uuid()->toString(),
+                            'uuid' => $domainData['uuid'] ?? Str::uuid()->toString(),
                             'name' => $name,
                             'registered_at' => $registeredAt,
                             'expires_at' => $expiresAt,
@@ -120,7 +120,7 @@ final class FetchDomainsJob implements ShouldQueue
 
             Log::info("Fetched and upserted $totalFetched domains from Namecheap.");
         } catch (Exception $exception) {
-            Log::error('Error fetching or saving domains: ' . $exception->getMessage(), [
+            Log::error('Error fetching or saving domains: '.$exception->getMessage(), [
                 'exception' => $exception,
             ]);
         }
@@ -168,6 +168,7 @@ final class FetchDomainsJob implements ShouldQueue
 
         $domainParts = explode('.', $domainData['name']);
         end($domainParts);
+
         return 1;
     }
 }

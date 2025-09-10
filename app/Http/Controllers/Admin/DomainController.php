@@ -138,9 +138,9 @@ final class DomainController extends Controller
             $availableContacts = Contact::withoutGlobalScopes()->get();
         } else {
             $availableContacts = Contact::withoutGlobalScopes()
-                ->where(function ($query) use ($user, $domain) {
+                ->where(function ($query) use ($user, $domain): void {
                     $query->where('user_id', $user->id)
-                        ->orWhereHas('domains', function ($q) use ($domain) {
+                        ->orWhereHas('domains', function ($q) use ($domain): void {
                             $q->where('domains.id', $domain->id);
                         })
                         ->orWhereNull('user_id');
@@ -197,7 +197,6 @@ final class DomainController extends Controller
         return redirect()->back()->withErrors(['error' => $result['message'] ?? 'Failed to update domain lock status']);
     }
 
-
     public function editContact(Domain $domain, string $type): View
     {
         abort_if(Gate::denies('domain_edit'), 403);
@@ -205,7 +204,7 @@ final class DomainController extends Controller
         if (! in_array($type, $validTypes)) {
             abort(404, 'Invalid contact type');
         }
-        $domain->load(['contacts' => function ($query) {
+        $domain->load(['contacts' => function ($query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
         $user = auth()->user();
@@ -213,9 +212,9 @@ final class DomainController extends Controller
             $availableContacts = Contact::withoutGlobalScopes()->get();
         } else {
             $availableContacts = Contact::withoutGlobalScopes()
-                ->where(function ($query) use ($user, $domain) {
+                ->where(function ($query) use ($user, $domain): void {
                     $query->where('user_id', $user->id)
-                        ->orWhereHas('domains', function ($q) use ($domain) {
+                        ->orWhereHas('domains', function ($q) use ($domain): void {
                             $q->where('domains.id', $domain->id);
                         })
                         ->orWhereNull('user_id');

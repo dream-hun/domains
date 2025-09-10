@@ -231,7 +231,7 @@ final readonly class UpdateDomainContactsAction
         $currentContacts = [];
 
         // Load current domain contacts
-        $domain->load(['contacts' => function ($query) {
+        $domain->load(['contacts' => function ($query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
 
