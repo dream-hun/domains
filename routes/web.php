@@ -50,7 +50,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 
 });
 
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['auth','verified'])->group(function (): void {
     Route::get('/domains/register', [RegisterDomainController::class, 'index'])->name('domains.register');
     Route::post('/domains/register', [RegisterDomainController::class, 'register'])->name('domains.register.store');
 
