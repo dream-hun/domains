@@ -37,4 +37,9 @@ final class DomainPrice extends Model
 
         return (new Money($priceAmount, $currency))->format();
     }
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
 }

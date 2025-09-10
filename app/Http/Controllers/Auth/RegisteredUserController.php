@@ -32,7 +32,7 @@ final class RegisteredUserController extends Controller
     public function store(RegisterUserRequest $request): RedirectResponse
     {
         User::create([
-            'uuid'=>Str::uuid(),
+            'uuid' => Str::uuid(),
             'client_code' => User::generateCustomerNumber(),
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,

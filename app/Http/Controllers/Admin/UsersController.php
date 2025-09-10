@@ -48,7 +48,6 @@ final class UsersController extends Controller
         return redirect()->route('admin.users.index');
     }
 
-
     public function edit(User $user): View|Factory
     {
         abort_if(Gate::denies('user_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');

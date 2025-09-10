@@ -55,6 +55,17 @@
                         </a>
                     </li>
                 @endcan
+                @can('domain_pricing_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.prices.index') }}"
+                           class="nav-link {{ request()->is('admin/prices*') ? 'active' : '' }}">
+                            <i class="bi bi-cash-coin"></i>
+                            <p>
+                                Domain Prices
+                            </p>
+                        </a>
+                    </li>
+                @endcan
                 @can('domain_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.domains.index') }}"
@@ -140,21 +151,11 @@
                         <p>{{ trans('global.logout') }}</p>
                     </a>
                 </li>
-                {{-- @can('domain_pricing_access')
-                     <li class="nav-item">
-                         <a href="{{ route('admin.domain-pricings.index') }}"
-                            class="nav-link {{ request()->is('admin/domain-pricings*') ? 'active' : '' }}">
-                             <i class="bi bi-cash-coin"></i>
-                             <p>
-                                 Domain Pricing
-                             </p>
-                         </a>
-                     </li>
-                 @endcan
 
 
 
-                 @can('hosting_access')
+
+                 {{--@can('hosting_access')
                      <li class="nav-item">
                          <a href="{{ route('admin.hostings.index') }}"
                             class="nav-link {{ request()->is('admin/hostings*') ? 'active' : '' }}">

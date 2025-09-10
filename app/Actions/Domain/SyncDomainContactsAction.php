@@ -106,7 +106,7 @@ final class SyncDomainContactsAction
 
             $contactModel = $this->createOrUpdateContact($contactData, $enumContactType);
 
-            if ($contactModel) {
+            if ($contactModel instanceof \App\Models\Contact) {
                 // Attach this contact to the domain with the specific type
                 $domain->contacts()->attach($contactModel->id, [
                     'type' => $enumContactType,
@@ -127,7 +127,7 @@ final class SyncDomainContactsAction
             }
         }
 
-        if (empty($processedContacts)) {
+        if ($processedContacts === []) {
             return [
                 'success' => false,
                 'message' => 'No valid contacts could be processed from the registry.',
@@ -158,7 +158,7 @@ final class SyncDomainContactsAction
             'organization' => mb_trim($contactData['organization'] ?? ''),
             'title' => null, // Not provided by Namecheap API
             'address_one' => mb_trim($contactData['address_one'] ?? ''),
-            'address_two' => mb_trim($contactData['address_two'] ?? '') ?: null,
+            'address_two' => in_array(mb_trim($contactData['address_two'] ?? ''), ['', '0'], true) ? null : mb_trim($contactData['address_two'] ?? ''),
             'city' => mb_trim($contactData['city'] ?? ''),
             'state_province' => mb_trim($contactData['state_province'] ?? ''),
             'postal_code' => mb_trim($contactData['postal_code'] ?? ''),

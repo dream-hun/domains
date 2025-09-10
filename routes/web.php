@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DomainController;
 use App\Http\Controllers\Admin\DomainOperationsController;
+use App\Http\Controllers\Admin\DomainPriceController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
@@ -44,6 +45,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('permissions', PermissionsController::class);
     Route::resource('roles', RolesController::class);
     Route::resource('users', UsersController::class);
+    Route::resource('prices', DomainPriceController::class)->except(['show']);
     Route::resource('settings', SettingController::class);
 
 });

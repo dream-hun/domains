@@ -17,7 +17,6 @@ use Illuminate\Http\RedirectResponse;
 final class DomainOperationsController extends Controller
 {
     public function __construct(
-        private readonly NamecheapDomainService $domainService,
         private readonly SyncDomainContactsAction $syncContactsAction,
         private readonly UpdateDomainContactsAction $updateContactsAction,
         private readonly GetDomainContactStatsAction $contactStatsAction

@@ -1648,13 +1648,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             if ($response && $response->code() === 1000) {
                 return ['success' => true, 'message' => 'Domain contacts updated successfully.'];
             }
+
             return ['success' => false, 'message' => $response ? $response->message() : 'Unknown error updating contacts.'];
         } catch (Exception $e) {
             Log::error('Domain contact update failed', [
                 'domain' => $domain,
                 'error' => $e->getMessage(),
             ]);
-            return ['success' => false, 'message' => 'Service error: ' . $e->getMessage()];
+
+            return ['success' => false, 'message' => 'Service error: '.$e->getMessage()];
         }
     }
 
@@ -1979,6 +1981,72 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     }
 
     /**
+     * Get information about a domain
+     *
+     * @param  string  $domain  The domain name to get information for
+     * @return array{success: bool, domain?: string, status?: array<string>, registrant?: string, created_date?: string, expiry_date?: string, message?: string}
+     */
+    public function getDomainInfo(string $domain): array
+    {
+        try {
+            $this->ensureConnection();
+            $domain = mb_rtrim($domain, '.');
+            $frame = new InfoDomain();
+            $frame->setDomain($domain);
+            $response = $this->client->request($frame);
+
+            if (! $response || $response->code() !== 1000) {
+                return [
+                    'success' => false,
+                    'message' => $response ? $response->message() : 'Failed to retrieve domain info',
+                ];
+            }
+
+            $responseXml = (string) $response;
+            $result = [
+                'success' => true,
+                'domain' => $domain,
+            ];
+
+            // Status
+            preg_match_all('/<domain:status s="([^"]+)"/', $responseXml, $statusMatches);
+            if (isset($statusMatches[1]) && $statusMatches[1] !== []) {
+                $result['status'] = $statusMatches[1];
+            }
+
+            // Registrant
+            preg_match('/<domain:registrant>([^<]+)<\/domain:registrant>/', $responseXml, $registrantMatch);
+            if (isset($registrantMatch[1])) {
+                $result['registrant'] = $registrantMatch[1];
+            }
+
+            // Created date
+            preg_match('/<domain:crDate>([^<]+)<\/domain:crDate>/', $responseXml, $createdMatch);
+            if (isset($createdMatch[1])) {
+                $result['created_date'] = $createdMatch[1];
+            }
+
+            // Expiry date
+            preg_match('/<domain:exDate>([^<]+)<\/domain:exDate>/', $responseXml, $expiryMatch);
+            if (isset($expiryMatch[1])) {
+                $result['expiry_date'] = $expiryMatch[1];
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            Log::error('Failed to get domain info', [
+                'domain' => $domain,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Service error: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Get common TLDs for domain suggestions
      */
     private function getCommonTlds(): array
@@ -2092,71 +2160,6 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'trace' => $e->getTraceAsString(),
             ]);
             throw new Exception('Failed to establish EPP connection: '.$e->getMessage(), $e->getCode(), $e);
-        }
-    }
-
-    /**
-     * Get information about a domain
-     *
-     * @param string $domain The domain name to get information for
-     * @return array{success: bool, domain?: string, status?: array<string>, registrant?: string, created_date?: string, expiry_date?: string, message?: string}
-     */
-    public function getDomainInfo(string $domain): array
-    {
-        try {
-            $this->ensureConnection();
-            $domain = mb_rtrim($domain, '.');
-            $frame = new InfoDomain();
-            $frame->setDomain($domain);
-            $response = $this->client->request($frame);
-
-            if (! $response || $response->code() !== 1000) {
-                return [
-                    'success' => false,
-                    'message' => $response ? $response->message() : 'Failed to retrieve domain info',
-                ];
-            }
-
-            $responseXml = (string) $response;
-            $result = [
-                'success' => true,
-                'domain' => $domain,
-            ];
-
-            // Status
-            preg_match_all('/<domain:status s="([^"]+)"/', $responseXml, $statusMatches);
-            if (!empty($statusMatches[1])) {
-                $result['status'] = $statusMatches[1];
-            }
-
-            // Registrant
-            preg_match('/<domain:registrant>([^<]+)<\/domain:registrant>/', $responseXml, $registrantMatch);
-            if (isset($registrantMatch[1])) {
-                $result['registrant'] = $registrantMatch[1];
-            }
-
-            // Created date
-            preg_match('/<domain:crDate>([^<]+)<\/domain:crDate>/', $responseXml, $createdMatch);
-            if (isset($createdMatch[1])) {
-                $result['created_date'] = $createdMatch[1];
-            }
-
-            // Expiry date
-            preg_match('/<domain:exDate>([^<]+)<\/domain:exDate>/', $responseXml, $expiryMatch);
-            if (isset($expiryMatch[1])) {
-                $result['expiry_date'] = $expiryMatch[1];
-            }
-
-            return $result;
-        } catch (Exception $e) {
-            Log::error('Failed to get domain info', [
-                'domain' => $domain,
-                'error' => $e->getMessage(),
-            ]);
-            return [
-                'success' => false,
-                'message' => 'Service error: ' . $e->getMessage(),
-            ];
         }
     }
 

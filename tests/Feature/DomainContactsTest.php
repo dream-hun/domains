@@ -1,17 +1,19 @@
 <?php
 
-use App\Models\Domain;
+declare(strict_types=1);
+
 use App\Models\Contact;
+use App\Models\Domain;
 use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->domain = Domain::factory()->create(['name' => 'example.com']);
 });
 
-it('saves contacts from namecheap response', function () {
+it('saves contacts from namecheap response', function (): void {
     $mockService = mock(NamecheapDomainService::class);
     $mockService->shouldReceive('getDomainContacts')
         ->once()
@@ -31,10 +33,10 @@ it('saves contacts from namecheap response', function () {
                         'StateProvince' => 'Test State',
                         'PostalCode' => '12345',
                         'Country' => 'US',
-                        'Phone' => '1234567890'
-                    ]
-                ]
-            ]
+                        'Phone' => '1234567890',
+                    ],
+                ],
+            ],
         ]);
 
     $this->app->instance(NamecheapDomainService::class, $mockService);
@@ -52,7 +54,7 @@ it('saves contacts from namecheap response', function () {
     expect($this->domain->contacts()->first()->pivot->type)->toBe('registrant');
 });
 
-it('handles missing contact data gracefully', function () {
+it('handles missing contact data gracefully', function (): void {
     $mockService = mock(NamecheapDomainService::class);
     $mockService->shouldReceive('getDomainContacts')
         ->once()
@@ -61,10 +63,10 @@ it('handles missing contact data gracefully', function () {
             'CommandResponse' => [
                 'DomainContactsResult' => [
                     'Registrant' => [
-                        'EmailAddress' => 'test@example.com'
-                    ]
-                ]
-            ]
+                        'EmailAddress' => 'test@example.com',
+                    ],
+                ],
+            ],
         ]);
 
     $this->app->instance(NamecheapDomainService::class, $mockService);
