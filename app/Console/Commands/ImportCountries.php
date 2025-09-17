@@ -18,7 +18,7 @@ final class ImportCountries extends Command
     /**
      * @throws ConnectionException
      */
-    public function handle(): ?int
+    public function handle(): int
     {
         $this->info('Importing countries from https://restcountries.com API');
         $apiUrl = 'https://restcountries.com/v3.1/all?fields=name,cca3,capital,region,currencies,flags';

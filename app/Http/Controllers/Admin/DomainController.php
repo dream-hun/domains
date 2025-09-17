@@ -135,7 +135,10 @@ final class DomainController extends Controller
         }]);
         $user = auth()->user();
         if ($user->isAdmin()) {
-            $availableContacts = Contact::withoutGlobalScopes()->get();
+            $availableContacts = Contact::withoutGlobalScopes()
+                ->orderBy('is_primary', 'desc')
+                ->orderBy('first_name')
+                ->get();
         } else {
             $availableContacts = Contact::withoutGlobalScopes()
                 ->where(function ($query) use ($user, $domain): void {
@@ -144,7 +147,10 @@ final class DomainController extends Controller
                             $q->where('domains.id', $domain->id);
                         })
                         ->orWhereNull('user_id');
-                })->get();
+                })
+                ->orderBy('is_primary', 'desc')
+                ->orderBy('first_name')
+                ->get();
         }
 
         $contactsByType = [
@@ -209,7 +215,10 @@ final class DomainController extends Controller
         }]);
         $user = auth()->user();
         if ($user->isAdmin()) {
-            $availableContacts = Contact::withoutGlobalScopes()->get();
+            $availableContacts = Contact::withoutGlobalScopes()
+                ->orderBy('is_primary', 'desc')
+                ->orderBy('first_name')
+                ->get();
         } else {
             $availableContacts = Contact::withoutGlobalScopes()
                 ->where(function ($query) use ($user, $domain): void {
@@ -218,7 +227,10 @@ final class DomainController extends Controller
                             $q->where('domains.id', $domain->id);
                         })
                         ->orWhereNull('user_id');
-                })->get();
+                })
+                ->orderBy('is_primary', 'desc')
+                ->orderBy('first_name')
+                ->get();
         }
         $currentContact = null;
         foreach ($domain->contacts as $contact) {

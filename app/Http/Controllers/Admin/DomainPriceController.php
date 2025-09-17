@@ -14,9 +14,7 @@ use App\Http\Requests\Admin\UpdateDomainPriceRequest;
 use App\Models\DomainPrice;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-
 
 final class DomainPriceController extends Controller
 {
@@ -50,7 +48,6 @@ final class DomainPriceController extends Controller
 
         return redirect()->route('admin.prices.index')->with('success', 'Domain price updated successfully.');
     }
-
 
     public function destroy(DomainPrice $price, DeleteDomainPriceAction $action): RedirectResponse
     {

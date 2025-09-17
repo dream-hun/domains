@@ -41,7 +41,9 @@ final class StoreContactRequest extends FormRequest
             'phone' => ['required', 'string', 'max:20'],
             'phone_extension' => ['nullable', 'string', 'max:10'],
             'fax_number' => ['nullable', 'string', 'max:20'],
+            'fax_ext' => ['nullable', 'string', 'max:10'],
             'email' => ['required', 'email', 'max:255'],
+            'is_primary' => ['nullable', 'boolean'],
         ];
     }
 

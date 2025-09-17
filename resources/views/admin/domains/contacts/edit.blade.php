@@ -69,7 +69,8 @@
                                                     data-country-code="{{ $contact->country_code }}"
                                                     data-phone="{{ $contact->phone }}"
                                                     data-email="{{ $contact->email }}">
-                                                    {{ $contact->full_name }} ({{ $contact->email }})
+                                                    {{ $contact->full_name }}
+                                                    ({{ $contact->email }}){{ $contact->is_primary ? ' - PRIMARY' : '' }}
                                                 </option>
                                             @endforeach
                                         </select>

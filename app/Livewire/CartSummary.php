@@ -47,7 +47,7 @@ final class CartSummary extends Component
                     );
                     $total += $convertedPrice * $item->quantity;
                 } catch (Exception) {
-                
+
                     $total += $item->price * $item->quantity;
                 }
             } else {

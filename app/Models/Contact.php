@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Str;
 
 #[ScopedBy(ContactScope::class)]
 final class Contact extends Model
@@ -19,10 +20,22 @@ final class Contact extends Model
 
     protected $guarded = [];
 
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($contact) {
+            if (empty($contact->uuid)) {
+                $contact->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'contact_type' => ContactType::class,
+        'is_primary' => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -59,5 +72,13 @@ final class Contact extends Model
         $address .= ' '.$this->postal_code;
 
         return $address.(', '.$this->country_code);
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
     }
 }

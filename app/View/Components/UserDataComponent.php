@@ -11,7 +11,7 @@ use Illuminate\View\Component;
 
 final class UserDataComponent extends Component
 {
-    public function render(): View|Closure|string
+    public function render(): \Illuminate\Contracts\View\View
     {
         $totalDomains = Domain::count();
         $totalSSL = 0;

@@ -9,7 +9,6 @@ use App\Actions\Domain\SyncDomainContactsAction;
 use App\Actions\Domain\UpdateDomainContactsAction;
 use App\Http\Controllers\Controller;
 use App\Models\Domain;
-use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;

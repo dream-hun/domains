@@ -17,7 +17,7 @@ final class ContactScope implements Scope
     {
         $user = auth()->user();
 
-        if (! $user->isAdmin()) {
+        if ($user && ! $user->isAdmin()) {
             $builder->where('contacts.user_id', $user->id);
         }
     }

@@ -123,7 +123,7 @@ final class RegisterDomainController extends Controller
             // Prepare response messages
             $messages = [];
 
-            if (! empty($successfulRegistrations)) {
+            if ($successfulRegistrations !== []) {
                 $successCount = count($successfulRegistrations);
                 if ($successCount === 1) {
                     $messages[] = "Domain {$successfulRegistrations[0]} has been successfully registered!";
@@ -132,7 +132,7 @@ final class RegisterDomainController extends Controller
                 }
             }
 
-            if (! empty($failedRegistrations)) {
+            if ($failedRegistrations !== []) {
                 $failureCount = count($failedRegistrations);
                 if ($failureCount === 1) {
                     $messages[] = "Failed to register {$failedRegistrations[0]['domain']}: {$failedRegistrations[0]['message']}";
@@ -142,13 +142,13 @@ final class RegisterDomainController extends Controller
             }
 
             // Determine redirect and message type
-            if (! empty($successfulRegistrations) && empty($failedRegistrations)) {
+            if ($successfulRegistrations !== [] && $failedRegistrations === []) {
                 // All successful
                 return redirect()
                     ->route('dashboard')
                     ->with('success', implode(' ', $messages));
             }
-            if (! empty($successfulRegistrations) && ! empty($failedRegistrations)) {
+            if ($successfulRegistrations !== [] && $failedRegistrations !== []) {
                 // Partial success
                 return redirect()
                     ->route('dashboard')

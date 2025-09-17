@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Actions\Prices;
@@ -14,6 +15,7 @@ final class StoreDomainPriceAction
         if (array_key_exists('redemption_price', $data) && $data['redemption_price'] === '') {
             $data['redemption_price'] = null;
         }
+
         return DomainPrice::create($data);
     }
 }

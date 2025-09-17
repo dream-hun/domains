@@ -36,7 +36,7 @@ final class CurrencyHelper
 
         $cacheKey = "exchange_rate_$currency";
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($currency) {
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($currency): array {
             try {
                 $response = Http::timeout(10)->get('https://api.exchangerate-api.com/v4/latest/'.self::BASE_CURRENCY);
 
@@ -47,16 +47,17 @@ final class CurrencyHelper
                 $rate = (float) $response['rates'][$currency];
                 $symbol = self::getCurrencySymbol($currency);
 
-                return compact('rate', 'symbol');
+                return ['rate' => $rate, 'symbol' => $symbol];
             } catch (ConnectionException $e) {
                 Log::error('CurrencyAPI connection failed', ['currency' => $currency, 'error' => $e->getMessage()]);
-                throw new Exception("Unable to fetch exchange rate for $currency");
+                throw new Exception("Unable to fetch exchange rate for $currency", $e->getCode(), $e);
             }
         });
     }
 
     /**
      * Convert USD amount to target currency
+     *
      * @throws Exception
      */
     public static function convertFromUSD(float $usdAmount, string $targetCurrency): float
@@ -74,6 +75,7 @@ final class CurrencyHelper
 
     /**
      * Convert any amount from one currency to another
+     *
      * @throws Exception
      */
     public static function convert(float $amount, string $fromCurrency, string $targetCurrency): float
@@ -88,7 +90,7 @@ final class CurrencyHelper
         // Convert to USD first if not already USD
         if ($fromCurrency !== self::BASE_CURRENCY) {
             $fromRateData = self::getRateAndSymbol($fromCurrency);
-            $amount = $amount / $fromRateData['rate']; // Convert to USD
+            $amount /= $fromRateData['rate']; // Convert to USD
         }
 
         // Convert from USD to target currency
@@ -97,6 +99,7 @@ final class CurrencyHelper
 
     /**
      * Format amount with currency symbol
+     *
      * @throws Exception
      */
     public static function formatMoney(float $amount, string $currency): string
@@ -136,7 +139,7 @@ final class CurrencyHelper
             $formatter = new NumberFormatter('en', NumberFormatter::CURRENCY);
             $formatted = $formatter->formatCurrency(0, $currencyCode);
 
-            return preg_replace('/[\d.,\s]/', '', $formatted) ?: $currencyCode;
+            return !in_array(preg_replace('/[\d.,\s]/', '', $formatted), ['', '0'], true) && preg_replace('/[\d.,\s]/', '', $formatted) !== [] ? preg_replace('/[\d.,\s]/', '', $formatted) : $currencyCode;
         } catch (Exception) {
             return $currencyCode;
         }

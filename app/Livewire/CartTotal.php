@@ -60,7 +60,7 @@ final class CartTotal extends Component
         }
     }
 
-    public function handleCurrencyChanged($currency): void
+    public function handleCurrencyChanged(string $currency): void
     {
         $this->selectedCurrency = $currency;
         $this->updateFormattedTotal();

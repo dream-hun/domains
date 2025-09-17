@@ -106,7 +106,7 @@ final class SyncDomainContactsAction
 
             $contactModel = $this->createOrUpdateContact($contactData, $enumContactType);
 
-            if ($contactModel instanceof \App\Models\Contact) {
+            if ($contactModel instanceof Contact) {
                 // Attach this contact to the domain with the specific type
                 $domain->contacts()->attach($contactModel->id, [
                     'type' => $enumContactType,

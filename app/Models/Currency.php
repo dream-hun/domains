@@ -65,12 +65,12 @@ final class Currency extends Model
 
         // Convert to base currency first if not already base
         if ($this->code !== $baseCurrency->code) {
-            $amount = $amount / $this->exchange_rate;
+            $amount /= $this->exchange_rate;
         }
 
         // Convert from base to target currency
         if ($targetCurrency->code !== $baseCurrency->code) {
-            $amount = $amount * $targetCurrency->exchange_rate;
+            $amount *= $targetCurrency->exchange_rate;
         }
 
         return round($amount, 2);

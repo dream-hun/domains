@@ -131,7 +131,7 @@ final class FetchDomainsJob implements ShouldQueue
      */
     private function mapRegistrarStatus(string $rawStatus): string
     {
-        $s = mb_strtolower(trim($rawStatus));
+        $s = mb_strtolower(mb_trim($rawStatus));
         if ($s === '') {
             return 'active';
         }

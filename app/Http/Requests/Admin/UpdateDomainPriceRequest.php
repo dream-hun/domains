@@ -18,14 +18,9 @@ final class UpdateDomainPriceRequest extends FormRequest
     {
         $uuid = $this->route('uuid') ?? $this->route('domain-price') ?? null;
 
-
         $tldRules = ['required', 'string'];
 
-        if ($uuid) {
-                       $tldRules[] = 'unique:domain_prices,tld,' . $uuid . ',uuid';
-        } else {
-            $tldRules[] = 'unique:domain_prices,tld';
-        }
+        $tldRules[] = $uuid ? 'unique:domain_prices,tld,'.$uuid.',uuid' : 'unique:domain_prices,tld';
 
         return [
             'tld' => $tldRules,
@@ -41,4 +36,3 @@ final class UpdateDomainPriceRequest extends FormRequest
         ];
     }
 }
-

@@ -146,7 +146,7 @@ final class CurrencyService
             ->orderBy('is_base', 'desc')
             ->orderBy('code')
             ->get()
-            ->map(function ($currency) {
+            ->map(function ($currency): array {
                 return [
                     'code' => $currency->code,
                     'name' => $currency->name,
@@ -162,14 +162,14 @@ final class CurrencyService
     }
 
     /**
-     * Try updating from the primary exchangerate-api.com
+     * Try updating from the primary exchanger-api.com
      */
     private function tryUpdateFromPrimaryApi(Currency $baseCurrency): bool
     {
         try {
             $response = Http::timeout(self::API_TIMEOUT)
                 ->retry(2, 1000) // Retry 2 times with 1-second delay
-                ->get("https://api.exchangerate-api.com/v4/latest/{$baseCurrency->code}");
+                ->get("https://api.exchangerate-api.com/v4/latest/$baseCurrency->code");
 
             if ($response->successful()) {
                 return $this->processExchangeRates($response->json('rates', []));
@@ -194,8 +194,8 @@ final class CurrencyService
         try {
             // Try with extended timeout
             $response = Http::timeout(45)
-                ->retry(3, 2000) // Retry 3 times with 2 second delay
-                ->get("https://api.exchangerate-api.com/v4/latest/{$baseCurrency->code}");
+                ->retry(3, 2000) // Retry 3 times with 2-second delay
+                ->get("https://api.exchangerate-api.com/v4/latest/$baseCurrency->code");
 
             if ($response->successful()) {
                 return $this->processExchangeRates($response->json('rates', []));
@@ -217,7 +217,7 @@ final class CurrencyService
      */
     private function processExchangeRates(array $rates): bool
     {
-        if (empty($rates)) {
+        if ($rates === []) {
             Log::error('No exchange rates received from API');
 
             return false;
