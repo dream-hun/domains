@@ -8,7 +8,9 @@
       ],
       "disabled": false,
       "autoApprove": [
-        "application-info"
+        "application-info",
+        "database-schema",
+        "read-log-entries"
       ]
     }
   }

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterDomainController;
@@ -22,6 +23,10 @@ Route::get('/', LandingController::class)->name('home');
 Route::get('/shopping-cart', CartController::class)->name('cart.index');
 Route::get('/domains', [SearchDomainController::class, 'index'])->name('domains');
 Route::post('/domains/search', [SearchDomainController::class, 'search'])->name('domains.search');
+
+// Currency routes
+Route::get('/api/currencies', [CurrencyController::class, 'index'])->name('currencies.index');
+Route::post('/api/currencies/switch', [CurrencyController::class, 'switch'])->name('currencies.switch');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -50,7 +55,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 
 });
 
-Route::middleware(['auth','verified'])->group(function (): void {
+Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/domains/register', [RegisterDomainController::class, 'index'])->name('domains.register');
     Route::post('/domains/register', [RegisterDomainController::class, 'register'])->name('domains.register.store');
 

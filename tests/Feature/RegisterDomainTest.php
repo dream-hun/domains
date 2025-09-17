@@ -107,10 +107,7 @@ final class RegisterDomainTest extends TestCase
     public function test_domain_service_selection_logic(): void
     {
         // Test the TLD detection logic through the action
-        $eppService = app(\App\Services\Domain\EppDomainService::class);
-        $namecheapService = app(\App\Services\Domain\NamecheapDomainService::class);
-
-        $action = new \App\Actions\RegisterDomainAction($eppService, $namecheapService);
+        $action = app(\App\Actions\RegisterDomainAction::class);
 
         // Test .rw domain uses EPP service
         $result = $action->handle('example.rw', [], 1);

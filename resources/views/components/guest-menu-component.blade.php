@@ -6,17 +6,16 @@
             <div class="row">
                 <div class="rts-ht__wrapper">
                     <div class="rts-ht__email">
-                        <a href="mailto:{{ $settings->email }}"><img src="assets/images/icon/email.svg"
-                                                                     alt="" class="icon">{{ $settings->email }}</a>
+                        <a href="mailto:{{ $settings->email }}"><img src="assets/images/icon/email.svg" alt=""
+                                class="icon">{{ $settings->email }}</a>
                     </div>
 
                     <div class="rts-ht__links">
                         <div class="live-chat-has-dropdown">
-                            <a href="#" class="live__chat"><img src="assets/images/icon/forum.svg"
-                                                                alt="" class="icon">Live Chat</a>
+                            <a href="#" class="live__chat"><img src="assets/images/icon/forum.svg" alt=""
+                                    class="icon">Live Chat</a>
                         </div>
-
-                        <livewire:cart-total/>
+                        <livewire:cart-total />
                     </div>
                 </div>
             </div>
@@ -51,9 +50,9 @@
                                             <div class="col-lg-12">
                                                 <ul class="mega-menu-item">
                                                     <li>
-                                                        <a href="{{--{{ route('shared.index') }}--}}">
+                                                        <a href="{{-- {{ route('shared.index') }} --}}">
                                                             <img src="{{ asset('assets/images/mega-menu/22.svg') }}"
-                                                                 alt="icon">
+                                                                alt="icon">
                                                             <div class="info">
                                                                 <p>Shared Hosting</p>
                                                                 <span>Manage Shared Hosting</span>
@@ -63,7 +62,7 @@
                                                     <li>
                                                         <a href="#">
                                                             <img src="{{ asset('assets/images/mega-menu/27.svg') }}"
-                                                                 alt="icon">
+                                                                alt="icon">
                                                             <div class="info">
                                                                 <p>VPS - High Storage</p>
                                                                 <span>Get your highest storage VPS</span>
@@ -73,7 +72,7 @@
                                                     <li>
                                                         <a href="#">
                                                             <img src="{{ asset('assets/images/mega-menu/24.svg') }}"
-                                                                 alt="icon">
+                                                                alt="icon">
                                                             <div class="info">
                                                                 <p>VPS High Performance</p>
                                                                 <span>Dedicated resources</span>
@@ -90,10 +89,9 @@
                             <li class="menu-item hostie-has-dropdown">
                                 <a href="#" class="hostie-dropdown-main-element">Domain</a>
                                 <ul class="hostie-submenu list-unstyled menu-pages">
-                                    <li class="nav-item"><a class="nav-link"
-                                                            href="{{--{{ route('domains.index') }}--}}">Register Domain</a></li>
-                                    <li class="nav-item"><a class="nav-link"
-                                                            href="{{--{{route('admin.domains.transfer.check')}}--}}">Transfer
+                                    <li class="nav-item"><a class="nav-link" href="{{-- {{ route('domains.index') }} --}}">Register
+                                            Domain</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="{{-- {{route('admin.domains.transfer.check')}} --}}">Transfer
                                             Domain
                                         </a></li>
 
@@ -119,8 +117,7 @@
                                     <li class="nav-item"><a class="nav-link" href="#">FAQ</a></li>
                                     <li class="nav-item"><a class="nav-link" href="#">Support</a></li>
                                     <li class="nav-item"><a class="nav-link" href="#">Contact</a></li>
-                                    <li class="nav-item"><a class="nav-link"
-                                                            href="#">Knowledgebase</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="#">Knowledgebase</a></li>
 
                                 </ul>
                             </li>

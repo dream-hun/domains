@@ -11,7 +11,6 @@ use App\Models\Nameserver;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
-use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -51,6 +50,7 @@ final readonly class RegisterDomainAction
             $result = $domainService->registerDomain($domainName, $serviceContacts, $years);
 
             if ($result['success']) {
+                // Use original processed contacts (with database IDs) for domain record creation
                 $domain = $this->createDomainRecord($domainName, $years, $processedContacts, $serviceName);
                 $this->processNameservers($domain, $nameservers);
                 $nsToSet = $domain->nameservers->pluck('name')->toArray();
@@ -61,8 +61,6 @@ final readonly class RegisterDomainAction
                         'message' => $updateResult['message'] ?? 'Unknown error',
                     ]);
                 }
-
-                Cart::clear();
 
                 Log::info("Domain registered successfully with $serviceName", [
                     'domain' => $domainName,
@@ -198,11 +196,30 @@ final readonly class RegisterDomainAction
 
             // Check if contact has an EPP contact_id
             if (! $contact->contact_id) {
-                throw new Exception("Contact '$contact->full_name' (ID: $contactId) does not exist in the EPP registry. Please create this contact first before registering the domain.");
+                // Contact doesn't exist in EPP registry, create it
+                Log::info('Creating contact in EPP registry', [
+                    'type' => $type,
+                    'database_id' => $contactId,
+                    'contact_name' => $contact->full_name,
+                ]);
+
+                $eppContactId = $this->createContactInEppRegistry($contact);
+
+                // Update the contact record with the EPP contact_id
+                $contact->update(['contact_id' => $eppContactId]);
+
+                $ensuredContacts[$type] = $eppContactId;
+            } else {
+                // Contact exists in EPP registry, use its contact_id for EPP registration
+                $ensuredContacts[$type] = $contact->contact_id;
             }
 
-            // Contact exists in EPP registry, use its contact_id
-            $ensuredContacts[$type] = $contact->contact_id;
+            Log::info('Using EPP contact for domain registration', [
+                'type' => $type,
+                'database_id' => $contactId,
+                'epp_contact_id' => $ensuredContacts[$type],
+                'contact_name' => $contact->full_name,
+            ]);
         }
 
         return $ensuredContacts;
@@ -346,5 +363,62 @@ final readonly class RegisterDomainAction
         $parts = explode('.', $domainName);
 
         return '.'.end($parts);
+    }
+
+    /**
+     * Create a contact in the EPP registry
+     *
+     * @throws Exception
+     */
+    private function createContactInEppRegistry(Contact $contact): string
+    {
+        // Validate required fields for EPP contact creation
+        $requiredFields = [
+            'full_name' => 'Full name',
+            'address_one' => 'Address',
+            'city' => 'City',
+            'country_code' => 'Country code',
+            'phone' => 'Phone number',
+            'email' => 'Email address',
+        ];
+
+        foreach ($requiredFields as $field => $label) {
+            if (empty($contact->$field)) {
+                throw new Exception("Contact '$contact->full_name' is missing required field: $label. Please update the contact information before registering the domain.");
+            }
+        }
+
+        // Generate a unique EPP contact ID
+        $eppContactId = 'C'.$contact->id.'-'.time();
+
+        // Prepare contact data for EPP
+        $eppContactData = [
+            'contact_id' => $eppContactId,
+            'name' => $contact->full_name,
+            'organization' => $contact->organization,
+            'street1' => $contact->address_one,
+            'street2' => $contact->address_two,
+            'city' => $contact->city,
+            'province' => $contact->state_province,
+            'postal_code' => $contact->postal_code,
+            'country_code' => $contact->country_code,
+            'voice' => $contact->phone,
+            'email' => $contact->email,
+        ];
+
+        // Create contact in EPP registry using the EPP service
+        $result = $this->eppDomainService->createContacts($eppContactData);
+
+        if (empty($result['contact_id'])) {
+            throw new Exception('Failed to create contact in EPP registry: '.($result['message'] ?? 'Unknown error'));
+        }
+
+        Log::info('Contact created successfully in EPP registry', [
+            'database_id' => $contact->id,
+            'epp_contact_id' => $result['contact_id'],
+            'contact_name' => $contact->full_name,
+        ]);
+
+        return $result['contact_id'];
     }
 }

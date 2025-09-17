@@ -20,6 +20,7 @@ final class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             DomainPriceSeeder::class,
             DomainSeeder::class,
+            CurrencySeeder::class,
         ]);
     }
 }

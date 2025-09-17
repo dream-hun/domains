@@ -31,9 +31,11 @@ final class RegisterDomainController extends Controller
         $cartTotal = Cart::getTotal();
         $contactTypes = ContactType::cases();
         $userContacts = auth()->user()->contacts()->latest()->get();
+
+        // Show all user contacts for every contact type dropdown
         $existingContacts = [];
         foreach ($contactTypes as $type) {
-            $existingContacts[$type->value] = $userContacts->where('contact_type', $type)->values();
+            $existingContacts[$type->value] = $userContacts;
         }
 
         $countries = Country::all();
@@ -55,35 +57,112 @@ final class RegisterDomainController extends Controller
         $validatedData = $request->validated();
 
         try {
-            $domainName = $validatedData['domain_name'];
-            $useSingleContact = isset($validatedData['use_single_contact']) && $validatedData['use_single_contact'];
-            $contacts = $this->processContactsFromForm($validatedData, $useSingleContact);
-            $registrationYears = $this->getRegistrationYears($validatedData);
-            $nameservers = $this->processNameserversFromForm($validatedData);
+            $cartItems = Cart::getContent();
 
-            // Use the action to handle domain registration
-            $result = $this->registerDomainAction->handle(
-                $domainName,
-                $contacts,
-                $registrationYears,
-                $nameservers,
-                $useSingleContact
-            );
-
-            if ($result['success']) {
+            if ($cartItems->isEmpty()) {
                 return redirect()
-                    ->route('dashboard')
-                    ->with('success', $result['message']);
+                    ->back()
+                    ->with('error', 'No domains found in cart to register.');
             }
 
+            $useSingleContact = isset($validatedData['use_single_contact']) && $validatedData['use_single_contact'];
+            $contacts = $this->processContactsFromForm($validatedData, $useSingleContact);
+            $nameservers = $this->processNameserversFromForm($validatedData);
+
+            $successfulRegistrations = [];
+            $failedRegistrations = [];
+
+            // Process each domain in the cart
+            foreach ($cartItems as $cartItem) {
+                $domainName = $cartItem->name;
+                $registrationYears = (int) $cartItem->quantity;
+
+                try {
+                    // Use the action to handle domain registration
+                    $result = $this->registerDomainAction->handle(
+                        $domainName,
+                        $contacts,
+                        $registrationYears,
+                        $nameservers,
+                        $useSingleContact
+                    );
+
+                    if ($result['success']) {
+                        $successfulRegistrations[] = $domainName;
+                        Log::info('Domain registered successfully', [
+                            'domain' => $domainName,
+                            'user_id' => $user->id,
+                        ]);
+                    } else {
+                        $failedRegistrations[] = [
+                            'domain' => $domainName,
+                            'message' => $result['message'] ?? 'Unknown error',
+                        ];
+                        Log::error('Domain registration failed', [
+                            'domain' => $domainName,
+                            'error' => $result['message'] ?? 'Unknown error',
+                            'user_id' => $user->id,
+                        ]);
+                    }
+                } catch (Exception $e) {
+                    $failedRegistrations[] = [
+                        'domain' => $domainName,
+                        'message' => $e->getMessage(),
+                    ];
+                    Log::error('Domain registration exception', [
+                        'domain' => $domainName,
+                        'error' => $e->getMessage(),
+                        'user_id' => $user->id,
+                    ]);
+                }
+            }
+
+            // Clear cart only after processing all domains
+            Cart::clear();
+
+            // Prepare response messages
+            $messages = [];
+
+            if (! empty($successfulRegistrations)) {
+                $successCount = count($successfulRegistrations);
+                if ($successCount === 1) {
+                    $messages[] = "Domain {$successfulRegistrations[0]} has been successfully registered!";
+                } else {
+                    $messages[] = "{$successCount} domains have been successfully registered: ".implode(', ', $successfulRegistrations);
+                }
+            }
+
+            if (! empty($failedRegistrations)) {
+                $failureCount = count($failedRegistrations);
+                if ($failureCount === 1) {
+                    $messages[] = "Failed to register {$failedRegistrations[0]['domain']}: {$failedRegistrations[0]['message']}";
+                } else {
+                    $messages[] = "{$failureCount} domains failed to register. Please check your email for details or contact support.";
+                }
+            }
+
+            // Determine redirect and message type
+            if (! empty($successfulRegistrations) && empty($failedRegistrations)) {
+                // All successful
+                return redirect()
+                    ->route('dashboard')
+                    ->with('success', implode(' ', $messages));
+            }
+            if (! empty($successfulRegistrations) && ! empty($failedRegistrations)) {
+                // Partial success
+                return redirect()
+                    ->route('dashboard')
+                    ->with('warning', implode(' ', $messages));
+            }
+
+            // All failed
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', $result['message'] ?? 'Domain registration failed. Please try again.');
+                ->with('error', implode(' ', $messages));
 
         } catch (Exception $e) {
-            Log::error('Domain registration failed', [
-                'domain' => $validatedData['domain_name'] ?? 'unknown',
+            Log::error('Domain registration process failed', [
                 'error' => $e->getMessage(),
                 'user_id' => $user->id,
             ]);
@@ -134,21 +213,6 @@ final class RegisterDomainController extends Controller
         }
 
         return $processedContacts;
-    }
-
-    /**
-     * Get registration years from cart items
-     */
-    private function getRegistrationYears(array $validatedData): int
-    {
-        if (isset($validatedData['registration_years'])) {
-            return (int) $validatedData['registration_years'];
-        }
-
-        $cartItems = Cart::getContent();
-        $firstItem = $cartItems->first();
-
-        return $firstItem ? (int) $firstItem->quantity : 1;
     }
 
     /**

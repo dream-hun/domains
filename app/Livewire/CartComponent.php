@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use Cknow\Money\Money;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -18,10 +17,19 @@ final class CartComponent extends Component
 
     public $totalAmount = 0;
 
-    protected $listeners = ['refreshCart' => '$refresh'];
+    public $currency;
+
+    protected $listeners = ['refreshCart' => '$refresh', 'currencyChanged' => 'updateCurrency'];
 
     public function mount(): void
     {
+        $this->currency = \App\Helpers\CurrencyHelper::getUserCurrency();
+        $this->updateCartTotal();
+    }
+
+    public function updateCurrency($newCurrency): void
+    {
+        $this->currency = $newCurrency;
         $this->updateCartTotal();
     }
 
@@ -36,18 +44,97 @@ final class CartComponent extends Component
             return $item->attributes->get('added_at', 0);
         });
 
-        $this->subtotalAmount = Cart::getSubTotal();
-        $this->totalAmount = Cart::getTotal();
+        // Calculate totals with currency conversion
+        $subtotal = 0;
+        $total = 0;
+
+        foreach ($this->items as $item) {
+            $itemCurrency = $item->attributes->currency ?? 'USD';
+            $itemPrice = $item->price;
+
+            // Convert item price to display currency if different
+            if ($itemCurrency !== $this->currency) {
+                try {
+                    $itemPrice = \App\Helpers\CurrencyHelper::convert(
+                        $item->price,
+                        $itemCurrency,
+                        $this->currency
+                    );
+                } catch (Exception) {
+                    // Fallback to original price if conversion fails
+                    $itemPrice = $item->price;
+                }
+            }
+
+            $itemTotal = $itemPrice * $item->quantity;
+            $subtotal += $itemTotal;
+            $total += $itemTotal; // For now, subtotal and total are the same
+        }
+
+        $this->subtotalAmount = $subtotal;
+        $this->totalAmount = $total;
     }
 
     public function getFormattedSubtotalProperty(): string
     {
-        return Money::RWF($this->subtotalAmount)->format();
+        return \App\Helpers\CurrencyHelper::formatMoney($this->subtotalAmount, $this->currency);
     }
 
     public function getFormattedTotalProperty(): string
     {
-        return Money::RWF($this->totalAmount)->format();
+        return \App\Helpers\CurrencyHelper::formatMoney($this->totalAmount, $this->currency);
+    }
+
+    /**
+     * Get formatted price for individual cart item
+     */
+    public function getFormattedItemPrice($item): string
+    {
+        $itemCurrency = $item->attributes->currency ?? 'USD';
+        $itemPrice = $item->price;
+
+        // Convert item price to display currency if different
+        if ($itemCurrency !== $this->currency) {
+            try {
+                $itemPrice = \App\Helpers\CurrencyHelper::convert(
+                    $item->price,
+                    $itemCurrency,
+                    $this->currency
+                );
+            } catch (Exception) {
+                // Fallback to original price if conversion fails
+                $itemPrice = $item->price;
+            }
+        }
+
+        return \App\Helpers\CurrencyHelper::formatMoney($itemPrice, $this->currency);
+    }
+
+    /**
+     * Get formatted total price for individual cart item (price * quantity)
+     */
+    public function getFormattedItemTotal($item): string
+    {
+        $itemCurrency = $item->attributes->currency ?? 'USD';
+        $itemPrice = $item->price;
+
+        // Convert item price to display currency if different
+        if ($itemCurrency !== $this->currency) {
+            try {
+                $itemPrice = \App\Helpers\CurrencyHelper::convert(
+                    $item->price,
+                    $itemCurrency,
+                    $this->currency
+                );
+            } catch (Exception) {
+                // Fallback to original price if conversion fails
+                $itemPrice = $item->price;
+            }
+        }
+
+        $total = $itemPrice * $item->quantity;
+
+        return \App\Helpers\CurrencyHelper::formatMoney($total, $this->currency);
     }
 
     public function updateQuantity($id, $quantity): void
@@ -91,11 +178,12 @@ final class CartComponent extends Component
         }
     }
 
-    public function addToCart($domain, $price): void
+    public function addToCart($domain, $price, $currency = null): void
     {
         try {
             // Convert price string to numeric value (remove currency symbols)
             $numericPrice = (float) preg_replace('/[^\d.]/', '', $price);
+            $itemCurrency = $currency ?? $this->currency;
 
             Cart::add([
                 'id' => $domain,
@@ -104,6 +192,7 @@ final class CartComponent extends Component
                 'quantity' => 1,
                 'attributes' => [
                     'type' => 'domain',
+                    'currency' => $itemCurrency,
                     'added_at' => now()->timestamp,
                 ],
             ]);

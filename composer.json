@@ -15,23 +15,24 @@
         "cknow/laravel-money": "^8.4",
         "darryldecode/cart": "^4.2.6",
         "laravel/breeze": "^2.3.8",
-        "laravel/framework": "^12.25",
+        "laravel/framework": "^12.29",
         "laravel/tinker": "^2.10.1",
         "livewire/livewire": "^3.6.4",
-        "opcodesio/log-viewer": "^3.19"
+        "opcodesio/log-viewer": "^3.19",
+        "ext-intl": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",
         "fakerphp/faker": "^1.24.1",
-        "laravel/boost": "^1.1",
+        "laravel/boost": "^1.1.4",
         "laravel/pail": "^1.2.3",
         "laravel/pint": "^1.24",
-        "laravel/sail": "^1.44",
+        "laravel/sail": "^1.45",
         "mockery/mockery": "^1.6.12",
         "nunomaduro/collision": "^8.8.2",
         "pestphp/pest": "^3.8.4",
         "pestphp/pest-plugin-laravel": "^3.2",
-        "rector/rector": "^2.1.4"
+        "rector/rector": "^2.1.7"
     },
     "autoload": {
         "psr-4": {

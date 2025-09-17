@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 
 final readonly class DomainSearchHelper
 {
+    use \App\Traits\HasCurrency;
+
     public function __construct(
         private NamecheapDomainService $internationalDomainService,
         private EppDomainService $eppDomainService
@@ -105,16 +107,19 @@ final readonly class DomainSearchHelper
     /**
      * Get popular domains for display
      */
-    public function getPopularDomains(DomainType $type, int $limit = 5): array
+    public function getPopularDomains(DomainType $type, int $limit = 5, ?string $targetCurrency = null): array
     {
+        $targetCurrency = $targetCurrency ?? $this->getUserCurrency()->code;
+
         return DomainPrice::where('type', $type)
             ->latest()
             ->limit($limit)
             ->get()
             ->map(fn ($price): array => [
                 'tld' => $price->tld,
-                'price' => $price->getFormattedPrice(),
-                'currency' => $type === DomainType::Local ? 'RWF' : 'USD',
+                'price' => $price->getFormattedPrice('register_price', $targetCurrency),
+                'currency' => $targetCurrency,
+                'base_currency' => $price->getBaseCurrency(),
             ])
             ->toArray();
     }
@@ -134,13 +139,18 @@ final readonly class DomainSearchHelper
             $primaryResult = $this->eppDomainService->searchDomains($domainBase, [$primaryTld]);
             if (isset($primaryResult[$primaryDomain])) {
                 $result = $primaryResult[$primaryDomain];
+                $priceInfo = $this->findDomainPriceInfo($primaryTld);
+                $targetCurrency = $this->getUserCurrency()->code;
+
                 $details = [
                     'domain' => $primaryDomain,
                     'available' => $this->normalizeAvailabilityStatus($result['available'] ?? false),
-                    'price' => $result['price'] ?? null,
+                    'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency) ?? $result['price'],
                     'service_error' => false,
                     'error_message' => $result['reason'] ?? null,
                     'type' => DomainType::Local->value,
+                    'currency' => $targetCurrency,
+                    'base_currency' => $priceInfo?->getBaseCurrency() ?? 'RWF',
                 ];
             }
         }
@@ -154,13 +164,19 @@ final readonly class DomainSearchHelper
 
             // Normalize the suggestion results
             foreach ($suggestionResults as $domainName => $result) {
+                $tld = explode('.', $domainName)[1] ?? null;
+                $priceInfo = $this->findDomainPriceInfo($tld);
+                $targetCurrency = $this->getUserCurrency()->code;
+
                 $suggestions[$domainName] = [
                     'domain' => $domainName,
                     'available' => $this->normalizeAvailabilityStatus($result['available'] ?? false),
-                    'price' => $result['price'] ?? null,
+                    'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency) ?? $result['price'],
                     'service_error' => false,
                     'error_message' => $result['reason'] ?? null,
                     'type' => DomainType::Local->value,
+                    'currency' => $targetCurrency,
+                    'base_currency' => $priceInfo?->getBaseCurrency() ?? 'RWF',
                 ];
             }
         }
@@ -189,13 +205,17 @@ final readonly class DomainSearchHelper
                         'error_property' => $result->error ?? 'no_error',
                     ]);
 
+                    $targetCurrency = $this->getUserCurrency()->code;
+
                     $details = [
                         'domain' => $primaryDomain,
                         'available' => $this->normalizeAvailabilityStatus($result->available ?? false),
-                        'price' => $priceInfo?->getFormattedPrice(),
+                        'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency),
                         'service_error' => ! empty($result->error),
                         'error_message' => $result->error ?? null,
                         'type' => DomainType::International->value,
+                        'currency' => $targetCurrency,
+                        'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
                     ];
                 }
             }
@@ -224,13 +244,17 @@ final readonly class DomainSearchHelper
                         'error' => $result->error ?? 'no_error',
                     ]);
 
+                    $targetCurrency = $this->getUserCurrency()->code;
+
                     $suggestions[$domainName] = [
                         'domain' => $domainName,
                         'available' => $this->normalizeAvailabilityStatus($result->available ?? false),
-                        'price' => $priceInfo?->getFormattedPrice(),
+                        'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency),
                         'service_error' => ! empty($result->error),
                         'error_message' => $result->error ?? null,
                         'type' => DomainType::International->value,
+                        'currency' => $targetCurrency,
+                        'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
                     ];
                 }
             }

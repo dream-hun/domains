@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -11,19 +12,37 @@ use Livewire\Component;
 
 final class DomainCartButton extends Component
 {
+    use HasCurrency;
+
     public $domain;
 
     public $price;
 
     public $available;
 
-    protected $listeners = ['refreshCart' => '$refresh'];
+    public $domainPrice; // DomainPrice model instance
 
-    public function mount($domain, $price, $available = true): void
+    public $currency;
+
+    protected $listeners = ['refreshCart' => '$refresh', 'currency-changed' => 'updateCurrency', 'currencyChanged' => 'updateCurrency'];
+
+    public function mount($domain, $price, $available = true, $domainPrice = null, $currency = null): void
     {
         $this->domain = $domain;
         $this->price = $price;
         $this->available = $available;
+        $this->domainPrice = $domainPrice;
+        $this->currency = $currency ?? $this->getUserCurrency()->code;
+    }
+
+    public function updateCurrency($newCurrency): void
+    {
+        $this->currency = $newCurrency;
+
+        // Update price if we have the domain price model
+        if ($this->domainPrice) {
+            $this->price = $this->domainPrice->getFormattedPrice('register_price', $this->currency);
+        }
     }
 
     public function getIsInCartProperty(): bool
@@ -34,8 +53,10 @@ final class DomainCartButton extends Component
     public function addToCart(): void
     {
         try {
-            // Convert price string to numeric value (remove currency symbols)
-            $numericPrice = (float) preg_replace('/[^\d.]/', '', $this->price);
+            // Get numeric price in the selected currency
+            $numericPrice = $this->domainPrice
+                ? $this->domainPrice->getPriceInCurrency('register_price', $this->currency)
+                : (float) preg_replace('/[^\d.]/', '', $this->price);
 
             Cart::add([
                 'id' => $this->domain,
@@ -44,6 +65,7 @@ final class DomainCartButton extends Component
                 'quantity' => 1,
                 'attributes' => [
                     'type' => 'domain',
+                    'currency' => $this->currency,
                     'added_at' => now()->timestamp,
                 ],
             ]);

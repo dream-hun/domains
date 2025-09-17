@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->uuid();
             $table->string('client_code')->unique();
+            $table->string('preferred_currency', 3)->default('RWF');
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();

@@ -5,61 +5,100 @@
 
     @push('styles')
         <style>
-
-            body.domain-page .domain-search-results .domain-result {
-                font-family: "Inter", sans-serif !important;
-                display: flex !important;
-                justify-content: space-between !important;
-                align-items: center !important;
-                padding: 12px 0 !important;
-                margin: 0 !important;
-                font-size: 16px !important;
+            .domain-search-results {
+                width: 100%;
             }
 
-            .domain-page.domain-action-wrapper {
+            .domain-result {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px 0;
+                border-bottom: 1px solid #e5e7eb;
+                font-family: "Inter", sans-serif;
+                font-size: 16px;
+                line-height: 26px;
+                gap: 20px;
+                min-height: 60px;
+                flex-wrap: nowrap;
+            }
+
+            .domain-result:last-child {
+                border-bottom: none;
+            }
+
+            .domain-result.primary {
+                border: 1px solid #3b82f6;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 20px;
+                background-color: #f8fafc;
+            }
+
+            .domain-info-box {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                flex: 1;
+                min-width: 0;
+            }
+
+            .domain {
+                font-size: 16px;
+                line-height: 26px;
+                font-weight: 600;
+                color: #1f2937;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .domain-price {
+                font-size: 16px;
+                line-height: 26px;
+                color: #6b7280;
+                font-weight: 400;
+            }
+
+            .domain-actions {
                 display: flex;
                 align-items: center;
-                gap: 15px;
-            }
-
-            .domain-page .domain-price {
-                font-weight: 600;
-                font-size: 1rem;
-                color: #1f2937;
+                justify-content: flex-end;
+                flex-shrink: 0;
                 white-space: nowrap;
             }
 
-            .domain-page .loading-overlay {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(255, 255, 255, 0.9);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1000;
-                border-radius: 12px;
+
+
+            .register-btn {
+                background-color: #3b82f6;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 16px;
+                line-height: 26px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background-color 0.2s;
             }
 
-            .domain-page.loading-spinner {
-                width: 40px;
-                height: 40px;
-                border: 4px solid #e5e7eb;
-                border-top: 4px solid #3b82f6;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 16px;
+            .register-btn:hover {
+                background-color: #2563eb;
             }
 
-            @keyframes spin {
-                0% {
-                    transform: rotate(0deg);
-                }
-                100% {
-                    transform: rotate(360deg);
-                }
+            .register-btn:disabled {
+                background-color: #9ca3af;
+                cursor: not-allowed;
+            }
+
+            .suggestions-title {
+                font-family: 'Inter', sans-serif;
+                font-size: 18px;
+                line-height: 26px;
+                font-weight: 600;
+                color: #374151;
+                margin: 30px 0 20px 0;
             }
 
             .domain-page .error-message {
@@ -72,60 +111,6 @@
                 border-radius: 6px;
                 font-weight: 500;
             }
-
-
-            .domain-page.domain-result {
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                padding: 16px;
-                margin-bottom: 12px;
-                background-color: #fff;
-                transition: all 0.2s ease;
-            }
-
-            .domain-page.domain-result:hover {
-                border-color: #3b82f6;
-                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-            }
-
-            .domain-page .domain-result .primary {
-                border-color: #3b82f6;
-                background-color: #f8fafc;
-            }
-
-            .domain-page.domain-info-box {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .domain-page.domain {
-                font-size: 1.1rem;
-                font-weight: 600;
-                color: #1f2937;
-            }
-
-            .domain-status {
-                font-size: 1rem;
-                font-weight: 500;
-                padding: 6px 10px;
-                border-radius: 6px;
-                text-align: center;
-                width: fit-content;
-            }
-
-            .domain-status.available {
-                background-color: #dcfce7;
-                color: #166534;
-                border: 1px solid #bbf7d0;
-            }
-
-            .domain-status.taken {
-                background-color: #fef2f2;
-                color: #dc2626;
-                border: 1px solid #fecaca;
-            }
-
         </style>
     @endpush
 
@@ -140,15 +125,14 @@
                             you need!
                         </h1>
                         <p class="description sal-animate" data-sal="slide-down" data-sal-delay="200"
-                           data-sal-duration="800">Web
+                            data-sal-duration="800">Web
                             Hosting, Domain Name and Hosting Center Solutions</p>
-                        <form id="domain-search-form" action="{{route('domains.search')}}" data-sal-delay="300"
-                              data-sal-duration="800"
-                              method="POST">
+                        <form id="domain-search-form" action="{{ route('domains.search') }}" data-sal-delay="300"
+                            data-sal-duration="800" method="POST">
                             @csrf
                             <div class="rts-hero__form-area">
-                                <input type="text" placeholder="find your domain name" name="domain" id="domain-input"
-                                       value="{{ old('domain', $searchedDomain ?? '') }}" required>
+                                <input type="text" placeholder="find your domain name" name="domain"
+                                    id="domain-input" value="{{ old('domain', $searchedDomain ?? '') }}" required>
                                 <div class="select-button-area">
                                     <button type="submit" id="search-button">
                                         <span class="button-text">Search</span>
@@ -170,8 +154,8 @@
                         <div class="banner-content-tag" data-sal-delay="400" data-sal-duration="800">
                             <p class="desc">Popular Domains:</p>
                             <ul class="tag-list">
-                                @if(isset($popularDomains))
-                                    @foreach(array_merge($popularDomains['local'] ?? [], $popularDomains['international'] ?? []) as $domain)
+                                @if (isset($popularDomains))
+                                    @foreach (array_merge($popularDomains['local'] ?? [], $popularDomains['international'] ?? []) as $domain)
                                         <li><span>{{ $domain['tld'] }}</span><span>{{ $domain['price'] }}</span></li>
                                     @endforeach
                                 @else
@@ -188,53 +172,40 @@
         </div>
     </section>
 
-    @if(isset($details) || (isset($suggestions) && count($suggestions) > 0))
+    @if (isset($details) || (isset($suggestions) && count($suggestions) > 0))
         <section class="mt-5 mb-5" id="search-results">
             <div class="container">
                 <div class="domain-results-container" style="position: relative;">
                     <div class="domain-search-results">
                         <h1 class="results-title" style="font-size: 3rem; font-family: 'Inter', sans-serif;">Domain
                             Search Results</h1>
-                        @if(isset($errorMessage))
+                        @if (isset($errorMessage))
                             <div class="error-message" style="margin-bottom: 20px;">{{ $errorMessage }}</div>
                         @endif
-                        @if(isset($details))
+                        @if (isset($details))
                             <div class="domain-result primary">
                                 <div class="domain-info-box">
-                                    <span class="domain">
-                                        {{ $details['domain'] }}
-                                    </span>
-                                    <span
-                                        class="domain-status {{ $details['available'] === 'true' ? 'available' : 'taken' }}">
-                                        {{ $details['available'] === 'true' ? 'Available' : 'Taken' }}
-                                    </span>
+                                    <span class="domain">{{ $details['domain'] }}</span>
+                                    {{-- <span class="domain-price">{{ $details['price'] }}/year</span> --}}
                                 </div>
-                                <livewire:domain-cart-button
-                                    :domain="$details['domain']"
-                                    :price="$details['price']"
-                                    :available="$details['available'] === 'true'"
-                                />
+                                <div class="domain-actions">
+                                    <livewire:domain-cart-button :domain="$details['domain']" :price="$details['price']"
+                                        :available="$details['available'] === 'true'" />
+                                </div>
                             </div>
                         @endif
-                        @if(isset($suggestions) && count($suggestions) > 0)
-                            <h2 class="suggestions-title" style="font-family: 'Inter', sans-serif; font-size: 4rem;">
-                                Suggested Domains</h2>
-                            @foreach($suggestions as $suggestion)
+                        @if (isset($suggestions) && count($suggestions) > 0)
+                            <h2 class="suggestions-title">Other Suggestions</h2>
+                            @foreach ($suggestions as $suggestion)
                                 <div class="domain-result">
                                     <div class="domain-info-box">
-                                        <span class="domain">
-                                            {{ $suggestion['domain'] }}
-                                        </span>
-                                        <span
-                                            class="domain-status {{ $suggestion['available'] === 'true' ? 'available' : 'taken' }}">
-                                            {{ $suggestion['available'] === 'true' ? 'Available' : 'Taken' }}
-                                        </span>
+                                        <span class="domain">{{ $suggestion['domain'] }}</span>
+                                        {{-- <span class="domain-price">{{ $suggestion['price'] }}/year</span> --}}
                                     </div>
-                                    <livewire:domain-cart-button
-                                        :domain="$suggestion['domain']"
-                                        :price="$suggestion['price']"
-                                        :available="$suggestion['available'] === 'true'"
-                                    />
+                                    <div class="domain-actions">
+                                        <livewire:domain-cart-button :domain="$suggestion['domain']" :price="$suggestion['price']"
+                                            :available="$suggestion['available'] === 'true'" />
+                                    </div>
                                 </div>
                             @endforeach
                         @endif
@@ -244,5 +215,5 @@
         </section>
 
     @endif
-    <livewire:cart-summary/>
+    <livewire:cart-summary />
 </x-user-layout>

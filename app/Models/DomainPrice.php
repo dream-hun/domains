@@ -6,7 +6,7 @@ namespace App\Models;
 
 use App\Enums\DomainType;
 use App\Models\Scopes\DomainPriceScope;
-use Cknow\Money\Money;
+use Exception;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,17 +29,78 @@ final class DomainPrice extends Model
         'type' => DomainType::class,
     ];
 
-    public function getFormattedPrice(string $priceType = 'register_price'): string
+    public function getFormattedPrice(string $priceType = 'register_price', ?string $targetCurrency = null): string
     {
-        $priceAmount = $this->{$priceType};
+        $priceAmount = $this->getPriceInBaseCurrency($priceType);
+        $baseCurrency = $this->getBaseCurrency();
 
-        $currency = $this->type === DomainType::Local ? 'RWF' : 'USD';
+        // If no target currency specified, use user's preferred currency
+        if (! $targetCurrency) {
+            $targetCurrency = app(\App\Services\CurrencyService::class)->getUserCurrency()->code;
+        }
 
-        return (new Money($priceAmount, $currency))->format();
+        try {
+            if ($targetCurrency !== $baseCurrency) {
+                $convertedAmount = app(\App\Services\CurrencyService::class)->convert(
+                    $priceAmount,
+                    $baseCurrency,
+                    $targetCurrency
+                );
+
+                return app(\App\Services\CurrencyService::class)->format($convertedAmount, $targetCurrency);
+            }
+
+            return app(\App\Services\CurrencyService::class)->format($priceAmount, $baseCurrency);
+        } catch (Exception $e) {
+            // Fallback to base currency if conversion fails
+            return app(\App\Services\CurrencyService::class)->format($priceAmount, $baseCurrency);
+        }
     }
+
+    /**
+     * Get price in specific currency as float value
+     */
+    public function getPriceInCurrency(string $priceType = 'register_price', string $targetCurrency = 'USD'): float
+    {
+        $priceAmount = $this->getPriceInBaseCurrency($priceType);
+        $baseCurrency = $this->getBaseCurrency();
+
+        if ($targetCurrency === $baseCurrency) {
+            return $priceAmount;
+        }
+
+        try {
+            return app(\App\Services\CurrencyService::class)->convert(
+                $priceAmount,
+                $baseCurrency,
+                $targetCurrency
+            );
+        } catch (Exception) {
+            return $priceAmount; // Fallback to base price
+        }
+    }
+
+    /**
+     * Get price in the base currency (properly converted from cents)
+     */
+    public function getPriceInBaseCurrency(string $priceType = 'register_price'): float
+    {
+        $priceInCents = $this->{$priceType};
+
+        // Convert from cents to the main currency unit
+        return $priceInCents / 100;
+    }
+
+    /**
+     * Get the base currency for this domain type
+     */
+    public function getBaseCurrency(): string
+    {
+        return $this->type === DomainType::Local ? 'RWF' : 'USD';
+    }
+
     public function getRouteKeyName(): string
     {
         return 'uuid';
     }
-
 }

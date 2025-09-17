@@ -16,7 +16,7 @@
                                 <img src="assets/images/icon/forum.svg" alt="" class="icon">Live Chat
                             </a>
                         </div>
-                        <livewire:cart-total/>
+                        <livewire:cart-total />
                     </div>
                 </div>
             </div>
@@ -50,9 +50,9 @@
                                             <div class="col-lg-12">
                                                 <ul class="mega-menu-item">
                                                     <li>
-                                                        <a href="{{--{{ route('shared.index') }}--}}">
+                                                        <a href="{{-- {{ route('shared.index') }} --}}">
                                                             <img src="{{ asset('assets/images/mega-menu/22.svg') }}"
-                                                                 alt="icon">
+                                                                alt="icon">
                                                             <div class="info">
                                                                 <p>Shared Hosting</p>
                                                                 <span>Manage Shared Hosting</span>
@@ -62,7 +62,7 @@
                                                     <li>
                                                         <a href="#">
                                                             <img src="{{ asset('assets/images/mega-menu/27.svg') }}"
-                                                                 alt="icon">
+                                                                alt="icon">
                                                             <div class="info">
                                                                 <p>VPS - High Storage</p>
                                                                 <span>Get your highest storage VPS</span>
@@ -72,7 +72,7 @@
                                                     <li>
                                                         <a href="#">
                                                             <img src="{{ asset('assets/images/mega-menu/24.svg') }}"
-                                                                 alt="icon">
+                                                                alt="icon">
                                                             <div class="info">
                                                                 <p>VPS High Performance</p>
                                                                 <span>Dedicated resources</span>
@@ -93,7 +93,7 @@
                                         <a class="nav-link" href="{{ route('domains') }}">Register Domain</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{{--{{route('admin.domains.transfer.check')}}--}}">Transfer
+                                        <a class="nav-link" href="{{-- {{route('admin.domains.transfer.check')}} --}}">Transfer
                                             Domain
                                         </a>
                                     </li>

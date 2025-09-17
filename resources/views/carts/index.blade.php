@@ -19,6 +19,6 @@
 
 
     <div class="container col-12 my-5">
-        <livewire:cart-component/>
+        <livewire:cart-component />
     </div>
 </x-user-layout>
