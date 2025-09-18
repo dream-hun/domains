@@ -1,19 +1,4 @@
 <div class="d-flex align-items-center">
-    <div class="login-btn-has-dropdown">
-        <a href="#" class="login__link">Login</a>
-        <div class="login-submenu">
-            <form action="#">
-                <div class="form-inner text-black" wire:model.live="selectedCurrency">
-                    @foreach ($currencies as $currency)
-                        <option value="{{ $currency->code }}" @selected($currency->code === $currentCurrency->code)>
-                            {{ $currency->symbol }} {{ $currency->code }}
-                        </option>
-                    @endforeach
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Cart Total -->
     <div class="live-chat-has-dropdown">
         <a href="{{ route('cart.index') }}" class="live__chat"

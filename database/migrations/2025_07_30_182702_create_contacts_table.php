@@ -31,8 +31,10 @@ return new class extends Migration
             $table->string('phone');
             $table->string('phone_extension')->nullable();
             $table->string('fax_number')->nullable();
+            $table->string('fax_ext')->nullable();
             $table->string('email');
             $table->foreignId('user_id')->nullable()->index();
+            $table->boolean('is_primary')->default(true);
             $table->timestamps();
         });
     }
