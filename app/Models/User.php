@@ -36,12 +36,6 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        self::created(function (self $user): void {
-            $registrationRole = config('panel.registration_default_role');
-            if (! $user->roles()->get()->contains($registrationRole)) {
-                $user->roles()->attach($registrationRole);
-            }
-        });
     }
 
     /**
@@ -100,6 +94,16 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function getNameAttribute(): string
     {
         return mb_trim($this->first_name.' '.$this->last_name);
+    }
+
+    protected static function booted(): void
+    {
+        self::created(function (self $user): void {
+            $registrationRole = config('panel.registration_default_role');
+            if (! $user->roles()->get()->contains($registrationRole)) {
+                $user->roles()->attach($registrationRole);
+            }
+        });
     }
 
     protected function casts(): array

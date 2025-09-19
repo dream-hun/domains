@@ -139,7 +139,7 @@ final class CurrencyHelper
             $formatter = new NumberFormatter('en', NumberFormatter::CURRENCY);
             $formatted = $formatter->formatCurrency(0, $currencyCode);
 
-            return !in_array(preg_replace('/[\d.,\s]/', '', $formatted), ['', '0'], true) && preg_replace('/[\d.,\s]/', '', $formatted) !== [] ? preg_replace('/[\d.,\s]/', '', $formatted) : $currencyCode;
+            return ! in_array(preg_replace('/[\d.,\s]/', '', $formatted), ['', '0'], true) && preg_replace('/[\d.,\s]/', '', $formatted) !== [] ? preg_replace('/[\d.,\s]/', '', $formatted) : $currencyCode;
         } catch (Exception) {
             return $currencyCode;
         }

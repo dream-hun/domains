@@ -64,6 +64,7 @@ final class Domain extends Model
     {
         return $this->last_renewed_at ? $this->last_renewed_at->format('d-m-Y') : null;
     }
+
     public function getRouteKeyName(): string
     {
         return 'uuid';

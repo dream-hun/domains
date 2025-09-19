@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterUserRequest;
 use App\Models\User;
 use Exception;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -31,8 +33,8 @@ final class RegisteredUserController extends Controller
      */
     public function store(RegisterUserRequest $request): RedirectResponse
     {
-        User::create([
-            'uuid' => Str::uuid(),
+        $user = User::create([
+            'uuid' => (string) Str::uuid(),
             'client_code' => User::generateCustomerNumber(),
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
@@ -40,6 +42,12 @@ final class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return redirect()->back()->with('success', 'An activation email has been sent to your email address.');
+        // Fire the Registered event so Laravel's SendEmailVerificationNotification listener runs
+        event(new Registered($user));
+
+        // Log the user in to match typical verification flow
+        Auth::login($user);
+
+        return redirect()->route('verification.notice')->with('success', 'An activation email has been sent to your email address.');
     }
 }

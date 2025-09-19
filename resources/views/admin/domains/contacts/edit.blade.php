@@ -30,7 +30,7 @@
                             <h3 class="card-title mb-0">
                                 <i class="bi bi-person-gear"></i> Edit {{ ucfirst($contactType) }} Contact
                             </h3>
-                            
+
                         </div>
 
                         <form action="{{ route('admin.domains.contacts.update', $domain->uuid) }}" method="POST">

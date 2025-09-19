@@ -20,17 +20,6 @@ final class Contact extends Model
 
     protected $guarded = [];
 
-    protected static function boot(): void
-    {
-        parent::boot();
-
-        static::creating(function ($contact) {
-            if (empty($contact->uuid)) {
-                $contact->uuid = (string) Str::uuid();
-            }
-        });
-    }
-
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -80,5 +69,16 @@ final class Contact extends Model
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        self::creating(function ($contact) {
+            if (empty($contact->uuid)) {
+                $contact->uuid = (string) Str::uuid();
+            }
+        });
     }
 }

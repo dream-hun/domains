@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace App\View\Components;
 
 use App\Models\Domain;
-use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
 final class UserDataComponent extends Component
 {
-    public function render(): \Illuminate\Contracts\View\View
+    public function render(): View
     {
         $totalDomains = Domain::count();
         $totalSSL = 0;
