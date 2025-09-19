@@ -30,9 +30,7 @@
                             <h3 class="card-title mb-0">
                                 <i class="bi bi-person-gear"></i> Edit {{ ucfirst($contactType) }} Contact
                             </h3>
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="useAddressBookBtn">
-                                <i class="bi bi-person-rolodex"></i> USE ADDRESS BOOK CONTACT
-                            </button>
+                            
                         </div>
 
                         <form action="{{ route('admin.domains.contacts.update', $domain->uuid) }}" method="POST">
@@ -58,17 +56,17 @@
                                             <option value="">Choose a contact...</option>
                                             @foreach ($availableContacts as $contact)
                                                 <option value="{{ $contact->id }}"
-                                                    data-first-name="{{ $contact->first_name }}"
-                                                    data-last-name="{{ $contact->last_name }}"
-                                                    data-organization="{{ $contact->organization }}"
-                                                    data-address-one="{{ $contact->address_one }}"
-                                                    data-address-two="{{ $contact->address_two }}"
-                                                    data-city="{{ $contact->city }}"
-                                                    data-state-province="{{ $contact->state_province }}"
-                                                    data-postal-code="{{ $contact->postal_code }}"
-                                                    data-country-code="{{ $contact->country_code }}"
-                                                    data-phone="{{ $contact->phone }}"
-                                                    data-email="{{ $contact->email }}">
+                                                        data-first-name="{{ $contact->first_name }}"
+                                                        data-last-name="{{ $contact->last_name }}"
+                                                        data-organization="{{ $contact->organization }}"
+                                                        data-address-one="{{ $contact->address_one }}"
+                                                        data-address-two="{{ $contact->address_two }}"
+                                                        data-city="{{ $contact->city }}"
+                                                        data-state-province="{{ $contact->state_province }}"
+                                                        data-postal-code="{{ $contact->postal_code }}"
+                                                        data-country-code="{{ $contact->country_code }}"
+                                                        data-phone="{{ $contact->phone }}"
+                                                        data-email="{{ $contact->email }}">
                                                     {{ $contact->full_name }}
                                                     ({{ $contact->email }}){{ $contact->is_primary ? ' - PRIMARY' : '' }}
                                                 </option>
@@ -86,12 +84,12 @@
                                         <div class="form-group mb-3">
                                             <label for="first_name" class="form-label">First Name</label>
                                             <input type="text"
-                                                class="form-control @error('first_name') is-invalid @enderror"
-                                                id="first_name" name="first_name"
-                                                value="{{ old('first_name', $currentContact->first_name ?? '') }}"
-                                                required>
+                                                   class="form-control @error('first_name') is-invalid @enderror"
+                                                   id="first_name" name="first_name"
+                                                   value="{{ old('first_name', $currentContact->first_name ?? '') }}"
+                                                   required>
                                             @error('first_name')
-                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
                                     </div>
@@ -99,12 +97,12 @@
                                         <div class="form-group mb-3">
                                             <label for="last_name" class="form-label">Last Name</label>
                                             <input type="text"
-                                                class="form-control @error('last_name') is-invalid @enderror"
-                                                id="last_name" name="last_name"
-                                                value="{{ old('last_name', $currentContact->last_name ?? '') }}"
-                                                required>
+                                                   class="form-control @error('last_name') is-invalid @enderror"
+                                                   id="last_name" name="last_name"
+                                                   value="{{ old('last_name', $currentContact->last_name ?? '') }}"
+                                                   required>
                                             @error('last_name')
-                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
                                     </div>
@@ -113,7 +111,7 @@
                                 <div class="form-group mb-3">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="is_organization"
-                                            name="is_organization"
+                                               name="is_organization"
                                             {{ old('is_organization', $currentContact->organization ? 'checked' : '') }}>
                                         <label class="form-check-label" for="is_organization">
                                             Domain is registered on behalf of a company
@@ -122,77 +120,77 @@
                                 </div>
 
                                 <div class="form-group mb-3" id="organization_field"
-                                    style="{{ old('is_organization', $currentContact->organization) ? '' : 'display: none;' }}">
+                                     style="{{ old('is_organization', $currentContact->organization) ? '' : 'display: none;' }}">
                                     <label for="organization" class="form-label">Organization</label>
                                     <input type="text"
-                                        class="form-control @error('organization') is-invalid @enderror"
-                                        id="organization" name="organization"
-                                        value="{{ old('organization', $currentContact->organization ?? '') }}">
+                                           class="form-control @error('organization') is-invalid @enderror"
+                                           id="organization" name="organization"
+                                           value="{{ old('organization', $currentContact->organization ?? '') }}">
                                     @error('organization')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="form-group mb-3">
                                     <label for="address_one" class="form-label">Address</label>
                                     <input type="text"
-                                        class="form-control @error('address_one') is-invalid @enderror" id="address_one"
-                                        name="address_one"
-                                        value="{{ old('address_one', $currentContact->address_one ?? '') }}" required>
+                                           class="form-control @error('address_one') is-invalid @enderror" id="address_one"
+                                           name="address_one"
+                                           value="{{ old('address_one', $currentContact->address_one ?? '') }}" required>
                                     @error('address_one')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="form-group mb-3">
                                     <input type="text"
-                                        class="form-control @error('address_two') is-invalid @enderror"
-                                        id="address_two" name="address_two"
-                                        value="{{ old('address_two', $currentContact->address_two ?? '') }}"
-                                        placeholder="Optional">
+                                           class="form-control @error('address_two') is-invalid @enderror"
+                                           id="address_two" name="address_two"
+                                           value="{{ old('address_two', $currentContact->address_two ?? '') }}"
+                                           placeholder="Optional">
                                     <small class="form-text text-muted">OPTIONAL</small>
                                     @error('address_two')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="form-group mb-3">
                                     <label for="city" class="form-label">City</label>
                                     <input type="text" class="form-control @error('city') is-invalid @enderror"
-                                        id="city" name="city"
-                                        value="{{ old('city', $currentContact->city ?? '') }}" required>
+                                           id="city" name="city"
+                                           value="{{ old('city', $currentContact->city ?? '') }}" required>
                                     @error('city')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="form-group mb-3">
                                     <label for="state_province" class="form-label">State/Province</label>
                                     <input type="text"
-                                        class="form-control @error('state_province') is-invalid @enderror"
-                                        id="state_province" name="state_province"
-                                        value="{{ old('state_province', $currentContact->state_province ?? '') }}"
-                                        required>
+                                           class="form-control @error('state_province') is-invalid @enderror"
+                                           id="state_province" name="state_province"
+                                           value="{{ old('state_province', $currentContact->state_province ?? '') }}"
+                                           required>
                                     @error('state_province')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="form-group mb-3">
                                     <label for="postal_code" class="form-label">ZIP/Postal Code</label>
                                     <input type="text"
-                                        class="form-control @error('postal_code') is-invalid @enderror"
-                                        id="postal_code" name="postal_code"
-                                        value="{{ old('postal_code', $currentContact->postal_code ?? '') }}" required>
+                                           class="form-control @error('postal_code') is-invalid @enderror"
+                                           id="postal_code" name="postal_code"
+                                           value="{{ old('postal_code', $currentContact->postal_code ?? '') }}" required>
                                     @error('postal_code')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="form-group mb-3">
                                     <label for="country_code" class="form-label">Country</label>
                                     <select name="country_code"
-                                        class="form-control @error('country_code') is-invalid @enderror" required>
+                                            class="form-control @error('country_code') is-invalid @enderror" required>
                                         <option value="">Select a country</option>
                                         @foreach ($countries as $country)
                                             @php $code = \Illuminate\Support\Str::substr($country->iso_code, 0, -1); @endphp
@@ -203,7 +201,7 @@
                                         @endforeach
                                     </select>
                                     @error('country_code')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
@@ -230,12 +228,12 @@
                                         <div class="form-group mb-3">
                                             <label for="phone" class="form-label">&nbsp;</label>
                                             <input type="text"
-                                                class="form-control @error('phone') is-invalid @enderror"
-                                                id="phone" name="phone"
-                                                value="{{ old('phone', $currentContact ? str_replace(['+250.', '+1.', '+44.', '+33.', '+49.'], '', $currentContact->phone) : '') }}"
-                                                required>
+                                                   class="form-control @error('phone') is-invalid @enderror"
+                                                   id="phone" name="phone"
+                                                   value="{{ old('phone', $currentContact ? str_replace(['+250.', '+1.', '+44.', '+33.', '+49.'], '', $currentContact->phone) : '') }}"
+                                                   required>
                                             @error('phone')
-                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
                                     </div>
@@ -244,7 +242,7 @@
                                 <div class="form-group mb-3">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="add_phone_extension"
-                                            name="add_phone_extension">
+                                               name="add_phone_extension">
                                         <label class="form-check-label" for="add_phone_extension">
                                             Add phone extension
                                         </label>
@@ -266,13 +264,13 @@
                                         <div class="form-group mb-3">
                                             <label for="fax_number" class="form-label">&nbsp;</label>
                                             <input type="text"
-                                                class="form-control @error('fax_number') is-invalid @enderror"
-                                                id="fax_number" name="fax_number"
-                                                value="{{ old('fax_number', $currentContact->fax_number ?? '') }}"
-                                                placeholder="Fax Number">
+                                                   class="form-control @error('fax_number') is-invalid @enderror"
+                                                   id="fax_number" name="fax_number"
+                                                   value="{{ old('fax_number', $currentContact->fax_number ?? '') }}"
+                                                   placeholder="Fax Number">
                                             <small class="form-text text-muted">OPTIONAL</small>
                                             @error('fax_number')
-                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
                                     </div>
@@ -281,10 +279,10 @@
                                 <div class="form-group mb-4">
                                     <label for="email" class="form-label">Email Address</label>
                                     <input type="email" class="form-control @error('email') is-invalid @enderror"
-                                        id="email" name="email"
-                                        value="{{ old('email', $currentContact->email ?? '') }}" required>
+                                           id="email" name="email"
+                                           value="{{ old('email', $currentContact->email ?? '') }}" required>
                                     @error('email')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
@@ -292,7 +290,7 @@
                                 <div class="form-group mb-4">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="use_for_registrant"
-                                            name="use_for_registrant"
+                                               name="use_for_registrant"
                                             {{ $contactType == 'registrant' ? 'checked' : '' }}>
                                         <label class="form-check-label" for="use_for_registrant">
                                             Use for Registrant Contacts
@@ -300,14 +298,14 @@
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="use_for_admin"
-                                            name="use_for_admin" {{ $contactType == 'admin' ? 'checked' : '' }}>
+                                               name="use_for_admin" {{ $contactType == 'admin' ? 'checked' : '' }}>
                                         <label class="form-check-label" for="use_for_admin">
                                             Use for Administrative Contacts
                                         </label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="use_for_technical"
-                                            name="use_for_technical"
+                                               name="use_for_technical"
                                             {{ $contactType == 'technical' ? 'checked' : '' }}>
                                         <label class="form-check-label" for="use_for_technical">
                                             Use for Billing Contacts
@@ -375,22 +373,22 @@
                                 @case('registrant')
                                     <p class="text-sm">The registrant is the legal owner of the domain name. This contact has
                                         full control over the domain and is responsible for all domain-related decisions.</p>
-                                @break
+                                    @break
 
                                 @case('admin')
                                     <p class="text-sm">The administrative contact handles the business aspects of the domain
                                         registration and serves as the primary contact for administrative issues.</p>
-                                @break
+                                    @break
 
                                 @case('technical')
                                     <p class="text-sm">The technical contact is responsible for the technical aspects of the
                                         domain, including nameserver changes and DNS management.</p>
-                                @break
+                                    @break
 
                                 @case('billing')
                                     <p class="text-sm">The billing contact receives invoices and handles payment-related
                                         matters for the domain registration and renewals.</p>
-                                @break
+                                    @break
                             @endswitch
                         </div>
                     </div>
