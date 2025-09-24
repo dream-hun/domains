@@ -450,37 +450,87 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Cart Summary Section - FIXED -->
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-body box-profile">
                                 <h3 class="profile-username text-center">Cart Summary</h3>
 
-                                <ul class="list-group list-group-unbordered mb-3">
-                                    @php
-                                        $currency = $domainType === DomainType::Local ? 'RWF' : 'USD';
-                                    @endphp
+                                @php
+                                    // Get the user's selected currency from session/user preferences
+                                    $userCurrency = session('selected_currency');
+                                    if (!$userCurrency && auth()->check()) {
+                                        $userCurrency = auth()->user()->preferred_currency;
+                                    }
+                                    // Fallback to default currency based on domain type
+                                    if (!$userCurrency) {
+                                        $userCurrency = $domainType === DomainType::Local ? 'RWF' : 'USD';
+                                    }
+                                @endphp
 
+                                <!-- Include the CartTotal Livewire component -->
+                                @livewire('cart-total')
+
+                                <ul class="list-group list-group-unbordered mb-3 mt-3">
                                     @foreach ($cartItems as $item)
+                                        @php
+                                            // Get the item's original currency
+                                            $itemCurrency = $item->attributes->currency ?? 'USD';
+                                            $itemPrice = $item->price;
+
+                                            // Convert price if necessary
+                                            if ($itemCurrency !== $userCurrency) {
+                                                try {
+                                                    $convertedPrice = app(\App\Services\CurrencyService::class)
+                                                        ->convertCurrency($itemPrice, $itemCurrency, $userCurrency);
+                                                    $displayPrice = $convertedPrice * $item->quantity;
+                                                } catch (Exception $e) {
+                                                    // Fallback to original price if conversion fails
+                                                    $displayPrice = $itemPrice * $item->quantity;
+                                                    $userCurrency = $itemCurrency; // Use original currency
+                                                }
+                                            } else {
+                                                $displayPrice = $itemPrice * $item->quantity;
+                                            }
+                                        @endphp
                                         <li class="list-group-item">
                                             {{ $item->name }}
-                                            <p class="float-right">
-                                                {{ money($item->price * $item->quantity, $currency) }}
+                                            <span class="float-right">
+                                                {{ money($displayPrice, $userCurrency) }}
                                                 /
                                                 {{ $item->quantity }} {{ Str::plural('Year', $item->quantity) }}
-                                            </p>
+                                            </span>
                                         </li>
                                     @endforeach
 
+                                    @php
+                                        // Calculate total in user's currency
+                                        $total = 0;
+                                        foreach ($cartItems as $item) {
+                                            $itemCurrency = $item->attributes->currency ?? 'USD';
+                                            $itemPrice = $item->price;
+
+                                            if ($itemCurrency !== $userCurrency) {
+                                                try {
+                                                    $convertedPrice = app(\App\Services\CurrencyService::class)
+                                                        ->convertCurrency($itemPrice, $itemCurrency, $userCurrency);
+                                                    $total += $convertedPrice * $item->quantity;
+                                                } catch (Exception $e) {
+                                                    $total += $itemPrice * $item->quantity;
+                                                }
+                                            } else {
+                                                $total += $itemPrice * $item->quantity;
+                                            }
+                                        }
+                                    @endphp
+
                                     <li class="list-group list-group-item">
                                         <b>Total</b>
-                                        <b>
-                                            <p class="float-right">
-                                                {{ money($cartTotal, $currency) }}
-                                            </p>
+                                        <b class="float-right">
+                                            {{ money($total, $userCurrency) }}
                                         </b>
                                     </li>
                                 </ul>
-
 
                                 <a href="{{ route('cart.index') }}" class="btn btn-secondary btn-block mb-3">
                                     <i class="bi bi-arrow-left"></i> Back to Cart
@@ -527,6 +577,8 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
                 </div>
             </div>
 
