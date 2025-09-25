@@ -7,65 +7,93 @@ namespace App\Services;
 use App\Models\Currency;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class CurrencyService
 {
     private const API_TIMEOUT = 30;
 
+    private const EXTENDED_TIMEOUT = 45;
+
+    private const CACHE_TTL = 3600; // 1 hour
+
+    private const RATE_STALENESS_HOURS = 24;
+
     /**
-     * Get user's preferred currency
+     * Get user's preferred currency with proper caching
      */
     public function getUserCurrency(): Currency
     {
         if (session()->has('selected_currency')) {
-            $currency = Currency::where('code', session('selected_currency'))->first();
-            if ($currency) {
+            $currency = $this->getCurrencyFromCache(session('selected_currency'));
+            if ($currency instanceof Currency) {
                 return $currency;
             }
         }
 
         if (auth()->check() && auth()->user()->preferred_currency) {
-            $currency = Currency::where('code', auth()->user()->preferred_currency)->first();
-            if ($currency) {
+            $currency = $this->getCurrencyFromCache(auth()->user()->preferred_currency);
+            if ($currency instanceof Currency) {
                 return $currency;
             }
         }
 
-        return Currency::getBaseCurrency();
+        return $this->getBaseCurrency();
     }
 
     /**
-     * Convert amount between currencies
+     * Convert amount between currencies with validation
      *
      * @throws Exception
      */
     public function convert(float $amount, string $fromCurrency, string $targetCurrency): float
     {
+        // Validate amount
+        if ($amount < 0) {
+            throw new Exception('Amount cannot be negative');
+        }
+
         if ($fromCurrency === $targetCurrency) {
             return $amount;
         }
 
-        $fromCurrencyModel = Currency::where('code', $fromCurrency)->first();
-        $targetCurrencyModel = Currency::where('code', $targetCurrency)->first();
+        // Validate currency codes format
+        if (! $this->isValidCurrencyCode($fromCurrency) || ! $this->isValidCurrencyCode($targetCurrency)) {
+            throw new Exception('Invalid currency code format');
+        }
 
-        if (! $fromCurrencyModel || ! $targetCurrencyModel) {
+        $fromCurrencyModel = $this->getCurrencyFromCache($fromCurrency);
+        $targetCurrencyModel = $this->getCurrencyFromCache($targetCurrency);
+
+        if (! $fromCurrencyModel instanceof Currency || ! $targetCurrencyModel instanceof Currency) {
             throw new Exception("Currency not found: $fromCurrency or $targetCurrency");
+        }
+
+        // Check if currencies are active
+        if (! $fromCurrencyModel->is_active || ! $targetCurrencyModel->is_active) {
+            throw new Exception("Inactive currency: $fromCurrency or $targetCurrency");
         }
 
         return $fromCurrencyModel->convertTo($amount, $targetCurrencyModel);
     }
 
     /**
-     * Format amount with currency
+     * Format amount with currency with better error handling
      */
     public function format(float $amount, string $currencyCode): string
     {
-        $currency = Currency::where('code', $currencyCode)->first();
+        if (! $this->isValidCurrencyCode($currencyCode)) {
+            return number_format($amount, 2);
+        }
 
-        if (! $currency) {
+        $currency = $this->getCurrencyFromCache($currencyCode);
+
+        if (! $currency instanceof Currency) {
             return $currencyCode.' '.number_format($amount, 2);
         }
 
@@ -73,11 +101,17 @@ final class CurrencyService
     }
 
     /**
-     * Update exchange rates from external API with fallback support
+     * Update exchange rates from external API with improved error handling
      */
     public function updateExchangeRates(): bool
     {
-        $baseCurrency = Currency::getBaseCurrency();
+        $baseCurrency = $this->getBaseCurrency();
+
+        if (! $baseCurrency instanceof Currency) {
+            Log::error('No base currency found');
+
+            return false;
+        }
 
         // Try primary API first
         if ($this->tryUpdateFromPrimaryApi($baseCurrency)) {
@@ -91,19 +125,21 @@ final class CurrencyService
     }
 
     /**
-     * Get all active currencies for display
+     * Get all active currencies with caching
      */
     public function getActiveCurrencies(): Collection
     {
-        return Currency::getActiveCurrencies();
+        return Cache::remember('active_currencies', self::CACHE_TTL, function (): Collection {
+            return Currency::getActiveCurrencies();
+        });
     }
 
     /**
-     * Get currency by code
+     * Get currency by code with caching
      */
     public function getCurrency(string $code): ?Currency
     {
-        return Currency::where('code', $code)->first();
+        return $this->getCurrencyFromCache($code);
     }
 
     /**
@@ -111,16 +147,18 @@ final class CurrencyService
      */
     public function ratesAreStale(): bool
     {
-        $lastUpdate = Currency::where('is_base', false)
-            ->whereNotNull('rate_updated_at')
-            ->max('rate_updated_at');
+        $lastUpdate = Cache::remember('last_rate_update', self::CACHE_TTL, function () {
+            return Currency::where('is_base', false)
+                ->whereNotNull('rate_updated_at')
+                ->max('rate_updated_at');
+        });
 
         if (! $lastUpdate) {
             return true; // No rates have been updated yet
         }
 
-        // Consider rates stale if they're older than 24 hours
-        return now()->diffInHours($lastUpdate) > 24;
+        // Consider rates stale if they're older than configured hours
+        return now()->diffInHours($lastUpdate) > self::RATE_STALENESS_HOURS;
     }
 
     /**
@@ -140,47 +178,97 @@ final class CurrencyService
     /**
      * Get current exchange rates with update information
      */
-    public function getCurrentRates(): \Illuminate\Support\Collection
+    public function getCurrentRates(): SupportCollection
     {
-        return Currency::where('is_active', true)
-            ->orderBy('is_base', 'desc')
-            ->orderBy('code')
-            ->get()
-            ->map(function ($currency): array {
-                return [
-                    'code' => $currency->code,
-                    'name' => $currency->name,
-                    'symbol' => $currency->symbol,
-                    'is_base' => $currency->is_base,
-                    'exchange_rate' => $currency->exchange_rate,
-                    'rate_updated_at' => $currency->rate_updated_at,
-                    'hours_since_update' => $currency->rate_updated_at
-                        ? now()->diffInHours($currency->rate_updated_at)
-                        : null,
-                ];
-            });
+        return Cache::remember('current_rates', self::CACHE_TTL / 4, function () {
+            return Currency::where('is_active', true)
+                ->orderBy('is_base', 'desc')
+                ->orderBy('code')
+                ->get()
+                ->map(function (Currency $currency): array {
+                    return [
+                        'code' => $currency->code,
+                        'name' => $currency->name,
+                        'symbol' => $currency->symbol,
+                        'is_base' => $currency->is_base,
+                        'exchange_rate' => $currency->exchange_rate,
+                        'rate_updated_at' => $currency->rate_updated_at,
+                        'hours_since_update' => $currency->rate_updated_at
+                            ? now()->diffInHours($currency->rate_updated_at)
+                            : null,
+                        'is_stale' => ! $currency->rate_updated_at || now()->diffInHours($currency->rate_updated_at) > self::RATE_STALENESS_HOURS,
+                    ];
+                });
+        });
     }
 
     /**
-     * Try updating from the primary exchanger-api.com
+     * Get base currency with caching
+     */
+    private function getBaseCurrency(): ?Currency
+    {
+        return Cache::remember('base_currency', self::CACHE_TTL, function (): Currency {
+            return Currency::getBaseCurrency();
+        });
+    }
+
+    /**
+     * Get currency from cache or database
+     */
+    private function getCurrencyFromCache(string $code): ?Currency
+    {
+        return Cache::remember("currency_$code", self::CACHE_TTL, function () use ($code): ?Currency {
+            return Currency::where('code', $code)->first();
+        });
+    }
+
+    /**
+     * Validate currency code format (ISO 4217)
+     */
+    private function isValidCurrencyCode(string $code): bool
+    {
+        return preg_match('/^[A-Z]{3}$/', $code) === 1;
+    }
+
+    /**
+     * Try updating from the primary exchanger-api.com with better error handling
      */
     private function tryUpdateFromPrimaryApi(Currency $baseCurrency): bool
     {
         try {
             $response = Http::timeout(self::API_TIMEOUT)
-                ->retry(2, 1000) // Retry 2 times with 1-second delay
+                ->retry(2, 1000)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'User-Agent' => config('app.name', 'Laravel').'/1.0',
+                ])
                 ->get("https://api.exchangerate-api.com/v4/latest/$baseCurrency->code");
 
             if ($response->successful()) {
-                return $this->processExchangeRates($response->json('rates', []));
+                $data = $response->json();
+
+                // Validate response structure
+                if (! isset($data['rates']) || ! is_array($data['rates'])) {
+                    Log::error('Invalid API response structure', ['response' => $data]);
+
+                    return false;
+                }
+
+                return $this->processExchangeRates($data['rates']);
             }
 
-            Log::warning('Primary API request failed', ['status' => $response->status()]);
+            Log::warning('Primary API request failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
 
             return false;
 
         } catch (Exception $e) {
-            Log::warning('Primary API exception', ['error' => $e->getMessage()]);
+            Log::warning('Primary API exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return false;
         }
@@ -192,28 +280,45 @@ final class CurrencyService
     private function tryUpdateWithRetry(Currency $baseCurrency): bool
     {
         try {
-            // Try with extended timeout
-            $response = Http::timeout(45)
-                ->retry(3, 2000) // Retry 3 times with 2-second delay
+            $response = Http::timeout(self::EXTENDED_TIMEOUT)
+                ->retry(3, 2000)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'User-Agent' => config('app.name', 'Laravel').'/1.0',
+                ])
                 ->get("https://api.exchangerate-api.com/v4/latest/$baseCurrency->code");
 
             if ($response->successful()) {
-                return $this->processExchangeRates($response->json('rates', []));
+                $data = $response->json();
+
+                if (! isset($data['rates']) || ! is_array($data['rates'])) {
+                    Log::error('Invalid API response structure on retry', ['response' => $data]);
+
+                    return false;
+                }
+
+                return $this->processExchangeRates($data['rates']);
             }
 
-            Log::error('All retry attempts failed', ['status' => $response->status()]);
+            Log::error('All retry attempts failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
 
             return false;
 
         } catch (Exception $e) {
-            Log::error('Error updating exchange rates after retries', ['error' => $e->getMessage()]);
+            Log::error('Error updating exchange rates after retries', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return false;
         }
     }
 
     /**
-     * Process and save exchange rates
+     * Process and save exchange rates with database transaction
      */
     private function processExchangeRates(array $rates): bool
     {
@@ -223,53 +328,117 @@ final class CurrencyService
             return false;
         }
 
-        $updatedCurrencies = [];
-        $updatedCount = 0;
+        try {
+            return DB::transaction(function () use ($rates): bool {
+                $updatedCurrencies = [];
+                $updatedCount = 0;
+                $now = now();
 
-        foreach ($rates as $currencyCode => $rate) {
-            $currency = Currency::where('code', $currencyCode)->first();
-            if ($currency && ! $currency->is_base) {
-                $oldRate = $currency->exchange_rate;
+                // Get all currencies that need updating in one query
+                $currencies = Currency::whereIn('code', array_keys($rates))
+                    ->where('is_base', false)
+                    ->get()
+                    ->keyBy('code');
 
-                $currency->update([
-                    'exchange_rate' => $rate,
-                    'rate_updated_at' => now(),
+                foreach ($rates as $currencyCode => $rate) {
+                    if (! isset($currencies[$currencyCode])) {
+                        continue;
+                    }
+
+                    $currency = $currencies[$currencyCode];
+
+                    // Validate rate
+                    if (! is_numeric($rate) || $rate <= 0) {
+                        Log::warning("Invalid exchange rate for $currencyCode: $rate");
+
+                        continue;
+                    }
+
+                    $oldRate = $currency->exchange_rate;
+                    $newRate = (float) $rate;
+
+                    // Only update if rate has changed significantly (more than 0.0001% difference)
+                    if ($oldRate && abs(($newRate - $oldRate) / $oldRate) < 0.000001) {
+                        continue;
+                    }
+
+                    $currency->update([
+                        'exchange_rate' => $newRate,
+                        'rate_updated_at' => $now,
+                    ]);
+
+                    $updatedCurrencies[] = [
+                        'code' => $currencyCode,
+                        'name' => $currency->name,
+                        'old_rate' => $oldRate,
+                        'new_rate' => $newRate,
+                        'change' => $oldRate ?: null,
+                    ];
+
+                    $updatedCount++;
+                }
+
+                // Clear relevant caches
+                $this->clearCurrencyCaches();
+
+                // Log summary
+                Log::info("Updated $updatedCount exchange rates", [
+                    'total_rates_received' => count($rates),
+                    'currencies_updated' => $updatedCount,
+                    'timestamp' => $now->toISOString(),
                 ]);
 
-                $updatedCurrencies[] = [
-                    'code' => $currencyCode,
-                    'name' => $currency->name,
-                    'old_rate' => $oldRate,
-                    'new_rate' => $rate,
-                    'change' => $oldRate ? round((($rate - $oldRate) / $oldRate) * 100, 2) : null,
-                ];
+                // Log detailed currency information (limit to avoid log spam)
+                foreach (array_slice($updatedCurrencies, 0, 10) as $currencyInfo) {
+                    $changeText = $currencyInfo['change'] !== null
+                        ? ($currencyInfo['change'] >= 0 ? "+{$currencyInfo['change']}%" : "{$currencyInfo['change']}%")
+                        : 'new';
 
-                $updatedCount++;
-            }
+                    Log::info("Currency rate updated: {$currencyInfo['code']} ({$currencyInfo['name']})", [
+                        'old_rate' => $currencyInfo['old_rate'],
+                        'new_rate' => $currencyInfo['new_rate'],
+                        'change_percent' => $changeText,
+                    ]);
+                }
+
+                if (count($updatedCurrencies) > 10) {
+                    Log::info('... and '.(count($updatedCurrencies) - 10).' more currencies updated');
+                }
+
+                return $updatedCount > 0;
+            });
+
+        } catch (Exception $e) {
+            Log::error('Error processing exchange rates', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return false;
+        } catch (Throwable $e) {
+            Log::error('Unexpected error processing exchange rates', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return false;
         }
+    }
 
+    /**
+     * Clear all currency-related caches
+     */
+    private function clearCurrencyCaches(): void
+    {
         Cache::forget('active_currencies');
         Cache::forget('base_currency');
+        Cache::forget('current_rates');
+        Cache::forget('last_rate_update');
 
-        // Log summary
-        Log::info("Updated $updatedCount exchange rates", [
-            'total_rates_received' => count($rates),
-            'currencies_updated' => $updatedCount,
-        ]);
-
-        // Log detailed currency information
-        foreach ($updatedCurrencies as $currencyInfo) {
-            $changeText = $currencyInfo['change'] !== null
-                ? ($currencyInfo['change'] >= 0 ? "+{$currencyInfo['change']}%" : "{$currencyInfo['change']}%")
-                : 'new';
-
-            Log::info("Currency rate updated: {$currencyInfo['code']} ({$currencyInfo['name']})", [
-                'old_rate' => $currencyInfo['old_rate'],
-                'new_rate' => $currencyInfo['new_rate'],
-                'change_percent' => $changeText,
-            ]);
+        // Clear individual currency caches (you might want to implement a more efficient way)
+        $currencies = Currency::pluck('code');
+        foreach ($currencies as $code) {
+            Cache::forget("currency_$code");
         }
-
-        return true;
     }
 }

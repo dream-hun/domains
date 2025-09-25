@@ -9,6 +9,7 @@ use App\Enums\ContactType;
 use App\Enums\DomainType;
 use App\Http\Requests\RegisterDomainRequest;
 use App\Models\Country;
+use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +19,8 @@ use Log;
 final class RegisterDomainController extends Controller
 {
     public function __construct(
-        private readonly RegisterDomainAction $registerDomainAction
+        private readonly RegisterDomainAction $registerDomainAction,
+        private readonly CurrencyService $currencyService
     ) {}
 
     public function index(): View
@@ -28,7 +30,6 @@ final class RegisterDomainController extends Controller
         $tld = mb_strrpos($domainName, '.') ? mb_substr($domainName, mb_strrpos($domainName, '.') + 1) : '';
         $domainType = mb_strtolower($tld) === 'rw' ? DomainType::Local : DomainType::International;
 
-        $cartTotal = Cart::getTotal();
         $contactTypes = ContactType::cases();
         $userContacts = auth()->user()->contacts()->latest()->get();
 
@@ -40,14 +41,25 @@ final class RegisterDomainController extends Controller
 
         $countries = Country::all();
 
+        // Determine display currency (user preferred or type-based default)
+        $userCurrency = $this->currencyService->getUserCurrency();
+        $displayCurrency = mb_strtoupper($userCurrency?->code ?? $this->getDefaultCurrencyForDomainType($domainType));
+
+        // Process cart items with currency conversion
+        [$convertedItems, $cartTotalNumeric] = $this->processCartItemsWithCurrency($cartItems, $displayCurrency);
+        $formattedCartTotal = $this->formatAmount($cartTotalNumeric, $displayCurrency);
+
         return view('domains.register', [
             'cartItems' => $cartItems,
-            'cartTotal' => $cartTotal,
             'countries' => $countries,
             'contactTypes' => $contactTypes,
             'userContacts' => $userContacts,
             'existingContacts' => $existingContacts,
             'domainType' => $domainType,
+            'displayCurrency' => $displayCurrency,
+            'convertedItems' => $convertedItems,
+            'convertedCartTotal' => $formattedCartTotal,
+            'convertedCartTotalNumeric' => $cartTotalNumeric,
         ]);
     }
 
@@ -231,5 +243,89 @@ final class RegisterDomainController extends Controller
         }
 
         return array_values(array_filter($nameservers, fn ($ns): bool => ! in_array(mb_trim($ns), ['', '0'], true)));
+    }
+
+    /**
+     * Process cart items with currency conversion
+     *
+     * @return array{0: array<string, array>, 1: float} Tuple of [converted items array, cart total]
+     */
+    private function processCartItemsWithCurrency(mixed $cartItems, string $displayCurrency): array
+    {
+        $convertedItems = [];
+        $cartTotalNumeric = 0.0;
+
+        foreach ($cartItems as $cartItem) {
+            $itemId = $cartItem->id ?? $cartItem->name;
+            $itemCurrency = mb_strtoupper($cartItem->attributes->currency ?? 'USD');
+            $unitPrice = (float) $cartItem->price;
+            $quantity = (int) $cartItem->quantity;
+
+            // Convert unit price to display currency
+            $convertedUnitPrice = $this->convertAmount($unitPrice, $itemCurrency, $displayCurrency);
+            $lineTotal = $convertedUnitPrice * $quantity;
+            $cartTotalNumeric += $lineTotal;
+
+            $convertedItems[$itemId] = [
+                'id' => $itemId,
+                'name' => $cartItem->name,
+                'quantity' => $quantity,
+                'unit_price' => $convertedUnitPrice,
+                'line_total' => $lineTotal,
+                'formatted_unit_price' => $this->formatAmount($convertedUnitPrice, $displayCurrency),
+                'formatted_line_total' => $this->formatAmount($lineTotal, $displayCurrency),
+            ];
+        }
+
+        return [$convertedItems, $cartTotalNumeric];
+    }
+
+    /**
+     * Convert amount from one currency to another with fallback
+     */
+    private function convertAmount(float $amount, string $fromCurrency, string $toCurrency): float
+    {
+        if ($fromCurrency === $toCurrency) {
+            return $amount;
+        }
+
+        try {
+            return $this->currencyService->convert($amount, $fromCurrency, $toCurrency);
+        } catch (Exception $e) {
+            Log::warning('Currency conversion failed', [
+                'from' => $fromCurrency,
+                'to' => $toCurrency,
+                'amount' => $amount,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $amount; // Fallback to original amount
+        }
+    }
+
+    /**
+     * Format amount in given currency with fallback
+     */
+    private function formatAmount(float $amount, string $currency): string
+    {
+        try {
+            return $this->currencyService->format($amount, $currency);
+        } catch (Exception $e) {
+            Log::warning('Currency formatting failed', [
+                'currency' => $currency,
+                'amount' => $amount,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $currency.' '.number_format($amount, 2);
+        }
+    }
+
+    /**
+     * Get default currency code for domain type
+     */
+    private function getDefaultCurrencyForDomainType(DomainType $domainType): string
+    {
+        return $domainType === DomainType::Local ? 'RWF' : 'USD';
     }
 }

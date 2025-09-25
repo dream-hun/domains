@@ -17,13 +17,13 @@
         @endif
 
         <form action="{{ route('domains.register.store') }}" method="POST" id="domainRegistrationForm"
-            class="needs-validation" novalidate>
+              class="needs-validation" novalidate>
 
             @csrf
             <input type="hidden" name="domain_name" value="{{ $cartItems->first()->name ?? '' }}" required>
             <input type="hidden" name="registration_years" value="{{ $cartItems->first()->quantity ?? 1 }}">
             @error('domain_name')
-                <div class="alert alert-danger">{{ $message }}</div>
+            <div class="alert alert-danger">{{ $message }}</div>
             @enderror
             <div id="domainRegistration">
                 <div class="row">
@@ -33,15 +33,13 @@
                                 <h3 class="card-title">Domain Contacts</h3>
                             </div>
                             <div class="card-body">
-                                <div x-data="{
-                                    useSingleContact: {{ old('use_single_contact', '0') === '1' ? 'true' : 'false' }},
-                                    registrantContactId: '{{ old('registrant_contact_id', '') }}'
-                                }">
+                                <div
+                                    x-data="{ useSingleContact: {{ old('use_single_contact', '0') === '1' ? 'true' : 'false' }},registrantContactId: '{{ old('registrant_contact_id', '') }}'}">
                                     <div class="form-check form-check-inline mb-3">
                                         <!-- Hidden field to ensure a value is always sent -->
                                         <input type="hidden" name="use_single_contact" value="0">
                                         <input type="checkbox" class="form-check-input" id="use_single_contact"
-                                            name="use_single_contact" value="1" x-model="useSingleContact"
+                                               name="use_single_contact" value="1" x-model="useSingleContact"
                                             {{ old('use_single_contact') ? 'checked' : '' }}>
                                         <label class="form-check-label ms-2" for="use_single_contact">
                                             Use the same contact for all roles (Registrant, Admin, Technical, Billing)
@@ -49,15 +47,17 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-3">
-                                            <div class="form-group mb-3" x-data="{ contact: { id: '{{ old('registrant_contact_id', '') }}', details: null } }" x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }"
+                                            <div class="form-group mb-3"
+                                                 x-data="{ contact: { id: '{{ old('registrant_contact_id', '') }}', details: null } }"
+                                                 x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
                                                 <label class="form-label font-weight-bold">Registrant Contact <span
-                                                    class="text-danger">*</span></label>
+                                                        class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select name="registrant_contact_id"
-                                                        class="form-control @error('registrant_contact_id') is-invalid @enderror"
-                                                        x-model="contact.id"
-                                                        x-on:change="registrantContactId = $el.value; fetchContactDetails($el.value).then(result => contact.details = result)"
-                                                        required>
+                                                            class="form-control @error('registrant_contact_id') is-invalid @enderror"
+                                                            x-model="contact.id"
+                                                            x-on:change="registrantContactId = $el.value; fetchContactDetails($el.value).then(result => contact.details = result)"
+                                                            required>
                                                         <option value="">Select Registrant Contact</option>
                                                         @foreach ($existingContacts['registrant'] ?? [] as $contact)
                                                             <option value="{{ $contact->id }}"
@@ -69,13 +69,13 @@
                                                     </select>
                                                     <div class="input-group-append">
                                                         <a href="{{ route('admin.contacts.create') }}"
-                                                            class="btn btn-primary add-contact-btn">
+                                                           class="btn btn-primary add-contact-btn">
                                                             <i class="bi bi-plus-lg"></i> Add New
                                                         </a>
                                                     </div>
                                                 </div>
                                                 @error('registrant_contact_id')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                                 <template x-if="contact.details">
                                                     <div class="contact-details mt-3">
@@ -129,16 +129,17 @@
                                             </div>
                                         </div>
                                         <div class="col-md-3" x-show="!useSingleContact" x-cloak>
-                                            <div class="form-group mb-3" x-data="{ contact: { id: '{{ old('admin_contact_id', '') }}', details: null } }"
-                                                x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
+                                            <div class="form-group mb-3"
+                                                 x-data="{ contact: { id: '{{ old('admin_contact_id', '') }}', details: null } }"
+                                                 x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
                                                 <label class="form-label font-weight-bold">Admin Contact <span
                                                         class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select name="admin_contact_id"
-                                                        class="form-control @error('admin_contact_id') is-invalid @enderror"
-                                                        x-model="contact.id"
-                                                        @change="fetchContactDetails($el.value).then(result => contact.details = result)"
-                                                        :required="!useSingleContact">
+                                                            class="form-control @error('admin_contact_id') is-invalid @enderror"
+                                                            x-model="contact.id"
+                                                            @change="fetchContactDetails($el.value).then(result => contact.details = result)"
+                                                            :required="!useSingleContact">
                                                         <option value="">Select Admin Contact</option>
                                                         @foreach ($existingContacts['admin'] ?? [] as $contact)
                                                             <option value="{{ $contact->id }}"
@@ -150,13 +151,13 @@
                                                     </select>
                                                     <div class="input-group-append">
                                                         <a href="{{ route('admin.contacts.create') }}"
-                                                            class="btn btn-primary add-contact-btn">
+                                                           class="btn btn-primary add-contact-btn">
                                                             <i class="bi bi-plus-lg"></i> Add New
                                                         </a>
                                                     </div>
                                                 </div>
                                                 @error('admin_contact_id')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                                 <template x-if="contact.details">
                                                     <div class="contact-details mt-3">
@@ -211,16 +212,17 @@
                                             </div>
                                         </div>
                                         <div class="col-md-3" x-show="!useSingleContact" x-cloak>
-                                            <div class="form-group mb-3" x-data="{ contact: { id: '{{ old('tech_contact_id', '') }}', details: null } }"
-                                                x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
+                                            <div class="form-group mb-3"
+                                                 x-data="{ contact: { id: '{{ old('tech_contact_id', '') }}', details: null } }"
+                                                 x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
                                                 <label class="form-label font-weight-bold">Technical Contact <span
                                                         class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select name="tech_contact_id"
-                                                        class="form-control @error('tech_contact_id') is-invalid @enderror"
-                                                        x-model="contact.id"
-                                                        @change="fetchContactDetails($el.value).then(result => contact.details = result)"
-                                                        :required="!useSingleContact">
+                                                            class="form-control @error('tech_contact_id') is-invalid @enderror"
+                                                            x-model="contact.id"
+                                                            @change="fetchContactDetails($el.value).then(result => contact.details = result)"
+                                                            :required="!useSingleContact">
                                                         <option value="">Select Technical Contact</option>
                                                         @foreach ($existingContacts['technical'] ?? [] as $contact)
                                                             <option value="{{ $contact->id }}"
@@ -232,13 +234,13 @@
                                                     </select>
                                                     <div class="input-group-append">
                                                         <a href="{{ route('admin.contacts.create') }}"
-                                                            class="btn btn-primary add-contact-btn">
+                                                           class="btn btn-primary add-contact-btn">
                                                             <i class="bi bi-plus-lg"></i> Add New
                                                         </a>
                                                     </div>
                                                 </div>
                                                 @error('tech_contact_id')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                                 <template x-if="contact.details">
                                                     <div class="contact-details mt-3">
@@ -293,16 +295,17 @@
                                             </div>
                                         </div>
                                         <div class="col-md-3" x-show="!useSingleContact" x-cloak>
-                                            <div class="form-group mb-3" x-data="{ contact: { id: '{{ old('billing_contact_id', '') }}', details: null } }"
-                                                x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
+                                            <div class="form-group mb-3"
+                                                 x-data="{ contact: { id: '{{ old('billing_contact_id', '') }}', details: null } }"
+                                                 x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
                                                 <label class="form-label font-weight-bold">Billing Contact <span
                                                         class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select name="billing_contact_id"
-                                                        class="form-control @error('billing_contact_id') is-invalid @enderror"
-                                                        x-model="contact.id"
-                                                        @change="fetchContactDetails($el.value).then(result => contact.details = result)"
-                                                        :required="!useSingleContact">
+                                                            class="form-control @error('billing_contact_id') is-invalid @enderror"
+                                                            x-model="contact.id"
+                                                            @change="fetchContactDetails($el.value).then(result => contact.details = result)"
+                                                            :required="!useSingleContact">
                                                         <option value="">Select Billing Contact</option>
                                                         @foreach ($existingContacts['billing'] ?? [] as $contact)
                                                             <option value="{{ $contact->id }}"
@@ -314,13 +317,13 @@
                                                     </select>
                                                     <div class="input-group-append">
                                                         <a href="{{ route('admin.contacts.create') }}"
-                                                            class="btn btn-primary add-contact-btn">
+                                                           class="btn btn-primary add-contact-btn">
                                                             <i class="bi bi-plus-lg"></i> Add New
                                                         </a>
                                                     </div>
                                                 </div>
                                                 @error('billing_contact_id')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                                 <template x-if="contact.details">
                                                     <div class="contact-details mt-3">
@@ -380,18 +383,19 @@
                                         <template x-if="useSingleContact && registrantContactId">
                                             <div>
                                                 <input type="hidden" name="admin_contact_id"
-                                                    :value="registrantContactId">
+                                                       :value="registrantContactId">
                                                 <input type="hidden" name="tech_contact_id"
-                                                    :value="registrantContactId">
+                                                       :value="registrantContactId">
                                                 <input type="hidden" name="billing_contact_id"
-                                                    :value="registrantContactId">
+                                                       :value="registrantContactId">
                                             </div>
                                         </template>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="card" x-data="{ disableDNS: {{ old('disable_dns', '0') === '1' ? 'true' : 'false' }} }">
+                        <div class="card"
+                             x-data="{ disableDNS: {{ old('disable_dns', '0') === '1' ? 'true' : 'false' }} }">
                             <div class="card-header">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h3 class="card-title mb-0">Name Servers <small class="text-muted">(Minimum 2,
@@ -399,16 +403,16 @@
                                 </div>
                             </div>
                             @error('nameservers')
-                                <div class="alert alert-danger mx-3 mt-3 mb-0">
-                                    {{ $message }}
-                                </div>
+                            <div class="alert alert-danger mx-3 mt-3 mb-0">
+                                {{ $message }}
+                            </div>
                             @enderror
                             <div class="card-body">
                                 <div class="form-check form-check-inline mb-3">
                                     <!-- Hidden field to ensure a value is always sent -->
                                     <input type="hidden" name="disable_dns" value="0">
                                     <input type="checkbox" class="form-check-input" id="disable_dns"
-                                        name="disable_dns" value="1" x-model="disableDNS"
+                                           name="disable_dns" value="1" x-model="disableDNS"
                                         {{ old('disable_dns') ? 'checked' : '' }}>
                                     <label class="form-check-label ms-2" for="disable_dns">
                                         Don't delegate this domain now
@@ -423,17 +427,17 @@
                                                     Name Server {{ $i + 1 }}
                                                     @if ($i < 2)
                                                         <span class="text-danger" x-show="!disableDNS"
-                                                            x-cloak>*</span>
+                                                              x-cloak>*</span>
                                                     @endif
                                                 </label>
                                                 <input type="text" name="nameservers[{{ $i }}]"
-                                                    class="form-control @error('nameservers.' . $i) is-invalid @enderror"
-                                                    placeholder="ns{{ $i + 1 }}.example.com"
-                                                    value="{{ old('nameservers.' . $i) }}"
-                                                    :required="!disableDNS && {{ $i < 2 ? 'true' : 'false' }}"
-                                                    :readonly="disableDNS" :disabled="disableDNS">
+                                                       class="form-control @error('nameservers.' . $i) is-invalid @enderror"
+                                                       placeholder="ns{{ $i + 1 }}.example.com"
+                                                       value="{{ old('nameservers.' . $i) }}"
+                                                       :required="!disableDNS && {{ $i < 2 ? 'true' : 'false' }}"
+                                                       :readonly="disableDNS" :disabled="disableDNS">
                                                 @error('nameservers.' . $i)
-                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
                                         </div>
@@ -450,87 +454,37 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Cart Summary Section - FIXED -->
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-body box-profile">
                                 <h3 class="profile-username text-center">Cart Summary</h3>
 
-                                @php
-                                    // Get the user's selected currency from session/user preferences
-                                    $userCurrency = session('selected_currency');
-                                    if (!$userCurrency && auth()->check()) {
-                                        $userCurrency = auth()->user()->preferred_currency;
-                                    }
-                                    // Fallback to default currency based on domain type
-                                    if (!$userCurrency) {
-                                        $userCurrency = $domainType === DomainType::Local ? 'RWF' : 'USD';
-                                    }
-                                @endphp
-
-                                <!-- Include the CartTotal Livewire component -->
-                                @livewire('cart-total')
-
-                                <ul class="list-group list-group-unbordered mb-3 mt-3">
+                                <ul class="list-group list-group-unbordered mb-3">
                                     @foreach ($cartItems as $item)
                                         @php
-                                            // Get the item's original currency
-                                            $itemCurrency = $item->attributes->currency ?? 'USD';
-                                            $itemPrice = $item->price;
-
-                                            // Convert price if necessary
-                                            if ($itemCurrency !== $userCurrency) {
-                                                try {
-                                                    $convertedPrice = app(\App\Services\CurrencyService::class)
-                                                        ->convertCurrency($itemPrice, $itemCurrency, $userCurrency);
-                                                    $displayPrice = $convertedPrice * $item->quantity;
-                                                } catch (Exception $e) {
-                                                    // Fallback to original price if conversion fails
-                                                    $displayPrice = $itemPrice * $item->quantity;
-                                                    $userCurrency = $itemCurrency; // Use original currency
-                                                }
-                                            } else {
-                                                $displayPrice = $itemPrice * $item->quantity;
-                                            }
+                                            $lookupKey = $item->id ?? $item->name;
+                                            $converted = $convertedItems[$lookupKey] ?? null;
                                         @endphp
+
                                         <li class="list-group-item">
                                             {{ $item->name }}
-                                            <span class="float-right">
-                                                {{ money($displayPrice, $userCurrency) }}
-                                                /
-                                                {{ $item->quantity }} {{ Str::plural('Year', $item->quantity) }}
-                                            </span>
+                                            <p class="float-right">
+                                                {!! $converted['formatted_line_total'] !!}
+                                                / {{ $converted['quantity'] }} {{ Str::plural('Year', $converted['quantity']) }}
+                                            </p>
                                         </li>
                                     @endforeach
 
-                                    @php
-                                        // Calculate total in user's currency
-                                        $total = 0;
-                                        foreach ($cartItems as $item) {
-                                            $itemCurrency = $item->attributes->currency ?? 'USD';
-                                            $itemPrice = $item->price;
-
-                                            if ($itemCurrency !== $userCurrency) {
-                                                try {
-                                                    $convertedPrice = app(\App\Services\CurrencyService::class)
-                                                        ->convertCurrency($itemPrice, $itemCurrency, $userCurrency);
-                                                    $total += $convertedPrice * $item->quantity;
-                                                } catch (Exception $e) {
-                                                    $total += $itemPrice * $item->quantity;
-                                                }
-                                            } else {
-                                                $total += $itemPrice * $item->quantity;
-                                            }
-                                        }
-                                    @endphp
-
                                     <li class="list-group list-group-item">
                                         <b>Total</b>
-                                        <b class="float-right">
-                                            {{ money($total, $userCurrency) }}
+                                        <b>
+                                            <p class="float-right">
+                                                {!! $convertedCartTotal !!}
+                                            </p>
                                         </b>
                                     </li>
                                 </ul>
+
 
                                 <a href="{{ route('cart.index') }}" class="btn btn-secondary btn-block mb-3">
                                     <i class="bi bi-arrow-left"></i> Back to Cart
@@ -545,29 +499,29 @@
                                 <!-- Terms and Privacy Policy -->
                                 <div class="form-check mb-3">
                                     <input type="checkbox"
-                                        class="form-check-input @error('terms_accepted') is-invalid @enderror"
-                                        id="terms_accepted" name="terms_accepted" required
+                                           class="form-check-input @error('terms_accepted') is-invalid @enderror"
+                                           id="terms_accepted" name="terms_accepted" required
                                         {{ old('terms_accepted') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="terms_accepted">
                                         I accept the <a href="#" target="_blank">Terms and Conditions</a> <span
                                             class="text-danger">*</span>
                                     </label>
                                     @error('terms_accepted')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <div class="form-check mb-3">
                                     <input type="checkbox"
-                                        class="form-check-input @error('privacy_policy_accepted') is-invalid @enderror"
-                                        id="privacy_policy_accepted" name="privacy_policy_accepted" required
+                                           class="form-check-input @error('privacy_policy_accepted') is-invalid @enderror"
+                                           id="privacy_policy_accepted" name="privacy_policy_accepted" required
                                         {{ old('privacy_policy_accepted') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="privacy_policy_accepted">
                                         I accept the <a href="#" target="_blank">Privacy Policy</a> <span
                                             class="text-danger">*</span>
                                     </label>
                                     @error('privacy_policy_accepted')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
@@ -579,9 +533,6 @@
                     </div>
                 </div>
             </div>
-                </div>
-            </div>
-
         </form>
     </div>
 
