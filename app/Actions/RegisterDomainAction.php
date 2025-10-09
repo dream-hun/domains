@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Models\Nameserver;
+use App\Notifications\DomainRegisteredNotification;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
@@ -61,6 +62,9 @@ final readonly class RegisterDomainAction
                         'message' => $updateResult['message'] ?? 'Unknown error',
                     ]);
                 }
+
+                // Send notification to the domain owner
+                $domain->owner->notify(new DomainRegisteredNotification($domain, $years));
 
                 Log::info("Domain registered successfully with $serviceName", [
                     'domain' => $domainName,

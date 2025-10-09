@@ -6,6 +6,8 @@ namespace App\Jobs;
 
 use App\Models\Domain;
 use App\Models\Scopes\DomainScope;
+use App\Models\User;
+use App\Notifications\DomainImportedNotification;
 use App\Services\Domain\NamecheapDomainService;
 use Carbon\Carbon;
 use Exception;
@@ -27,6 +29,7 @@ final class FetchDomainsJob implements ShouldQueue
         $page = 1;
         $perPage = 100;
         $totalFetched = 0;
+        $importedDomains = [];
 
         try {
             do {
@@ -87,7 +90,7 @@ final class FetchDomainsJob implements ShouldQueue
                         Log::warning('Error while attempting to toggle domain lock', ['domain' => $name, 'error' => $e->getMessage()]);
                     }
 
-                    Domain::query()->withoutGlobalScope(DomainScope::class)->updateOrCreate(
+                    $domain = Domain::query()->withoutGlobalScope(DomainScope::class)->updateOrCreate(
                         ['name' => $name],
                         [
                             'uuid' => $domainData['uuid'] ?? Str::uuid()->toString(),
@@ -106,6 +109,12 @@ final class FetchDomainsJob implements ShouldQueue
                             'domain_price_id' => $this->getOrCreateDomainPrice($domainData),
                         ]
                     );
+                    
+                    // Add to imported domains list for notification
+                    if ($domain->wasRecentlyCreated) {
+                        $importedDomains[] = $domain;
+                    }
+                    
                     $count++;
                 }
                 $totalFetched += $count;
@@ -119,6 +128,11 @@ final class FetchDomainsJob implements ShouldQueue
             } while (count($result['domains']) > 0);
 
             Log::info("Fetched and upserted $totalFetched domains from Namecheap.");
+            
+            // Send notifications for newly imported domains
+            if (!empty($importedDomains)) {
+                $this->sendImportNotifications($importedDomains);
+            }
         } catch (Exception $exception) {
             Log::error('Error fetching or saving domains: '.$exception->getMessage(), [
                 'exception' => $exception,
@@ -170,5 +184,39 @@ final class FetchDomainsJob implements ShouldQueue
         end($domainParts);
 
         return 1;
+    }
+
+    /**
+     * Send notifications for imported domains
+     */
+    private function sendImportNotifications(array $importedDomains): void
+    {
+        $totalImported = count($importedDomains);
+        
+        // Get unique owners of the imported domains
+        $ownerIds = collect($importedDomains)->pluck('owner_id')->unique()->filter();
+        
+        foreach ($ownerIds as $ownerId) {
+            $user = User::find($ownerId);
+            if ($user) {
+                // Get domains for this specific user
+                $userDomains = collect($importedDomains)->where('owner_id', $ownerId);
+                
+                // Send notification for each domain or batch notification
+                if ($userDomains->count() === 1) {
+                    $user->notify(new DomainImportedNotification($userDomains->first(), 1));
+                } else {
+                    // Send batch notification for multiple domains
+                    $firstDomain = $userDomains->first();
+                    $user->notify(new DomainImportedNotification($firstDomain, $userDomains->count()));
+                }
+                
+                Log::info('Domain import notification sent', [
+                    'user_id' => $ownerId,
+                    'domains_count' => $userDomains->count(),
+                    'domains' => $userDomains->pluck('name')->toArray(),
+                ]);
+            }
+        }
     }
 }
