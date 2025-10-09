@@ -16,6 +16,7 @@
         "cknow/laravel-money": "^8.4",
         "darryldecode/cart": "^4.2.6",
         "laravel/breeze": "^2.3.8",
+        "laravel/cashier": "^16.0",
         "laravel/framework": "^12.29",
         "laravel/mcp": "^0.1.1",
         "laravel/tinker": "^2.10.1",

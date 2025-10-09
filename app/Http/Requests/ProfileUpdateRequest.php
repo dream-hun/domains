@@ -29,6 +29,7 @@ final class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'preferred_currency' => ['nullable', 'string', 'max:3'],
         ];
     }
 }
