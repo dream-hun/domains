@@ -13,8 +13,10 @@ use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckOutController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterDomainController;
 use App\Http\Controllers\SearchDomainController;
@@ -53,7 +55,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('users', UsersController::class);
     Route::resource('prices', DomainPriceController::class)->except(['show']);
     Route::resource('settings', SettingController::class);
-    
+
     // Notification routes
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
@@ -64,6 +66,9 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 });
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
+    Route::get('/checkout', [CheckOutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/apply-coupon/{couponCode}', [CheckOutController::class, 'applyCoupon'])->name('checkout.apply-coupon');
+    Route::post('/checkout/proceed', [CheckOutController::class, 'proceed'])->name('checkout.proceed');
     Route::get('/domains/register', [RegisterDomainController::class, 'index'])->name('domains.register');
     Route::post('/domains/register', [RegisterDomainController::class, 'register'])->name('domains.register.store');
 
@@ -73,6 +78,18 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
     Route::get('/contacts/{id}/details', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('contacts.details');
     Route::get('/api/contacts/{id}', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('api.contacts.details');
+
+    // Payment routes
+    Route::get('/payment', [PaymentController::class, 'showPaymentPage'])->name('payment.index');
+    Route::post('/payment/stripe', [PaymentController::class, 'processStripePayment'])->name('payment.stripe');
+    Route::get('/payment/success/{order}', [PaymentController::class, 'handlePaymentSuccess'])->name('payment.success');
+    Route::get('/payment/success/{order}/show', [PaymentController::class, 'showPaymentSuccess'])->name('payment.success.show');
+    Route::get('/payment/cancel/{order}', [PaymentController::class, 'handlePaymentCancel'])->name('payment.cancel');
+    Route::get('/payment/failed/{order}', [PaymentController::class, 'showPaymentFailed'])->name('payment.failed');
+
 });
+
+// Stripe webhook route (no auth required) - Using Laravel Cashier's built-in webhook controller
+Route::post('/stripe/webhook', [Laravel\Cashier\Http\Controllers\WebhookController::class, 'handleWebhook'])->name('cashier.webhook');
 
 require __DIR__.'/auth.php';

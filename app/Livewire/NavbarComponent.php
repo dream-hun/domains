@@ -7,6 +7,7 @@ namespace App\Livewire;
 use Cknow\Money\Money;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Livewire\Component;
+use Log;
 
 final class NavbarComponent extends Component
 {
@@ -29,7 +30,7 @@ final class NavbarComponent extends Component
 
     public function getRecentNotificationsProperty()
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return collect();
         }
 
@@ -38,34 +39,34 @@ final class NavbarComponent extends Component
 
     public function markNotificationAsRead($notificationId): void
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return;
         }
 
-        \Log::info('Marking notification as read', ['notification_id' => $notificationId]);
-        
+        Log::info('Marking notification as read', ['notification_id' => $notificationId]);
+
         $notification = auth()->user()->notifications()->find($notificationId);
         if ($notification) {
             $notification->markAsRead();
             $this->dispatch('refreshNotifications');
-            \Log::info('Notification marked as read successfully');
+            Log::info('Notification marked as read successfully');
         } else {
-            \Log::warning('Notification not found', ['notification_id' => $notificationId]);
+            Log::warning('Notification not found', ['notification_id' => $notificationId]);
         }
     }
 
     public function markAllNotificationsAsRead(): void
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return;
         }
 
-        \Log::info('Marking all notifications as read');
-        
+        Log::info('Marking all notifications as read');
+
         auth()->user()->unreadNotifications->markAsRead();
         $this->dispatch('refreshNotifications');
-        
-        \Log::info('All notifications marked as read successfully');
+
+        Log::info('All notifications marked as read successfully');
     }
 
     public function render(): object

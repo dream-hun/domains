@@ -6,7 +6,6 @@ namespace App\Notifications;
 
 use App\Models\Domain;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -20,8 +19,7 @@ final class DomainRegisteredNotification extends Notification
     public function __construct(
         private readonly Domain $domain,
         private readonly int $registrationYears = 1
-    ) {
-    }
+    ) {}
 
     /**
      * Get the notification's delivery channels.
@@ -46,7 +44,7 @@ final class DomainRegisteredNotification extends Notification
             ->line("Registration Period: {$this->registrationYears} year(s)")
             ->line("Registered: {$this->domain->registeredAt()}")
             ->line("Expires: {$this->domain->expiresAt()}")
-            ->line("Status: " . ucfirst($this->domain->status))
+            ->line('Status: '.ucfirst($this->domain->status))
             ->action('Manage Domain', route('admin.domains.index'))
             ->line('Your domain is now active and ready to use!')
             ->line('Thank you for choosing our domain registration service!');

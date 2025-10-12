@@ -231,6 +231,66 @@ final class CartComponent extends Component
         }
     }
 
+    /**
+     * Prepare cart data for payment processing
+     */
+    public function prepareCartForPayment(): array
+    {
+        $cartItems = [];
+
+        foreach ($this->items as $item) {
+            $itemCurrency = $item->attributes->currency ?? 'USD';
+            $itemPrice = $item->price;
+
+            // Convert item price to display currency if different
+            if ($itemCurrency !== $this->currency) {
+                try {
+                    $itemPrice = \App\Helpers\CurrencyHelper::convert(
+                        $item->price,
+                        $itemCurrency,
+                        $this->currency
+                    );
+                } catch (Exception) {
+                    // Fallback to original price if conversion fails
+                    $itemPrice = $item->price;
+                }
+            }
+
+            $cartItems[] = [
+                'domain_name' => $item->name,
+                'domain_type' => $item->attributes->get('type', 'registration'),
+                'price' => $itemPrice,
+                'currency' => $this->currency,
+                'quantity' => $item->quantity,
+                'years' => $item->quantity,
+                'domain_id' => $item->attributes->get('domain_id'),
+            ];
+        }
+
+        return $cartItems;
+    }
+
+    /**
+     * Store cart data in session for payment processing
+     */
+    public function proceedToPayment(): void
+    {
+        if ($this->items->isEmpty()) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Your cart is empty',
+            ]);
+
+            return;
+        }
+
+        // Store cart data in session for payment processing
+        session(['cart' => $this->prepareCartForPayment()]);
+
+        // Redirect to payment page using Livewire's redirect method
+        $this->redirect(route('payment.index'));
+    }
+
     public function render(): View
     {
         return view('livewire.cart-component');

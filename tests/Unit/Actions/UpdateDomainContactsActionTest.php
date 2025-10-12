@@ -153,7 +153,7 @@ it('prepares contact data correctly', function (): void {
     $this->domainService
         ->shouldReceive('updateDomainContacts')
         ->once()
-        ->with($this->domain->name, Mockery::on(function ($contactInfo): bool {
+        ->with($this->domain->name, Mockery::on(function (array $contactInfo): bool {
             return isset($contactInfo['registrant']) &&
                    $contactInfo['registrant']['first_name'] === $this->contacts[0]->first_name &&
                    $contactInfo['registrant']['email'] === $this->contacts[0]->email;

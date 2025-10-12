@@ -1,0 +1,18 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - database
+        - routes
+
+    level: 5
+
+    # Optional: tells Larastan to use Laravel’s container for better analysis
+    bootstrapFiles:
+        - bootstrap/app.php
+
+    # Optional: exclude certain files or folders
+    excludePaths:
+        - tests

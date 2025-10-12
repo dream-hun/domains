@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
 use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
-use App\Models\User;
 
-it('converts cart amounts to user preferred currency and displays them', function () {
+it('converts cart amounts to user preferred currency and displays them', function (): void {
     // Create a user and authenticate
     $user = User::factory()->create();
     actingAs($user);
@@ -25,7 +25,8 @@ it('converts cart amounts to user preferred currency and displays them', functio
     Cart::shouldReceive('getTotal')->andReturn(20.00);
 
     // Bind a fake CurrencyService that converts by doubling amounts and formats with EUR symbol
-    $fakeCurrencyService = new class {
+    $fakeCurrencyService = new class
+    {
         public function getUserCurrency()
         {
             return (object) ['code' => 'EUR'];
@@ -39,7 +40,7 @@ it('converts cart amounts to user preferred currency and displays them', functio
 
         public function format(float $amount, string $currencyCode): string
         {
-            return '€' . number_format($amount, 2);
+            return '€'.number_format($amount, 2);
         }
     };
 
@@ -56,4 +57,3 @@ it('converts cart amounts to user preferred currency and displays them', functio
     // Total should also be formatted and displayed
     $response->assertSee('€40.00');
 });
-

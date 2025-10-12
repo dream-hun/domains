@@ -109,12 +109,12 @@ final class FetchDomainsJob implements ShouldQueue
                             'domain_price_id' => $this->getOrCreateDomainPrice($domainData),
                         ]
                     );
-                    
+
                     // Add to imported domains list for notification
                     if ($domain->wasRecentlyCreated) {
                         $importedDomains[] = $domain;
                     }
-                    
+
                     $count++;
                 }
                 $totalFetched += $count;
@@ -128,9 +128,9 @@ final class FetchDomainsJob implements ShouldQueue
             } while (count($result['domains']) > 0);
 
             Log::info("Fetched and upserted $totalFetched domains from Namecheap.");
-            
+
             // Send notifications for newly imported domains
-            if (!empty($importedDomains)) {
+            if ($importedDomains !== []) {
                 $this->sendImportNotifications($importedDomains);
             }
         } catch (Exception $exception) {
@@ -191,17 +191,15 @@ final class FetchDomainsJob implements ShouldQueue
      */
     private function sendImportNotifications(array $importedDomains): void
     {
-        $totalImported = count($importedDomains);
-        
         // Get unique owners of the imported domains
         $ownerIds = collect($importedDomains)->pluck('owner_id')->unique()->filter();
-        
+
         foreach ($ownerIds as $ownerId) {
             $user = User::find($ownerId);
             if ($user) {
                 // Get domains for this specific user
                 $userDomains = collect($importedDomains)->where('owner_id', $ownerId);
-                
+
                 // Send notification for each domain or batch notification
                 if ($userDomains->count() === 1) {
                     $user->notify(new DomainImportedNotification($userDomains->first(), 1));
@@ -210,7 +208,7 @@ final class FetchDomainsJob implements ShouldQueue
                     $firstDomain = $userDomains->first();
                     $user->notify(new DomainImportedNotification($firstDomain, $userDomains->count()));
                 }
-                
+
                 Log::info('Domain import notification sent', [
                     'user_id' => $ownerId,
                     'domains_count' => $userDomains->count(),

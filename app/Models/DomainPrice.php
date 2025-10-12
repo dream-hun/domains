@@ -35,7 +35,7 @@ final class DomainPrice extends Model
         $baseCurrency = $this->getBaseCurrency();
 
         // If no target currency specified, use user's preferred currency
-        if ($targetCurrency === null || $targetCurrency === '' || $targetCurrency === '0') {
+        if (in_array($targetCurrency, [null, '', '0'], true)) {
             $targetCurrency = app(\App\Services\CurrencyService::class)->getUserCurrency()->code;
         }
 
