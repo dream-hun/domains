@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 final class NotificationController extends Controller
@@ -18,7 +18,7 @@ final class NotificationController extends Controller
     {
         $notifications = $request->user()->notifications()->latest()->paginate(15);
 
-        return view('admin.notifications.index', compact('notifications'));
+        return view('admin.notifications.index', ['notifications' => $notifications]);
     }
 
     /**
@@ -27,7 +27,7 @@ final class NotificationController extends Controller
     public function markAsRead(Request $request, string $id): RedirectResponse
     {
         $notification = $request->user()->notifications()->find($id);
-        
+
         if ($notification) {
             $notification->markAsRead();
         }
@@ -51,7 +51,7 @@ final class NotificationController extends Controller
     public function destroy(Request $request, string $id): RedirectResponse
     {
         $notification = $request->user()->notifications()->find($id);
-        
+
         if ($notification) {
             $notification->delete();
         }

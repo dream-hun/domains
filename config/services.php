@@ -51,6 +51,7 @@ return [
         'ssl' => env('EPP_SSL'),
         'certificate' => storage_path('app/public/certificate.pem'),
     ],
+
     /*
     |--------------------------------------------------------------------------
     | Namecheap API
@@ -66,9 +67,25 @@ return [
         'sandbox' => env('NAMECHEAP_SANDBOX', false),
     ],
 
-    /**
-     * Recaptcha configurations of environment we are working on
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Payment Gateway Configurations
+    |--------------------------------------------------------------------------
+    */
+    'payment' => [
+        'stripe' => [
+            'secret_key' => env('STRIPE_SECRET_KEY'),
+            'publishable_key' => env('STRIPE_PUBLISHABLE_KEY'),
+            'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        ],
+        'mobile-money' => 'not-yet-available',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Recaptcha configurations
+    |--------------------------------------------------------------------------
+    */
     'recaptcha' => [
         'site_key' => env('RECAPTCHA_SITE_KEY'),
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),

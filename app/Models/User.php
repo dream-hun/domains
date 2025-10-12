@@ -11,12 +11,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Cashier\Billable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Cashier\Billable;
 
 final class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, Billable;
+    use Billable, HasFactory, Notifiable;
 
     protected $fillable = [
         'uuid',
@@ -69,6 +69,11 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function contacts(): HasMany
     {
         return $this->hasMany(Contact::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
     }
 
     public function isAdmin(): bool

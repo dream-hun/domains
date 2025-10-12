@@ -21,6 +21,7 @@
 /storage/pail
 /vendor
 /.cursor/
+/.kiro/
 Homestead.json
 Homestead.yaml
 Thumbs.db

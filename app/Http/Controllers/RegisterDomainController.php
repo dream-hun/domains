@@ -129,7 +129,7 @@ final class RegisterDomainController extends Controller
                 }
             }
 
-            // Clear cart only after processing all domains
+            // Clear the cart only after processing all domains
             Cart::clear();
 
             // Prepare response messages
@@ -138,9 +138,9 @@ final class RegisterDomainController extends Controller
             if ($successfulRegistrations !== []) {
                 $successCount = count($successfulRegistrations);
                 if ($successCount === 1) {
-                    $messages[] = "Domain {$successfulRegistrations[0]} has been successfully registered!";
+                    $messages[] = "Domain $successfulRegistrations[0] has been successfully registered!";
                 } else {
-                    $messages[] = "{$successCount} domains have been successfully registered: ".implode(', ', $successfulRegistrations);
+                    $messages[] = "$successCount domains have been successfully registered: ".implode(', ', $successfulRegistrations);
                 }
             }
 
@@ -149,7 +149,7 @@ final class RegisterDomainController extends Controller
                 if ($failureCount === 1) {
                     $messages[] = "Failed to register {$failedRegistrations[0]['domain']}: {$failedRegistrations[0]['message']}";
                 } else {
-                    $messages[] = "{$failureCount} domains failed to register. Please check your email for details or contact support.";
+                    $messages[] = "$failureCount domains failed to register. Please check your email for details or contact support.";
                 }
             }
 
@@ -202,7 +202,7 @@ final class RegisterDomainController extends Controller
         ];
 
         if ($useSingleContact && isset($validatedData['registrant_contact_id'])) {
-            // Use the same contact for all roles when single contact is selected
+            // Use the same contact for all roles when a single contact is selected
             $registrantContactId = $validatedData['registrant_contact_id'];
             foreach (array_keys($contactFields) as $type) {
                 $processedContacts[$type] = $registrantContactId;

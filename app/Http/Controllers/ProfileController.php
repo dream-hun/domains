@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Currency;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
-use App\Models\Currency;
 
 final class ProfileController extends Controller
 {
@@ -19,9 +19,10 @@ final class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $currencies=Currency::select(['code','name'])->get();
+        $currencies = Currency::select(['code', 'name'])->get();
+
         return view('profile.edit', [
-            'user' => $request->user(),'currencies'=>$currencies
+            'user' => $request->user(), 'currencies' => $currencies,
         ]);
     }
 

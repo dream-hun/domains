@@ -3,11 +3,10 @@
 declare(strict_types=1);
 
 return
-[
-    'default_nameservers' => [
-        'ns1.example.com',
-        'ns2.example.com',
-        'ns3.example.com',
-        'ns4.example.com',
-    ],
-];
+    [
+        'nameservers' => [
+            'dns1.registrar-servers.com',
+            'dns2.registrar-servers.com',
+
+        ],
+    ];

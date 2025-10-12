@@ -2218,7 +2218,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 Log::debug("Found availability value at path {$path}:", ['value' => $value]);
 
                 // Check for both string '1' and boolean true
-                return $value === '1' || $value === 1 || $value === true;
+                return in_array($value, ['1', 1, true], true);
             }
         }
 

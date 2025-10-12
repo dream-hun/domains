@@ -21,6 +21,7 @@ final class DatabaseSeeder extends Seeder
             DomainPriceSeeder::class,
             DomainSeeder::class,
             CurrencySeeder::class,
+            CouponSeeder::class,
         ]);
     }
 }

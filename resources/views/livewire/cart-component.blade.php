@@ -91,9 +91,18 @@
 
                     <div class="mt-3">
                         @if ($items && $items->isNotEmpty())
-                            <a href="{{ route('domains.register') }}"
-                                class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
-                                style="font-size: 16px !important;">Proceed to checkout</a>
+                            <button wire:click="proceedToPayment" class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
+                                style="font-size: 16px !important;" wire:loading.class="opacity-75"
+                                wire:target="proceedToPayment">
+                                <span wire:loading.remove wire:target="proceedToPayment">
+                                    <i class="bi bi-credit-card me-2"></i>Proceed to Payment
+                                </span>
+                                <span wire:loading wire:target="proceedToPayment">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"
+                                        aria-hidden="true"></span>
+                                    Processing...
+                                </span>
+                            </button>
                         @endif
                     </div>
                 </div>

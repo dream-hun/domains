@@ -6,7 +6,6 @@ namespace App\Notifications;
 
 use App\Models\Domain;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -20,8 +19,7 @@ final class DomainImportedNotification extends Notification
     public function __construct(
         private readonly Domain $domain,
         private readonly int $totalImported = 1
-    ) {
-    }
+    ) {}
 
     /**
      * Get the notification's delivery channels.
@@ -38,7 +36,7 @@ final class DomainImportedNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $message = $this->totalImported > 1 
+        $message = $this->totalImported > 1
             ? "{$this->totalImported} domains have been imported successfully."
             : "Domain '{$this->domain->name}' has been imported successfully.";
 
@@ -49,7 +47,7 @@ final class DomainImportedNotification extends Notification
             ->line("Domain: {$this->domain->name}")
             ->line("Registered: {$this->domain->registeredAt()}")
             ->line("Expires: {$this->domain->expiresAt()}")
-            ->line("Status: " . ucfirst($this->domain->status))
+            ->line('Status: '.ucfirst($this->domain->status))
             ->action('View Domains', route('admin.domains.index'))
             ->line('Thank you for using our domain management system!');
     }
