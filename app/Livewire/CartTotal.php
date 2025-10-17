@@ -20,7 +20,14 @@ final class CartTotal extends Component
 
     public string $formattedTotal = '';
 
-    protected $listeners = ['refreshCart' => 'refreshCart', 'currency-changed' => 'handleCurrencyChanged'];
+    public float $discountAmount = 0;
+
+    protected $listeners = [
+        'refreshCart' => 'refreshCart',
+        'currency-changed' => 'handleCurrencyChanged',
+        'couponApplied' => 'refreshCart',
+        'couponRemoved' => 'refreshCart',
+    ];
 
     public function mount(): void
     {
@@ -51,12 +58,10 @@ final class CartTotal extends Component
                 auth()->user()->update(['preferred_currency' => $currency->code]);
             }
 
-            // Update the formatted total
             $this->updateFormattedTotal();
 
-            // Dispatch events to update other components
             $this->dispatch('currency-changed', currency: $currency->code);
-            $this->dispatch('currencyChanged', $currency->code); // For backward compatibility
+            $this->dispatch('currencyChanged', $currency->code);
         }
     }
 
@@ -69,12 +74,11 @@ final class CartTotal extends Component
     public function calculateTotal(): string
     {
         $cartItems = Cart::getContent();
-        $total = 0;
+        $subtotal = 0;
 
         foreach ($cartItems as $item) {
             $itemCurrency = $item->attributes->currency ?? 'USD';
 
-            // Convert item price to display currency if different
             if ($itemCurrency !== $this->selectedCurrency) {
                 try {
                     $convertedPrice = $this->convertCurrency(
@@ -82,15 +86,18 @@ final class CartTotal extends Component
                         $itemCurrency,
                         $this->selectedCurrency
                     );
-                    $total += $convertedPrice * $item->quantity;
+                    $subtotal += $convertedPrice * $item->quantity;
                 } catch (Exception $e) {
-                    // Fallback to original price if conversion fails
-                    $total += $item->price * $item->quantity;
+                    $subtotal += $item->price * $item->quantity;
                 }
             } else {
-                $total += $item->price * $item->quantity;
+                $subtotal += $item->price * $item->quantity;
             }
         }
+
+        // Apply discount from session if coupon is applied
+        $this->discountAmount = $this->calculateDiscount($subtotal);
+        $total = max(0, $subtotal - $this->discountAmount);
 
         return $this->formatCurrency($total, $this->selectedCurrency);
     }
@@ -106,6 +113,50 @@ final class CartTotal extends Component
             'currencies' => $currencyService->getActiveCurrencies(),
             'currentCurrency' => $currencyService->getCurrency($this->selectedCurrency) ?? $currencyService->getUserCurrency(),
         ]);
+    }
+
+    private function calculateDiscount(float $subtotal): float
+    {
+        if (! session()->has('coupon')) {
+            return 0;
+        }
+
+        $couponData = session('coupon');
+        $couponCurrency = $couponData['currency'] ?? 'USD';
+        $discountAmount = $couponData['discount_amount'] ?? 0;
+
+        // Convert discount to current currency if different
+        if ($couponCurrency !== $this->selectedCurrency) {
+            try {
+                $discountAmount = $this->convertCurrency(
+                    $discountAmount,
+                    $couponCurrency,
+                    $this->selectedCurrency
+                );
+            } catch (Exception $e) {
+                // Fallback to recalculating discount
+                $type = $couponData['type'] ?? 'percentage';
+                $value = $couponData['value'] ?? 0;
+
+                if ($type === 'percentage') {
+                    $discountAmount = $subtotal * ($value / 100);
+                } elseif ($type === 'fixed') {
+                    // Convert fixed amount to current currency
+                    try {
+                        $discountAmount = $this->convertCurrency(
+                            $value,
+                            $couponCurrency,
+                            $this->selectedCurrency
+                        );
+                    } catch (Exception $e) {
+                        $discountAmount = $value;
+                    }
+                }
+            }
+        }
+
+        // Ensure discount doesn't exceed subtotal
+        return min($discountAmount, $subtotal);
     }
 
     private function updateFormattedTotal(): void

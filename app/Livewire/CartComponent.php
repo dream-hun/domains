@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Helpers\CurrencyHelper;
+use App\Models\Coupon;
+use App\Services\Coupon\CouponService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -19,11 +22,30 @@ final class CartComponent extends Component
 
     public $currency;
 
+    public ?string $couponCode = null;
+
+    public ?Coupon $appliedCoupon = null;
+
+    public float $discountAmount = 0;
+
+    public bool $isCouponApplied = false;
+
     protected $listeners = ['refreshCart' => '$refresh', 'currencyChanged' => 'updateCurrency'];
 
     public function mount(): void
     {
-        $this->currency = \App\Helpers\CurrencyHelper::getUserCurrency();
+        $this->currency = CurrencyHelper::getUserCurrency();
+
+        // Restore coupon from session if exists
+        if (session()->has('coupon')) {
+            $couponData = session('coupon');
+            $this->appliedCoupon = Coupon::where('code', $couponData['code'])->first();
+            if ($this->appliedCoupon) {
+                $this->isCouponApplied = true;
+                $this->couponCode = $this->appliedCoupon->code;
+            }
+        }
+
         $this->updateCartTotal();
     }
 
@@ -31,6 +53,25 @@ final class CartComponent extends Component
     {
         $this->currency = $newCurrency;
         $this->updateCartTotal();
+
+        // Recalculate discount if coupon is applied
+        if ($this->isCouponApplied && $this->appliedCoupon) {
+            $this->calculateDiscount();
+
+            // Update coupon session with new currency
+            session([
+                'coupon' => [
+                    'code' => $this->appliedCoupon->code,
+                    'type' => $this->appliedCoupon->type->value,
+                    'value' => $this->appliedCoupon->value,
+                    'discount_amount' => $this->discountAmount,
+                    'currency' => $this->currency,
+                ],
+            ]);
+        }
+
+        // Update session currency
+        session(['selected_currency' => $this->currency]);
     }
 
     public function updateCartTotal(): void
@@ -46,7 +87,6 @@ final class CartComponent extends Component
 
         // Calculate totals with currency conversion
         $subtotal = 0;
-        $total = 0;
 
         foreach ($this->items as $item) {
             $itemCurrency = $item->attributes->currency ?? 'USD';
@@ -55,7 +95,7 @@ final class CartComponent extends Component
             // Convert item price to display currency if different
             if ($itemCurrency !== $this->currency) {
                 try {
-                    $itemPrice = \App\Helpers\CurrencyHelper::convert(
+                    $itemPrice = CurrencyHelper::convert(
                         $item->price,
                         $itemCurrency,
                         $this->currency
@@ -68,25 +108,49 @@ final class CartComponent extends Component
 
             $itemTotal = $itemPrice * $item->quantity;
             $subtotal += $itemTotal;
-            $total += $itemTotal; // For now, subtotal and total are the same
         }
 
         $this->subtotalAmount = $subtotal;
-        $this->totalAmount = $total;
+
+        // Apply discount to total
+        $total = $subtotal - $this->discountAmount;
+
+        // Ensure total never goes below zero
+        $this->totalAmount = max(0, $total);
     }
 
+    /**
+     * @throws Exception
+     */
     public function getFormattedSubtotalProperty(): string
     {
-        return \App\Helpers\CurrencyHelper::formatMoney($this->subtotalAmount, $this->currency);
+        return CurrencyHelper::formatMoney($this->subtotalAmount, $this->currency);
     }
 
+    /**
+     * @throws Exception
+     */
     public function getFormattedTotalProperty(): string
     {
-        return \App\Helpers\CurrencyHelper::formatMoney($this->totalAmount, $this->currency);
+        return CurrencyHelper::formatMoney($this->totalAmount, $this->currency);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getFormattedDiscountProperty(): string
+    {
+        try {
+            return CurrencyHelper::formatMoney($this->discountAmount, $this->currency);
+        } catch (Exception $e) {
+            return CurrencyHelper::formatMoney(0, $this->currency);
+        }
     }
 
     /**
      * Get formatted price for individual cart item
+     *
+     * @throws Exception
      */
     public function getFormattedItemPrice($item): string
     {
@@ -96,7 +160,7 @@ final class CartComponent extends Component
         // Convert item price to display currency if different
         if ($itemCurrency !== $this->currency) {
             try {
-                $itemPrice = \App\Helpers\CurrencyHelper::convert(
+                $itemPrice = CurrencyHelper::convert(
                     $item->price,
                     $itemCurrency,
                     $this->currency
@@ -107,7 +171,7 @@ final class CartComponent extends Component
             }
         }
 
-        return \App\Helpers\CurrencyHelper::formatMoney($itemPrice, $this->currency);
+        return CurrencyHelper::formatMoney($itemPrice, $this->currency);
     }
 
     /**
@@ -121,7 +185,7 @@ final class CartComponent extends Component
         // Convert item price to display currency if different
         if ($itemCurrency !== $this->currency) {
             try {
-                $itemPrice = \App\Helpers\CurrencyHelper::convert(
+                $itemPrice = CurrencyHelper::convert(
                     $item->price,
                     $itemCurrency,
                     $this->currency
@@ -134,7 +198,7 @@ final class CartComponent extends Component
 
         $total = $itemPrice * $item->quantity;
 
-        return \App\Helpers\CurrencyHelper::formatMoney($total, $this->currency);
+        return CurrencyHelper::formatMoney($total, $this->currency);
     }
 
     public function updateQuantity($id, $quantity): void
@@ -163,6 +227,23 @@ final class CartComponent extends Component
                 }
 
                 $this->updateCartTotal();
+
+                // Recalculate discount if coupon is applied
+                if ($this->isCouponApplied && $this->appliedCoupon) {
+                    $this->calculateDiscount();
+
+                    // Update coupon session with new discount amount
+                    session([
+                        'coupon' => [
+                            'code' => $this->appliedCoupon->code,
+                            'type' => $this->appliedCoupon->type->value,
+                            'value' => $this->appliedCoupon->value,
+                            'discount_amount' => $this->discountAmount,
+                            'currency' => $this->currency,
+                        ],
+                    ]);
+                }
+
                 $this->dispatch('refreshCart');
 
                 $this->dispatch('notify', [
@@ -198,6 +279,23 @@ final class CartComponent extends Component
             ]);
 
             $this->updateCartTotal();
+
+            // Recalculate discount if coupon is applied
+            if ($this->isCouponApplied && $this->appliedCoupon) {
+                $this->calculateDiscount();
+
+                // Update coupon session with new discount amount
+                session([
+                    'coupon' => [
+                        'code' => $this->appliedCoupon->code,
+                        'type' => $this->appliedCoupon->type->value,
+                        'value' => $this->appliedCoupon->value,
+                        'discount_amount' => $this->discountAmount,
+                        'currency' => $this->currency,
+                    ],
+                ]);
+            }
+
             $this->dispatch('refreshCart');
 
             $this->dispatch('notify', [
@@ -217,6 +315,23 @@ final class CartComponent extends Component
         try {
             Cart::remove($id);
             $this->updateCartTotal();
+
+            // Recalculate discount if coupon is applied
+            if ($this->isCouponApplied && $this->appliedCoupon) {
+                $this->calculateDiscount();
+
+                // Update coupon session with new discount amount
+                session([
+                    'coupon' => [
+                        'code' => $this->appliedCoupon->code,
+                        'type' => $this->appliedCoupon->type->value,
+                        'value' => $this->appliedCoupon->value,
+                        'discount_amount' => $this->discountAmount,
+                        'currency' => $this->currency,
+                    ],
+                ]);
+            }
+
             $this->dispatch('refreshCart');
 
             $this->dispatch('notify', [
@@ -231,6 +346,91 @@ final class CartComponent extends Component
         }
     }
 
+    public function applyCoupon(): void
+    {
+        try {
+            // Validate coupon code is not empty
+            if (empty($this->couponCode)) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Please enter a coupon code',
+                ]);
+
+                return;
+            }
+
+            // Check if cart has items
+            if ($this->items->isEmpty()) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Add items to cart before applying coupon',
+                ]);
+
+                return;
+            }
+
+            // Validate coupon using CouponService
+            $couponService = app(CouponService::class);
+            $this->appliedCoupon = $couponService->validateCoupon($this->couponCode);
+            $this->isCouponApplied = true;
+
+            // Calculate discount (this will set discountAmount and update totalAmount)
+            $this->calculateDiscount();
+
+            // Store coupon data in session
+            session([
+                'coupon' => [
+                    'code' => $this->appliedCoupon->code,
+                    'type' => $this->appliedCoupon->type->value,
+                    'value' => $this->appliedCoupon->value,
+                    'discount_amount' => $this->discountAmount,
+                    'currency' => $this->currency,
+                ],
+            ]);
+
+            // Dispatch event to update other components (like CartTotal)
+            $this->dispatch('couponApplied');
+            $this->dispatch('refreshCart');
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => "Coupon '{$this->appliedCoupon->code}' applied! You saved ".CurrencyHelper::formatMoney($this->discountAmount, $this->currency),
+            ]);
+        } catch (Exception $e) {
+            // Clear any partial coupon state
+            $this->appliedCoupon = null;
+            $this->isCouponApplied = false;
+            $this->discountAmount = 0;
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function removeCoupon(): void
+    {
+        // Reset coupon properties
+        $this->appliedCoupon = null;
+        $this->discountAmount = 0;
+        $this->isCouponApplied = false;
+        $this->couponCode = null;
+
+        session()->forget('coupon');
+
+        $this->updateCartTotal();
+
+        // Dispatch event to update other components (like CartTotal)
+        $this->dispatch('couponRemoved');
+        $this->dispatch('refreshCart');
+
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Coupon removed successfully',
+        ]);
+    }
+
     /**
      * Prepare cart data for payment processing
      */
@@ -242,16 +442,14 @@ final class CartComponent extends Component
             $itemCurrency = $item->attributes->currency ?? 'USD';
             $itemPrice = $item->price;
 
-            // Convert item price to display currency if different
             if ($itemCurrency !== $this->currency) {
                 try {
-                    $itemPrice = \App\Helpers\CurrencyHelper::convert(
+                    $itemPrice = CurrencyHelper::convert(
                         $item->price,
                         $itemCurrency,
                         $this->currency
                     );
                 } catch (Exception) {
-                    // Fallback to original price if conversion fails
                     $itemPrice = $item->price;
                 }
             }
@@ -267,12 +465,25 @@ final class CartComponent extends Component
             ];
         }
 
-        return $cartItems;
+        $paymentData = [
+            'items' => $cartItems,
+            'subtotal' => $this->subtotalAmount,
+            'total' => $this->totalAmount,
+            'currency' => $this->currency,
+        ];
+
+        if ($this->isCouponApplied && $this->appliedCoupon) {
+            $paymentData['coupon'] = [
+                'code' => $this->appliedCoupon->code,
+                'type' => $this->appliedCoupon->type->value,
+                'value' => $this->appliedCoupon->value,
+                'discount_amount' => $this->discountAmount,
+            ];
+        }
+
+        return $paymentData;
     }
 
-    /**
-     * Store cart data in session for payment processing
-     */
     public function proceedToPayment(): void
     {
         if ($this->items->isEmpty()) {
@@ -284,15 +495,47 @@ final class CartComponent extends Component
             return;
         }
 
-        // Store cart data in session for payment processing
-        session(['cart' => $this->prepareCartForPayment()]);
+        // Prepare cart data with currency conversion
+        $paymentData = $this->prepareCartForPayment();
 
-        // Redirect to payment page using Livewire's redirect method
+        // Store prepared cart data in session
+        session([
+            'cart' => $paymentData['items'],
+            'cart_subtotal' => $paymentData['subtotal'],
+            'cart_total' => $paymentData['total'],
+            'selected_currency' => $paymentData['currency'],
+        ]);
+
+        // Store coupon data if present
+        if (isset($paymentData['coupon'])) {
+            session(['coupon' => $paymentData['coupon']]);
+        }
+
         $this->redirect(route('payment.index'));
     }
 
     public function render(): View
     {
         return view('livewire.cart-component');
+    }
+
+    private function calculateDiscount(): void
+    {
+        if (! $this->appliedCoupon || ! $this->isCouponApplied) {
+            $this->discountAmount = 0;
+
+            return;
+        }
+
+        $subtotal = $this->subtotalAmount;
+
+        $couponService = app(CouponService::class);
+        $discountedTotal = $couponService->applyCoupon($this->appliedCoupon, $subtotal);
+
+        $discount = $subtotal - $discountedTotal;
+
+        $this->discountAmount = max(0, min($discount, $subtotal));
+
+        $this->totalAmount = max(0, $subtotal - $this->discountAmount);
     }
 }

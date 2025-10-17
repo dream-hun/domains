@@ -46,7 +46,7 @@
                                     <div class="price-display">
                                         <div class="h5 mb-0 d-flex align-items-center gap-2">
                                             <span class="text-primary"
-                                                style="font-size: 16px !important;">{{ $this->getFormattedItemTotal($item) }}</span>
+                                                style="font-size: 16px !important; text-transform:uppercase !important;">{{ $this->getFormattedItemTotal($item) }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -72,6 +72,8 @@
                     @endforelse
                 </div>
             </div>
+
+            
         </div>
 
         <div class="col-lg-3">
@@ -79,34 +81,89 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <p class="mb-2">Subtotal:</p>
-                        <p class="mb-2">{{ $this->formattedSubtotal }}</p>
+                        <p class="mb-2" style="text-transform:uppercase !important;">{{ $this->formattedSubtotal }}</p>
                     </div>
+
+                    @if ($isCouponApplied && $appliedCoupon)
+                        <div class="d-flex justify-content-start text-success">
+                            <p class="mb-2">
+                                <i class="bi bi-tag-fill me-1"></i>
+                                Discount ({{ $appliedCoupon->code }}):
+                            </p>
+                            <p class="mb-2" style="text-transform:uppercase !important;">-{{ $this->formattedDiscount }}</p>
+                        </div>
+                    @endif
 
                     <hr />
 
                     <div class="d-flex justify-content-between">
                         <p class="mb-2 fw-bold">Total:</p>
-                        <p class="mb-2 fw-bold">{{ $this->formattedTotal }}</p>
+                        <p class="mb-2 fw-bold" style="text-transform:uppercase !important;">{{ $this->formattedTotal }}</p>
                     </div>
 
                     <div class="mt-3">
                         @if ($items && $items->isNotEmpty())
-                            <button wire:click="proceedToPayment" class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
+                            <a href="{{ route('checkout.index') }}" wire:navigate class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
                                 style="font-size: 16px !important;" wire:loading.class="opacity-75"
                                 wire:target="proceedToPayment">
-                                <span wire:loading.remove wire:target="proceedToPayment">
+
                                     <i class="bi bi-credit-card me-2"></i>Proceed to Payment
-                                </span>
-                                <span wire:loading wire:target="proceedToPayment">
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"
-                                        aria-hidden="true"></span>
-                                    Processing...
-                                </span>
-                            </button>
+
+                            </a>
                         @endif
                     </div>
                 </div>
             </div>
+            @if ($items && $items->isNotEmpty())
+                <div class="card border shadow-0 mt-4">
+                    <div class="card-body py-4">
+                        <h6 class="mb-3">Have a coupon code?</h6>
+                        
+                        @if (!$isCouponApplied)
+                            <form wire:submit.prevent="applyCoupon">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           wire:model="couponCode" 
+                                           class="form-control" 
+                                           placeholder="Enter coupon code"
+                                           style="font-size: 16px !important; height: 40px;">
+                                </div>
+                                <div class="d-grid gap-2 mt-2">
+                                    @error('couponCode')
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            {{ $message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    @enderror
+                                    <button type="submit" 
+                                            class="btn btn-primary btn-lg w-100 pb-3 pt-3 mt-4"
+                                            wire:loading.attr="disabled"
+                                            wire:target="applyCoupon"
+                                            style="font-size: 16px !important;">
+                                        <span wire:loading.remove wire:target="applyCoupon">Apply</span>
+                                        <span wire:loading wire:target="applyCoupon" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </form>
+                        @else
+                            <div class="align-items-center justify-content-between">
+                                <span class="badge bg-success align-items-center gap-2 badge-lg w-100 py-3" style="font-size: 16px;">
+                                    <i class="bi bi-check-circle"></i>
+                                    {{ $appliedCoupon->code }}
+                                </span>
+                                <button wire:click="removeCoupon" 
+                                        class="btn btn-md w-100 py-3 btn-outline-danger mt-4 gap-2"
+                                        wire:loading.attr="disabled"
+                                        wire:target="removeCoupon"
+                                        style="font-size: 14px;">
+                                    <span wire:loading.remove wire:target="removeCoupon">Remove</span>
+                                    <span wire:loading wire:target="removeCoupon" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>

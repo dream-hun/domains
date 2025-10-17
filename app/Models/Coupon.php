@@ -14,7 +14,8 @@ final class Coupon extends Model
     protected $table = 'coupons';
 
     protected $casts = [
-        'expires_at' => 'datetime',
+        'valid_from' => 'datetime',
+        'valid_to' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'type' => CouponType::class,

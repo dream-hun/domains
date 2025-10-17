@@ -36,10 +36,12 @@ final class CouponService
 
     public function applyCoupon($coupon, $amount)
     {
-        if ($coupon->type === 'fixed') {
-            return $amount - $coupon->value;
+        $type = is_string($coupon->type) ? $coupon->type : $coupon->type->value;
+
+        if ($type === 'fixed') {
+            return max(0, $amount - $coupon->value);
         }
-        if ($coupon->type === 'percentage') {
+        if ($type === 'percentage') {
             return $amount - ($amount * ($coupon->value / 100));
         }
 

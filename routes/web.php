@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DomainController;
@@ -66,15 +67,16 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 });
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
-    Route::get('/checkout', [CheckOutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout/apply-coupon/{couponCode}', [CheckOutController::class, 'applyCoupon'])->name('checkout.apply-coupon');
-    Route::post('/checkout/proceed', [CheckOutController::class, 'proceed'])->name('checkout.proceed');
+    Route::get('/cart/checkout/payment/', [CheckOutController::class, 'index'])->name('checkout.index');
     Route::get('/domains/register', [RegisterDomainController::class, 'index'])->name('domains.register');
     Route::post('/domains/register', [RegisterDomainController::class, 'register'])->name('domains.register.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Billing
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
 
     Route::get('/contacts/{id}/details', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('contacts.details');
     Route::get('/api/contacts/{id}', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('api.contacts.details');

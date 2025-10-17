@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use App\Models\Contact;
+use App\Helpers\CurrencyHelper;
 use App\Services\Coupon\CouponService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 final class CheckoutProcess extends Component
@@ -20,7 +21,7 @@ final class CheckoutProcess extends Component
 
     public $total = 0;
 
-    public $couponCode = '';
+    public $currency = 'USD';
 
     public $appliedCoupon = null;
 
@@ -39,24 +40,67 @@ final class CheckoutProcess extends Component
 
     public $showContactSelection = false;
 
-    protected $listeners = ['cartUpdated' => 'refreshCart'];
+    protected $listeners = [
+        'cartUpdated' => 'refreshCart',
+        'currencyChanged' => 'updateCurrency',
+        'couponApplied' => 'refreshCart',
+        'couponRemoved' => 'refreshCart',
+    ];
 
     public function mount(): void
     {
+        $this->currency = CurrencyHelper::getUserCurrency();
         $this->refreshCart();
         $this->loadUserContacts();
+        $this->restoreCouponFromSession();
+    }
+
+    public function updateCurrency($newCurrency): void
+    {
+        $this->currency = $newCurrency;
+        $this->refreshCart();
     }
 
     public function refreshCart(): void
     {
-        $this->cartItems = Cart::getContent()->toArray();
+        $cartContent = Cart::getContent();
+        $this->cartItems = $cartContent->toArray();
         $this->calculateTotals();
     }
 
     public function calculateTotals(): void
     {
-        $this->subtotal = Cart::getContent()->sum(fn ($item) => $item->price * $item->quantity);
-        $this->total = $this->subtotal - $this->discount;
+        $cartContent = Cart::getContent();
+        $subtotal = 0;
+
+        // Calculate subtotal with currency conversion
+        foreach ($cartContent as $item) {
+            $itemCurrency = $item->attributes->currency ?? 'USD';
+            $itemPrice = $item->price;
+
+            // Convert item price to display currency if different
+            if ($itemCurrency !== $this->currency) {
+                try {
+                    $itemPrice = CurrencyHelper::convert(
+                        $item->price,
+                        $itemCurrency,
+                        $this->currency
+                    );
+                } catch (Exception) {
+                    // Fallback to original price if conversion fails
+                    $itemPrice = $item->price;
+                }
+            }
+
+            $itemTotal = $itemPrice * $item->quantity;
+            $subtotal += $itemTotal;
+        }
+
+        $this->subtotal = $subtotal;
+
+        // Discount is already set from session (applied in cart)
+        // Just calculate total
+        $this->total = max(0, $this->subtotal - $this->discount);
     }
 
     public function loadUserContacts(): void
@@ -85,48 +129,6 @@ final class CheckoutProcess extends Component
         $this->showContactSelection = ! $this->showContactSelection;
     }
 
-    public function applyCoupon(): void
-    {
-        if (empty($this->couponCode)) {
-            $this->errorMessage = 'Please enter a coupon code.';
-
-            return;
-        }
-
-        try {
-            $this->isProcessing = true;
-            $this->errorMessage = '';
-
-            $couponService = new CouponService();
-            $coupon = $couponService->validateCoupon($this->couponCode);
-
-            // Calculate discount amount
-            if ($coupon->type->value === 'fixed') {
-                $this->discount = min($coupon->value, $this->subtotal);
-            } elseif ($coupon->type->value === 'percentage') {
-                $this->discount = $this->subtotal * ($coupon->value / 100);
-            }
-
-            $this->appliedCoupon = $coupon;
-            $this->calculateTotals();
-            $this->successMessage = "Coupon '{$coupon->code}' applied successfully!";
-            $this->couponCode = '';
-
-        } catch (Exception $e) {
-            $this->errorMessage = $e->getMessage();
-        } finally {
-            $this->isProcessing = false;
-        }
-    }
-
-    public function removeCoupon(): void
-    {
-        $this->appliedCoupon = null;
-        $this->discount = 0;
-        $this->calculateTotals();
-        $this->successMessage = 'Coupon removed.';
-    }
-
     public function proceedToPayment()
     {
         if (empty($this->cartItems)) {
@@ -152,17 +154,38 @@ final class CheckoutProcess extends Component
         try {
             $this->isProcessing = true;
 
-            // Store checkout data in session
+            // Prepare cart data with currency conversion
+            $preparedCartData = $this->prepareCartForPayment();
+
+            // Store prepared cart data in session
+            session([
+                'cart' => $preparedCartData['items'],
+                'cart_subtotal' => $preparedCartData['subtotal'],
+                'cart_total' => $preparedCartData['total'],
+                'selected_currency' => $preparedCartData['currency'],
+            ]);
+
+            // Store coupon data if present
+            if (isset($preparedCartData['coupon'])) {
+                session(['coupon' => $preparedCartData['coupon']]);
+            }
+
+            // Store checkout data
             session([
                 'checkout' => [
                     'payment_method' => $this->paymentMethod,
-                    'coupon_code' => $this->appliedCoupon?->code,
-                    'discount' => $this->discount,
-                    'total' => $this->total,
-                    'cart_items' => $this->cartItems,
+                    'total' => $preparedCartData['total'],
+                    'currency' => $preparedCartData['currency'],
                     'selected_contact_id' => $this->selectedContactId,
                     'created_at' => now()->toISOString(),
                 ],
+            ]);
+
+            Log::info('Checkout process completed', [
+                'payment_method' => $this->paymentMethod,
+                'total' => $preparedCartData['total'],
+                'currency' => $preparedCartData['currency'],
+                'contact_id' => $this->selectedContactId,
             ]);
 
             // Redirect to payment page
@@ -170,6 +193,10 @@ final class CheckoutProcess extends Component
 
         } catch (Exception $e) {
             $this->errorMessage = 'Failed to proceed to payment: '.$e->getMessage();
+            Log::error('Checkout process failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
         } finally {
             $this->isProcessing = false;
         }
@@ -178,5 +205,180 @@ final class CheckoutProcess extends Component
     public function render()
     {
         return view('livewire.checkout-process');
+    }
+
+    /**
+     * Get formatted subtotal with currency
+     */
+    public function getFormattedSubtotalProperty(): string
+    {
+        try {
+            return CurrencyHelper::formatMoney($this->subtotal, $this->currency);
+        } catch (Exception) {
+            return $this->currency.' '.number_format($this->subtotal, 2);
+        }
+    }
+
+    /**
+     * Get formatted total with currency
+     */
+    public function getFormattedTotalProperty(): string
+    {
+        try {
+            return CurrencyHelper::formatMoney($this->total, $this->currency);
+        } catch (Exception) {
+            return $this->currency.' '.number_format($this->total, 2);
+        }
+    }
+
+    /**
+     * Get formatted discount with currency
+     */
+    public function getFormattedDiscountProperty(): string
+    {
+        try {
+            return CurrencyHelper::formatMoney($this->discount, $this->currency);
+        } catch (Exception) {
+            return $this->currency.' '.number_format($this->discount, 2);
+        }
+    }
+
+    /**
+     * Get formatted price for individual cart item
+     */
+    public function getFormattedItemPrice($item): string
+    {
+        $itemCurrency = $item['attributes']['currency'] ?? 'USD';
+        $itemPrice = $item['price'];
+
+        // Convert item price to display currency if different
+        if ($itemCurrency !== $this->currency) {
+            try {
+                $itemPrice = CurrencyHelper::convert(
+                    $item['price'],
+                    $itemCurrency,
+                    $this->currency
+                );
+            } catch (Exception) {
+                $itemPrice = $item['price'];
+            }
+        }
+
+        try {
+            return CurrencyHelper::formatMoney($itemPrice, $this->currency);
+        } catch (Exception) {
+            return $this->currency.' '.number_format($itemPrice, 2);
+        }
+    }
+
+    /**
+     * Get formatted total price for individual cart item
+     */
+    public function getFormattedItemTotal($item): string
+    {
+        $itemCurrency = $item['attributes']['currency'] ?? 'USD';
+        $itemPrice = $item['price'];
+
+        // Convert item price to display currency if different
+        if ($itemCurrency !== $this->currency) {
+            try {
+                $itemPrice = CurrencyHelper::convert(
+                    $item['price'],
+                    $itemCurrency,
+                    $this->currency
+                );
+            } catch (Exception) {
+                $itemPrice = $item['price'];
+            }
+        }
+
+        $total = $itemPrice * $item['quantity'];
+
+        try {
+            return CurrencyHelper::formatMoney($total, $this->currency);
+        } catch (Exception) {
+            return $this->currency.' '.number_format($total, 2);
+        }
+    }
+
+    /**
+     * Prepare cart data for payment processing
+     */
+    private function prepareCartForPayment(): array
+    {
+        $cartItems = [];
+        $cartContent = Cart::getContent();
+
+        foreach ($cartContent as $item) {
+            $itemCurrency = $item->attributes->currency ?? 'USD';
+            $itemPrice = $item->price;
+
+            if ($itemCurrency !== $this->currency) {
+                try {
+                    $itemPrice = CurrencyHelper::convert(
+                        $item->price,
+                        $itemCurrency,
+                        $this->currency
+                    );
+                } catch (Exception) {
+                    $itemPrice = $item->price;
+                }
+            }
+
+            $cartItems[] = [
+                'domain_name' => $item->name,
+                'domain_type' => $item->attributes->get('type', 'registration'),
+                'price' => $itemPrice,
+                'currency' => $this->currency,
+                'quantity' => $item->quantity,
+                'years' => $item->quantity,
+                'domain_id' => $item->attributes->get('domain_id'),
+            ];
+        }
+
+        $paymentData = [
+            'items' => $cartItems,
+            'subtotal' => $this->subtotal,
+            'total' => $this->total,
+            'currency' => $this->currency,
+        ];
+
+        if ($this->appliedCoupon) {
+            $paymentData['coupon'] = [
+                'code' => $this->appliedCoupon->code,
+                'type' => $this->appliedCoupon->type->value,
+                'value' => $this->appliedCoupon->value,
+                'discount_amount' => $this->discount,
+            ];
+        }
+
+        return $paymentData;
+    }
+
+    /**
+     * Restore coupon from session if exists (read-only, for display purposes)
+     */
+    private function restoreCouponFromSession(): void
+    {
+        if (session()->has('coupon')) {
+            $couponData = session('coupon');
+
+            // Just store the coupon data for display, don't recalculate
+            // The discount is already calculated in the cart
+            $this->discount = $couponData['discount_amount'] ?? 0;
+
+            // Try to load the coupon model for display
+            try {
+                $couponService = new CouponService;
+                $this->appliedCoupon = $couponService->validateCoupon($couponData['code']);
+            } catch (Exception $e) {
+                // Coupon is no longer valid, but keep the discount from session
+                // since it was already applied in the cart
+                Log::warning('Stored coupon is no longer valid but keeping discount', [
+                    'coupon_code' => $couponData['code'],
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }

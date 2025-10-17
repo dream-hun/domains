@@ -24,15 +24,10 @@
     <link rel="shortcut icon" type="image/x-icon" href="assets/images/fav.png">
 
     <title>@yield('page-title') - {{config('app.name')}}</title>
-    <!-- Preconnect to Google Fonts and Google Fonts Static -->
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <!-- Importing Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap"
-          rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;1,400;1,800&display=swap"
-        rel="stylesheet">
+    <link href="{{ asset('font/web/inter.css') }}" rel="stylesheet">
+
     <link rel="stylesheet" href="{{asset('font/bootstrap-icons.min.css')}}">
     <!-- all styles -->
     <link rel="preload stylesheet" href="{{ asset('assets/css/plugins.min.css') }}" as="style">
@@ -42,6 +37,14 @@
     <link rel="preload stylesheet" href="{{ asset('assets/css/style.css') }}" as="style">
     @livewireStyles
     @stack('styles')
+    <style>
+        body{
+            font-family: 'Inter', sans-serif !important;
+        }
+        h1,h2,h3,h4,h5,h6{
+            font-family: 'Inter', sans-serif !important;
+        }
+    </style>
 </head>
 
 <body class="loaded domain-page">

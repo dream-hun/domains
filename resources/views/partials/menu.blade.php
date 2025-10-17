@@ -132,6 +132,16 @@
                     </li>
                 @endcan
                 <li class="nav-item">
+                    <a href="{{ route('billing.index') }}"
+                       class="nav-link {{ request()->is('billing.index') ? 'active' : '' }}">
+                        <i class="bi bi-credit-card-fill"></i>
+                        <p>
+                            Billing
+                        </p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a href="{{ route('profile.edit') }}"
                        class="nav-link {{ request()->is('profile.edit') ? 'active' : '' }}">
                         <i class="bi bi-person"></i>
