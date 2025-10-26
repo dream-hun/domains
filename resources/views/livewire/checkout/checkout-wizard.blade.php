@@ -53,7 +53,7 @@
 
             {{-- Loading Overlay --}}
             @if($isProcessing)
-                <div class="checkout-loading-overlay">
+                <div class="checkout-loading-overlay" role="alert" aria-live="assertive" aria-busy="true">
                     <div class="spinner-border text-primary" role="status">
                         <span class="sr-only">Processing...</span>
                     </div>
@@ -65,21 +65,4 @@
 
     {{-- Contact Creation Modal --}}
     @livewire('checkout.contact-create-modal')
-
-    <style>
-    .checkout-loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        color: white;
-    }
-    </style>
 </div>

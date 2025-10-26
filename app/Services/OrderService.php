@@ -8,10 +8,18 @@ use App\Models\Contact;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\User;
 use App\Notifications\OrderConfirmationNotification;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 final class OrderService
 {
+    public function __construct(
+        private readonly BillingService $billingService,
+        private readonly NotificationService $notificationService
+    ) {}
+
     public function createOrder(array $data): Order
     {
         $currency = Currency::where('code', $data['currency'])->first();
@@ -73,13 +81,78 @@ final class OrderService
         // Update order status to processing
         $order->update(['status' => 'processing']);
 
-        // TODO: Integrate with domain registration service
-        // This will be implemented when domain registration workflow is ready
-        // For now, we just mark the order as processing
+        try {
+            // Get selected contact from checkout session
+            $checkoutData = session('checkout', []);
+            $selectedContactId = $checkoutData['selected_contact_id'] ?? null;
+
+            $selectedContact = $this->getSelectedContact($order->user, $selectedContactId);
+
+            if (! $selectedContact) {
+                throw new Exception('No contact information found for domain registration.');
+            }
+
+            // Prepare contacts (use same contact for all types)
+            $contacts = [
+                'registrant' => $selectedContact->id,
+                'admin' => $selectedContact->id,
+                'technical' => $selectedContact->id,
+                'billing' => $selectedContact->id,
+            ];
+
+            $results = $this->billingService->processDomainRegistrations($order, $contacts);
+
+            // Update order status based on results
+            if (empty($results['failed'])) {
+                $order->update(['status' => 'completed']);
+            } elseif (empty($results['successful'])) {
+                $order->update(['status' => 'failed']);
+                $this->notificationService->notifyAdminOfFailedRegistration($order, $results);
+            } else {
+                $order->update(['status' => 'partially_completed']);
+                $this->notificationService->notifyAdminOfPartialFailure($order, $results);
+            }
+
+        } catch (Exception $e) {
+            Log::error('Domain registration failed for order', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $order->update([
+                'status' => 'requires_attention',
+                'notes' => 'Payment succeeded but domain registration failed: '.$e->getMessage(),
+            ]);
+
+            $this->notificationService->notifyAdminOfCriticalFailure($order, $e);
+        }
     }
 
     public function sendOrderConfirmation(Order $order): void
     {
         $order->user->notify(new OrderConfirmationNotification($order));
+    }
+
+    /**
+     * Get selected contact for domain registration
+     */
+    private function getSelectedContact(User $user, ?int $contactId): ?Contact
+    {
+        // Try selected contact first
+        if ($contactId) {
+            $contact = $user->contacts()->find($contactId);
+            if ($contact) {
+                return $contact;
+            }
+        }
+
+        // Fallback to primary contact
+        $contact = $user->contacts()->where('is_primary', true)->first();
+        if ($contact) {
+            return $contact;
+        }
+
+        // Fallback to first available contact
+        return $user->contacts()->first();
     }
 }

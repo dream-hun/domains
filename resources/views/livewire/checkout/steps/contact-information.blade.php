@@ -14,12 +14,16 @@
             </button>
         @else
             <p class="text-muted mb-3">Select a contact for your domain registration:</p>
-            
+
             <div class="row">
                 @foreach($this->userContacts as $contact)
                     <div class="col-md-6 mb-3">
-                        <div class="contact-card {{ $selectedContactId === $contact->id ? 'selected' : '' }}" 
+                        <div class="contact-card {{ $selectedContactId === $contact->id ? 'selected' : '' }}"
                              wire:click="selectContact({{ $contact->id }})"
+                             role="button"
+                             tabindex="0"
+                             aria-pressed="{{ $selectedContactId === $contact->id ? 'true' : 'false' }}"
+                             aria-label="Select contact {{ $contact->full_name }}"
                              style="cursor: pointer;">
                             <div class="card h-100">
                                 <div class="card-body">
@@ -58,9 +62,9 @@
             <hr class="my-4">
 
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" 
-                       class="custom-control-input" 
-                       id="useContactForAll" 
+                <input type="checkbox"
+                       class="custom-control-input"
+                       id="useContactForAll"
                        wire:model="useContactForAll">
                 <label class="custom-control-label" for="useContactForAll">
                     Use this contact for all contact types (Registrant, Admin, Tech, Billing)
@@ -70,31 +74,14 @@
     </div>
     <div class="card-footer">
         <button wire:click="previousStep" class="btn btn-secondary">
-            <i class="fas fa-arrow-left mr-2"></i>
+            <i class="bi bi-arrow-left mr-2"></i>
             Back
         </button>
         @if(!$this->userContacts->isEmpty())
             <button wire:click="nextStep" class="btn btn-primary float-right">
                 Continue to Payment
-                <i class="fas fa-arrow-right ml-2"></i>
+                <i class="bi bi-arrow-right ml-2"></i>
             </button>
         @endif
     </div>
 </div>
-
-<style>
-.contact-card.selected .card {
-    border: 2px solid #007bff;
-    background-color: #f8f9fa;
-}
-
-.contact-card .card {
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
-}
-
-.contact-card:hover .card {
-    border-color: #007bff;
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-}
-</style>

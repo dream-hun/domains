@@ -68,6 +68,9 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/cart/checkout/payment/', [CheckOutController::class, 'index'])->name('checkout.index');
+    Route::get('/checkout/stripe/redirect/{order}', [CheckOutController::class, 'stripeRedirect'])->name('checkout.stripe.redirect');
+    Route::get('/checkout/stripe/success/{order}', [CheckOutController::class, 'stripeSuccess'])->name('checkout.stripe.success');
+    Route::get('/checkout/stripe/cancel/{order}', [CheckOutController::class, 'stripeCancel'])->name('checkout.stripe.cancel');
     Route::get('/domains/register', [RegisterDomainController::class, 'index'])->name('domains.register');
     Route::post('/domains/register', [RegisterDomainController::class, 'register'])->name('domains.register.store');
 
@@ -91,7 +94,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
 });
 
-// Stripe webhook route (no auth required) - Using Laravel Cashier's built-in webhook controller
-Route::post('/stripe/webhook', [Laravel\Cashier\Http\Controllers\WebhookController::class, 'handleWebhook'])->name('cashier.webhook');
+// Stripe webhook route (no auth required)
+Route::post('/stripe/webhook', [App\Http\Controllers\StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
 
 require __DIR__.'/auth.php';

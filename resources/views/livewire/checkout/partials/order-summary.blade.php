@@ -1,4 +1,4 @@
-<div class="card shadow-sm sticky-top" style="top: 20px;">
+<aside class="card shadow-sm order-summary-card" aria-label="Order summary">
     <div class="card-header bg-primary text-white">
         <h5 class="mb-0">Order Summary</h5>
     </div>
@@ -82,4 +82,4 @@
             </small>
         </div>
     </div>
-</div>
+</aside>

@@ -13,6 +13,8 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 final class CheckoutWizard extends Component
 {
@@ -42,6 +44,10 @@ final class CheckoutWizard extends Component
 
     public string $userCurrencyCode = 'USD';
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     public function mount(CurrencyService $currencyService): void
     {
 
@@ -80,7 +86,7 @@ final class CheckoutWizard extends Component
     }
 
     #[Computed(persist: false)]
-    public function selectedContact()
+    public function selectedContact(): Contact|array|null
     {
         if (! $this->selectedContactId) {
             return null;
@@ -200,9 +206,10 @@ final class CheckoutWizard extends Component
     {
         $this->selectedPaymentMethod = $method;
         $this->errorMessage = '';
+        $this->dispatch('payment-method-selected', $method);
     }
 
-    public function completeOrder(): void
+    public function completeOrder()
     {
         if (! $this->validateCurrentStep()) {
             return;
@@ -222,6 +229,13 @@ final class CheckoutWizard extends Component
                 'cart_items' => $this->cartItems,
             ]);
 
+            // Check if we need to redirect to Stripe Checkout
+            if ($this->selectedPaymentMethod === 'stripe' && $order->stripe_session_id) {
+                // Redirect to Stripe Checkout
+                return redirect()->route('checkout.stripe.redirect', ['order' => $order->order_number]);
+            }
+
+            // Payment completed (e.g., account credit)
             $this->orderNumber = $order->order_number;
             $this->currentStep = self::STEP_CONFIRMATION;
 
@@ -300,6 +314,10 @@ final class CheckoutWizard extends Component
         ]);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     private function restoreCheckoutState(): void
     {
         $state = session()->get('checkout_state');
@@ -320,6 +338,16 @@ final class CheckoutWizard extends Component
     private function initializePaymentMethods(): void
     {
         $this->paymentMethods = [];
+
+        // Account Credit
+        $user = auth()->user();
+        if ($user && $user->account_credit > 0) {
+            $this->paymentMethods[] = [
+                'id' => 'account_credit',
+                'name' => 'Account Credit ('.number_format($user->account_credit, 2).' available)',
+                'balance' => $user->account_credit,
+            ];
+        }
 
         // Stripe
         if (config('cashier.key')) {

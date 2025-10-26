@@ -31,7 +31,7 @@
                         <p class="small text-muted mb-3">
                             View and manage your newly registered domains
                         </p>
-                        <a href="{{ route('domains.index') }}" class="btn btn-primary btn-sm">
+                        <a href="{{ route('admin.domains.index') }}" class="btn btn-primary btn-sm">
                             Go to Domains
                         </a>
                     </div>
@@ -41,12 +41,12 @@
                 <div class="card bg-light">
                     <div class="card-body">
                         <i class="fas fa-file-invoice fa-2x text-info mb-3"></i>
-                        <h6>View Order Details</h6>
+                        <h6>View Your Orders</h6>
                         <p class="small text-muted mb-3">
-                            See the complete details of your order
+                            See all your orders and billing history
                         </p>
-                        <a href="{{ route('orders.show', $orderNumber) }}" class="btn btn-info btn-sm">
-                            View Order
+                        <a href="{{ route('billing.index') }}" class="btn btn-info btn-sm">
+                            View Orders
                         </a>
                     </div>
                 </div>

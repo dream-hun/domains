@@ -94,7 +94,7 @@ final class BillingService
     /**
      * Process domain registrations after successful payment
      */
-    public function processDomainRegistrations(Order $order): array
+    public function processDomainRegistrations(Order $order, array $contacts): array
     {
         $results = [
             'successful' => [],
@@ -102,36 +102,6 @@ final class BillingService
         ];
 
         try {
-            // Get selected contact from checkout session or fallback to primary contact
-            $checkoutData = session('checkout', []);
-            $selectedContactId = $checkoutData['selected_contact_id'] ?? null;
-
-            $selectedContact = null;
-            if ($selectedContactId) {
-                $selectedContact = $order->user->contacts()->find($selectedContactId);
-            }
-
-            if (! $selectedContact) {
-                // Fallback to primary contact
-                $selectedContact = $order->user->contacts()->where('is_primary', true)->first();
-            }
-
-            if (! $selectedContact) {
-                // Use the first available contact
-                $selectedContact = $order->user->contacts()->first();
-            }
-
-            if (! $selectedContact) {
-                throw new Exception('No contact information found for user. Please create a contact profile first.');
-            }
-
-            // Prepare contacts for registration (use same contact for all types)
-            $contacts = [
-                'registrant' => $selectedContact->id,
-                'admin' => $selectedContact->id,
-                'technical' => $selectedContact->id,
-                'billing' => $selectedContact->id,
-            ];
 
             // Process each order item (domain)
             foreach ($order->orderItems as $orderItem) {

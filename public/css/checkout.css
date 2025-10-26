@@ -1,0 +1,336 @@
+/* Checkout Flow Custom Styles */
+
+/* ===========================
+   Step Indicator Styles
+   =========================== */
+.checkout-steps {
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    position: relative;
+}
+
+.checkout-steps .step {
+    text-align: center;
+    position: relative;
+}
+
+.checkout-steps .step-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+    font-weight: bold;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.checkout-steps .step.active .step-circle {
+    background: #007bff;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
+}
+
+.checkout-steps .step.completed .step-circle {
+    background: #28a745;
+    color: #fff;
+}
+
+.checkout-steps .step-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.checkout-steps .step.active .step-label {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.checkout-steps .step.completed .step-label {
+    color: #28a745;
+}
+
+/* Step connectors */
+.checkout-steps .row > div:not(:last-child) .step::after {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 1;
+}
+
+.checkout-steps .row > div:not(:last-child) .step.completed::after {
+    background: #28a745;
+}
+
+/* ===========================
+   Contact Card Styles
+   =========================== */
+.contact-card {
+    transition: transform 0.2s ease;
+}
+
+.contact-card .card {
+    transition: all 0.2s ease;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+}
+
+.contact-card:hover {
+    transform: translateY(-2px);
+}
+
+.contact-card:hover .card {
+    border-color: #007bff;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.contact-card.selected .card {
+    border: 2px solid #007bff;
+    background-color: #f8f9fa;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 123, 255, 0.25);
+}
+
+.contact-card .card-body {
+    position: relative;
+}
+
+/* ===========================
+   Payment Method Styles
+   =========================== */
+.payment-method-option {
+    transition: transform 0.2s ease;
+}
+
+.payment-method-option .card {
+    transition: all 0.2s ease;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+}
+
+.payment-method-option:hover {
+    transform: translateY(-2px);
+}
+
+.payment-method-option:hover .card {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border-color: #007bff;
+}
+
+.payment-method-option .card.border-primary {
+    background-color: #f8f9fa;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 123, 255, 0.25);
+}
+
+.payment-method-option .custom-control-label {
+    width: 100%;
+    cursor: pointer;
+}
+
+/* ===========================
+   Loading Overlay
+   =========================== */
+.checkout-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    color: white;
+}
+
+.checkout-loading-overlay .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* ===========================
+   Order Summary Sidebar
+   =========================== */
+.order-summary-card {
+    position: sticky;
+    top: 20px;
+}
+
+.order-summary-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.order-summary-item:last-child {
+    border-bottom: none;
+}
+
+.order-summary-total {
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding-top: 1rem;
+    border-top: 2px solid #dee2e6;
+}
+
+/* ===========================
+   Button Styles
+   =========================== */
+.btn-checkout-primary {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-checkout-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-checkout-primary:active {
+    transform: translateY(0);
+}
+
+/* ===========================
+   Responsive Design
+   =========================== */
+@media (max-width: 991px) {
+    .order-summary-card {
+        position: static;
+        margin-top: 2rem;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Step indicator adjustments */
+    .checkout-steps .step-label {
+        font-size: 0.75rem;
+    }
+
+    .checkout-steps .step-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    .checkout-steps .row > div:not(:last-child) .step::after {
+        top: 20px;
+    }
+
+    /* Contact cards stack on mobile */
+    .contact-card {
+        margin-bottom: 1rem;
+    }
+
+    /* Payment methods full width */
+    .payment-method-option {
+        margin-bottom: 1rem;
+    }
+
+    /* Button adjustments */
+    .btn-checkout-primary {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    .card-footer .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-footer .float-right {
+        float: none !important;
+    }
+}
+
+@media (max-width: 575px) {
+    /* Further mobile optimizations */
+    .checkout-steps {
+        padding: 1rem 0.5rem;
+    }
+
+    .checkout-steps .step-circle {
+        width: 35px;
+        height: 35px;
+        font-size: 0.875rem;
+    }
+
+    .checkout-steps .step-label {
+        font-size: 0.65rem;
+    }
+
+    .contact-card .card-body {
+        padding: 1rem;
+    }
+
+    .payment-method-option .card-body {
+        padding: 1rem;
+    }
+}
+
+/* ===========================
+   Accessibility Enhancements
+   =========================== */
+.contact-card:focus-within .card,
+.payment-method-option:focus-within .card {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.custom-control-input:focus ~ .custom-control-label::before {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .checkout-steps .step-circle {
+        border: 2px solid currentColor;
+    }
+
+    .contact-card.selected .card,
+    .payment-method-option .card.border-primary {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .checkout-steps .step-circle,
+    .checkout-steps .step-label,
+    .contact-card,
+    .contact-card .card,
+    .payment-method-option,
+    .payment-method-option .card,
+    .btn-checkout-primary {
+        transition: none;
+    }
+}
+
+/* ===========================
+   Print Styles
+   =========================== */
+@media print {
+    .checkout-steps,
+    .card-footer,
+    .btn {
+        display: none;
+    }
+
+    .order-summary-card {
+        position: static;
+    }
+}

@@ -15,6 +15,9 @@
                 @foreach($paymentMethods as $method)
                     <div class="payment-method-option mb-3" 
                          wire:click="selectPaymentMethod('{{ $method['id'] }}')"
+                         role="button"
+                         tabindex="0"
+                         aria-label="Select payment method {{ $method['name'] }}"
                          style="cursor: pointer;">
                         <div class="card {{ $selectedPaymentMethod === $method['id'] ? 'border-primary' : '' }}">
                             <div class="card-body">
@@ -30,11 +33,17 @@
                                         <div class="d-flex justify-content-between align-items-center w-100">
                                             <div>
                                                 <strong>{{ $method['name'] }}</strong>
+                                                @if(isset($method['balance']))
+                                                    <br>
+                                                    <small class="text-muted">Balance: {{ $method['balance'] }}</small>
+                                                @endif
                                             </div>
                                             @if($method['id'] === 'stripe')
                                                 <i class="fab fa-cc-stripe fa-2x text-primary"></i>
                                             @elseif($method['id'] === 'paypal')
                                                 <i class="fab fa-paypal fa-2x text-primary"></i>
+                                            @elseif($method['id'] === 'account_credit')
+                                                <i class="fas fa-wallet fa-2x text-success"></i>
                                             @endif
                                         </div>
                                     </label>
@@ -67,16 +76,3 @@
     </div>
 </div>
 
-<style>
-.payment-method-option .card {
-    transition: all 0.2s ease;
-}
-
-.payment-method-option:hover .card {
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-}
-
-.payment-method-option .card.border-primary {
-    background-color: #f8f9fa;
-}
-</style>

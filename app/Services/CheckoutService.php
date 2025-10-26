@@ -34,6 +34,12 @@ final class CheckoutService
             );
 
             if ($paymentResult['success']) {
+                // Check if payment requires action (redirect to Stripe Checkout)
+                if (isset($paymentResult['requires_action']) && $paymentResult['requires_action']) {
+                    return $order; // Return order with checkout_url for redirect
+                }
+
+                // Payment completed immediately (e.g., account credit)
                 $order->update([
                     'payment_status' => 'paid',
                     'processed_at' => now(),

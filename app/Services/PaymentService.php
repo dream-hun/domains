@@ -5,16 +5,21 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Order;
+use DB;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Laravel\Cashier\Exceptions\IncompletePayment;
 
 final class PaymentService
 {
+    public function __construct(
+        private readonly TransactionLogger $transactionLogger
+    ) {}
+
     public function processPayment(Order $order, string $paymentMethod): array
     {
         return match ($paymentMethod) {
             'stripe' => $this->processStripePayment($order),
+            'account_credit' => $this->processAccountCreditPayment($order),
             'paypal' => $this->processPayPalPayment($order),
             default => ['success' => false, 'error' => 'Invalid payment method'],
         };
@@ -23,65 +28,135 @@ final class PaymentService
     private function processStripePayment(Order $order): array
     {
         try {
-            $user = $order->user;
-
-            // Create or retrieve Stripe customer
-            if (! $user->hasStripeId()) {
-                $user->createAsStripeCustomer();
-            }
-
-            // Get default payment method
-            $paymentMethod = $user->defaultPaymentMethod();
-
-            if (! $paymentMethod) {
+            // Validate Stripe configuration
+            if (! $this->isStripeConfigured()) {
                 return [
                     'success' => false,
-                    'error' => 'No payment method found. Please add a payment method.',
+                    'error' => 'Stripe payment is not configured. Please contact support.',
                 ];
             }
 
-            // Create payment intent
-            $payment = $user->charge(
-                (int) ($order->total_amount * 100), // Convert to cents
-                $paymentMethod->id,
-                [
-                    'currency' => mb_strtolower($order->currency),
-                    'description' => "Order {$order->order_number}",
-                    'metadata' => [
-                        'order_id' => $order->id,
-                        'order_number' => $order->order_number,
-                    ],
-                ]
-            );
-
-            Log::info('Stripe payment processed', [
-                'order_id' => $order->id,
-                'payment_intent' => $payment->id,
-            ]);
+            // Create Stripe Checkout Session instead of direct charge
+            $checkoutSession = $this->createStripeCheckoutSession($order);
 
             return [
                 'success' => true,
-                'transaction_id' => $payment->id,
+                'requires_action' => true,
+                'checkout_url' => $checkoutSession->url,
+                'session_id' => $checkoutSession->id,
             ];
-        } catch (IncompletePayment $e) {
-            Log::error('Stripe payment incomplete', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
 
-            return [
-                'success' => false,
-                'error' => 'Payment requires additional authentication. Please try again.',
-            ];
         } catch (Exception $e) {
-            Log::error('Stripe payment failed', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
+            $this->transactionLogger->logFailure(
+                order: $order,
+                method: 'stripe',
+                error: 'Failed to create checkout session',
+                details: $e->getMessage()
+            );
 
             return [
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Failed to initialize payment. Please try again or contact support.',
+            ];
+        }
+    }
+
+    /**
+     * Create Stripe Checkout Session
+     */
+    private function createStripeCheckoutSession(Order $order): \Stripe\Checkout\Session
+    {
+        \Stripe\Stripe::setApiKey(config('cashier.secret'));
+
+        $user = $order->user;
+
+        // Ensure user has Stripe customer ID
+        if (! $user->hasStripeId()) {
+            $user->createAsStripeCustomer([
+                'name' => $user->name,
+                'email' => $user->email,
+            ]);
+        }
+
+        // Prepare line items
+        $lineItems = [];
+        foreach ($order->orderItems as $item) {
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => mb_strtolower($order->currency),
+                    'product_data' => [
+                        'name' => $item->domain_name,
+                        'description' => "Domain Registration - {$item->years} year(s)",
+                    ],
+                    'unit_amount' => (int) ($item->price * 100), // Convert to cents
+                ],
+                'quantity' => 1,
+            ];
+        }
+
+        // Create checkout session
+        $session = \Stripe\Checkout\Session::create([
+            'customer' => $user->stripeId(),
+            'payment_method_types' => ['card'],
+            'line_items' => $lineItems,
+            'mode' => 'payment',
+            'success_url' => route('checkout.stripe.success', ['order' => $order->order_number]).'?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('checkout.stripe.cancel', ['order' => $order->order_number]),
+            'metadata' => [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'user_id' => $user->id,
+            ],
+        ]);
+
+        // Store session ID in order
+        $order->update(['stripe_session_id' => $session->id]);
+
+        return $session;
+    }
+
+    private function processAccountCreditPayment(Order $order): array
+    {
+        try {
+            $user = $order->user;
+
+            // Check if user has sufficient balance
+            if (! $user->hasAccountCredit($order->total_amount)) {
+                return [
+                    'success' => false,
+                    'error' => 'Insufficient account credit. Please add funds or use a different payment method.',
+                ];
+            }
+
+            // Deduct balance within transaction
+            DB::transaction(function () use ($user, $order) {
+                $user->deductAccountCredit($order->total_amount);
+
+                // Log transaction
+                $this->transactionLogger->logSuccess(
+                    order: $order,
+                    method: 'account_credit',
+                    transactionId: 'CREDIT-'.$order->order_number,
+                    amount: $order->total_amount
+                );
+            });
+
+            return [
+                'success' => true,
+                'transaction_id' => 'CREDIT-'.$order->order_number,
+            ];
+
+        } catch (Exception $e) {
+            $this->transactionLogger->logFailure(
+                order: $order,
+                method: 'account_credit',
+                error: 'Credit deduction failed',
+                details: $e->getMessage()
+            );
+
+            return [
+                'success' => false,
+                'error' => 'Failed to process account credit payment. Please try again.',
             ];
         }
     }
@@ -98,5 +173,29 @@ final class PaymentService
             'success' => false,
             'error' => 'PayPal integration not yet implemented',
         ];
+    }
+
+    /**
+     * Validate Stripe configuration
+     */
+    private function isStripeConfigured(): bool
+    {
+        return ! empty(config('cashier.key')) && ! empty(config('cashier.secret'));
+    }
+
+    /**
+     * Get user-friendly error message from Stripe error code
+     */
+    private function getStripeErrorMessage(string $code): string
+    {
+        return match ($code) {
+            'card_declined' => 'Your card was declined. Please try a different payment method.',
+            'insufficient_funds' => 'Your card has insufficient funds. Please try a different payment method.',
+            'expired_card' => 'Your card has expired. Please use a different payment method.',
+            'incorrect_cvc' => 'The card security code is incorrect. Please check and try again.',
+            'processing_error' => 'An error occurred while processing your card. Please try again.',
+            'rate_limit' => 'Too many requests. Please wait a moment and try again.',
+            default => 'Payment failed. Please check your card details and try again.',
+        };
     }
 }

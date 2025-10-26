@@ -102,6 +102,36 @@ final class User extends Authenticatable implements MustVerifyEmail
         return mb_trim($this->first_name.' '.$this->last_name);
     }
 
+    /**
+     * Check if user has sufficient account credit
+     */
+    public function hasAccountCredit(float $amount): bool
+    {
+        return $this->account_credit >= $amount;
+    }
+
+    /**
+     * Deduct amount from account credit
+     *
+     * @throws Exception
+     */
+    public function deductAccountCredit(float $amount): void
+    {
+        if (! $this->hasAccountCredit($amount)) {
+            throw new Exception('Insufficient account credit');
+        }
+
+        $this->decrement('account_credit', $amount);
+    }
+
+    /**
+     * Add amount to account credit
+     */
+    public function addAccountCredit(float $amount): void
+    {
+        $this->increment('account_credit', $amount);
+    }
+
     protected static function booted(): void
     {
         self::created(function (self $user): void {
