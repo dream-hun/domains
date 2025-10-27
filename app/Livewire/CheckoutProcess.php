@@ -55,9 +55,9 @@ final class CheckoutProcess extends Component
         $this->restoreCouponFromSession();
     }
 
-    public function updateCurrency($newCurrency): void
+    public function updateCurrency(string $currency): void
     {
-        $this->currency = $newCurrency;
+        $this->currency = $currency;
         $this->refreshCart();
     }
 

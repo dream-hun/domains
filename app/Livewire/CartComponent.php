@@ -11,6 +11,7 @@ use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Log;
 
 final class CartComponent extends Component
 {
@@ -49,9 +50,14 @@ final class CartComponent extends Component
         $this->updateCartTotal();
     }
 
-    public function updateCurrency($newCurrency): void
+    public function updateCurrency(string $currency): void
     {
-        $this->currency = $newCurrency;
+        Log::info('CartComponent received currency change', [
+            'new_currency' => $currency,
+            'old_currency' => $this->currency,
+        ]);
+
+        $this->currency = $currency;
         $this->updateCartTotal();
 
         // Recalculate discount if coupon is applied

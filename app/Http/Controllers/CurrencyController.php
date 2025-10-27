@@ -52,11 +52,6 @@ final class CurrencyController extends Controller
         // Set in session
         session(['selected_currency' => $currency->code]);
 
-        // Update user preference if authenticated
-        if (auth()->check()) {
-            auth()->user()->update(['preferred_currency' => $currency->code]);
-        }
-
         return response()->json([
             'success' => true,
             'currency' => $currency,

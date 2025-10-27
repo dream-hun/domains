@@ -25,11 +25,6 @@ final class SetCurrency
 
             if ($currency) {
                 session(['selected_currency' => $currency->code]);
-
-                // Update user preference if authenticated
-                if (auth()->check()) {
-                    auth()->user()->update(['preferred_currency' => $currency->code]);
-                }
             }
         }
 

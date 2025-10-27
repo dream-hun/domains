@@ -11,6 +11,7 @@ use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Log;
 
 final class CartTotal extends Component
 {
@@ -54,10 +55,6 @@ final class CartTotal extends Component
         if ($currency) {
             session(['selected_currency' => $currency->code]);
 
-            if (auth()->check()) {
-                auth()->user()->update(['preferred_currency' => $currency->code]);
-            }
-
             $this->updateFormattedTotal();
 
             $this->dispatch('currency-changed', currency: $currency->code);
@@ -67,8 +64,17 @@ final class CartTotal extends Component
 
     public function handleCurrencyChanged(string $currency): void
     {
+        Log::info('CartTotal received currency change', [
+            'new_currency' => $currency,
+            'old_currency' => $this->selectedCurrency,
+        ]);
+
         $this->selectedCurrency = $currency;
         $this->updateFormattedTotal();
+
+        Log::info('CartTotal updated total', [
+            'formatted_total' => $this->formattedTotal,
+        ]);
     }
 
     public function calculateTotal(): string

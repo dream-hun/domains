@@ -24,6 +24,14 @@ use App\Http\Controllers\SearchDomainController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
+
+// Temporary route for testing - remove after testing
+Route::get('/clear-currency', function () {
+    session()->forget('selected_currency');
+
+    return redirect('/')->with('success', 'Currency session cleared. Please refresh.');
+})->name('clear.currency');
+
 Route::get('/shopping-cart', CartController::class)->name('cart.index');
 Route::get('/domains', [SearchDomainController::class, 'index'])->name('domains');
 Route::post('/domains/search', [SearchDomainController::class, 'search'])->name('domains.search');

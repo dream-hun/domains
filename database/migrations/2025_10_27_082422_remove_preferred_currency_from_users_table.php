@@ -13,8 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->string('status')->default('pending')->change();
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('preferred_currency');
         });
     }
 
@@ -23,8 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->enum('status', ['pending', 'processing', 'completed', 'cancelled'])->default('pending')->change();
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('preferred_currency', 3)->default('RWF')->after('client_code');
         });
     }
 };

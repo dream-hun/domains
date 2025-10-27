@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use App\Enums\DomainType;
+use App\Helpers\CurrencyHelper;
 use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\InternationalDomainService;
-use Cknow\Money\Money;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -33,7 +33,9 @@ final class DomainSearch extends Component
 
     public $quantity = 1;
 
-    protected $listeners = ['refreshCart' => '$refresh'];
+    public string $currentCurrency = 'RWF';
+
+    protected $listeners = ['refreshCart' => '$refresh', 'currencyChanged' => 'handleCurrencyChanged'];
 
     private EppDomainService $eppService;
 
@@ -55,6 +57,16 @@ final class DomainSearch extends Component
         if ($firstTld) {
             $this->extension = $firstTld->tld;
         }
+
+        // Get current currency from session
+        $this->currentCurrency = session('selected_currency', 'USD');
+    }
+
+    public function handleCurrencyChanged(string $currency): void
+    {
+        $this->currentCurrency = $currency;
+        // Force refresh of the component to show new prices
+        $this->dispatch('$refresh');
     }
 
     public function render(): View
@@ -239,13 +251,23 @@ final class DomainSearch extends Component
                 // Always process the result for international domains
                 $rawPrice = (int) ($tld->register_price);
 
+                // Convert price to current currency if needed
+                $convertedPrice = $rawPrice;
+                try {
+                    if ($this->currentCurrency !== 'USD') {
+                        $convertedPrice = CurrencyHelper::convertFromUSD($rawPrice / 1000, $this->currentCurrency);
+                    }
+                } catch (Exception $e) {
+                    Log::warning('Currency conversion failed', ['error' => $e->getMessage()]);
+                }
+
                 $results[$domainName] = [
                     'available' => $checkResult['available'] ?? false,
                     'reason' => $checkResult['reason'] ?? 'Unknown status',
-                    'register_price' => $rawPrice,
+                    'register_price' => $convertedPrice,
                     'transfer_price' => $tld->transfer_price,
                     'renewal_price' => $tld->renewal_price,
-                    'formatted_price' => Money::RWF($rawPrice)->format(),
+                    'formatted_price' => CurrencyHelper::formatMoney($convertedPrice, $this->currentCurrency),
                     'in_cart' => $cartContent->has($domainName),
                     'is_primary' => $isPrimary,
                     'is_international' => true,
@@ -264,13 +286,23 @@ final class DomainSearch extends Component
                     $result = $eppResults[$domainName];
                     $rawPrice = (int) ($tld->register_price);
 
+                    // Convert price to current currency if needed
+                    $convertedPrice = $rawPrice;
+                    try {
+                        if ($this->currentCurrency !== 'RWF') {
+                            $convertedPrice = CurrencyHelper::convert($rawPrice, 'RWF', $this->currentCurrency);
+                        }
+                    } catch (Exception $e) {
+                        Log::warning('Currency conversion failed', ['error' => $e->getMessage()]);
+                    }
+
                     $results[$domainName] = [
                         'available' => $result->available,
                         'reason' => $result->reason,
-                        'register_price' => $rawPrice,
+                        'register_price' => $convertedPrice,
                         'transfer_price' => $tld->transfer_price,
                         'renewal_price' => $tld->renewal_price,
-                        'formatted_price' => Money::RWF($rawPrice)->format(),
+                        'formatted_price' => CurrencyHelper::formatMoney($convertedPrice, $this->currentCurrency),
                         'in_cart' => $cartContent->has($domainName),
                         'is_primary' => $isPrimary,
                         'is_international' => false,

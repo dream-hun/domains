@@ -1,6 +1,6 @@
 <x-user-layout>
     @section('page-title')
-        Bluhub
+        Home
     @endsection
     <section class="rts-hero rts-hero__one banner-style-home-one">
         <div class="container">

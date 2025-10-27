@@ -30,9 +30,9 @@ final class CartSummary extends Component
         $this->currency = CurrencyHelper::getUserCurrency();
     }
 
-    public function updateCurrency($newCurrency): void
+    public function updateCurrency(string $currency): void
     {
-        $this->currency = $newCurrency;
+        $this->currency = $currency;
     }
 
     /**

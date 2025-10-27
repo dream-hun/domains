@@ -36,13 +36,7 @@ final class CurrencyService
             }
         }
 
-        if (auth()->check() && auth()->user()->preferred_currency) {
-            $currency = $this->getCurrencyFromCache(auth()->user()->preferred_currency);
-            if ($currency instanceof Currency) {
-                return $currency;
-            }
-        }
-
+        // No user preference lookup, fallback to base currency
         return $this->getBaseCurrency();
     }
 
