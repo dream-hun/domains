@@ -11,7 +11,7 @@
                         </a>
                     </div>
                     <div class="rts-ht__links">
-                        <livewire:currency-switcher-simple />
+                        <livewire:currency-switcher />
                         <div class="live-chat-has-dropdown">
                             <a href="#" class="live__chat">
                                 <img src="assets/images/icon/forum.svg" alt="" class="icon">Live Chat
