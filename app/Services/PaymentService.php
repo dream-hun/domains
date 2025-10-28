@@ -88,9 +88,9 @@ final class PaymentService
                         'name' => $item->domain_name,
                         'description' => "Domain Registration - {$item->years} year(s)",
                     ],
-                    'unit_amount' => (int) ($item->price * 100), // Convert to cents
+                    'unit_amount' => (int) (round((float) $item->price, 2) * 100), // Convert to smallest currency unit
                 ],
-                'quantity' => 1,
+                'quantity' => $item->quantity,
             ];
         }
 
