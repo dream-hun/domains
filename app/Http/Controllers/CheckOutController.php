@@ -4,103 +4,94 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\Coupon\CouponService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
-use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 final class CheckOutController extends Controller
 {
-    public function index(): Factory|View
+    public function index(): Factory|View|RedirectResponse
     {
+        if (Cart::isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+        }
+
         return view('checkout.index');
     }
 
-    /**
-     * @throws Exception
-     */
-    public function applyCoupon($couponCode)
+    public function stripeRedirect(string $orderNumber): RedirectResponse
     {
-        try {
-            $couponService = new CouponService();
-            $coupon = $couponService->validateCoupon($couponCode);
+        $order = \App\Models\Order::where('order_number', $orderNumber)->firstOrFail();
 
-            // Calculate cart total
-            $cartItems = Cart::getContent();
-            $amount = $cartItems->sum(function ($item) {
-                return $item->price * $item->quantity;
-            });
-
-            // Calculate discount amount
-            $discountAmount = 0;
-            if ($coupon->type->value === 'fixed') {
-                $discountAmount = min($coupon->value, $amount); // Don't exceed cart total
-            } elseif ($coupon->type->value === 'percentage') {
-                $discountAmount = $amount * ($coupon->value / 100);
-            }
-
-            return response()->json([
-                'success' => true,
-                'discount' => $discountAmount,
-                'total' => $amount - $discountAmount,
-                'coupon' => $coupon->code,
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 400);
+        // Verify order belongs to current user
+        if ($order->user_id !== auth()->id()) {
+            abort(403);
         }
+
+        // Get Stripe session and redirect
+        if ($order->stripe_session_id) {
+            \Stripe\Stripe::setApiKey(config('cashier.secret'));
+            $session = \Stripe\Checkout\Session::retrieve($order->stripe_session_id);
+
+            return redirect($session->url);
+        }
+
+        return redirect()->route('checkout.index')->with('error', 'Payment session not found.');
     }
 
-    public function proceed(): JsonResponse
+    public function stripeSuccess(string $orderNumber): Factory|View|RedirectResponse
     {
-        try {
-            $request = request();
-            $cartItems = Cart::getContent();
+        $order = \App\Models\Order::where('order_number', $orderNumber)->firstOrFail();
 
-            if ($cartItems->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Your cart is empty',
-                ], 400);
-            }
-
-            // Validate required checkout data
-            $paymentMethod = $request->input('payment_method');
-            $total = $request->input('total');
-
-            if (! $paymentMethod || ! $total) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Missing required checkout information',
-                ], 400);
-            }
-
-            // Store checkout data in session
-            session([
-                'checkout' => [
-                    'payment_method' => $paymentMethod,
-                    'coupon_code' => $request->input('coupon_code'),
-                    'discount' => $request->input('discount', 0),
-                    'total' => $total,
-                    'cart_items' => $cartItems->toArray(),
-                    'created_at' => now()->toISOString(),
-                ],
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'redirect_url' => route('payment.index'),
-                'message' => 'Proceeding to payment...',
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to proceed to payment: '.$e->getMessage(),
-            ], 500);
+        // Verify order belongs to current user
+        if ($order->user_id !== auth()->id()) {
+            abort(403);
         }
+
+        // Verify payment with Stripe
+        if ($order->stripe_session_id) {
+            \Stripe\Stripe::setApiKey(config('cashier.secret'));
+            $session = \Stripe\Checkout\Session::retrieve($order->stripe_session_id);
+
+            if ($session->payment_status === 'paid') {
+                // Update order
+                $order->update([
+                    'payment_status' => 'paid',
+                    'processed_at' => now(),
+                    'stripe_payment_intent_id' => $session->payment_intent,
+                ]);
+
+                // Process domain registrations
+                $orderService = app(\App\Services\OrderService::class);
+                $orderService->processDomainRegistrations($order);
+                $orderService->sendOrderConfirmation($order);
+
+                // Clear cart
+                Cart::clear();
+
+                return view('checkout.success', ['order' => $order]);
+            }
+        }
+
+        return redirect()->route('checkout.index')->with('error', 'Payment verification failed.');
+    }
+
+    public function stripeCancel(string $orderNumber): RedirectResponse
+    {
+        $order = \App\Models\Order::where('order_number', $orderNumber)->firstOrFail();
+
+        // Verify order belongs to current user
+        if ($order->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Update order status
+        $order->update([
+            'payment_status' => 'cancelled',
+            'notes' => 'Payment cancelled by user',
+        ]);
+
+        return redirect()->route('checkout.index')->with('error', 'Payment was cancelled. You can try again.');
     }
 }

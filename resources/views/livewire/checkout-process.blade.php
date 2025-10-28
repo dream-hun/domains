@@ -55,22 +55,8 @@
                                                 </span>
                                             </td>
                                             <td>{{ $item['quantity'] }} {{ Str::plural('Year', $item['quantity']) }}</td>
-                                            <td>
-                                                @if (isset($item['attributes']['currency']) && $item['attributes']['currency'] !== 'USD')
-                                                    {{ number_format($item['price'], 2) }} {{ $item['attributes']['currency'] }}
-                                                @else
-                                                    ${{ number_format($item['price'], 2) }}
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <strong>
-                                                    @if (isset($item['attributes']['currency']) && $item['attributes']['currency'] !== 'USD')
-                                                        {{ number_format($item['price'] * $item['quantity'], 2) }} {{ $item['attributes']['currency'] }}
-                                                    @else
-                                                        ${{ number_format($item['price'] * $item['quantity'], 2) }}
-                                                    @endif
-                                                </strong>
-                                            </td>
+                                            <td>{{ $this->getFormattedItemPrice($item) }}</td>
+                                            <td><strong>{{ $this->getFormattedItemTotal($item) }}</strong></td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -194,44 +180,28 @@
                             </div>
                         @endif
 
-                        <!-- Coupon Section -->
-                        <div class="mb-4">
-                            <label for="couponCode" class="form-label">
-                                <i class="fas fa-ticket-alt mr-1"></i>Coupon Code
-                            </label>
-                            @if ($appliedCoupon)
-                                <div class="input-group">
-                                    <input type="text" class="form-control" value="{{ $appliedCoupon->code }}" readonly>
-                                    <div class="input-group-append">
-                                        <button class="btn btn-outline-danger" type="button" wire:click="removeCoupon">
-                                            <i class="fas fa-times mr-1"></i>Remove
-                                        </button>
+                        <!-- Applied Coupon Display (Read-only) -->
+                        @if ($appliedCoupon)
+                            <div class="mb-4">
+                                <div class="alert alert-success">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fas fa-ticket-alt mr-2"></i>
+                                            <strong>Coupon Applied:</strong> {{ $appliedCoupon->code }}
+                                        </div>
+                                        <a href="{{ route('cart.index') }}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-edit mr-1"></i>Edit in Cart
+                                        </a>
                                     </div>
                                 </div>
-                            @else
-                                <div class="input-group">
-                                    <input type="text" class="form-control" wire:model="couponCode" 
-                                           placeholder="Enter coupon code" wire:keydown.enter="applyCoupon">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-outline-primary" type="button" 
-                                                wire:click="applyCoupon" wire:loading.attr="disabled">
-                                            <span wire:loading.remove wire:target="applyCoupon">
-                                                <i class="fas fa-check mr-1"></i>Apply
-                                            </span>
-                                            <span wire:loading wire:target="applyCoupon">
-                                                <i class="fas fa-spinner fa-spin mr-1"></i>Applying...
-                                            </span>
-                                        </button>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
 
                         <!-- Order Totals -->
                         <div class="border-top pt-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal:</span>
-                                <span>${{ number_format($subtotal, 2) }}</span>
+                                <span>{{ $this->formattedSubtotal }}</span>
                             </div>
 
                             @if ($discount > 0)
@@ -239,14 +209,14 @@
                                     <span class="text-success">
                                         Discount @if($appliedCoupon)({{ $appliedCoupon->code }})@endif:
                                     </span>
-                                    <span class="text-success">-${{ number_format($discount, 2) }}</span>
+                                    <span class="text-success">-{{ $this->formattedDiscount }}</span>
                                 </div>
                             @endif
 
                             <hr>
                             <div class="d-flex justify-content-between">
                                 <strong>Total:</strong>
-                                <strong>${{ number_format($total, 2) }}</strong>
+                                <strong>{{ $this->formattedTotal }}</strong>
                             </div>
                         </div>
 
@@ -279,7 +249,7 @@
                                     {{ (!$selectedContactId && !empty($userContacts)) ? 'disabled' : '' }}>
                                 <span wire:loading.remove wire:target="proceedToPayment">
                                     <i class="fas fa-credit-card mr-2"></i>Proceed to Payment
-                                    <span class="float-right">${{ number_format($total, 2) }}</span>
+                                    <span class="float-right">{{ $this->formattedTotal }}</span>
                                 </span>
                                 <span wire:loading wire:target="proceedToPayment">
                                     <i class="fas fa-spinner fa-spin mr-2"></i>Processing...

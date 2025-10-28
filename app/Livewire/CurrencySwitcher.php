@@ -6,43 +6,100 @@ namespace App\Livewire;
 
 use App\Models\Currency;
 use App\Services\CurrencyService;
+use App\Services\GeolocationService;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Log;
 
 final class CurrencySwitcher extends Component
 {
     public string $selectedCurrency = '';
 
-    public function mount(CurrencyService $currencyService): void
+    public bool $showDropdown = false;
+
+    public function mount(CurrencyService $currencyService, GeolocationService $geolocationService): void
     {
-        $this->selectedCurrency = $currencyService->getUserCurrency()->code;
+
+        if (session()->has('selected_currency')) {
+            $this->selectedCurrency = session('selected_currency');
+
+            Log::info('Using existing session currency', [
+                'currency' => $this->selectedCurrency,
+            ]);
+
+            return;
+        }
+        // No session currency, initialize from geolocation
+        $isFromRwanda = $geolocationService->isUserFromRwanda();
+        $userCountry = $geolocationService->getUserCountryCode();
+
+        Log::info('Initializing currency from geolocation', [
+            'ip' => request()->ip(),
+            'country_code' => $userCountry,
+            'is_from_rwanda' => $isFromRwanda,
+        ]);
+
+        if ($isFromRwanda) {
+            $this->selectedCurrency = 'RWF';
+        } else {
+            $this->selectedCurrency = 'USD';
+        }
+
+        session(['selected_currency' => $this->selectedCurrency]);
     }
 
-    public function updatedSelectedCurrency(): void
+    public function selectCurrency(string $currencyCode): void
     {
-        $currency = Currency::where('code', $this->selectedCurrency)
+        Log::info('Currency change requested', [
+            'currency_code' => $currencyCode,
+        ]);
+
+        $currency = Currency::where('code', $currencyCode)
             ->where('is_active', true)
             ->first();
 
-        if ($currency) {
-            session(['selected_currency' => $currency->code]);
+        if (! $currency) {
+            Log::error('Currency not found or inactive', [
+                'currency_code' => $currencyCode,
+            ]);
 
-            if (auth()->check()) {
-                auth()->user()->update(['preferred_currency' => $currency->code]);
-            }
-
-            $this->dispatch('currency-changed', currency: $currency->code);
-            $this->dispatch('currencyChanged', $currency->code); // For backward compatibility
-            $this->dispatch('$refresh');
+            return;
         }
+
+        $this->selectedCurrency = $currency->code;
+        $this->showDropdown = false;
+
+        session(['selected_currency' => $currency->code]);
+
+        Log::info('Dispatching currency change events', [
+            'currency_code' => $currency->code,
+        ]);
+
+        $this->dispatch('currency-changed', currency: $currency->code);
+        $this->dispatch('currencyChanged', currency: $currency->code);
+        $this->dispatch('refreshCart');
+    }
+
+    public function toggleDropdown(): void
+    {
+        $this->showDropdown = ! $this->showDropdown;
     }
 
     public function render(CurrencyService $currencyService): Factory|View|\Illuminate\View\View
     {
+        $availableCurrencies = [];
+
+        foreach ($currencyService->getActiveCurrencies()->whereIn('code', ['USD', 'RWF']) as $currency) {
+            $availableCurrencies[$currency->code] = [
+                'name' => $currency->name,
+                'symbol' => $currency->symbol,
+                'code' => $currency->code,
+            ];
+        }
+
         return view('livewire.currency-switcher', [
-            'currencies' => $currencyService->getActiveCurrencies(),
-            'currentCurrency' => $currencyService->getUserCurrency(),
+            'availableCurrencies' => $availableCurrencies,
         ]);
     }
 }

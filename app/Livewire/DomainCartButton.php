@@ -35,9 +35,9 @@ final class DomainCartButton extends Component
         $this->currency = $currency ?? $this->getUserCurrency()->code;
     }
 
-    public function updateCurrency($newCurrency): void
+    public function updateCurrency(string $currency): void
     {
-        $this->currency = $newCurrency;
+        $this->currency = $currency;
         if ($this->domainPrice) {
             $this->price = $this->domainPrice->getFormattedPrice('register_price', $this->currency);
         }

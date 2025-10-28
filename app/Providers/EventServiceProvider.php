@@ -19,6 +19,9 @@ final class EventServiceProvider extends ServiceProvider
         WebhookReceived::class => [
             HandleStripeWebhook::class,
         ],
+        \App\Events\ExchangeRatesUpdated::class => [
+            \App\Listeners\ClearUserCarts::class,
+        ],
     ];
 
     /**

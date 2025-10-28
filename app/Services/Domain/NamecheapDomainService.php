@@ -802,6 +802,32 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             ];
         }
 
+        // Check if domain is premium by querying Namecheap API
+        try {
+            $availability = $this->checkAvailability([$domain]);
+
+            if (! empty($availability) && isset($availability[0])) {
+                $domainInfo = $availability[0];
+
+                // If it's a premium domain, return the premium price
+                if (isset($domainInfo['is_premium']) && $domainInfo['is_premium']) {
+                    return [
+                        'success' => true,
+                        'price' => $domainInfo['premium_price'] ?? ($domainPrice->register_price / 100),
+                        'currency' => $domainPrice->type === DomainType::Local ? 'RWF' : 'USD',
+                        'is_premium' => true,
+                        'eap_fee' => $domainInfo['eap_fee'] ?? 0,
+                    ];
+                }
+            }
+        } catch (Exception $e) {
+            Log::warning('Failed to check premium pricing for domain', [
+                'domain' => $domain,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Return standard pricing
         return [
             'success' => true,
             'price' => $domainPrice->register_price / 100,

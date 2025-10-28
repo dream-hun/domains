@@ -1,4 +1,7 @@
 <x-user-layout>
+    @section('page-title')
+        Shopping Cart
+    @endsection
     <div class="rts-hosting-banner rts-hosting-banner-bg">
         <div class="container">
             <div class="row">

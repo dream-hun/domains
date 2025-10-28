@@ -1,4 +1,7 @@
 <x-user-layout>
+    @section('page-title')
+        Home
+    @endsection
     <section class="rts-hero rts-hero__one banner-style-home-one">
         <div class="container">
             <div class="rts-hero__blur-area"></div>
@@ -16,7 +19,7 @@
                             is our passion.</p>
                         <div class="rts-hero__content--group" data-sal="slide-down" data-sal-delay="500"
                              data-sal-duration="800">
-                            <a href="{{--{{ route('register') }}--}}" class="primary__btn white__bg">Get Started <i
+                            <a href="route('register') }}" class="primary__btn white__bg">Get Started <i
                                     class="fa-regular fa-long-arrow-right"></i></a>
                             <a href="{{--{{ route('shared.index') }}--}}" class="btn__zero plan__btn">Plans & Pricing <i
                                     class="fa-regular fa-long-arrow-right"></i></a>
@@ -287,12 +290,12 @@
                         <h3 data-sal="slide-down" data-sal-delay="300" data-sal-duration="800">A name that looks good
                             on
                             a billboard.</h3>
-                        <form action="https://hostie-whmcs.themewant.com/cart.php" class="domain-checker"
+                        <form action="{{ route('domains.search') }}" class="domain-checker" method="post"
                               data-sal="slide-down" data-sal-delay="400" data-sal-duration="800">
-                            <input type="text" id="domain-name" name="query"
+                            @csrf
+                            <input type="text" id="domain-name" name="domain"
                                    placeholder="Register a domain name to start" required>
-                            <input type="hidden" name="domain" value="register">
-                            <input type="hidden" name="a" value="add">
+
                             <button type="submit" aria-label="register domain" name="domain_type">search
                                 domain
                             </button>

@@ -146,18 +146,13 @@ final class CurrencyHelper
     }
 
     /**
-     * Get user's preferred currency (checks session, user preferences, then defaults)
+     * Get user's preferred currency (checks session, then defaults)
      */
     public static function getUserCurrency(): string
     {
         // Check session first
         if (session()->has('selected_currency')) {
             return session('selected_currency');
-        }
-
-        // Check user preferences if authenticated
-        if (auth()->check() && auth()->user()->preferred_currency) {
-            return auth()->user()->preferred_currency;
         }
 
         // Default to USD

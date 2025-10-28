@@ -87,4 +87,24 @@ final class Order extends Model
     {
         return $this->payment_status === 'cancelled';
     }
+
+    public function requiresAttention(): bool
+    {
+        return $this->status === 'requires_attention';
+    }
+
+    public function isPartiallyCompleted(): bool
+    {
+        return $this->status === 'partially_completed';
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status === 'completed';
+    }
+
+    public function isProcessing(): bool
+    {
+        return $this->status === 'processing';
+    }
 }

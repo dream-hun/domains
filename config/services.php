@@ -92,4 +92,18 @@ return [
         'min_score' => env('RECAPTCHA_MIN_SCORE', .5),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Exchange Rate API
+    |--------------------------------------------------------------------------
+    */
+    'exchange_rate' => [
+        'api_key' => env('EXCHANGER_RATE_API_KEY'),
+        'base_url' => 'https://v6.exchangerate-api.com/v6',
+        'timeout' => 30,
+        'extended_timeout' => 45,
+        'cache_ttl' => 3600, // 1 hour
+        'staleness_hours' => 24,
+    ],
+
 ];

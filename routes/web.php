@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\CurrencyController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DomainController;
 use App\Http\Controllers\Admin\DomainOperationsController;
@@ -14,7 +16,6 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckOutController;
-use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
@@ -23,13 +24,10 @@ use App\Http\Controllers\SearchDomainController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
+
 Route::get('/shopping-cart', CartController::class)->name('cart.index');
 Route::get('/domains', [SearchDomainController::class, 'index'])->name('domains');
 Route::post('/domains/search', [SearchDomainController::class, 'search'])->name('domains.search');
-
-// Currency routes
-Route::get('/api/currencies', [CurrencyController::class, 'index'])->name('currencies.index');
-Route::post('/api/currencies/switch', [CurrencyController::class, 'switch'])->name('currencies.switch');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -54,6 +52,8 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('roles', RolesController::class);
     Route::resource('users', UsersController::class);
     Route::resource('prices', DomainPriceController::class)->except(['show']);
+    Route::resource('currencies', CurrencyController::class);
+    Route::post('currencies/update-rates', [CurrencyController::class, 'updateRates'])->name('currencies.update-rates');
     Route::resource('settings', SettingController::class);
 
     // Notification routes
@@ -66,15 +66,19 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 });
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
-    Route::get('/checkout', [CheckOutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout/apply-coupon/{couponCode}', [CheckOutController::class, 'applyCoupon'])->name('checkout.apply-coupon');
-    Route::post('/checkout/proceed', [CheckOutController::class, 'proceed'])->name('checkout.proceed');
+    Route::get('/cart/checkout/payment/', [CheckOutController::class, 'index'])->name('checkout.index');
+    Route::get('/checkout/stripe/redirect/{order}', [CheckOutController::class, 'stripeRedirect'])->name('checkout.stripe.redirect');
+    Route::get('/checkout/stripe/success/{order}', [CheckOutController::class, 'stripeSuccess'])->name('checkout.stripe.success');
+    Route::get('/checkout/stripe/cancel/{order}', [CheckOutController::class, 'stripeCancel'])->name('checkout.stripe.cancel');
     Route::get('/domains/register', [RegisterDomainController::class, 'index'])->name('domains.register');
     Route::post('/domains/register', [RegisterDomainController::class, 'register'])->name('domains.register.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Billing
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
 
     Route::get('/contacts/{id}/details', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('contacts.details');
     Route::get('/api/contacts/{id}', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('api.contacts.details');
@@ -89,7 +93,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
 });
 
-// Stripe webhook route (no auth required) - Using Laravel Cashier's built-in webhook controller
-Route::post('/stripe/webhook', [Laravel\Cashier\Http\Controllers\WebhookController::class, 'handleWebhook'])->name('cashier.webhook');
+// Stripe webhook route (no auth required)
+Route::post('/stripe/webhook', [App\Http\Controllers\StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
 
 require __DIR__.'/auth.php';

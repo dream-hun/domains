@@ -24,7 +24,7 @@
     <link rel="shortcut icon" type="image/x-icon" href="assets/images/fav.png">
     <title>@yield('page-title') - {{config('app.name')}}</title>
     <!-- Fonts -->
-    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="{{ asset('font/web/inter.css') }}">
     <link rel="stylesheet" href="{{asset('font/bootstrap-icons.min.css')}}">
     <!-- all styles -->
     <link rel="preload stylesheet" href="{{ asset('assets/css/plugins.min.css') }}" as="style">
@@ -34,10 +34,12 @@
     <link rel="preload stylesheet" href="{{ asset('assets/css/style.css') }}" as="style">
 
     <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
-    @livewireStyles
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', sans-serif !important;
+        }
+        h1,h2,h3,h4,h5,h6 {
+            font-family: 'Inter', sans-serif !important;
         }
     </style>
     @stack('styles')
@@ -49,7 +51,6 @@
 {{ $slot }}
 
 <x-footer-component></x-footer-component>
-@livewireScripts
 @stack('scripts')
 
 </body>

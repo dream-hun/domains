@@ -27,64 +27,17 @@ final class CurrencySeeder extends Seeder
             [
                 'code' => 'RWF',
                 'name' => 'Rwandan Franc',
-                'symbol' => 'FRw',
-                'exchange_rate' => 1350.000000, // Approximate rate
+                'symbol' => 'FRW',
+                'exchange_rate' => 1350.000000,
                 'is_base' => false,
                 'is_active' => true,
                 'rate_updated_at' => now(),
             ],
-            [
-                'code' => 'EUR',
-                'name' => 'Euro',
-                'symbol' => '€',
-                'exchange_rate' => 0.920000, // Approximate rate
-                'is_base' => false,
-                'is_active' => true,
-                'rate_updated_at' => now(),
-            ],
-            [
-                'code' => 'GBP',
-                'name' => 'British Pound',
-                'symbol' => '£',
-                'exchange_rate' => 0.790000, // Approximate rate
-                'is_base' => false,
-                'is_active' => true,
-                'rate_updated_at' => now(),
-            ],
-            [
-                'code' => 'KES',
-                'name' => 'Kenyan Shilling',
-                'symbol' => 'KSh',
-                'exchange_rate' => 145.000000, // Approximate rate
-                'is_base' => false,
-                'is_active' => true,
-                'rate_updated_at' => now(),
-            ],
-            [
-                'code' => 'UGX',
-                'name' => 'Ugandan Shilling',
-                'symbol' => 'USh',
-                'exchange_rate' => 3700.000000, // Approximate rate
-                'is_base' => false,
-                'is_active' => true,
-                'rate_updated_at' => now(),
-            ],
-            [
-                'code' => 'TZS',
-                'name' => 'Tanzanian Shilling',
-                'symbol' => 'TSh',
-                'exchange_rate' => 2500.000000, // Approximate rate
-                'is_base' => false,
-                'is_active' => true,
-                'rate_updated_at' => now(),
-            ],
+
         ];
 
-        foreach ($currencies as $currency) {
-            Currency::updateOrCreate(
-                ['code' => $currency['code']],
-                $currency
-            );
-        }
+        Currency::insert($currencies);
+
+        $this->command->info('Currencies seeded successfully.');
     }
 }

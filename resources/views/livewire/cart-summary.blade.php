@@ -18,7 +18,7 @@
                            style="font-size: 16px; line-height: 26px; padding: 5px 10px; border-radius: 8px;">
                             <bi class="bi bi-cart-fill"></bi> View Cart
                         </a>
-                        <a href="{{ route('domains.register') }}"
+                        <a href="{{ route('checkout.index') }}"
                            class="btn btn-success"
                            style="font-size: 16px; line-height: 26px; padding: 5px 10px; border-radius: 8px;">
                             Checkout
