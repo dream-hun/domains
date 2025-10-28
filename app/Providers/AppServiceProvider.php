@@ -10,6 +10,7 @@ use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
+use App\Services\ExchangeRateClient;
 use Exception;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -18,6 +19,16 @@ final class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Bind exchange rate client with config values
+        $this->app->singleton(ExchangeRateClient::class, function (): ExchangeRateClient {
+            return new ExchangeRateClient(
+                apiKey: config('services.exchange_rate.api_key'),
+                baseUrl: config('services.exchange_rate.base_url'),
+                timeout: config('services.exchange_rate.timeout'),
+                extendedTimeout: config('services.exchange_rate.extended_timeout')
+            );
+        });
+
         $this->app->singleton(DomainSearchHelper::class, function ($app): DomainSearchHelper {
             return new DomainSearchHelper(
                 $app->make(NamecheapDomainService::class),

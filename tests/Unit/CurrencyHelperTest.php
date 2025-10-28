@@ -6,37 +6,36 @@ namespace Tests\Unit;
 
 use App\Helpers\CurrencyHelper;
 use Illuminate\Support\Facades\Cache;
-use PHPUnit\Framework\TestCase;
+use Illuminate\Support\Facades\Session;
 
-final class CurrencyHelperTest extends TestCase
-{
-    public function test_get_currency_symbol_returns_correct_symbols(): void
-    {
-        $this->assertEquals('$', CurrencyHelper::getCurrencySymbol('USD'));
-        $this->assertEquals('€', CurrencyHelper::getCurrencySymbol('EUR'));
-        $this->assertEquals('FRw', CurrencyHelper::getCurrencySymbol('RWF'));
-    }
+uses(\Tests\TestCase::class);
 
-    public function test_convert_from_usd_with_same_currency(): void
-    {
-        $result = CurrencyHelper::convertFromUSD(100.0, 'USD');
-        $this->assertEquals(100.0, $result);
-    }
+beforeEach(function () {
+    Session::flush();
+});
 
-    public function test_format_money(): void
-    {
-        // Mock the getRateAndSymbol method
-        Cache::shouldReceive('remember')
-            ->once()
-            ->andReturn(['rate' => 1.0, 'symbol' => '$']);
+test('get currency symbol returns correct symbols', function () {
+    $this->assertEquals('$', CurrencyHelper::getCurrencySymbol('USD'));
+    $this->assertEquals('€', CurrencyHelper::getCurrencySymbol('EUR'));
+    $this->assertEquals('FRw', CurrencyHelper::getCurrencySymbol('RWF'));
+});
 
-        $formatted = CurrencyHelper::formatMoney(100.50, 'USD');
-        $this->assertEquals('$100.50', $formatted);
-    }
+test('convert from usd with same currency', function () {
+    $result = CurrencyHelper::convertFromUSD(100.0, 'USD');
+    $this->assertEquals(100.0, $result);
+});
 
-    public function test_get_user_currency_defaults_to_usd(): void
-    {
-        $currency = CurrencyHelper::getUserCurrency();
-        $this->assertEquals('USD', $currency);
-    }
-}
+test('format money', function () {
+    // Mock the getRateAndSymbol method to be called inside Cache::remember
+    Cache::shouldReceive('remember')
+        ->zeroOrMoreTimes()
+        ->andReturn(['rate' => 1.0, 'symbol' => '$']);
+
+    $formatted = CurrencyHelper::formatMoney(100.50, 'USD');
+    $this->assertEquals('$100.50', $formatted);
+});
+
+test('get user currency defaults to usd', function () {
+    $currency = CurrencyHelper::getUserCurrency();
+    $this->assertEquals('USD', $currency);
+});

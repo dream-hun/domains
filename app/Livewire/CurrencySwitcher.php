@@ -12,7 +12,7 @@ use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Log;
 
-final class CurrencySwitcherSimple extends Component
+final class CurrencySwitcher extends Component
 {
     public string $selectedCurrency = '';
 
@@ -20,7 +20,7 @@ final class CurrencySwitcherSimple extends Component
 
     public function mount(CurrencyService $currencyService, GeolocationService $geolocationService): void
     {
-        // If session already has a currency, use it
+
         if (session()->has('selected_currency')) {
             $this->selectedCurrency = session('selected_currency');
 
@@ -30,7 +30,6 @@ final class CurrencySwitcherSimple extends Component
 
             return;
         }
-
         // No session currency, initialize from geolocation
         $isFromRwanda = $geolocationService->isUserFromRwanda();
         $userCountry = $geolocationService->getUserCountryCode();
@@ -68,23 +67,18 @@ final class CurrencySwitcherSimple extends Component
             return;
         }
 
-        // Update the selected currency
         $this->selectedCurrency = $currency->code;
-
-        // Close the dropdown
         $this->showDropdown = false;
 
-        // Store in session
         session(['selected_currency' => $currency->code]);
 
         Log::info('Dispatching currency change events', [
             'currency_code' => $currency->code,
         ]);
 
-        // Dispatch events to update all listening components
         $this->dispatch('currency-changed', currency: $currency->code);
         $this->dispatch('currencyChanged', currency: $currency->code);
-        $this->dispatch('refreshCart'); // Refresh cart components
+        $this->dispatch('refreshCart');
     }
 
     public function toggleDropdown(): void
@@ -104,7 +98,7 @@ final class CurrencySwitcherSimple extends Component
             ];
         }
 
-        return view('livewire.currency-switcher-simple', [
+        return view('livewire.currency-switcher', [
             'availableCurrencies' => $availableCurrencies,
         ]);
     }

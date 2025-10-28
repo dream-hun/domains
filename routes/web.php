@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\CurrencyController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DomainController;
 use App\Http\Controllers\Admin\DomainOperationsController;
@@ -15,7 +16,6 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckOutController;
-use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
@@ -25,20 +25,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
 
-// Temporary route for testing - remove after testing
-Route::get('/clear-currency', function () {
-    session()->forget('selected_currency');
-
-    return redirect('/')->with('success', 'Currency session cleared. Please refresh.');
-})->name('clear.currency');
-
 Route::get('/shopping-cart', CartController::class)->name('cart.index');
 Route::get('/domains', [SearchDomainController::class, 'index'])->name('domains');
 Route::post('/domains/search', [SearchDomainController::class, 'search'])->name('domains.search');
-
-// Currency routes
-Route::get('/api/currencies', [CurrencyController::class, 'index'])->name('currencies.index');
-Route::post('/api/currencies/switch', [CurrencyController::class, 'switch'])->name('currencies.switch');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -63,6 +52,8 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('roles', RolesController::class);
     Route::resource('users', UsersController::class);
     Route::resource('prices', DomainPriceController::class)->except(['show']);
+    Route::resource('currencies', CurrencyController::class);
+    Route::post('currencies/update-rates', [CurrencyController::class, 'updateRates'])->name('currencies.update-rates');
     Route::resource('settings', SettingController::class);
 
     // Notification routes
