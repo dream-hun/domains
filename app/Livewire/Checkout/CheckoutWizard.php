@@ -98,31 +98,17 @@ final class CheckoutWizard extends Component
     #[Computed]
     public function orderTotal(): float
     {
-        $currencyService = app(CurrencyService::class);
-        $total = Cart::getTotal();
-
-        try {
-            return $currencyService->convert($total, 'USD', $this->userCurrencyCode);
-        } catch (Exception $e) {
-            logger()->error('Currency conversion failed', ['error' => $e->getMessage()]);
-
-            return $total;
-        }
+        // Cart totals are already in the correct currency
+        // No conversion needed as items are stored with their currency attribute
+        return (float) Cart::getTotal();
     }
 
     #[Computed]
     public function orderSubtotal(): float
     {
-        $currencyService = app(CurrencyService::class);
-        $subtotal = Cart::getSubTotal();
-
-        try {
-            return $currencyService->convert($subtotal, 'USD', $this->userCurrencyCode);
-        } catch (Exception $e) {
-            logger()->error('Currency conversion failed', ['error' => $e->getMessage()]);
-
-            return $subtotal;
-        }
+        // Cart subtotals are already in the correct currency
+        // No conversion needed as items are stored with their currency attribute
+        return (float) Cart::getSubTotal();
     }
 
     // Helper method to format currency
@@ -133,24 +119,15 @@ final class CheckoutWizard extends Component
         return $currencyService->format($amount, $this->userCurrencyCode);
     }
 
-    // Helper method to convert and format item price
+    // Helper method to get item price (already in correct currency)
     public function getItemPrice($item): string
     {
         $currencyService = app(CurrencyService::class);
 
-        try {
-            $convertedPrice = $currencyService->convert(
-                $item->getPriceSum(),
-                'USD',
-                $this->userCurrencyCode
-            );
+        // Item prices are already in the correct currency from cart
+        $itemCurrency = $item->attributes->currency ?? 'USD';
 
-            return $this->formatCurrency($convertedPrice);
-        } catch (Exception $e) {
-            logger()->error('Item price conversion failed', ['error' => $e->getMessage()]);
-
-            return $this->formatCurrency($item->getPriceSum());
-        }
+        return $currencyService->format($item->getPriceSum(), $itemCurrency);
     }
 
     public function goToStep(int $step): void

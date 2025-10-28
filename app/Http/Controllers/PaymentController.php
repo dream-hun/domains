@@ -84,14 +84,15 @@ final class PaymentController extends Controller
             // Create Stripe checkout session
             $lineItems = [];
             foreach ($cartItems as $item) {
+                $itemCurrency = mb_strtolower($item->attributes->currency ?? 'usd');
                 $lineItems[] = [
                     'price_data' => [
-                        'currency' => mb_strtolower($item->attributes->currency ?? 'usd'),
+                        'currency' => $itemCurrency,
                         'product_data' => [
                             'name' => "Domain: {$item->name}",
                             'description' => "Domain registration for {$item->quantity} year(s)",
                         ],
-                        'unit_amount' => (int) ($item->price * 100), // Convert to cents
+                        'unit_amount' => (int) (round((float) $item->price, 2) * 100), // Convert to smallest currency unit
                     ],
                     'quantity' => $item->quantity ?? 1,
                 ];

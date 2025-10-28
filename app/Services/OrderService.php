@@ -25,15 +25,14 @@ final class OrderService
         $currency = Currency::where('code', $data['currency'])->first();
         $contact = Contact::find($data['contact_id']);
 
-        // Calculate total
+        // Calculate total - items already have correct currency from cart
         $total = 0;
         foreach ($data['cart_items'] as $item) {
             $total += $item->getPriceSum();
         }
 
-        // Convert to user's currency
-        $baseCurrency = Currency::getBaseCurrency();
-        $convertedTotal = $baseCurrency->convertTo($total, $currency);
+        // Cart items are already in the correct currency, no conversion needed
+        $convertedTotal = $total;
 
         // Create order
         $order = Order::create([
@@ -56,17 +55,19 @@ final class OrderService
             ],
         ]);
 
-        // Create order items
+        // Create order items - prices already in correct currency
         foreach ($data['cart_items'] as $item) {
-            $itemPrice = $baseCurrency->convertTo($item->price, $currency);
-            $itemTotal = $baseCurrency->convertTo($item->getPriceSum(), $currency);
+            // No conversion needed - items are already in the correct currency
+            $itemPrice = $item->price;
+            $itemTotal = $item->getPriceSum();
+            $itemCurrency = $item->attributes->currency ?? 'USD';
 
             OrderItem::create([
                 'order_id' => $order->id,
                 'domain_name' => $item->name,
                 'domain_type' => $item->attributes['tld'] ?? 'registration',
                 'price' => $itemPrice,
-                'currency' => $currency->code,
+                'currency' => $itemCurrency,
                 'quantity' => $item->quantity,
                 'years' => $item->quantity,
                 'total_amount' => $itemTotal,
