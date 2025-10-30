@@ -1,6 +1,7 @@
 <div class="card shadow-sm">
     <div class="card-header">
         <h4 class="mb-0">Contact Information</h4>
+        <p class="text-muted mb-0 mt-1 small">Select contacts for domain registration roles</p>
     </div>
     <div class="card-body">
         @if($this->userContacts->isEmpty())
@@ -13,62 +14,204 @@
                 Create New Contact
             </button>
         @else
-            <p class="text-muted mb-3">Select a contact for your domain registration:</p>
-
-            <div class="row">
-                @foreach($this->userContacts as $contact)
-                    <div class="col-md-6 mb-3">
-                        <div class="contact-card {{ $selectedContactId === $contact->id ? 'selected' : '' }}"
-                             wire:click="selectContact({{ $contact->id }})"
-                             role="button"
-                             tabindex="0"
-                             aria-pressed="{{ $selectedContactId === $contact->id ? 'true' : 'false' }}"
-                             aria-label="Select contact {{ $contact->full_name }}"
-                             style="cursor: pointer;">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h5 class="mb-0">
-                                            {{ $contact->full_name }}
-                                            @if($contact->is_primary)
-                                                <span class="badge badge-primary ml-2">Default</span>
-                                            @endif
-                                        </h5>
-                                        @if($selectedContactId === $contact->id)
-                                            <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
-                                        @endif
-                                    </div>
-                                    <p class="mb-1 text-muted">
-                                        <i class="fas fa-envelope mr-2"></i>{{ $contact->email }}
-                                    </p>
-                                    <p class="mb-0 text-muted small">
-                                        <i class="fas fa-map-marker-alt mr-2"></i>
-                                        {{ $contact->city }}, {{ $contact->state_province }}, {{ $contact->country_code }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="mt-3">
-                <button wire:click="createNewContact" class="btn btn-outline-primary">
+            <div class="mb-4">
+                <button wire:click="createNewContact" class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-plus mr-2"></i>
                     Create New Contact
                 </button>
             </div>
 
+            {{-- Registrant Contact --}}
+            <div class="contact-section mb-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-user mr-2 text-primary"></i>
+                    Registrant Contact
+                    <small class="text-muted">(Domain Owner)</small>
+                </h5>
+                <div class="row">
+                    @foreach($this->userContacts as $contact)
+                        <div class="col-md-6 mb-3">
+                            <div class="contact-card {{ $selectedRegistrantId === $contact->id ? 'selected' : '' }}"
+                                 role="button"
+                                 tabindex="0"
+                                 style="cursor: pointer;">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0">
+                                                {{ $contact->full_name }}
+                                                @if($contact->is_primary)
+                                                    <span class="badge badge-primary ml-2">Default</span>
+                                                @endif
+                                            </h6>
+                                            @if($selectedRegistrantId === $contact->id)
+                                                <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
+                                            @endif
+                                        </div>
+                                        <p class="mb-1 text-muted small">
+                                            <i class="fas fa-envelope mr-2"></i>{{ $contact->email }}
+                                        </p>
+                                        <p class="mb-2 text-muted small">
+                                            <i class="fas fa-map-marker-alt mr-2"></i>
+                                            {{ $contact->city }}, {{ $contact->country_code }}
+                                        </p>
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <button wire:click="selectRegistrant({{ $contact->id }})" 
+                                                    class="btn btn-outline-primary {{ $selectedRegistrantId === $contact->id ? 'active' : '' }}">
+                                                Select for Registrant
+                                            </button>
+                                            <button wire:click="useContactForAll({{ $contact->id }})" 
+                                                    class="btn btn-outline-success">
+                                                Use for All
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
             <hr class="my-4">
 
-            <div class="custom-control custom-checkbox">
-                <input type="checkbox"
-                       class="custom-control-input"
-                       id="useContactForAll"
-                       wire:model="useContactForAll">
-                <label class="custom-control-label" for="useContactForAll">
-                    Use this contact for all contact types (Registrant, Admin, Tech, Billing)
-                </label>
+            {{-- Admin Contact --}}
+            <div class="contact-section mb-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-user-shield mr-2 text-info"></i>
+                    Administrative Contact
+                </h5>
+                <div class="row">
+                    @foreach($this->userContacts as $contact)
+                        <div class="col-md-6 mb-3">
+                            <div class="contact-card {{ $selectedAdminId === $contact->id ? 'selected' : '' }}"
+                                 role="button"
+                                 tabindex="0"
+                                 style="cursor: pointer;">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0">
+                                                {{ $contact->full_name }}
+                                                @if($contact->is_primary)
+                                                    <span class="badge badge-primary ml-2">Default</span>
+                                                @endif
+                                            </h6>
+                                            @if($selectedAdminId === $contact->id)
+                                                <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
+                                            @endif
+                                        </div>
+                                        <p class="mb-1 text-muted small">
+                                            <i class="fas fa-envelope mr-2"></i>{{ $contact->email }}
+                                        </p>
+                                        <p class="mb-2 text-muted small">
+                                            <i class="fas fa-map-marker-alt mr-2"></i>
+                                            {{ $contact->city }}, {{ $contact->country_code }}
+                                        </p>
+                                        <button wire:click="selectAdmin({{ $contact->id }})" 
+                                                class="btn btn-outline-info btn-sm w-100 {{ $selectedAdminId === $contact->id ? 'active' : '' }}">
+                                            Select for Admin
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            {{-- Technical Contact --}}
+            <div class="contact-section mb-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-tools mr-2 text-warning"></i>
+                    Technical Contact
+                </h5>
+                <div class="row">
+                    @foreach($this->userContacts as $contact)
+                        <div class="col-md-6 mb-3">
+                            <div class="contact-card {{ $selectedTechId === $contact->id ? 'selected' : '' }}"
+                                 role="button"
+                                 tabindex="0"
+                                 style="cursor: pointer;">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0">
+                                                {{ $contact->full_name }}
+                                                @if($contact->is_primary)
+                                                    <span class="badge badge-primary ml-2">Default</span>
+                                                @endif
+                                            </h6>
+                                            @if($selectedTechId === $contact->id)
+                                                <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
+                                            @endif
+                                        </div>
+                                        <p class="mb-1 text-muted small">
+                                            <i class="fas fa-envelope mr-2"></i>{{ $contact->email }}
+                                        </p>
+                                        <p class="mb-2 text-muted small">
+                                            <i class="fas fa-map-marker-alt mr-2"></i>
+                                            {{ $contact->city }}, {{ $contact->country_code }}
+                                        </p>
+                                        <button wire:click="selectTech({{ $contact->id }})" 
+                                                class="btn btn-outline-warning btn-sm w-100 {{ $selectedTechId === $contact->id ? 'active' : '' }}">
+                                            Select for Technical
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            {{-- Billing Contact --}}
+            <div class="contact-section mb-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-credit-card mr-2 text-success"></i>
+                    Billing Contact
+                </h5>
+                <div class="row">
+                    @foreach($this->userContacts as $contact)
+                        <div class="col-md-6 mb-3">
+                            <div class="contact-card {{ $selectedBillingId === $contact->id ? 'selected' : '' }}"
+                                 role="button"
+                                 tabindex="0"
+                                 style="cursor: pointer;">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0">
+                                                {{ $contact->full_name }}
+                                                @if($contact->is_primary)
+                                                    <span class="badge badge-primary ml-2">Default</span>
+                                                @endif
+                                            </h6>
+                                            @if($selectedBillingId === $contact->id)
+                                                <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
+                                            @endif
+                                        </div>
+                                        <p class="mb-1 text-muted small">
+                                            <i class="fas fa-envelope mr-2"></i>{{ $contact->email }}
+                                        </p>
+                                        <p class="mb-2 text-muted small">
+                                            <i class="fas fa-map-marker-alt mr-2"></i>
+                                            {{ $contact->city }}, {{ $contact->country_code }}
+                                        </p>
+                                        <button wire:click="selectBilling({{ $contact->id }})" 
+                                                class="btn btn-outline-success btn-sm w-100 {{ $selectedBillingId === $contact->id ? 'active' : '' }}">
+                                            Select for Billing
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         @endif
     </div>
@@ -85,3 +228,25 @@
         @endif
     </div>
 </div>
+
+<style>
+.contact-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.contact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.contact-card.selected .card {
+    border: 2px solid #28a745;
+    background-color: #f8fff9;
+}
+
+.contact-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+</style>

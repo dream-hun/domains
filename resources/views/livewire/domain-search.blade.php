@@ -204,7 +204,7 @@
                                 @foreach ($tlds as $tld)
                                     <li>
                                         <span>{{ $tld->tld }}</span>
-                                        <span>{{ Cknow\Money\Money::RWF($tld->register_price)->format() }}</span>
+                                        <span>{{ format_money(currency_convert($tld->register_price / 100, 'USD', $this->currentCurrency)) }}</span>
                                         @if(isset($tld->type) && $tld->type == \App\Enums\DomainType::International)
                                             <small class="domain-type-indicator">International</small>
                                         @endif

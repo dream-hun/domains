@@ -14,6 +14,7 @@
         "ext-simplexml": "*",
         "africc/php-epp2": "^2.0",
         "barryvdh/laravel-dompdf": "^3.1",
+        "cknow/laravel-money": "^8.4",
         "darryldecode/cart": "^4.2",
         "laravel/breeze": "^2.3.8",
         "laravel/framework": "^12.29",
@@ -42,7 +43,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

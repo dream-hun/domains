@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Currency;
 use App\Models\Role;
 use App\Models\User;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
@@ -10,6 +11,16 @@ beforeEach(function () {
     // Create necessary roles for user creation
     Role::create(['id' => 1, 'title' => 'Admin']);
     Role::create(['id' => 2, 'title' => 'User']);
+
+    // Seed currencies for testing
+    Currency::create([
+        'code' => 'USD',
+        'name' => 'US Dollar',
+        'symbol' => '$',
+        'exchange_rate' => 1.0,
+        'is_base' => true,
+        'is_active' => true,
+    ]);
 });
 
 it('displays checkout page with empty cart', function () {

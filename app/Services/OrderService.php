@@ -23,7 +23,10 @@ final class OrderService
     public function createOrder(array $data): Order
     {
         $currency = Currency::where('code', $data['currency'])->first();
-        $contact = Contact::find($data['contact_id']);
+
+        // Get billing contact (use billing contact from contact_ids)
+        $billingContactId = $data['contact_ids']['billing'];
+        $contact = Contact::find($billingContactId);
 
         // Calculate total - items already have correct currency from cart
         $total = 0;
@@ -31,8 +34,13 @@ final class OrderService
             $total += $item->getPriceSum();
         }
 
-        // Cart items are already in the correct currency, no conversion needed
-        $convertedTotal = $total;
+        // Apply discount if coupon is provided
+        $discountAmount = $data['discount_amount'] ?? 0;
+        $convertedTotal = max(0, $total - $discountAmount);
+
+        // Prepare coupon data
+        $couponCode = $data['coupon']?->code ?? null;
+        $discountType = $data['coupon']?->type->value ?? null;
 
         // Create order
         $order = Order::create([
@@ -43,6 +51,9 @@ final class OrderService
             'payment_status' => 'pending',
             'total_amount' => $convertedTotal,
             'currency' => $currency->code,
+            'coupon_code' => $couponCode,
+            'discount_type' => $discountType,
+            'discount_amount' => $discountAmount,
             'billing_email' => $contact->email,
             'billing_name' => $contact->full_name,
             'billing_address' => [
@@ -82,28 +93,23 @@ final class OrderService
         return $order->fresh(['orderItems']);
     }
 
-    public function processDomainRegistrations(Order $order): void
+    public function processDomainRegistrations(Order $order, array $contactIds): void
     {
         // Update order status to process
         $order->update(['status' => 'processing']);
 
         try {
-            // Get selected contact from checkout session
-            $checkoutData = session('checkout', []);
-            $selectedContactId = $checkoutData['selected_contact_id'] ?? null;
-
-            $selectedContact = $this->getSelectedContact($order->user, $selectedContactId);
-
-            if (! $selectedContact) {
-                throw new Exception('No contact information found for domain registration.');
+            // Validate all contact IDs are provided
+            if (! isset($contactIds['registrant'], $contactIds['admin'], $contactIds['tech'], $contactIds['billing'])) {
+                throw new Exception('All contact IDs (registrant, admin, tech, billing) are required.');
             }
 
-            // Prepare contacts (use same contact for all types)
+            // Prepare contacts with the provided IDs
             $contacts = [
-                'registrant' => $selectedContact->id,
-                'admin' => $selectedContact->id,
-                'technical' => $selectedContact->id,
-                'billing' => $selectedContact->id,
+                'registrant' => $contactIds['registrant'],
+                'admin' => $contactIds['admin'],
+                'technical' => $contactIds['tech'],
+                'billing' => $contactIds['billing'],
             ];
 
             $results = $this->billingService->processDomainRegistrations($order, $contacts);

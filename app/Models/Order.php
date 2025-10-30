@@ -23,6 +23,9 @@ final class Order extends Model
         'stripe_session_id',
         'total_amount',
         'currency',
+        'coupon_code',
+        'discount_type',
+        'discount_amount',
         'billing_email',
         'billing_name',
         'billing_address',
@@ -35,6 +38,7 @@ final class Order extends Model
 
     protected $casts = [
         'total_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'processed_at' => 'datetime',
         'billing_address' => 'array',
     ];

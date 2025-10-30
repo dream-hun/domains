@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Actions\Currency\UpdateExchangeRatesAction;
+use App\Helpers\CurrencyExchangeHelper;
 use App\Models\Currency;
+use Cknow\Money\Money;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
@@ -16,7 +18,8 @@ final class CurrencyService
     private const CACHE_TTL = 3600; // 1 hour
 
     public function __construct(
-        private UpdateExchangeRatesAction $updateAction
+        private UpdateExchangeRatesAction $updateAction,
+        private CurrencyExchangeHelper $exchangeHelper
     ) {}
 
     /**
@@ -71,6 +74,7 @@ final class CurrencyService
 
     /**
      * Convert amount between currencies
+     * Uses API-based conversion for USD/FRW pairs, database for others
      *
      * @throws Exception
      */
@@ -84,6 +88,19 @@ final class CurrencyService
             return $amount;
         }
 
+        // Use CurrencyExchangeHelper for USD/FRW conversions
+        if ($this->isUsdFrwPair($fromCurrency, $targetCurrency)) {
+            try {
+                $money = $this->exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
+
+                return $money->getAmount() / 100; // Convert from minor units to decimal
+            } catch (\App\Exceptions\CurrencyExchangeException $e) {
+                // Fall back to database conversion if API fails
+                // This provides resilience
+            }
+        }
+
+        // Use database-based conversion for non-USD/FRW pairs
         $fromCurrencyModel = $this->getCurrency($fromCurrency);
         $targetCurrencyModel = $this->getCurrency($targetCurrency);
 
@@ -194,6 +211,65 @@ final class CurrencyService
                     ];
                 });
         });
+    }
+
+    /**
+     * Convert amount between currencies and return Money object
+     *
+     * @throws Exception
+     */
+    public function convertToMoney(float $amount, string $from, string $to): Money
+    {
+        if ($amount < 0) {
+            throw new Exception('Amount cannot be negative');
+        }
+
+        // Use CurrencyExchangeHelper for USD/FRW conversions
+        if ($this->isUsdFrwPair($from, $to)) {
+            return $this->exchangeHelper->convertWithAmount($from, $to, $amount);
+        }
+
+        // For other currencies, convert and wrap in Money object
+        $convertedAmount = $this->convert($amount, $from, $to);
+
+        // Create Money object based on target currency
+        // Note: This assumes the Currency model has a toMoney method
+        $currency = $this->getCurrency($to);
+        if ($currency instanceof Currency) {
+            return $currency->toMoney($convertedAmount);
+        }
+
+        throw new Exception("Currency not found: $to");
+    }
+
+    /**
+     * Format amount as Money object
+     */
+    public function formatAsMoney(float $amount, string $currencyCode): string
+    {
+        // Use CurrencyExchangeHelper formatting for USD/FRW
+        if (in_array($currencyCode, ['USD', 'FRW'], true)) {
+            try {
+                $money = $this->exchangeHelper->convertWithAmount($currencyCode, $currencyCode, $amount);
+
+                return $this->exchangeHelper->formatMoney($money);
+            } catch (\App\Exceptions\CurrencyExchangeException) {
+                // Fall back to regular format
+            }
+        }
+
+        return $this->format($amount, $currencyCode);
+    }
+
+    /**
+     * Check if currency pair is USD/FRW
+     */
+    private function isUsdFrwPair(string $from, string $to): bool
+    {
+        $pair = [$from, $to];
+        sort($pair);
+
+        return $pair === ['FRW', 'USD'];
     }
 
     /**

@@ -24,7 +24,9 @@ final class CheckoutService
                 'currency' => $data['currency'],
                 'payment_method' => $data['payment_method'],
                 'cart_items' => $data['cart_items'],
-                'contact_id' => $data['contact_id'],
+                'contact_ids' => $data['contact_ids'],
+                'coupon' => $data['coupon'] ?? null,
+                'discount_amount' => $data['discount_amount'] ?? 0,
             ]);
 
             // Process payment
@@ -47,7 +49,7 @@ final class CheckoutService
                 ]);
 
                 // Trigger domain registration
-                $this->orderService->processDomainRegistrations($order);
+                $this->orderService->processDomainRegistrations($order, $data['contact_ids']);
 
                 // Send confirmation email
                 $this->orderService->sendOrderConfirmation($order);
