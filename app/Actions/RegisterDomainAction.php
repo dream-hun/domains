@@ -334,6 +334,9 @@ final readonly class RegisterDomainAction
                 'ns2.example.com',
             ]);
 
+            // Ensure array is numerically indexed
+            $defaultNameservers = array_values($defaultNameservers);
+
             foreach ($defaultNameservers as $index => $nameserver) {
                 Nameserver::create([
                     'uuid' => (string) Str::uuid(),
@@ -349,11 +352,10 @@ final readonly class RegisterDomainAction
         }
 
         // Process custom nameservers
-        foreach ($nameservers as $index => $nameserver) {
-            if (in_array(mb_trim($nameserver), ['', '0'], true)) {
-                continue;
-            }
+        // Ensure array is numerically indexed
+        $nameservers = array_values(array_filter($nameservers, fn ($ns) => ! in_array(mb_trim($ns), ['', '0'], true)));
 
+        foreach ($nameservers as $index => $nameserver) {
             // Create custom nameserver
             Nameserver::create([
                 'uuid' => (string) Str::uuid(),
