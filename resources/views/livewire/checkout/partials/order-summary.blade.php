@@ -32,6 +32,16 @@
                 <span>Subtotal:</span>
                 <strong>{{ $this->formatCurrency($this->orderSubtotal) }}</strong>
             </div>
+
+            @if($isCouponApplied && $appliedCoupon)
+                <div class="d-flex justify-content-between mb-2 text-success">
+                    <span>
+                        <i class="fas fa-tag mr-1"></i>
+                        Discount ({{ $appliedCoupon->code }}):
+                    </span>
+                    <strong>-{{ $this->formatCurrency($discountAmount) }}</strong>
+                </div>
+            @endif
             
             <hr class="my-3">
             
@@ -39,22 +49,38 @@
                 <span class="h5 mb-0">Total:</span>
                 <strong class="h5 mb-0 text-primary">{{ $this->formatCurrency($this->orderTotal) }}</strong>
             </div>
+
+            @if($isCouponApplied && $appliedCoupon)
+                <div class="alert alert-success py-2 px-3 mb-0 small">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    You saved {{ $this->formatCurrency($discountAmount) }} with coupon <strong>{{ $appliedCoupon->code }}</strong>!
+                </div>
+            @endif
         </div>
 
         {{-- Contact Information (Step 2+) --}}
-        @if($currentStep >= 2 && $this->selectedContact)
+        @if($currentStep >= 2 && ($this->selectedRegistrant || $this->selectedAdmin || $this->selectedTech || $this->selectedBilling))
             <hr class="my-3">
             <div class="contact-info">
                 <h6 class="mb-2">
                     <i class="fas fa-user mr-2"></i>Contact Information
                 </h6>
-                <p class="small mb-0">
-                    <strong>{{ $this->selectedContact->full_name }}</strong><br>
-                    {{ $this->selectedContact->email }}<br>
-                    <span class="text-muted">
-                        {{ $this->selectedContact->city }}, {{ $this->selectedContact->country_code }}
-                    </span>
-                </p>
+                @if($this->selectedRegistrant)
+                    <p class="small mb-1">
+                        <strong class="text-primary">Registrant:</strong> {{ $this->selectedRegistrant->full_name }}
+                    </p>
+                @endif
+                @if($this->selectedBilling && $this->selectedBilling->id !== $this->selectedRegistrant?->id)
+                    <p class="small mb-1">
+                        <strong class="text-success">Billing:</strong> {{ $this->selectedBilling->full_name }}
+                    </p>
+                @endif
+                @if(($this->selectedAdmin && $this->selectedAdmin->id !== $this->selectedRegistrant?->id) ||
+                    ($this->selectedTech && $this->selectedTech->id !== $this->selectedRegistrant?->id))
+                    <p class="small mb-0 text-muted">
+                        + Admin & Technical contacts
+                    </p>
+                @endif
             </div>
         @endif
 

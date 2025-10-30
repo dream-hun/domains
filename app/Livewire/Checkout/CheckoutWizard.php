@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Livewire\Checkout;
 
+use App\Helpers\CurrencyHelper;
 use App\Models\Contact;
+use App\Models\Coupon;
 use App\Services\CheckoutService;
+use App\Services\Coupon\CouponService;
 use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -28,9 +31,13 @@ final class CheckoutWizard extends Component
 
     public int $currentStep = 1;
 
-    public ?int $selectedContactId = null;
+    public ?int $selectedRegistrantId = null;
 
-    public bool $useContactForAll = true;
+    public ?int $selectedAdminId = null;
+
+    public ?int $selectedTechId = null;
+
+    public ?int $selectedBillingId = null;
 
     public ?string $selectedPaymentMethod = null;
 
@@ -43,6 +50,12 @@ final class CheckoutWizard extends Component
     public array $paymentMethods = [];
 
     public string $userCurrencyCode = 'USD';
+
+    public ?Coupon $appliedCoupon = null;
+
+    public float $discountAmount = 0;
+
+    public bool $isCouponApplied = false;
 
     /**
      * @throws ContainerExceptionInterface
@@ -65,7 +78,20 @@ final class CheckoutWizard extends Component
             ->first();
 
         if ($defaultContact) {
-            $this->selectedContactId = $defaultContact->id;
+            $this->selectedRegistrantId = $defaultContact->id;
+            $this->selectedAdminId = $defaultContact->id;
+            $this->selectedTechId = $defaultContact->id;
+            $this->selectedBillingId = $defaultContact->id;
+        }
+
+        // Restore coupon from session if exists
+        if (session()->has('coupon')) {
+            $couponData = session('coupon');
+            $this->appliedCoupon = Coupon::where('code', $couponData['code'])->first();
+            if ($this->appliedCoupon) {
+                $this->isCouponApplied = true;
+                $this->calculateDiscount();
+            }
         }
 
         $this->initializePaymentMethods();
@@ -86,48 +112,104 @@ final class CheckoutWizard extends Component
     }
 
     #[Computed(persist: false)]
-    public function selectedContact(): Contact|array|null
+    public function selectedRegistrant(): ?Contact
     {
-        if (! $this->selectedContactId) {
+        if (! $this->selectedRegistrantId) {
             return null;
         }
 
-        return Contact::find($this->selectedContactId);
+        return Contact::find($this->selectedRegistrantId);
+    }
+
+    #[Computed(persist: false)]
+    public function selectedAdmin(): ?Contact
+    {
+        if (! $this->selectedAdminId) {
+            return null;
+        }
+
+        return Contact::find($this->selectedAdminId);
+    }
+
+    #[Computed(persist: false)]
+    public function selectedTech(): ?Contact
+    {
+        if (! $this->selectedTechId) {
+            return null;
+        }
+
+        return Contact::find($this->selectedTechId);
+    }
+
+    #[Computed(persist: false)]
+    public function selectedBilling(): ?Contact
+    {
+        if (! $this->selectedBillingId) {
+            return null;
+        }
+
+        return Contact::find($this->selectedBillingId);
     }
 
     #[Computed]
     public function orderTotal(): float
     {
-        // Cart totals are already in the correct currency
-        // No conversion needed as items are stored with their currency attribute
-        return (float) Cart::getTotal();
+        // Calculate total with currency conversion
+        $total = 0;
+        foreach ($this->cartItems as $item) {
+            $itemPrice = $item->getPriceSum();
+            $itemCurrency = $item->attributes->currency ?? 'USD';
+
+            // Convert to user's currency if different
+            if ($itemCurrency !== $this->userCurrencyCode) {
+                $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
+            }
+
+            $total += $itemPrice;
+        }
+
+        // Subtract discount if coupon is applied
+        return max(0, $total - $this->discountAmount);
     }
 
     #[Computed]
     public function orderSubtotal(): float
     {
-        // Cart subtotals are already in the correct currency
-        // No conversion needed as items are stored with their currency attribute
-        return (float) Cart::getSubTotal();
+        // Calculate subtotal with currency conversion
+        $subtotal = 0;
+        foreach ($this->cartItems as $item) {
+            $itemPrice = $item->getPriceSum();
+            $itemCurrency = $item->attributes->currency ?? 'USD';
+
+            // Convert to user's currency if different
+            if ($itemCurrency !== $this->userCurrencyCode) {
+                $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
+            }
+
+            $subtotal += $itemPrice;
+        }
+
+        return $subtotal;
     }
 
-    // Helper method to format currency
+    // Helper method to format currency - always uses user's selected currency
     public function formatCurrency(float $amount): string
     {
-        $currencyService = app(CurrencyService::class);
-
-        return $currencyService->format($amount, $this->userCurrencyCode);
+        return CurrencyHelper::formatMoney($amount, $this->userCurrencyCode);
     }
 
-    // Helper method to get item price (already in correct currency)
+    // Helper method to get item price - converts and formats in user's currency
     public function getItemPrice($item): string
     {
-        $currencyService = app(CurrencyService::class);
-
-        // Item prices are already in the correct currency from cart
+        $itemPrice = $item->getPriceSum();
         $itemCurrency = $item->attributes->currency ?? 'USD';
 
-        return $currencyService->format($item->getPriceSum(), $itemCurrency);
+        // Convert to user's currency if different
+        if ($itemCurrency !== $this->userCurrencyCode) {
+            $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
+        }
+
+        return CurrencyHelper::formatMoney($itemPrice, $this->userCurrencyCode);
     }
 
     public function goToStep(int $step): void
@@ -162,9 +244,36 @@ final class CheckoutWizard extends Component
         }
     }
 
-    public function selectContact(int $contactId): void
+    public function selectRegistrant(int $contactId): void
     {
-        $this->selectedContactId = $contactId;
+        $this->selectedRegistrantId = $contactId;
+        $this->errorMessage = '';
+    }
+
+    public function selectAdmin(int $contactId): void
+    {
+        $this->selectedAdminId = $contactId;
+        $this->errorMessage = '';
+    }
+
+    public function selectTech(int $contactId): void
+    {
+        $this->selectedTechId = $contactId;
+        $this->errorMessage = '';
+    }
+
+    public function selectBilling(int $contactId): void
+    {
+        $this->selectedBillingId = $contactId;
+        $this->errorMessage = '';
+    }
+
+    public function useContactForAll(int $contactId): void
+    {
+        $this->selectedRegistrantId = $contactId;
+        $this->selectedAdminId = $contactId;
+        $this->selectedTechId = $contactId;
+        $this->selectedBillingId = $contactId;
         $this->errorMessage = '';
     }
 
@@ -175,7 +284,7 @@ final class CheckoutWizard extends Component
 
     public function contactCreated(int $contactId): void
     {
-        $this->selectedContactId = $contactId;
+        $this->useContactForAll($contactId);
         $this->dispatch('close-contact-modal');
     }
 
@@ -199,11 +308,17 @@ final class CheckoutWizard extends Component
 
             $order = $checkoutService->processCheckout([
                 'user_id' => auth()->id(),
-                'contact_id' => $this->selectedContactId,
-                'use_contact_for_all' => $this->useContactForAll,
+                'contact_ids' => [
+                    'registrant' => $this->selectedRegistrantId,
+                    'admin' => $this->selectedAdminId,
+                    'tech' => $this->selectedTechId,
+                    'billing' => $this->selectedBillingId,
+                ],
                 'payment_method' => $this->selectedPaymentMethod,
                 'currency' => $this->userCurrencyCode,
                 'cart_items' => $this->cartItems,
+                'coupon' => $this->appliedCoupon,
+                'discount_amount' => $this->discountAmount,
             ]);
 
             // Check if we need to redirect to Stripe Checkout
@@ -260,8 +375,8 @@ final class CheckoutWizard extends Component
 
     private function validateContactStep(): bool
     {
-        if (! $this->selectedContactId) {
-            $this->errorMessage = 'Please select a contact or create a new one.';
+        if (! $this->selectedRegistrantId || ! $this->selectedAdminId || ! $this->selectedTechId || ! $this->selectedBillingId) {
+            $this->errorMessage = 'Please select contacts for all roles (Registrant, Admin, Technical, and Billing).';
 
             return false;
         }
@@ -285,8 +400,10 @@ final class CheckoutWizard extends Component
     {
         session()->put('checkout_state', [
             'current_step' => $this->currentStep,
-            'selected_contact_id' => $this->selectedContactId,
-            'use_contact_for_all' => $this->useContactForAll,
+            'selected_registrant_id' => $this->selectedRegistrantId,
+            'selected_admin_id' => $this->selectedAdminId,
+            'selected_tech_id' => $this->selectedTechId,
+            'selected_billing_id' => $this->selectedBillingId,
             'selected_payment_method' => $this->selectedPaymentMethod,
         ]);
     }
@@ -301,8 +418,10 @@ final class CheckoutWizard extends Component
 
         if ($state) {
             $this->currentStep = $state['current_step'] ?? 1;
-            $this->selectedContactId = $state['selected_contact_id'] ?? null;
-            $this->useContactForAll = $state['use_contact_for_all'] ?? true;
+            $this->selectedRegistrantId = $state['selected_registrant_id'] ?? null;
+            $this->selectedAdminId = $state['selected_admin_id'] ?? null;
+            $this->selectedTechId = $state['selected_tech_id'] ?? null;
+            $this->selectedBillingId = $state['selected_billing_id'] ?? null;
             $this->selectedPaymentMethod = $state['selected_payment_method'] ?? null;
         }
     }
@@ -331,5 +450,23 @@ final class CheckoutWizard extends Component
                 'name' => 'PayPal',
             ];
         }
+    }
+
+    private function calculateDiscount(): void
+    {
+        if (! $this->appliedCoupon || ! $this->isCouponApplied) {
+            $this->discountAmount = 0;
+
+            return;
+        }
+
+        $subtotal = $this->orderSubtotal;
+
+        $couponService = app(CouponService::class);
+        $discountedTotal = $couponService->applyCoupon($this->appliedCoupon, $subtotal);
+
+        $discount = $subtotal - $discountedTotal;
+
+        $this->discountAmount = max(0, min($discount, $subtotal));
     }
 }

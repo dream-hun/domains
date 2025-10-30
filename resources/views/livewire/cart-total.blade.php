@@ -21,7 +21,7 @@
                     {{ $this->cartItemsCount }}
                 </span>
             @endif &nbsp;&nbsp;
-            {{ $formattedTotal }}
+                {{ $formattedTotal }}
         </a>
     </div>
 </div>

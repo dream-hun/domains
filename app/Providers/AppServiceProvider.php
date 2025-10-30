@@ -11,7 +11,9 @@ use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use App\Services\ExchangeRateClient;
+use Cknow\Money\Money;
 use Exception;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -65,5 +67,51 @@ final class AppServiceProvider extends ServiceProvider
         } catch (Exception) {
             View::share('settings');
         }
+
+        $this->registerBladeDirectives();
+    }
+
+    /**
+     * Register custom Blade directives for currency conversion
+     */
+    private function registerBladeDirectives(): void
+    {
+        // @money($amount, $currency) - Create Money object and format it
+        Blade::directive('money', function (string $expression): string {
+            return "<?php echo app(\App\Helpers\CurrencyExchangeHelper::class)->formatMoney(\Cknow\Money\Money::\$expression); ?>";
+        });
+
+        // @convert_currency($amount, $from, $to) - Convert and format currency
+        Blade::directive('convert_currency', function (string $expression): string {
+            return "<?php 
+                \$__args = [{$expression}];
+                \$__money = currency_convert(\$__args[0], \$__args[1], \$__args[2]);
+                echo format_money(\$__money);
+            ?>";
+        });
+
+        // @usd_to_frw($amount) - Quick USD to FRW conversion
+        Blade::directive('usd_to_frw', function (string $expression): string {
+            return "<?php 
+                try {
+                    \$__money = usd_to_frw({$expression});
+                    echo format_money(\$__money);
+                } catch (\App\Exceptions\CurrencyExchangeException \$e) {
+                    echo 'N/A';
+                }
+            ?>";
+        });
+
+        // @frw_to_usd($amount) - Quick FRW to USD conversion
+        Blade::directive('frw_to_usd', function (string $expression): string {
+            return "<?php 
+                try {
+                    \$__money = frw_to_usd({$expression});
+                    echo format_money(\$__money);
+                } catch (\App\Exceptions\CurrencyExchangeException \$e) {
+                    echo 'N/A';
+                }
+            ?>";
+        });
     }
 }

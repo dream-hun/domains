@@ -98,7 +98,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'exchange_rate' => [
-        'api_key' => env('EXCHANGER_RATE_API_KEY'),
+        'api_key' => env('EXCHANGE_RATE_API_KEY'),
         'base_url' => 'https://v6.exchangerate-api.com/v6',
         'timeout' => 30,
         'extended_timeout' => 45,

@@ -87,6 +87,23 @@ final class CurrencyHelper
             return $amount;
         }
 
+        // Use CurrencyExchangeHelper for USD/FRW conversions
+        if (self::isUsdFrwPair($fromCurrency, $targetCurrency)) {
+            try {
+                $exchangeHelper = app(CurrencyExchangeHelper::class);
+                $money = $exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
+
+                return $money->getAmount() / 100; // Convert from minor units
+            } catch (\App\Exceptions\CurrencyExchangeException $e) {
+                Log::warning('CurrencyExchangeHelper failed, falling back to old method', [
+                    'from' => $fromCurrency,
+                    'to' => $targetCurrency,
+                    'error' => $e->getMessage(),
+                ]);
+                // Fall through to old method
+            }
+        }
+
         // Convert to USD first if not already USD
         if ($fromCurrency !== self::BASE_CURRENCY) {
             $fromRateData = self::getRateAndSymbol($fromCurrency);
@@ -105,10 +122,32 @@ final class CurrencyHelper
     public static function formatMoney(float $amount, string $currency): string
     {
         $currency = mb_strtoupper($currency);
+
+        // Use CurrencyExchangeHelper formatting for USD/FRW
+        if (in_array($currency, ['USD', 'FRW'], true)) {
+            try {
+                $exchangeHelper = app(CurrencyExchangeHelper::class);
+                $money = $exchangeHelper->convertWithAmount($currency, $currency, $amount);
+
+                return $exchangeHelper->formatMoney($money);
+            } catch (\App\Exceptions\CurrencyExchangeException $e) {
+                Log::warning('CurrencyExchangeHelper formatting failed, falling back', [
+                    'currency' => $currency,
+                    'error' => $e->getMessage(),
+                ]);
+                // Fall through to old method
+            }
+        }
+
         $rateData = self::getRateAndSymbol($currency);
 
-        return $rateData['symbol'].number_format($amount, 2);
+        // Determine decimal places based on currency
+        $decimals = self::getDecimalPlaces($currency, $amount);
 
+        // Round to the appropriate decimal places to ensure consistency
+        $amount = round($amount, $decimals);
+
+        return $rateData['symbol'].number_format($amount, $decimals);
     }
 
     /**
@@ -157,5 +196,48 @@ final class CurrencyHelper
 
         // Default to USD
         return self::BASE_CURRENCY;
+    }
+
+    /**
+     * Check if currency pair is USD/FRW
+     */
+    private static function isUsdFrwPair(string $from, string $to): bool
+    {
+        $pair = [$from, $to];
+        sort($pair);
+
+        return $pair === ['FRW', 'USD'];
+    }
+
+    /**
+     * Get the appropriate number of decimal places for a currency
+     */
+    private static function getDecimalPlaces(string $currency, float $amount): int
+    {
+        // Currencies that don't use decimal places
+        $noDecimalCurrencies = [
+            'FRW', // Rwandan Franc
+            'JPY', // Japanese Yen
+            'KRW', // South Korean Won
+            'VND', // Vietnamese Dong
+            'CLP', // Chilean Peso
+            'ISK', // Icelandic Króna
+            'UGX', // Ugandan Shilling
+            'KES', // Kenyan Shilling
+            'TZS', // Tanzanian Shilling
+        ];
+
+        if (in_array($currency, $noDecimalCurrencies, true)) {
+            return 0;
+        }
+
+        // For other currencies, check if the amount has meaningful decimals
+        // If the fractional part is effectively zero, don't show decimals
+        if (abs($amount - round($amount)) < 0.01) {
+            return 0;
+        }
+
+        // Default to 2 decimal places
+        return 2;
     }
 }

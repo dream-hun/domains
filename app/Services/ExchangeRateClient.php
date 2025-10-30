@@ -41,6 +41,65 @@ final class ExchangeRateClient
     }
 
     /**
+     * Fetch pair conversion rate between two currencies
+     *
+     * @return array<string, mixed>|null Returns full API response or null on failure
+     */
+    public function fetchPairConversion(string $from, string $to, ?float $amount = null): ?array
+    {
+        try {
+            $endpoint = "{$this->baseUrl}/{$this->apiKey}/pair/{$from}/{$to}";
+
+            if ($amount !== null) {
+                $endpoint .= "/{$amount}";
+            }
+
+            $response = Http::timeout($this->timeout)
+                ->retry(2, 1000)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'User-Agent' => config('app.name', 'Laravel').'/1.0',
+                ])
+                ->get($endpoint);
+
+            if (! $response->successful()) {
+                Log::warning('Exchange rate pair conversion API request failed', [
+                    'from' => $from,
+                    'to' => $to,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return null;
+            }
+
+            $data = $response->json();
+
+            // Check for API errors
+            if (isset($data['result']) && $data['result'] === 'error') {
+                Log::error('Exchange rate API returned error', [
+                    'from' => $from,
+                    'to' => $to,
+                    'error_type' => $data['error-type'] ?? 'unknown',
+                ]);
+
+                return $data; // Return error response so caller can handle it
+            }
+
+            return $data;
+
+        } catch (Exception $e) {
+            Log::error('Exchange rate pair conversion exception', [
+                'from' => $from,
+                'to' => $to,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Attempt to fetch rates with specified timeout and retry count
      *
      * @return array<string, float>|null
