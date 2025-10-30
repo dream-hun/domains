@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('domain_type');
             $table->decimal('price', 10, 2);
             $table->string('currency', 3);
+            $table->decimal('exchange_rate', 12, 6)->nullable();
             $table->integer('quantity')->default(1);
             $table->integer('years')->default(1);
             $table->decimal('total_amount', 10, 2);
