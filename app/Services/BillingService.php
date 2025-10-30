@@ -15,34 +15,43 @@ use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
-final class BillingService
+final readonly class BillingService
 {
     public function __construct(
-        private readonly RegisterDomainAction $registerDomainAction
+        private RegisterDomainAction $registerDomainAction
     ) {}
 
     /**
      * Create an order from cart items
+     *
+     * @throws Throwable
      */
     public function createOrderFromCart(User $user, array $billingData, array $checkoutData, ?array $preparedCartData = null): Order
     {
         return DB::transaction(function () use ($user, $billingData, $checkoutData, $preparedCartData) {
-            // Get prepared cart data with currency conversion and discount calculations
+
             $cartData = $this->getPreparedCartData($preparedCartData);
 
-            // Extract cart information
             $items = $cartData['items'];
             $subtotal = $cartData['subtotal'];
             $total = $cartData['total'];
             $currency = $cartData['currency'];
             $coupon = $cartData['coupon'] ?? null;
 
-            // Prepare order notes with coupon information
+            // Prepare order data with coupon information
             $notes = null;
+            $couponCode = null;
+            $discountType = null;
+            $discountAmount = null;
+
             if ($coupon) {
                 $formattedDiscount = CurrencyHelper::formatMoney($coupon['discount_amount'], $currency);
-                $notes = "Coupon applied: {$coupon['code']} ({$formattedDiscount} discount)";
+                $notes = "Coupon applied: {$coupon['code']} ($formattedDiscount discount)";
+                $couponCode = $coupon['code'];
+                $discountType = $coupon['type'];
+                $discountAmount = $coupon['discount_amount'];
             }
 
             // Create the order
@@ -54,6 +63,9 @@ final class BillingService
                 'payment_status' => 'pending',
                 'total_amount' => $total,
                 'currency' => $currency,
+                'coupon_code' => $couponCode,
+                'discount_type' => $discountType,
+                'discount_amount' => $discountAmount,
                 'billing_name' => $billingData['billing_name'] ?? $user->name,
                 'billing_email' => $billingData['billing_email'] ?? $user->email,
                 'billing_address' => $billingData['billing_address'] ?? '',
@@ -90,7 +102,8 @@ final class BillingService
                 'total_amount' => $total,
                 'currency' => $currency,
                 'subtotal' => $subtotal,
-                'discount' => $coupon['discount_amount'] ?? 0,
+                'discount_amount' => $discountAmount ?? 0,
+                'coupon_code' => $couponCode,
             ]);
 
             return $order;
@@ -99,6 +112,8 @@ final class BillingService
 
     /**
      * Process domain registrations after successful payment
+     *
+     * @throws Exception
      */
     public function processDomainRegistrations(Order $order, array $contacts): array
     {
@@ -189,6 +204,8 @@ final class BillingService
 
     /**
      * Get prepared cart data from provided data, session, or Cart facade
+     *
+     * @throws Exception
      */
     private function getPreparedCartData(?array $preparedCartData): array
     {
@@ -236,10 +253,12 @@ final class BillingService
 
     /**
      * Validate cart data structure
+     *
+     * @throws Exception
      */
-    private function validateCartData(array $cartData): void
+    private function validateCartData(array &$cartData): void
     {
-        if (! isset($cartData['items']) || empty($cartData['items'])) {
+        if (empty($cartData['items'])) {
             throw new Exception('Cart data is missing items');
         }
 

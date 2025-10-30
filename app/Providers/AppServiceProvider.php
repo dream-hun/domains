@@ -11,7 +11,6 @@ use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use App\Services\ExchangeRateClient;
-use Cknow\Money\Money;
 use Exception;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
@@ -83,8 +82,8 @@ final class AppServiceProvider extends ServiceProvider
 
         // @convert_currency($amount, $from, $to) - Convert and format currency
         Blade::directive('convert_currency', function (string $expression): string {
-            return "<?php 
-                \$__args = [{$expression}];
+            return "<?php
+                \$__args = [$expression];
                 \$__money = currency_convert(\$__args[0], \$__args[1], \$__args[2]);
                 echo format_money(\$__money);
             ?>";
@@ -92,9 +91,9 @@ final class AppServiceProvider extends ServiceProvider
 
         // @usd_to_frw($amount) - Quick USD to FRW conversion
         Blade::directive('usd_to_frw', function (string $expression): string {
-            return "<?php 
+            return "<?php
                 try {
-                    \$__money = usd_to_frw({$expression});
+                    \$__money = usd_to_frw($expression);
                     echo format_money(\$__money);
                 } catch (\App\Exceptions\CurrencyExchangeException \$e) {
                     echo 'N/A';
@@ -104,9 +103,9 @@ final class AppServiceProvider extends ServiceProvider
 
         // @frw_to_usd($amount) - Quick FRW to USD conversion
         Blade::directive('frw_to_usd', function (string $expression): string {
-            return "<?php 
+            return "<?php
                 try {
-                    \$__money = frw_to_usd({$expression});
+                    \$__money = frw_to_usd($expression);
                     echo format_money(\$__money);
                 } catch (\App\Exceptions\CurrencyExchangeException \$e) {
                     echo 'N/A';

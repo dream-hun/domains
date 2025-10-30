@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Actions\Currency\UpdateExchangeRatesAction;
+use App\Events\ExchangeRatesUpdated;
+use App\Exceptions\CurrencyExchangeException;
 use App\Helpers\CurrencyExchangeHelper;
 use App\Models\Currency;
 use Cknow\Money\Money;
@@ -18,8 +20,8 @@ final class CurrencyService
     private const CACHE_TTL = 3600; // 1 hour
 
     public function __construct(
-        private UpdateExchangeRatesAction $updateAction,
-        private CurrencyExchangeHelper $exchangeHelper
+        private readonly UpdateExchangeRatesAction $updateAction,
+        private readonly CurrencyExchangeHelper $exchangeHelper
     ) {}
 
     /**
@@ -88,19 +90,16 @@ final class CurrencyService
             return $amount;
         }
 
-        // Use CurrencyExchangeHelper for USD/FRW conversions
+
         if ($this->isUsdFrwPair($fromCurrency, $targetCurrency)) {
             try {
                 $money = $this->exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
 
-                return $money->getAmount() / 100; // Convert from minor units to decimal
-            } catch (\App\Exceptions\CurrencyExchangeException $e) {
-                // Fall back to database conversion if API fails
-                // This provides resilience
+                return $money->getAmount() / 100;
+            } catch (CurrencyExchangeException) {
             }
         }
 
-        // Use database-based conversion for non-USD/FRW pairs
         $fromCurrencyModel = $this->getCurrency($fromCurrency);
         $targetCurrencyModel = $this->getCurrency($targetCurrency);
 
@@ -179,7 +178,7 @@ final class CurrencyService
      */
     public function clearAllCarts(): void
     {
-        event(new \App\Events\ExchangeRatesUpdated(0, []));
+        event(new ExchangeRatesUpdated(0, []));
     }
 
     /**
@@ -224,16 +223,11 @@ final class CurrencyService
             throw new Exception('Amount cannot be negative');
         }
 
-        // Use CurrencyExchangeHelper for USD/FRW conversions
         if ($this->isUsdFrwPair($from, $to)) {
             return $this->exchangeHelper->convertWithAmount($from, $to, $amount);
         }
 
-        // For other currencies, convert and wrap in Money object
         $convertedAmount = $this->convert($amount, $from, $to);
-
-        // Create Money object based on target currency
-        // Note: This assumes the Currency model has a toMoney method
         $currency = $this->getCurrency($to);
         if ($currency instanceof Currency) {
             return $currency->toMoney($convertedAmount);
@@ -253,7 +247,7 @@ final class CurrencyService
                 $money = $this->exchangeHelper->convertWithAmount($currencyCode, $currencyCode, $amount);
 
                 return $this->exchangeHelper->formatMoney($money);
-            } catch (\App\Exceptions\CurrencyExchangeException) {
+            } catch (CurrencyExchangeException) {
                 // Fall back to regular format
             }
         }

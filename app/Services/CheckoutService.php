@@ -7,18 +7,21 @@ namespace App\Services;
 use App\Models\Order;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
-final class CheckoutService
+final readonly class CheckoutService
 {
     public function __construct(
-        private readonly PaymentService $paymentService,
-        private readonly OrderService $orderService
+        private PaymentService        $paymentService,
+        private OrderService $orderService
     ) {}
 
+    /**
+     * @throws Throwable
+     */
     public function processCheckout(array $data): Order
     {
         return DB::transaction(function () use ($data) {
-            // Create order
             $order = $this->orderService->createOrder([
                 'user_id' => $data['user_id'],
                 'currency' => $data['currency'],
@@ -29,29 +32,24 @@ final class CheckoutService
                 'discount_amount' => $data['discount_amount'] ?? 0,
             ]);
 
-            // Process payment
             $paymentResult = $this->paymentService->processPayment(
                 $order,
                 $data['payment_method']
             );
 
             if ($paymentResult['success']) {
-                // Check if payment requires action (redirect to Stripe Checkout)
                 if (isset($paymentResult['requires_action']) && $paymentResult['requires_action']) {
-                    return $order; // Return order with checkout_url for redirect
+                    return $order;
                 }
 
-                // Payment completed immediately (e.g., account credit)
                 $order->update([
                     'payment_status' => 'paid',
                     'processed_at' => now(),
                     'stripe_payment_intent_id' => $paymentResult['transaction_id'] ?? null,
                 ]);
 
-                // Trigger domain registration
                 $this->orderService->processDomainRegistrations($order, $data['contact_ids']);
 
-                // Send confirmation email
                 $this->orderService->sendOrderConfirmation($order);
             } else {
                 $order->update([

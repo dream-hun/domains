@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Listeners\HandleStripeWebhook;
+use App\Events\ExchangeRatesUpdated;
+use App\Listeners\ClearUserCarts;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Laravel\Cashier\Events\WebhookReceived;
+
 
 final class EventServiceProvider extends ServiceProvider
 {
@@ -16,11 +17,9 @@ final class EventServiceProvider extends ServiceProvider
      * @var array<class-string, array<int, class-string>>
      */
     protected $listen = [
-        WebhookReceived::class => [
-            HandleStripeWebhook::class,
-        ],
-        \App\Events\ExchangeRatesUpdated::class => [
-            \App\Listeners\ClearUserCarts::class,
+
+        ExchangeRatesUpdated::class => [
+            ClearUserCarts::class,
         ],
     ];
 
