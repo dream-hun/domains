@@ -31,7 +31,7 @@ final readonly class RegisterDomainAction
     /**
      * Register a domain using the appropriate service based on TLD
      */
-    public function handle(string $domainName, array $contactInfo, int $years, array $nameservers = [], bool $useSingleContact = false): array
+    public function handle(string $domainName, array $contactInfo, int $years, array $nameservers = [], bool $useSingleContact = false, ?int $userId = null): array
     {
         try {
             $domainService = $this->getDomainService($domainName);
@@ -52,7 +52,7 @@ final readonly class RegisterDomainAction
 
             if ($result['success']) {
                 // Use original processed contacts (with database IDs) for domain record creation
-                $domain = $this->createDomainRecord($domainName, $years, $processedContacts, $serviceName);
+                $domain = $this->createDomainRecord($domainName, $years, $processedContacts, $serviceName, $userId);
                 $this->processNameservers($domain, $nameservers);
                 $nsToSet = $domain->nameservers->pluck('name')->toArray();
                 $updateResult = $domainService->updateNameservers($domainName, $nsToSet);
@@ -276,16 +276,23 @@ final readonly class RegisterDomainAction
      *
      * @throws Exception
      */
-    private function createDomainRecord(string $domainName, int $years, array $contacts, string $service): Domain
+    private function createDomainRecord(string $domainName, int $years, array $contacts, string $service, ?int $userId = null): Domain
     {
         // Get the domain price for the TLD
         $tld = $this->extractTld($domainName);
         $domainPrice = DomainPrice::where('tld', $tld)->firstOrFail();
 
+        // Use provided userId or fall back to authenticated user
+        $ownerId = $userId ?? auth()->id();
+
+        if ($ownerId === null) {
+            throw new Exception('Cannot create domain: No user ID provided and no authenticated user found.');
+        }
+
         $domain = Domain::create([
             'uuid' => (string) Str::uuid(),
             'name' => $domainName,
-            'owner_id' => auth()->id(),
+            'owner_id' => $ownerId,
             'years' => $years,
             'registered_at' => now(),
             'expires_at' => now()->addYears($years),
@@ -308,7 +315,7 @@ final readonly class RegisterDomainAction
 
             $domain->contacts()->attach($contactId, [
                 'type' => $type,
-                'user_id' => auth()->id(),
+                'user_id' => $ownerId,
             ]);
         }
 
@@ -322,7 +329,7 @@ final readonly class RegisterDomainAction
     {
         if ($nameservers === []) {
             // Use default nameservers from config
-            $defaultNameservers = config('default-nameservers.default_nameservers', [
+            $defaultNameservers = config('default-nameservers', [
                 'ns1.example.com',
                 'ns2.example.com',
             ]);
