@@ -27,7 +27,7 @@ beforeEach(function (): void {
     Currency::create([
         'code' => 'FRW',
         'name' => 'Rwandan Franc',
-        'symbol' => 'FRw',
+        'symbol' => 'FRW',
         'exchange_rate' => 1350.0,
         'is_base' => false,
         'is_active' => true,
@@ -151,7 +151,7 @@ it('formats as Money for FRW', function (): void {
     $service = app(CurrencyService::class);
     $formatted = $service->formatAsMoney(1350.0, 'FRW');
 
-    expect($formatted)->toContain('FRw');
+    expect($formatted)->toContain('FRW');
     expect($formatted)->toContain('1,350');
 });
 
