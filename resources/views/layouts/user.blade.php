@@ -38,6 +38,12 @@
     @livewireStyles
     @stack('styles')
     <style>
+        [x-cloak] {
+            display: none !important;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
         body{
             font-family: 'Inter', sans-serif !important;
         }
