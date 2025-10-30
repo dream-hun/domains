@@ -13,8 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('subscription_items', function (Blueprint $table) {
-            $table->string('meter_id')->nullable()->after('stripe_price');
+        Schema::table('order_items', function (Blueprint $table) {
+            $table->decimal('exchange_rate', 12, 6)->nullable()->after('currency');
         });
     }
 
@@ -23,8 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('subscription_items', function (Blueprint $table) {
-            $table->dropColumn('meter_id');
+        Schema::table('order_items', function (Blueprint $table) {
+            $table->dropColumn('exchange_rate');
         });
     }
 };

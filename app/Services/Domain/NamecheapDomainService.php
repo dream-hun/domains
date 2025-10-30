@@ -124,17 +124,57 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                     }
                 }
 
+                // Detect premium flags and pricing if provided by Namecheap
+                // Attribute names vary across docs; support common variants
+                $isPremium = false;
+                $premiumPrice = null;
+                $eapFee = 0.0;
+
+                $premiumFlags = [
+                    'IsPremiumName',
+                    'IsPremium',
+                    'PremiumDomain',
+                ];
+                foreach ($premiumFlags as $flag) {
+                    if (isset($result[$flag]) && mb_strtolower((string) $result[$flag]) === 'true') {
+                        $isPremium = true;
+                        break;
+                    }
+                }
+
+                $priceKeys = [
+                    'PremiumRegistrationPrice',
+                    'PremiumPrice',
+                    'PremiumRegistrationCost',
+                ];
+                foreach ($priceKeys as $key) {
+                    if (isset($result[$key]) && (string) $result[$key] !== '') {
+                        $premiumPrice = (float) $result[$key];
+                        break;
+                    }
+                }
+
+                // EAP fee if present
+                if (isset($result['EapFee']) && (string) $result['EapFee'] !== '') {
+                    $eapFee = (float) $result['EapFee'];
+                }
+
                 Log::debug('Namecheap domain check result', [
                     'domain' => $domainName,
                     'available' => $available,
+                    'is_premium' => $isPremium,
+                    'premium_price' => $premiumPrice,
+                    'eap_fee' => $eapFee,
                     'raw_available' => (string) $result['Available'],
                     'error_message' => $errorMessage,
-                    'full_result' => (array) $result,
                 ]);
 
                 $results[$domainName] = (object) [
                     'available' => $available,
                     'error' => $errorMessage,
+                    'is_premium' => $isPremium,
+                    'premium_price' => $premiumPrice,
+                    'eap_fee' => $eapFee,
                 ];
             }
 
@@ -806,17 +846,17 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
         try {
             $availability = $this->checkAvailability([$domain]);
 
-            if (! empty($availability) && isset($availability[0])) {
-                $domainInfo = $availability[0];
+            if (! empty($availability) && isset($availability[$domain])) {
+                $domainInfo = (array) $availability[$domain];
 
                 // If it's a premium domain, return the premium price
-                if (isset($domainInfo['is_premium']) && $domainInfo['is_premium']) {
+                if (($domainInfo['is_premium'] ?? false) === true) {
                     return [
                         'success' => true,
-                        'price' => $domainInfo['premium_price'] ?? ($domainPrice->register_price / 100),
+                        'price' => (float) ($domainInfo['premium_price'] ?? ($domainPrice->register_price / 100)),
                         'currency' => $domainPrice->type === DomainType::Local ? 'RWF' : 'USD',
                         'is_premium' => true,
-                        'eap_fee' => $domainInfo['eap_fee'] ?? 0,
+                        'eap_fee' => (float) ($domainInfo['eap_fee'] ?? 0),
                     ];
                 }
             }

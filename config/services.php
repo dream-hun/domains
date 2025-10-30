@@ -74,8 +74,8 @@ return [
     */
     'payment' => [
         'stripe' => [
-            'secret_key' => env('STRIPE_SECRET_KEY'),
-            'publishable_key' => env('STRIPE_PUBLISHABLE_KEY'),
+            'secret_key' => env('STRIPE_SECRET'),
+            'publishable_key' => env('STRIPE_KEY'),
             'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         ],
         'mobile-money' => 'not-yet-available',

@@ -31,7 +31,7 @@ final class CheckOutController extends Controller
 
         // Get Stripe session and redirect
         if ($order->stripe_session_id) {
-            \Stripe\Stripe::setApiKey(config('cashier.secret'));
+            \Stripe\Stripe::setApiKey(config('services.payment.stripe.secret_key'));
             $session = \Stripe\Checkout\Session::retrieve($order->stripe_session_id);
 
             return redirect($session->url);
@@ -51,7 +51,7 @@ final class CheckOutController extends Controller
 
         // Verify payment with Stripe
         if ($order->stripe_session_id) {
-            \Stripe\Stripe::setApiKey(config('cashier.secret'));
+            \Stripe\Stripe::setApiKey(config('services.payment.stripe.secret_key'));
             $session = \Stripe\Checkout\Session::retrieve($order->stripe_session_id);
 
             if ($session->payment_status === 'paid') {

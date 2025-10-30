@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\User;
-
 final class PaymentMethodValidator
 {
     /**
@@ -17,23 +15,6 @@ final class PaymentMethodValidator
             return [
                 'valid' => false,
                 'error' => 'Stripe payment is not configured. Please contact support.',
-            ];
-        }
-
-        return [
-            'valid' => true,
-        ];
-    }
-
-    /**
-     * Validate account credit payment method
-     */
-    public function validateAccountCredit(User $user, float $amount): array
-    {
-        if (! $user->hasAccountCredit($amount)) {
-            return [
-                'valid' => false,
-                'error' => 'Insufficient account credit. Your balance is '.$user->account_credit.'. Please add funds or use a different payment method.',
             ];
         }
 
@@ -56,14 +37,10 @@ final class PaymentMethodValidator
     /**
      * Validate payment method based on type
      */
-    public function validate(string $method, ?User $user = null, ?float $amount = null): array
+    public function validate(string $method): array
     {
         return match ($method) {
             'stripe' => $this->validateStripe(),
-            'account_credit' => $user && $amount ? $this->validateAccountCredit($user, $amount) : [
-                'valid' => false,
-                'error' => 'User and amount required for account credit validation',
-            ],
             'paypal' => $this->validatePayPal(),
             default => [
                 'valid' => false,
@@ -77,6 +54,7 @@ final class PaymentMethodValidator
      */
     private function isStripeConfigured(): bool
     {
-        return ! empty(config('cashier.key')) && ! empty(config('cashier.secret'));
+        return ! empty(config('services.payment.stripe.publishable_key'))
+            && ! empty(config('services.payment.stripe.secret_key'));
     }
 }

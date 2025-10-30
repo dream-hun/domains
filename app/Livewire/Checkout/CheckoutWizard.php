@@ -316,18 +316,8 @@ final class CheckoutWizard extends Component
     {
         $this->paymentMethods = [];
 
-        // Account Credit
-        $user = auth()->user();
-        if ($user && $user->account_credit > 0) {
-            $this->paymentMethods[] = [
-                'id' => 'account_credit',
-                'name' => 'Account Credit ('.number_format($user->account_credit, 2).' available)',
-                'balance' => $user->account_credit,
-            ];
-        }
-
         // Stripe
-        if (config('cashier.key')) {
+        if (config('services.payment.stripe.publishable_key')) {
             $this->paymentMethods[] = [
                 'id' => 'stripe',
                 'name' => 'Credit Card (Stripe)',

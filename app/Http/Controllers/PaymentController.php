@@ -23,7 +23,7 @@ final class PaymentController extends Controller
     public function __construct(
         private readonly BillingService $billingService
     ) {
-        Stripe::setApiKey(config('cashier.secret'));
+        Stripe::setApiKey(config('services.payment.stripe.secret_key'));
     }
 
     /**

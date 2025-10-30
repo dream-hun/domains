@@ -19,6 +19,7 @@ final class OrderItem extends Model
         'domain_type',
         'price',
         'currency',
+        'exchange_rate',
         'quantity',
         'years',
         'total_amount',
@@ -27,6 +28,7 @@ final class OrderItem extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'exchange_rate' => 'decimal:6',
     ];
 
     public function order(): BelongsTo

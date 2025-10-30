@@ -8,6 +8,9 @@ use App\Models\Order;
 use DB;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Stripe\Checkout\Session;
+use Stripe\Customer;
+use Stripe\Stripe;
 
 final class PaymentService
 {
@@ -64,18 +67,23 @@ final class PaymentService
     /**
      * Create Stripe Checkout Session
      */
-    private function createStripeCheckoutSession(Order $order): \Stripe\Checkout\Session
+    private function createStripeCheckoutSession(Order $order): Session
     {
-        \Stripe\Stripe::setApiKey(config('cashier.secret'));
+        Stripe::setApiKey(config('services.payment.stripe.secret_key'));
 
         $user = $order->user;
 
         // Ensure user has Stripe customer ID
-        if (! $user->hasStripeId()) {
-            $user->createAsStripeCustomer([
+        if (! $user->stripe_id) {
+            $customer = Customer::create([
                 'name' => $user->name,
                 'email' => $user->email,
+                'metadata' => [
+                    'user_id' => $user->id,
+                ],
             ]);
+
+            $user->update(['stripe_id' => $customer->id]);
         }
 
         // Prepare line items
@@ -95,8 +103,8 @@ final class PaymentService
         }
 
         // Create checkout session
-        $session = \Stripe\Checkout\Session::create([
-            'customer' => $user->stripeId(),
+        $session = Session::create([
+            'customer' => $user->stripe_id,
             'payment_method_types' => ['card'],
             'line_items' => $lineItems,
             'mode' => 'payment',
@@ -180,7 +188,8 @@ final class PaymentService
      */
     private function isStripeConfigured(): bool
     {
-        return ! empty(config('cashier.key')) && ! empty(config('cashier.secret'));
+        return ! empty(config('services.payment.stripe.publishable_key'))
+            && ! empty(config('services.payment.stripe.secret_key'));
     }
 
     /**
