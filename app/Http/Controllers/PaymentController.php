@@ -137,7 +137,19 @@ final class PaymentController extends Controller
 
                 // Process domain registrations
                 try {
-                    $this->orderService->processDomainRegistrations($order);
+                    // Get contact ID from checkout session (use same contact for all roles)
+                    $checkoutData = session('checkout', []);
+                    $contactId = $checkoutData['selected_contact_id'] ?? $order->user->contacts()->where('is_primary', true)->first()?->id;
+
+                    if ($contactId) {
+                        $contactIds = [
+                            'registrant' => $contactId,
+                            'admin' => $contactId,
+                            'tech' => $contactId,
+                            'billing' => $contactId,
+                        ];
+                        $this->orderService->processDomainRegistrations($order, $contactIds);
+                    }
 
                     // Clear cart and checkout session
                     Cart::clear();
