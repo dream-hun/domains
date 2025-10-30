@@ -833,7 +833,7 @@
                                         Why buy a domain name from hostie?
                                     </h4>
                                 </div>
-                                <div id="item__one" class="accordion-collapse collapse collapse show"
+                                <div id="item__one" class="accordion-collapse collapse show"
                                      aria-labelledby="first" data-bs-parent="#rts-accordion">
                                     <div class="accordion-body">
                                         Above all else, we strive to deliver outstanding customer experiences. When you

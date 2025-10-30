@@ -11,13 +11,21 @@
                         </a>
                     </div>
                     <div class="rts-ht__links">
-                        <livewire:currency-switcher />
                         <div class="live-chat-has-dropdown">
                             <a href="#" class="live__chat">
                                 <img src="assets/images/icon/forum.svg" alt="" class="icon">Live Chat
                             </a>
                         </div>
-                        <livewire:cart-total />
+                        <div class="live-chat-has-dropdown">
+                            <a href="#" class="live__chat">
+                                <livewire:currency-switcher />
+                            </a>
+                        </div>
+                        
+                        
+                        <div class="live-chat-has-dropdown">
+                            <livewire:cart-total />
+                        </div>
                     </div>
                 </div>
             </div>
