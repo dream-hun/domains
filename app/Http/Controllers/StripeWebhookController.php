@@ -107,7 +107,19 @@ final class StripeWebhookController extends Controller
 
         // Trigger domain registration if not already processing
         if ($order->status === 'pending') {
-            $this->orderService->processDomainRegistrations($order);
+            // Use the user's primary contact for domain registration (all roles)
+            $contactId = $order->user->contacts()->where('is_primary', true)->first()?->id;
+
+            if ($contactId) {
+                $contactIds = [
+                    'registrant' => $contactId,
+                    'admin' => $contactId,
+                    'tech' => $contactId,
+                    'billing' => $contactId,
+                ];
+                $this->orderService->processDomainRegistrations($order, $contactIds);
+            }
+
             $this->orderService->sendOrderConfirmation($order);
         }
 
