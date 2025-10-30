@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('order_number')->unique();
-            $table->string('status')->default('pending')->change();
+            $table->string('status')->default('pending');
             $table->enum('payment_method', ['stripe', 'mtn_mobile_money'])->default('stripe');
             $table->enum('payment_status', ['pending', 'paid', 'failed', 'cancelled', 'refunded'])->default('pending');
             $table->string('stripe_payment_intent_id')->nullable();
