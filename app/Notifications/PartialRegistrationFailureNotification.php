@@ -34,7 +34,7 @@ final class PartialRegistrationFailureNotification extends Notification
             ->implode(', ');
 
         return (new MailMessage)
-            ->warning()
+            ->level('warning')
             ->subject('WARNING: Partial Domain Registration Failure - Order '.$this->order->order_number)
             ->greeting('Partial Registration Failure')
             ->line('Payment was successful but some domain registrations failed for order '.$this->order->order_number)
