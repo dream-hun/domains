@@ -180,7 +180,7 @@ it('formats Money objects correctly for FRW', function (): void {
     $helper = app(CurrencyExchangeHelper::class);
     $formatted = $helper->formatMoney($money);
 
-    expect($formatted)->toBe('FRw1,350');
+    expect($formatted)->toBe('FRW1,350');
 });
 
 it('returns rate metadata', function (): void {

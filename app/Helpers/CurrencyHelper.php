@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
+use App\Exceptions\CurrencyExchangeException;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
@@ -94,7 +95,7 @@ final class CurrencyHelper
                 $money = $exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
 
                 return $money->getAmount() / 100; // Convert from minor units
-            } catch (\App\Exceptions\CurrencyExchangeException $e) {
+            } catch (CurrencyExchangeException $e) {
                 Log::warning('CurrencyExchangeHelper failed, falling back to old method', [
                     'from' => $fromCurrency,
                     'to' => $targetCurrency,
@@ -130,7 +131,7 @@ final class CurrencyHelper
                 $money = $exchangeHelper->convertWithAmount($currency, $currency, $amount);
 
                 return $exchangeHelper->formatMoney($money);
-            } catch (\App\Exceptions\CurrencyExchangeException $e) {
+            } catch (CurrencyExchangeException $e) {
                 Log::warning('CurrencyExchangeHelper formatting failed, falling back', [
                     'currency' => $currency,
                     'error' => $e->getMessage(),
@@ -160,13 +161,8 @@ final class CurrencyHelper
         // Common currency symbols for better performance
         $commonSymbols = [
             'USD' => '$',
-            'EUR' => '€',
-            'GBP' => '£',
-            'JPY' => '¥',
-            'RWF' => 'FRw',
-            'KES' => 'KSh',
-            'UGX' => 'USh',
-            'TZS' => 'TSh',
+            'RWF' => 'FRW',
+
         ];
 
         if (isset($commonSymbols[$currencyCode])) {
@@ -219,12 +215,6 @@ final class CurrencyHelper
             'FRW', // Rwandan Franc
             'JPY', // Japanese Yen
             'KRW', // South Korean Won
-            'VND', // Vietnamese Dong
-            'CLP', // Chilean Peso
-            'ISK', // Icelandic Króna
-            'UGX', // Ugandan Shilling
-            'KES', // Kenyan Shilling
-            'TZS', // Tanzanian Shilling
         ];
 
         if (in_array($currency, $noDecimalCurrencies, true)) {

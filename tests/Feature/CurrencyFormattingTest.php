@@ -21,7 +21,7 @@ beforeEach(function (): void {
     Currency::create([
         'code' => 'FRW',
         'name' => 'Rwandan Franc',
-        'symbol' => 'FRw',
+        'symbol' => 'FRW',
         'exchange_rate' => 1350.0,
         'is_base' => false,
         'is_active' => true,
@@ -46,14 +46,14 @@ it('formats FRW amounts without decimals', function (): void {
     $currency = Currency::where('code', 'FRW')->first();
     $formatted = $currency->format(135000.0);
 
-    expect($formatted)->toBe('FRw135,000');
+    expect($formatted)->toBe('FRW135,000');
 });
 
 it('formats FRW amounts even with fractional parts', function (): void {
     $currency = Currency::where('code', 'FRW')->first();
     $formatted = $currency->format(135000.75);
 
-    expect($formatted)->toBe('FRw135,001'); // Rounds to whole number
+    expect($formatted)->toBe('FRW135,001'); // Rounds to whole number
 });
 
 it('formats small dollar amounts correctly', function (): void {
@@ -78,8 +78,8 @@ it('rounds FRW amounts with fractional cents consistently', function (): void {
     $formatted2 = $currency->format(203756.0);
 
     // Both should round to the same value
-    expect($formatted1)->toBe('FRw203,755');
-    expect($formatted2)->toBe('FRw203,756');
+    expect($formatted1)->toBe('FRW203,755');
+    expect($formatted2)->toBe('FRW203,756');
 });
 
 it('ensures consistent rounding across multiple calls', function (): void {

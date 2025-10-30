@@ -21,7 +21,7 @@ return [
         ],
         'FRW' => [
             'name' => 'Rwandan Franc',
-            'symbol' => 'FRw',
+            'symbol' => 'FRW',
         ],
     ],
 

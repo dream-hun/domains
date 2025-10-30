@@ -21,7 +21,7 @@ beforeEach(function (): void {
     Currency::create([
         'code' => 'FRW',
         'name' => 'Rwandan Franc',
-        'symbol' => 'FRw',
+        'symbol' => 'FRW',
         'exchange_rate' => 1350.0,
         'is_base' => false,
         'is_active' => true,
@@ -40,16 +40,16 @@ it('shows consistent FRW amounts between header and cart page', function (): voi
 
     // Both should be identical
     expect($headerFormat)->toBe($cartPageFormat);
-    expect($headerFormat)->toBe('FRw203,755');
-    expect($cartPageFormat)->toBe('FRw203,755');
+    expect($headerFormat)->toBe('FRW203,755');
+    expect($cartPageFormat)->toBe('FRW203,755');
 });
 
 it('rounds fractional FRW amounts consistently', function (): void {
     $amounts = [
-        203755.41 => 'FRw203,755', // Rounds down
-        203755.51 => 'FRw203,756', // Rounds up
-        203755.49 => 'FRw203,755', // Rounds down
-        203756.00 => 'FRw203,756', // Already whole
+        203755.41 => 'FRW203,755', // Rounds down
+        203755.51 => 'FRW203,756', // Rounds up
+        203755.49 => 'FRW203,755', // Rounds down
+        203756.00 => 'FRW203,756', // Already whole
     ];
 
     foreach ($amounts as $amount => $expected) {

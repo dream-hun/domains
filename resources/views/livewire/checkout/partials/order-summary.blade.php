@@ -15,7 +15,7 @@
                         @if(isset($item->attributes['whois_privacy']) && $item->attributes['whois_privacy'])
                             <br>
                             <small class="text-primary">
-                                <i class="fas fa-shield-alt"></i> + WHOIS Privacy
+                                <i class="bi bi-shield-fill-check"></i> + WHOIS Privacy
                             </small>
                         @endif
                     </div>

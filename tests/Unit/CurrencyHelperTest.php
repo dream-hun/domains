@@ -17,7 +17,7 @@ beforeEach(function () {
 test('get currency symbol returns correct symbols', function () {
     $this->assertEquals('$', CurrencyHelper::getCurrencySymbol('USD'));
     $this->assertEquals('€', CurrencyHelper::getCurrencySymbol('EUR'));
-    $this->assertEquals('FRw', CurrencyHelper::getCurrencySymbol('RWF'));
+    $this->assertEquals('FRW', CurrencyHelper::getCurrencySymbol('RWF'));
 });
 
 test('convert from usd with same currency', function () {

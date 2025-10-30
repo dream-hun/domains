@@ -27,7 +27,7 @@ final class CurrencySeeder extends Seeder
             [
                 'code' => 'FRW',
                 'name' => 'Rwandan Franc',
-                'symbol' => 'FRw',
+                'symbol' => 'FRW',
                 'exchange_rate' => 1350.000000,
                 'is_base' => false,
                 'is_active' => true,
