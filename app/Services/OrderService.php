@@ -13,11 +13,11 @@ use App\Notifications\OrderConfirmationNotification;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
-final class OrderService
+final readonly class OrderService
 {
     public function __construct(
-        private readonly BillingService $billingService,
-        private readonly NotificationService $notificationService
+        private BillingService      $billingService,
+        private NotificationService $notificationService
     ) {}
 
     public function createOrder(array $data): Order
@@ -34,15 +34,13 @@ final class OrderService
             $total += $item->getPriceSum();
         }
 
-        // Apply discount if coupon is provided
+
         $discountAmount = $data['discount_amount'] ?? 0;
         $convertedTotal = max(0, $total - $discountAmount);
 
-        // Prepare coupon data
         $couponCode = $data['coupon']?->code ?? null;
         $discountType = $data['coupon']?->type->value ?? null;
 
-        // Create order
         $order = Order::create([
             'user_id' => $data['user_id'],
             'order_number' => Order::generateOrderNumber(),
@@ -95,16 +93,13 @@ final class OrderService
 
     public function processDomainRegistrations(Order $order, array $contactIds): void
     {
-        // Update order status to process
         $order->update(['status' => 'processing']);
 
         try {
-            // Validate all contact IDs are provided
             if (! isset($contactIds['registrant'], $contactIds['admin'], $contactIds['tech'], $contactIds['billing'])) {
                 throw new Exception('All contact IDs (registrant, admin, tech, billing) are required.');
             }
 
-            // Prepare contacts with the provided IDs
             $contacts = [
                 'registrant' => $contactIds['registrant'],
                 'admin' => $contactIds['admin'],
@@ -114,7 +109,6 @@ final class OrderService
 
             $results = $this->billingService->processDomainRegistrations($order, $contacts);
 
-            // Update order status based on results
             if (empty($results['failed'])) {
                 $order->update(['status' => 'completed']);
             } elseif (empty($results['successful'])) {
@@ -150,7 +144,6 @@ final class OrderService
      */
     private function getSelectedContact(User $user, ?int $contactId): ?Contact
     {
-        // Try selected contact first
         if ($contactId) {
             $contact = $user->contacts()->find($contactId);
             if ($contact) {
@@ -158,13 +151,10 @@ final class OrderService
             }
         }
 
-        // Fallback to primary contact
         $contact = $user->contacts()->where('is_primary', true)->first();
         if ($contact) {
             return $contact;
         }
-
-        // Fallback to first available contact
         return $user->contacts()->first();
     }
 }

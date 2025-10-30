@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
+use App\Services\OrderService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Stripe\Checkout\Session;
+use Stripe\Exception\ApiErrorException;
+use Stripe\Stripe;
 
 final class CheckOutController extends Controller
 {
@@ -20,9 +25,12 @@ final class CheckOutController extends Controller
         return view('checkout.index');
     }
 
+    /**
+     * @throws ApiErrorException
+     */
     public function stripeRedirect(string $orderNumber): RedirectResponse
     {
-        $order = \App\Models\Order::where('order_number', $orderNumber)->firstOrFail();
+        $order = Order::where('order_number', $orderNumber)->firstOrFail();
 
         // Verify order belongs to current user
         if ($order->user_id !== auth()->id()) {
@@ -31,8 +39,8 @@ final class CheckOutController extends Controller
 
         // Get Stripe session and redirect
         if ($order->stripe_session_id) {
-            \Stripe\Stripe::setApiKey(config('services.payment.stripe.secret_key'));
-            $session = \Stripe\Checkout\Session::retrieve($order->stripe_session_id);
+            Stripe::setApiKey(config('services.payment.stripe.secret_key'));
+            $session = Session::retrieve($order->stripe_session_id);
 
             return redirect($session->url);
         }
@@ -40,9 +48,12 @@ final class CheckOutController extends Controller
         return redirect()->route('checkout.index')->with('error', 'Payment session not found.');
     }
 
+    /**
+     * @throws ApiErrorException
+     */
     public function stripeSuccess(string $orderNumber): Factory|View|RedirectResponse
     {
-        $order = \App\Models\Order::where('order_number', $orderNumber)->firstOrFail();
+        $order = Order::where('order_number', $orderNumber)->firstOrFail();
 
         // Verify order belongs to current user
         if ($order->user_id !== auth()->id()) {
@@ -51,11 +62,10 @@ final class CheckOutController extends Controller
 
         // Verify payment with Stripe
         if ($order->stripe_session_id) {
-            \Stripe\Stripe::setApiKey(config('services.payment.stripe.secret_key'));
-            $session = \Stripe\Checkout\Session::retrieve($order->stripe_session_id);
+            Stripe::setApiKey(config('services.payment.stripe.secret_key'));
+            $session = Session::retrieve($order->stripe_session_id);
 
             if ($session->payment_status === 'paid') {
-                // Update order
                 $order->update([
                     'payment_status' => 'paid',
                     'processed_at' => now(),
@@ -63,7 +73,7 @@ final class CheckOutController extends Controller
                 ]);
 
                 // Process domain registrations
-                $orderService = app(\App\Services\OrderService::class);
+                $orderService = app(OrderService::class);
                 $orderService->processDomainRegistrations($order);
                 $orderService->sendOrderConfirmation($order);
 
@@ -79,7 +89,7 @@ final class CheckOutController extends Controller
 
     public function stripeCancel(string $orderNumber): RedirectResponse
     {
-        $order = \App\Models\Order::where('order_number', $orderNumber)->firstOrFail();
+        $order = Order::where('order_number', $orderNumber)->firstOrFail();
 
         // Verify order belongs to current user
         if ($order->user_id !== auth()->id()) {

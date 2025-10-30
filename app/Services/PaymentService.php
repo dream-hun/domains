@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Helpers\StripeHelper;
 use App\Models\Order;
-use DB;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Stripe\Checkout\Session;
 use Stripe\Customer;
+use Stripe\Exception\ApiErrorException;
 use Stripe\Stripe;
 
-final class PaymentService
+final readonly class PaymentService
 {
     public function __construct(
-        private readonly TransactionLogger $transactionLogger
+        private TransactionLogger $transactionLogger
     ) {}
 
     public function processPayment(Order $order, string $paymentMethod): array
     {
         return match ($paymentMethod) {
             'stripe' => $this->processStripePayment($order),
-            'account_credit' => $this->processAccountCreditPayment($order),
             'paypal' => $this->processPayPalPayment($order),
             default => ['success' => false, 'error' => 'Invalid payment method'],
         };
@@ -31,7 +31,7 @@ final class PaymentService
     private function processStripePayment(Order $order): array
     {
         try {
-            // Validate Stripe configuration
+
             if (! $this->isStripeConfigured()) {
                 return [
                     'success' => false,
@@ -39,7 +39,6 @@ final class PaymentService
                 ];
             }
 
-            // Create Stripe Checkout Session instead of direct charge
             $checkoutSession = $this->createStripeCheckoutSession($order);
 
             return [
@@ -65,7 +64,7 @@ final class PaymentService
     }
 
     /**
-     * Create Stripe Checkout Session
+     * @throws ApiErrorException
      */
     private function createStripeCheckoutSession(Order $order): Session
     {
@@ -73,7 +72,6 @@ final class PaymentService
 
         $user = $order->user;
 
-        // Ensure user has Stripe customer ID
         if (! $user->stripe_id) {
             $customer = Customer::create([
                 'name' => $user->name,
@@ -86,23 +84,31 @@ final class PaymentService
             $user->update(['stripe_id' => $customer->id]);
         }
 
-        // Prepare line items
-        $lineItems = [];
-        foreach ($order->orderItems as $item) {
-            $lineItems[] = [
+        // Build description from order items
+        $itemDescriptions = $order->orderItems->map(function ($item) {
+            return "{$item->domain_name} ({$item->years} year(s))";
+        })->join(', ');
+
+        // Use order total_amount which already includes any discounts
+        $stripeAmount = StripeHelper::convertToStripeAmount(
+            (float) $order->total_amount,
+            $order->currency
+        );
+
+        $lineItems = [
+            [
                 'price_data' => [
                     'currency' => mb_strtolower($order->currency),
                     'product_data' => [
-                        'name' => $item->domain_name,
-                        'description' => "Domain Registration - {$item->years} year(s)",
+                        'name' => "Order {$order->order_number}",
+                        'description' => $itemDescriptions,
                     ],
-                    'unit_amount' => (int) (round((float) $item->price, 2) * 100), // Convert to smallest currency unit
+                    'unit_amount' => $stripeAmount,
                 ],
-                'quantity' => $item->quantity,
-            ];
-        }
+                'quantity' => 1,
+            ],
+        ];
 
-        // Create checkout session
         $session = Session::create([
             'customer' => $user->stripe_id,
             'payment_method_types' => ['card'],
@@ -123,56 +129,9 @@ final class PaymentService
         return $session;
     }
 
-    private function processAccountCreditPayment(Order $order): array
-    {
-        try {
-            $user = $order->user;
-
-            // Check if user has sufficient balance
-            if (! $user->hasAccountCredit($order->total_amount)) {
-                return [
-                    'success' => false,
-                    'error' => 'Insufficient account credit. Please add funds or use a different payment method.',
-                ];
-            }
-
-            // Deduct balance within transaction
-            DB::transaction(function () use ($user, $order) {
-                $user->deductAccountCredit($order->total_amount);
-
-                // Log transaction
-                $this->transactionLogger->logSuccess(
-                    order: $order,
-                    method: 'account_credit',
-                    transactionId: 'CREDIT-'.$order->order_number,
-                    amount: $order->total_amount
-                );
-            });
-
-            return [
-                'success' => true,
-                'transaction_id' => 'CREDIT-'.$order->order_number,
-            ];
-
-        } catch (Exception $e) {
-            $this->transactionLogger->logFailure(
-                order: $order,
-                method: 'account_credit',
-                error: 'Credit deduction failed',
-                details: $e->getMessage()
-            );
-
-            return [
-                'success' => false,
-                'error' => 'Failed to process account credit payment. Please try again.',
-            ];
-        }
-    }
-
     private function processPayPalPayment(Order $order): array
     {
-        // PayPal integration would go here
-        // For now, return placeholder
+
         Log::warning('PayPal payment attempted but not implemented', [
             'order_id' => $order->id,
         ]);

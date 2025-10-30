@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Services\BillingService;
 use App\Services\OrderService;
+use App\Services\PaymentService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,8 @@ final class PaymentController extends Controller
 {
     public function __construct(
         private readonly BillingService $billingService,
-        private readonly OrderService $orderService
+        private readonly OrderService $orderService,
+        private readonly PaymentService $paymentService
     ) {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
     }
@@ -83,44 +85,19 @@ final class PaymentController extends Controller
                 $checkoutData
             );
 
-            // Create Stripe checkout session
-            $lineItems = [];
-            foreach ($cartItems as $item) {
-                $itemCurrency = mb_strtolower($item->attributes->currency ?? 'usd');
-                $lineItems[] = [
-                    'price_data' => [
-                        'currency' => $itemCurrency,
-                        'product_data' => [
-                            'name' => "Domain: {$item->name}",
-                            'description' => "Domain registration for {$item->quantity} year(s)",
-                        ],
-                        'unit_amount' => (int) (round((float) $item->price, 2) * 100), // Convert to smallest currency unit
-                    ],
-                    'quantity' => $item->quantity ?? 1,
-                ];
+            // Use PaymentService to create Stripe checkout session
+            // This ensures proper currency handling and discount application
+            $paymentResult = $this->paymentService->processPayment($order, 'stripe');
+
+            if (! $paymentResult['success']) {
+                DB::rollBack();
+
+                return redirect()->back()->with('error', $paymentResult['error'] ?? 'Payment processing failed. Please try again.');
             }
-
-            $checkoutSession = Session::create([
-                'payment_method_types' => ['card'],
-                'line_items' => $lineItems,
-                'mode' => 'payment',
-                'success_url' => route('payment.success', ['order' => $order->order_number]).'?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => route('payment.cancel', ['order' => $order->order_number]),
-                'customer_email' => $user->email,
-                'metadata' => [
-                    'order_number' => $order->order_number,
-                    'user_id' => $user->id,
-                ],
-            ]);
-
-            // Update order with Stripe session ID
-            $order->update([
-                'stripe_session_id' => $checkoutSession->id,
-            ]);
 
             DB::commit();
 
-            return redirect($checkoutSession->url);
+            return redirect($paymentResult['checkout_url']);
 
         } catch (ApiErrorException $e) {
             DB::rollBack();

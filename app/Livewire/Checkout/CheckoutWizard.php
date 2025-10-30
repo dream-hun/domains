@@ -151,6 +151,9 @@ final class CheckoutWizard extends Component
         return Contact::find($this->selectedBillingId);
     }
 
+    /**
+     * @throws Exception
+     */
     #[Computed]
     public function orderTotal(): float
     {
@@ -172,6 +175,9 @@ final class CheckoutWizard extends Component
         return max(0, $total - $this->discountAmount);
     }
 
+    /**
+     * @throws Exception
+     */
     #[Computed]
     public function orderSubtotal(): float
     {
@@ -193,12 +199,20 @@ final class CheckoutWizard extends Component
     }
 
     // Helper method to format currency - always uses user's selected currency
+
+    /**
+     * @throws Exception
+     */
     public function formatCurrency(float $amount): string
     {
         return CurrencyHelper::formatMoney($amount, $this->userCurrencyCode);
     }
 
     // Helper method to get item price - converts and formats in user's currency
+
+    /**
+     * @throws Exception
+     */
     public function getItemPrice($item): string
     {
         $itemPrice = $item->getPriceSum();
@@ -298,7 +312,7 @@ final class CheckoutWizard extends Component
     public function completeOrder()
     {
         if (! $this->validateCurrentStep()) {
-            return;
+            return back();
         }
 
         $this->isProcessing = true;
@@ -327,7 +341,7 @@ final class CheckoutWizard extends Component
                 return redirect()->route('checkout.stripe.redirect', ['order' => $order->order_number]);
             }
 
-            // Payment completed (e.g., account credit)
+
             $this->orderNumber = $order->order_number;
             $this->currentStep = self::STEP_CONFIRMATION;
 
