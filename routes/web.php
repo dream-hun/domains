@@ -79,6 +79,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
     // Billing
     Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::get('/billing/{order:order_number}', [BillingController::class, 'show'])->name('billing.show');
+    Route::get('/billing/{order:order_number}/invoice', [BillingController::class, 'invoice'])->name('billing.invoice');
+    Route::get('/billing/{order:order_number}/invoice/download', [BillingController::class, 'downloadInvoice'])->name('billing.invoice.download');
+    Route::get('/billing/{order:order_number}/invoice/view-pdf', [BillingController::class, 'viewInvoicePdf'])->name('billing.invoice.view-pdf');
 
     Route::get('/contacts/{id}/details', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('contacts.details');
     Route::get('/api/contacts/{id}', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('api.contacts.details');

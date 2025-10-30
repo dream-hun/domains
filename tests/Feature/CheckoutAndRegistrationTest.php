@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Contact;
+use App\Models\Currency;
 use App\Models\DomainPrice;
 use App\Models\Order;
 use App\Models\User;
@@ -12,6 +13,16 @@ use Darryldecode\Cart\Facades\CartFacade as Cart;
 beforeEach(function () {
     // Seed roles first
     $this->artisan('db:seed', ['--class' => 'RolesSeeder']);
+
+    // Create base USD currency
+    Currency::factory()->create([
+        'code' => 'USD',
+        'name' => 'US Dollar',
+        'symbol' => '$',
+        'exchange_rate' => 1.0,
+        'is_base' => true,
+        'is_active' => true,
+    ]);
 
     $this->user = User::factory()->create();
     $this->contact = Contact::factory()->create([
@@ -162,4 +173,43 @@ it('uses selected contact for domain registration', function () {
 
     expect($order)->toBeInstanceOf(Order::class);
     expect($order->user_id)->toBe($this->user->id);
+});
+
+it('stores exchange rate on order items when creating order', function () {
+    // Add items to cart with USD currency
+    Cart::add([
+        'id' => 'example.com',
+        'name' => 'example.com',
+        'price' => 10.99,
+        'quantity' => 1,
+        'attributes' => [
+            'type' => 'registration',
+            'currency' => 'USD',
+        ],
+    ]);
+
+    $billingService = app(BillingService::class);
+
+    $billingData = [
+        'billing_name' => 'John Doe',
+        'billing_email' => 'john@example.com',
+        'billing_address' => '123 Main St',
+        'billing_city' => 'Anytown',
+        'billing_country' => 'US',
+        'billing_postal_code' => '12345',
+    ];
+
+    $checkoutData = [
+        'payment_method' => 'stripe',
+        'coupon_code' => null,
+        'discount' => 0,
+        'total' => 10.99,
+    ];
+
+    $order = $billingService->createOrderFromCart($this->user, $billingData, $checkoutData);
+
+    expect($order->orderItems)->toHaveCount(1);
+    $orderItem = $order->orderItems->first();
+    expect($orderItem->currency)->toBe('USD');
+    expect($orderItem->exchange_rate)->toBe('1.000000'); // USD base rate is 1.0
 });

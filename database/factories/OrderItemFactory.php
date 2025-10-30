@@ -26,12 +26,13 @@ final class OrderItemFactory extends Factory
         return [
             'order_id' => Order::factory(),
             'domain_id' => Domain::factory(),
-            'domain_name' => $this->faker->domainName(),
-            'domain_type' => $this->faker->randomElement(['registration', 'renewal', 'transfer']),
-            'price' => $this->faker->randomFloat(2, 5, 50),
+            'domain_name' => fake()->domainWord().'.'.fake()->randomElement(['com', 'net', 'org']),
+            'domain_type' => fake()->randomElement(['registration', 'renewal', 'transfer']),
+            'price' => fake()->randomFloat(2, 5, 50),
             'currency' => 'USD',
+            'exchange_rate' => 1.0,
             'quantity' => 1,
-            'years' => $this->faker->numberBetween(1, 5),
+            'years' => fake()->numberBetween(1, 5),
             'total_amount' => function (array $attributes) {
                 return $attributes['price'] * $attributes['quantity'];
             },

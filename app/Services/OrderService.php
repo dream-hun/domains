@@ -62,12 +62,17 @@ final class OrderService
             $itemTotal = $item->getPriceSum();
             $itemCurrency = $item->attributes->currency ?? 'USD';
 
+            // Get the exchange rate for the item's currency
+            $itemCurrencyModel = Currency::where('code', $itemCurrency)->first();
+            $exchangeRate = $itemCurrencyModel?->exchange_rate ?? 1.0;
+
             OrderItem::create([
                 'order_id' => $order->id,
                 'domain_name' => $item->name,
                 'domain_type' => $item->attributes['tld'] ?? 'registration',
                 'price' => $itemPrice,
                 'currency' => $itemCurrency,
+                'exchange_rate' => $exchangeRate,
                 'quantity' => $item->quantity,
                 'years' => $item->quantity,
                 'total_amount' => $itemTotal,
@@ -79,7 +84,7 @@ final class OrderService
 
     public function processDomainRegistrations(Order $order): void
     {
-        // Update order status to processing
+        // Update order status to process
         $order->update(['status' => 'processing']);
 
         try {

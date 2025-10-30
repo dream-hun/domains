@@ -12,11 +12,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Cashier\Billable;
 
 final class User extends Authenticatable implements MustVerifyEmail
 {
-    use Billable, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'uuid',
@@ -25,6 +24,7 @@ final class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'client_code',
+        'stripe_id',
     ];
 
     protected $hidden = [
@@ -99,36 +99,6 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function getNameAttribute(): string
     {
         return mb_trim($this->first_name.' '.$this->last_name);
-    }
-
-    /**
-     * Check if user has sufficient account credit
-     */
-    public function hasAccountCredit(float $amount): bool
-    {
-        return $this->account_credit >= $amount;
-    }
-
-    /**
-     * Deduct amount from account credit
-     *
-     * @throws Exception
-     */
-    public function deductAccountCredit(float $amount): void
-    {
-        if (! $this->hasAccountCredit($amount)) {
-            throw new Exception('Insufficient account credit');
-        }
-
-        $this->decrement('account_credit', $amount);
-    }
-
-    /**
-     * Add amount to account credit
-     */
-    public function addAccountCredit(float $amount): void
-    {
-        $this->increment('account_credit', $amount);
     }
 
     protected static function booted(): void
