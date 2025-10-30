@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\BillingService;
+use App\Services\OrderService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +22,8 @@ use Stripe\Stripe;
 final class PaymentController extends Controller
 {
     public function __construct(
-        private readonly BillingService $billingService
+        private readonly BillingService $billingService,
+        private readonly OrderService $orderService
     ) {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
     }
@@ -158,29 +160,26 @@ final class PaymentController extends Controller
 
                 // Process domain registrations
                 try {
-                    $registrationResults = $this->billingService->processDomainRegistrations($order);
+                    $this->orderService->processDomainRegistrations($order);
 
                     // Clear cart and checkout session
                     Cart::clear();
                     session()->forget(['cart', 'checkout']);
 
-                    // Prepare success message based on registration results
-                    $successfulCount = count($registrationResults['successful']);
-                    $failedCount = count($registrationResults['failed']);
+                    // Refresh order to get updated status
+                    $order->refresh();
 
-                    if ($successfulCount > 0 && $failedCount === 0) {
-                        $message = $successfulCount === 1
-                            ? 'Payment successful! Your domain has been registered.'
-                            : "Payment successful! All {$successfulCount} domains have been registered.";
-                    } elseif ($successfulCount > 0 && $failedCount > 0) {
-                        $message = "Payment successful! {$successfulCount} domains registered successfully, {$failedCount} failed. Check your email for details.";
+                    // Prepare success message based on order status
+                    if ($order->isCompleted()) {
+                        $message = 'Payment successful! Your domain has been registered.';
+                    } elseif ($order->isPartiallyCompleted()) {
+                        $message = 'Payment successful! Some domains were registered successfully, but others failed. Check your email for details.';
                     } else {
                         $message = 'Payment successful, but domain registration failed. Our support team will contact you shortly.';
                     }
 
                     return redirect()->route('payment.success.show', $order)
-                        ->with('success', $message)
-                        ->with('registration_results', $registrationResults);
+                        ->with('success', $message);
 
                 } catch (Exception $e) {
                     Log::error('Domain registration failed after payment', [

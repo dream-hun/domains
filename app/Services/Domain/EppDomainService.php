@@ -219,27 +219,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 throw new Exception('Domain registration failed: '.($response->message() ?? 'Unknown error'));
             }
 
-            // Create domain record in database
-            $domainModel = Domain::create([
-                'name' => $domain,
-                'owner_id' => $contactInfo['user_id'] ?? null,
-                'registered_at' => now(),
-                'expires_at' => now()->addYears($years),
-                'status' => 'active',
-            ]);
-
-            // Attach existing contacts to domain
-            $domainModel->contacts()->attach([
-                $registrantContactId => ['type' => 'registrant'],
-                $adminContactId => ['type' => 'admin'],
-                $technicalContactId => ['type' => 'technical'],
-                $billingContactId => ['type' => 'billing'],
-            ]);
-
             return [
                 'success' => true,
                 'domain' => $domain,
-                'message' => 'Domain registered successfully',
+                'message' => 'Domain registered successfully with EPP registry',
             ];
 
         } catch (Exception $e) {
