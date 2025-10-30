@@ -117,7 +117,8 @@ final class BillingService
                         $contacts,
                         $orderItem->years,
                         [], // Use default nameservers
-                        true // Use single contact
+                        true, // Use single contact
+                        $order->user_id // Pass the order's user_id
                     );
 
                     if ($result['success']) {

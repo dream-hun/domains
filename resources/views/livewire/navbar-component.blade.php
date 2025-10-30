@@ -17,7 +17,7 @@
         <!-- Navbar Search -->
         <li class="nav-item">
             <a class="nav-link" data-widget="navbar-search" href="#" role="button">
-                <i class="fas fa-search"></i>
+                <i class="bi bi-search"></i>
             </a>
             <div class="navbar-search-block">
                 <form class="form-inline">
@@ -26,10 +26,10 @@
                                aria-label="Search">
                         <div class="input-group-append">
                             <button class="btn btn-navbar" type="submit">
-                                <i class="fas fa-search"></i>
+                                <i class="bi bi-search"></i>
                             </button>
                             <button class="btn btn-navbar" type="button" data-widget="navbar-search">
-                                <i class="fas fa-times"></i>
+                                <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
                     </div>
@@ -40,7 +40,7 @@
         <!-- Messages Dropdown Menu -->
         <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#">
-                <i class="far fa-comments"></i>
+                <i class="bi bi-chat-right-text"></i>
                 <span class="badge badge-danger navbar-badge">3</span>
             </a>
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
@@ -51,7 +51,7 @@
                         <div class="media-body">
                             <h3 class="dropdown-item-title">
                                 Brad Diesel
-                                <span class="float-right text-sm text-danger"><i class="fas fa-star"></i></span>
+                                <span class="float-right text-sm text-danger"><i class="bi bi-star-fill"></i></span>
                             </h3>
                             <p class="text-sm">Call me whenever you can...</p>
                             <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
@@ -67,7 +67,7 @@
                         <div class="media-body">
                             <h3 class="dropdown-item-title">
                                 John Pierce
-                                <span class="float-right text-sm text-muted"><i class="fas fa-star"></i></span>
+                                <span class="float-right text-sm text-muted"><i class="bi bi-star-fill"></i></span>
                             </h3>
                             <p class="text-sm">I got your message bro</p>
                             <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
@@ -83,7 +83,7 @@
                         <div class="media-body">
                             <h3 class="dropdown-item-title">
                                 Nora Silvester
-                                <span class="float-right text-sm text-warning"><i class="fas fa-star"></i></span>
+                                <span class="float-right text-sm text-warning"><i class="bi bi-star-fill"></i></span>
                             </h3>
                             <p class="text-sm">The subject goes here</p>
                             <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
@@ -98,7 +98,7 @@
         <!-- Notifications Dropdown Menu -->
         <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#">
-                <i class="far fa-bell"></i>
+                <i class="bi bi-bell"></i>
                 <span class="badge badge-warning navbar-badge">15</span>
             </a>
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
@@ -124,13 +124,13 @@
         </li>
         <li class="nav-item">
             <a class="nav-link" data-widget="fullscreen" href="#" role="button">
-                <i class="fas fa-expand-arrows-alt"></i>
+                <i class="bi bi-arrows-fullscreen"></i>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" data-widget="control-sidebar" data-controlsidebar-slide="true" href="#"
                role="button">
-                <i class="fas fa-th-large"></i>
+                <i class="bi bi-grid-3x3-gap"></i>
             </a>
         </li>
     </ul>
