@@ -8,6 +8,7 @@ use App\Actions\RegisterDomainAction;
 use App\Models\Contact;
 use App\Models\Country;
 use App\Models\DomainPrice;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use Exception;
@@ -27,6 +28,9 @@ final class RegisterDomainActionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Create default role required by User model
+        Role::create(['id' => 2, 'title' => 'User']);
 
         // Create test user
         $this->user = User::factory()->create();
@@ -153,5 +157,57 @@ final class RegisterDomainActionTest extends TestCase
         $this->assertTrue($result['success']);
         $this->assertEquals('example.rw', $result['domain']);
         $this->assertStringContainsString('EPP', $result['message']);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function test_it_registers_domain_with_default_nameservers(): void
+    {
+        // Mock the Namecheap domain service
+        $mockService = $this->mock(DomainRegistrationServiceInterface::class);
+
+        // Configure the mock to return successful registration
+        $mockService->shouldReceive('registerDomain')
+            ->once()
+            ->andReturn([
+                'success' => true,
+                'domain' => 'example.com',
+                'message' => 'Domain registered successfully',
+            ]);
+
+        // Mock nameserver update - should receive the default nameservers
+        $mockService->shouldReceive('updateNameservers')
+            ->once()
+            ->with('example.com', ['dns1.registrar-servers.com', 'dns2.registrar-servers.com'])
+            ->andReturn(['success' => true]);
+
+        app()->instance('namecheap_domain_service', $mockService);
+
+        $action = app(RegisterDomainAction::class);
+
+        // Pass empty nameservers array to trigger default nameservers
+        $result = $action->handle(
+            'example.com',
+            [
+                'registrant' => $this->contact->id,
+                'admin' => $this->contact->id,
+                'technical' => $this->contact->id,
+                'billing' => $this->contact->id,
+            ],
+            1,
+            []
+        );
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('example.com', $result['domain']);
+
+        // Verify the domain has the default nameservers
+        $domain = \App\Models\Domain::where('name', 'example.com')->first();
+        $this->assertNotNull($domain);
+        $this->assertCount(2, $domain->nameservers);
+        $this->assertEquals('dns1.registrar-servers.com', $domain->nameservers[0]->name);
+        $this->assertEquals('dns2.registrar-servers.com', $domain->nameservers[1]->name);
+        $this->assertEquals('default', $domain->nameservers[0]->type);
     }
 }
