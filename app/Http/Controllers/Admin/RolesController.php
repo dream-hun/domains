@@ -34,7 +34,7 @@ final class RolesController extends Controller
 
     public function store(StoreRoleRequest $request)
     {
-        $role = Role::create($request->all());
+        $role = Role::create($request->only(['title']));
         $role->permissions()->sync($request->input('permissions', []));
 
         return redirect()->route('admin.roles.index');
@@ -53,7 +53,7 @@ final class RolesController extends Controller
 
     public function update(UpdateRoleRequest $request, Role $role)
     {
-        $role->update($request->all());
+        $role->update($request->only(['title']));
         $role->permissions()->sync($request->input('permissions', []));
 
         return redirect()->route('admin.roles.index');
