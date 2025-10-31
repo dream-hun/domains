@@ -329,7 +329,7 @@ final readonly class RegisterDomainAction
     {
         if ($nameservers === []) {
             // Use default nameservers from config
-            $defaultNameservers = config('default-nameservers', [
+            $defaultNameservers = config('default-nameservers.nameservers', [
                 'ns1.example.com',
                 'ns2.example.com',
             ]);
