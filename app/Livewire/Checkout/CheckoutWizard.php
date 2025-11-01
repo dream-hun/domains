@@ -106,6 +106,20 @@ final class CheckoutWizard extends Component
     }
 
     #[Computed(persist: false)]
+    public function hasOnlyRenewals(): bool
+    {
+        $cartItems = $this->cartItems;
+
+        if ($cartItems->isEmpty()) {
+            return false;
+        }
+
+        return $cartItems->every(function ($item) {
+            return ($item->attributes->type ?? 'registration') === 'renewal';
+        });
+    }
+
+    #[Computed(persist: false)]
     public function userContacts()
     {
         return auth()->user()->contacts()->get();
@@ -246,14 +260,26 @@ final class CheckoutWizard extends Component
             return;
         }
 
-        $this->currentStep++;
+        // Skip contact step if cart has only renewals
+        if ($this->currentStep === self::STEP_REVIEW && $this->hasOnlyRenewals) {
+            $this->currentStep = self::STEP_PAYMENT;
+        } else {
+            $this->currentStep++;
+        }
+
         $this->saveCheckoutState();
     }
 
     public function previousStep(): void
     {
         if ($this->currentStep > 1) {
-            $this->currentStep--;
+            // Skip contact step when going back if cart has only renewals
+            if ($this->currentStep === self::STEP_PAYMENT && $this->hasOnlyRenewals) {
+                $this->currentStep = self::STEP_REVIEW;
+            } else {
+                $this->currentStep--;
+            }
+
             $this->saveCheckoutState();
         }
     }
@@ -320,13 +346,20 @@ final class CheckoutWizard extends Component
         try {
             $checkoutService = app(CheckoutService::class);
 
+            // For renewals, use user's primary contact as billing contact if not selected
+            $billingContactId = $this->selectedBillingId;
+            if ($this->hasOnlyRenewals && ! $billingContactId) {
+                $primaryContact = auth()->user()->contacts()->where('is_primary', true)->first();
+                $billingContactId = $primaryContact?->id;
+            }
+
             $order = $checkoutService->processCheckout([
                 'user_id' => auth()->id(),
                 'contact_ids' => [
                     'registrant' => $this->selectedRegistrantId,
                     'admin' => $this->selectedAdminId,
                     'tech' => $this->selectedTechId,
-                    'billing' => $this->selectedBillingId,
+                    'billing' => $billingContactId,
                 ],
                 'payment_method' => $this->selectedPaymentMethod,
                 'currency' => $this->userCurrencyCode,
@@ -389,6 +422,11 @@ final class CheckoutWizard extends Component
 
     private function validateContactStep(): bool
     {
+        // Skip contact validation for renewal-only orders
+        if ($this->hasOnlyRenewals) {
+            return true;
+        }
+
         if (! $this->selectedRegistrantId || ! $this->selectedAdminId || ! $this->selectedTechId || ! $this->selectedBillingId) {
             $this->errorMessage = 'Please select contacts for all roles (Registrant, Admin, Technical, and Billing).';
 

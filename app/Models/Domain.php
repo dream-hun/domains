@@ -39,6 +39,11 @@ final class Domain extends Model
         return $this->belongsTo(DomainPrice::class);
     }
 
+    public function renewals(): HasMany
+    {
+        return $this->hasMany(DomainRenewal::class);
+    }
+
     public function casts(): array
     {
         return [

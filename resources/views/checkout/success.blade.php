@@ -18,7 +18,14 @@
                             Thank you for your payment. Your domain renewal is being processed.
                         </p>
 
-                        @if(session('order_number'))
+                        @if(isset($order))
+                            <div class="alert alert-info d-inline-block">
+                                <strong>Order Number:</strong> {{ $order->order_number }}
+                            </div>
+                            <div class="mt-3">
+                                <p><strong>Total Amount:</strong> {{ $order->currency }} {{ number_format($order->total_amount, 2) }}</p>
+                            </div>
+                        @elseif(session('order_number'))
                             <div class="alert alert-info d-inline-block">
                                 <strong>Order Number:</strong> {{ session('order_number') }}
                             </div>

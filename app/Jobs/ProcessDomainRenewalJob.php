@@ -62,8 +62,8 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                 $domainId = $item['id'];
                 $years = $item['attributes']['years'] ?? $item['quantity'];
 
-                // Find the domain
-                $domain = Domain::find($domainId);
+                // Find the domain (bypass global scopes since we're in a job context)
+                $domain = Domain::withoutGlobalScopes()->find($domainId);
 
                 if (! $domain) {
                     Log::error('Domain not found for renewal', [

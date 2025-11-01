@@ -57,6 +57,10 @@ final class AppServiceProvider extends ServiceProvider
 
         // Bind the DomainServiceInterface to NamecheapDomainService by default
         $this->app->bind(DomainServiceInterface::class, NamecheapDomainService::class);
+
+        // Bind DomainRegistrationServiceInterface to EppDomainService by default
+        // This is used by RenewalService and other services that need domain operations
+        $this->app->bind(DomainRegistrationServiceInterface::class, EppDomainService::class);
     }
 
     public function boot(): void

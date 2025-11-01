@@ -73,10 +73,12 @@
                                         @endcan
 
                                         @can('domain_renew')
-                                            <a href="{{ route('admin.domains.renew', $domain->uuid) }}"
-                                                class="btn btn-sm btn-success">
-                                                <i class="bi bi-redo"></i> Renew
-                                            </a>
+                                            @if ($domain->status !== 'expired')
+                                                <button onclick="addRenewalToCart('{{ $domain->uuid }}', '{{ $domain->name }}', {{ $domain->id }})"
+                                                    class="btn btn-sm btn-success">
+                                                    <i class="bi bi-cart-plus"></i> Renew
+                                                </button>
+                                            @endif
                                         @endcan
                                         @can('domain_edit')
                                             @if ($domain->status === 'expired')
@@ -176,6 +178,58 @@
                         .columns.adjust();
                 });
             })
+
+            // Add domain renewal to cart
+            function addRenewalToCart(domainUuid, domainName, domainId) {
+                // Disable the button to prevent double-clicks
+                event.target.disabled = true;
+                event.target.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Adding...';
+
+                // Send AJAX request to add to cart
+                fetch(`/domains/${domainUuid}/renew/add-to-cart`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        years: 1, // Default to 1 year
+                        domain_id: domainId
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => Promise.reject(err));
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Show success message
+                        alert(`${domainName} has been added to your cart for renewal!`);
+                        // Redirect to cart
+                        window.location.href = '/shopping-cart';
+                    } else {
+                        alert(data.message || 'Failed to add domain to cart');
+                        // Re-enable button
+                        event.target.disabled = false;
+                        event.target.innerHTML = '<i class="bi bi-cart-plus"></i> Renew';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    let errorMessage = 'An error occurred. Please try again.';
+                    if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    alert(errorMessage);
+                    // Re-enable button
+                    event.target.disabled = false;
+                    event.target.innerHTML = '<i class="bi bi-cart-plus"></i> Renew';
+                });
+            }
         </script>
     @endsection
 </x-admin-layout>
+

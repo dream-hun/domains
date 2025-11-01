@@ -316,6 +316,109 @@ final class CartComponent extends Component
         }
     }
 
+    /**
+     * Add domain renewal to cart
+     */
+    public function addRenewalToCart(int $domainId, int $years = 1): void
+    {
+        try {
+            $domain = \App\Models\Domain::with('domainPrice')->findOrFail($domainId);
+
+            // Validate ownership
+            if ($domain->owner_id !== auth()->id()) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'You do not own this domain',
+                ]);
+
+                return;
+            }
+
+            // Validate domain can be renewed
+            $renewalService = app(\App\Services\RenewalService::class);
+            $canRenew = $renewalService->canRenewDomain($domain, auth()->id());
+
+            if (! $canRenew['can_renew']) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => $canRenew['reason'] ?? 'Cannot renew this domain',
+                ]);
+
+                return;
+            }
+
+            // Get renewal price
+            $priceData = $renewalService->getRenewalPrice($domain, $years);
+            $price = $priceData['price'];
+            $currency = $priceData['currency'];
+
+            // Create unique cart ID for renewal
+            $cartId = 'renewal-'.$domainId;
+
+            // Check if already in cart
+            if (Cart::get($cartId)) {
+                $this->dispatch('notify', [
+                    'type' => 'warning',
+                    'message' => 'This domain renewal is already in your cart',
+                ]);
+
+                return;
+            }
+
+            // Add to cart
+            Cart::add([
+                'id' => $cartId,
+                'name' => $domain->name.' (Renewal)',
+                'price' => $price,
+                'quantity' => $years,
+                'attributes' => [
+                    'type' => 'renewal',
+                    'domain_id' => $domain->id,
+                    'domain_name' => $domain->name,
+                    'current_expiry' => $domain->expires_at?->format('Y-m-d'),
+                    'tld' => $domain->domainPrice->tld,
+                    'currency' => $currency,
+                    'added_at' => now()->timestamp,
+                ],
+            ]);
+
+            $this->updateCartTotal();
+
+            // Recalculate discount if coupon is applied
+            if ($this->isCouponApplied && $this->appliedCoupon) {
+                $this->calculateDiscount();
+
+                // Update coupon session with new discount amount
+                session([
+                    'coupon' => [
+                        'code' => $this->appliedCoupon->code,
+                        'type' => $this->appliedCoupon->type->value,
+                        'value' => $this->appliedCoupon->value,
+                        'discount_amount' => $this->discountAmount,
+                        'currency' => $this->currency,
+                    ],
+                ]);
+            }
+
+            $this->dispatch('refreshCart');
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => "Domain renewal for {$domain->name} added to cart for {$years} year(s)",
+            ]);
+        } catch (Exception $e) {
+            \Log::error('Failed to add renewal to cart', [
+                'domain_id' => $domainId,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Failed to add renewal to cart: '.$e->getMessage(),
+            ]);
+        }
+    }
+
     public function removeItem($id): void
     {
         try {

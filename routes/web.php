@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckOutController;
+use App\Http\Controllers\CheckoutController as RenewalCheckoutController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
@@ -66,12 +67,17 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 });
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
-    Route::get('/cart/checkout/payment/', [CheckOutController::class, 'index'])->name('checkout.index');
+    Route::get('/cart/checkout/payment/', [RenewalCheckoutController::class, 'index'])->name('checkout.index');
+    Route::get('/checkout/success/{order}', [RenewalCheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/checkout/cancel', [RenewalCheckoutController::class, 'cancel'])->name('checkout.cancel');
     Route::get('/checkout/stripe/redirect/{order}', [CheckOutController::class, 'stripeRedirect'])->name('checkout.stripe.redirect');
     Route::get('/checkout/stripe/success/{order}', [CheckOutController::class, 'stripeSuccess'])->name('checkout.stripe.success');
     Route::get('/checkout/stripe/cancel/{order}', [CheckOutController::class, 'stripeCancel'])->name('checkout.stripe.cancel');
     Route::get('/domains/register', [RegisterDomainController::class, 'index'])->name('domains.register');
     Route::post('/domains/register', [RegisterDomainController::class, 'register'])->name('domains.register.store');
+    
+    // Domain renewal cart routes
+    Route::post('/domains/{domain}/renew/add-to-cart', [CartController::class, 'addRenewalToCart'])->name('domains.renewal.add-to-cart');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

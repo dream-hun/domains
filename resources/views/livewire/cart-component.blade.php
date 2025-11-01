@@ -14,9 +14,21 @@
                         <div class="row gy-3 mb-4 align-items-center" data-item-id="{{ $item->id }}">
                             <div class="col-lg-3">
                                 <div class="me-lg-3">
-                                    <div class="d-flex align-items-center">
-                                        <p class="nav-link h5 mb-0" style="font-size: 16px !important;">
-                                            {{ $item->name }}</p>
+                                    <div class="d-flex align-items-center flex-column align-items-start">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <p class="nav-link h5 mb-0" style="font-size: 16px !important;">
+                                                {{ $item->attributes->domain_name ?? $item->name }}</p>
+                                            @if (($item->attributes->type ?? 'registration') === 'renewal')
+                                                <span class="badge bg-success" style="font-size: 11px;">Renewal</span>
+                                            @elseif (($item->attributes->type ?? 'registration') === 'transfer')
+                                                <span class="badge bg-info" style="font-size: 11px;">Transfer</span>
+                                            @else
+                                                <span class="badge bg-primary" style="font-size: 11px;">Registration</span>
+                                            @endif
+                                        </div>
+                                        @if (($item->attributes->type ?? 'registration') === 'renewal' && isset($item->attributes->current_expiry))
+                                            <small class="text-muted" style="font-size: 12px;">Current expiry: {{ $item->attributes->current_expiry }}</small>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -103,9 +115,8 @@
 
                     <div class="mt-3">
                         @if ($items && $items->isNotEmpty())
-                            <a href="{{ route('checkout.index') }}" wire:navigate class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
-                                style="font-size: 16px !important;" wire:loading.class="opacity-75"
-                                wire:target="proceedToPayment">
+                            <a href="{{ route('checkout.index') }}" class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
+                                style="font-size: 16px !important;">
 
                                     <i class="bi bi-credit-card me-2"></i>Proceed to Payment
 

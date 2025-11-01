@@ -22,7 +22,16 @@ final class CheckOutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
-        return view('checkout.index');
+        $cartItems = Cart::getContent();
+        $cartTotal = Cart::getTotal();
+        $currency = $cartItems->first()->attributes['currency'] ?? 'USD';
+
+        return view('checkout.index', [
+            'cartItems' => $cartItems,
+            'cartTotal' => $cartTotal,
+            'currency' => $currency,
+            'stripeKey' => config('services.payment.stripe.publishable_key'),
+        ]);
     }
 
     /**
