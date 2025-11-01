@@ -13,35 +13,40 @@ final class Order extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'order_number',
-        'status',
-        'payment_method',
-        'payment_status',
-        'stripe_payment_intent_id',
-        'stripe_session_id',
-        'total_amount',
-        'currency',
-        'coupon_code',
-        'discount_type',
-        'discount_amount',
-        'billing_email',
-        'billing_name',
-        'billing_address',
-        'billing_city',
-        'billing_country',
-        'billing_postal_code',
-        'notes',
-        'processed_at',
-    ];
+    protected $guarded = [];
 
-    protected $casts = [
-        'total_amount' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'processed_at' => 'datetime',
-        'billing_address' => 'array',
-    ];
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function domainRenewals(): HasMany
+    {
+        return $this->hasMany(DomainRenewal::class);
+    }
+
+    public function casts(): array
+    {
+        return [
+            'subtotal' => 'decimal:2',
+            'tax' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'items' => 'array',
+            'billing_address' => 'array',
+            'processed_at' => 'datetime',
+        ];
+    }
 
     public static function generateOrderNumber(): string
     {
@@ -55,16 +60,6 @@ final class Order extends Model
         $number = isset($matches[0]) ? (int) $matches[0] + 1 : 1;
 
         return 'ORD-'.date('Y').'-'.mb_str_pad((string) $number, 6, '0', STR_PAD_LEFT);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function orderItems(): HasMany
-    {
-        return $this->hasMany(OrderItem::class);
     }
 
     public function getRouteKeyName(): string
