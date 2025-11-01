@@ -1,45 +1,56 @@
 <x-admin-layout>
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow-sm">
+    @section('page-title')
+        Payment Successful
+    @endsection
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
                     <div class="card-body text-center py-5">
                         <div class="mb-4">
-                            <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+                            <i class="fas fa-check-circle text-success" style="font-size: 72px;"></i>
                         </div>
+
                         <h2 class="mb-3">Payment Successful!</h2>
-                        <p class="lead mb-4">Thank you for your order. Your payment has been processed successfully.</p>
-                        
-                        <div class="alert alert-info">
-                            <strong>Order Number:</strong> {{ $order->order_number }}
-                        </div>
 
-                        <div class="mb-4">
-                            <h5>Domains Purchased:</h5>
-                            <ul class="list-unstyled">
-                                @foreach($order->orderItems as $item)
-                                    <li class="mb-2">
-                                        <i class="bi bi-globe text-primary"></i>
-                                        <strong>{{ $item->domain_name }}</strong> - {{ $item->years }} year(s)
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-
-                        <p class="text-muted mb-4">
-                            Your domains are being registered. You will receive a confirmation email shortly.
+                        <p class="lead mb-4">
+                            Thank you for your payment. Your domain renewal is being processed.
                         </p>
 
-                        <div class="d-flex justify-content-center gap-3">
-                            <a href="{{ route('admin.domains.index') }}" class="btn btn-primary">
-                                <i class="bi bi-list mr-2"></i>
-                                View My Domains
+                        @if(session('order_number'))
+                            <div class="alert alert-info d-inline-block">
+                                <strong>Order Number:</strong> {{ session('order_number') }}
+                            </div>
+                        @endif
+
+                        <div class="mt-4">
+                            <p class="text-muted">
+                                You will receive an email confirmation shortly with the details of your renewal.
+                                The renewal process typically completes within a few minutes.
+                            </p>
+                        </div>
+
+                        <div class="mt-5">
+                            <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-home me-2"></i>
+                                Go to Dashboard
                             </a>
-                            
                         </div>
                     </div>
+                </div>
+
+                <div class="alert alert-success mt-4">
+                    <h6 class="alert-heading">What happens next?</h6>
+                    <ul class="mb-0">
+                        <li>Your domain renewal has been queued for processing.</li>
+                        <li>The renewal will be reflected in your domain dashboard shortly.</li>
+                        <li>You will receive an email confirmation once the renewal is complete.</li>
+                        <li>If you have any questions, please contact our support team.</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
 </x-admin-layout>
+

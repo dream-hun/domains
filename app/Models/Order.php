@@ -13,102 +13,33 @@ final class Order extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'order_number',
-        'status',
-        'payment_method',
-        'payment_status',
-        'stripe_payment_intent_id',
-        'stripe_session_id',
-        'total_amount',
-        'currency',
-        'coupon_code',
-        'discount_type',
-        'discount_amount',
-        'billing_email',
-        'billing_name',
-        'billing_address',
-        'billing_city',
-        'billing_country',
-        'billing_postal_code',
-        'notes',
-        'processed_at',
-    ];
-
-    protected $casts = [
-        'total_amount' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'processed_at' => 'datetime',
-        'billing_address' => 'array',
-    ];
-
-    public static function generateOrderNumber(): string
-    {
-        $lastOrder = self::orderBy('id', 'desc')->first();
-
-        if (! $lastOrder) {
-            return 'ORD-'.date('Y').'-000001';
-        }
-
-        preg_match('/\d+$/', $lastOrder->order_number, $matches);
-        $number = isset($matches[0]) ? (int) $matches[0] + 1 : 1;
-
-        return 'ORD-'.date('Y').'-'.mb_str_pad((string) $number, 6, '0', STR_PAD_LEFT);
-    }
+    protected $guarded = [];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function orderItems(): HasMany
+    public function payment(): BelongsTo
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->belongsTo(Payment::class);
     }
 
-    public function getRouteKeyName(): string
+    public function domainRenewals(): HasMany
     {
-        return 'order_number';
+        return $this->hasMany(DomainRenewal::class);
     }
 
-    public function isPaid(): bool
+    public function casts(): array
     {
-        return $this->payment_status === 'paid';
-    }
-
-    public function isPending(): bool
-    {
-        return $this->payment_status === 'pending';
-    }
-
-    public function isFailed(): bool
-    {
-        return $this->payment_status === 'failed';
-    }
-
-    public function isCancelled(): bool
-    {
-        return $this->payment_status === 'cancelled';
-    }
-
-    public function requiresAttention(): bool
-    {
-        return $this->status === 'requires_attention';
-    }
-
-    public function isPartiallyCompleted(): bool
-    {
-        return $this->status === 'partially_completed';
-    }
-
-    public function isCompleted(): bool
-    {
-        return $this->status === 'completed';
-    }
-
-    public function isProcessing(): bool
-    {
-        return $this->status === 'processing';
+        return [
+            'subtotal' => 'decimal:2',
+            'tax' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'items' => 'array',
+            'billing_address' => 'array',
+            'processed_at' => 'datetime',
+        ];
     }
 }
