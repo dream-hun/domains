@@ -143,8 +143,13 @@ final class CheckoutProcess extends Component
             return;
         }
 
-        // Validate contact selection
-        if (! $this->selectedContactId) {
+        // Check if cart has any new domain registrations (not renewals)
+        $hasNewRegistrations = collect($this->cartItems)->contains(function ($item) {
+            return ($item['attributes']['type'] ?? 'registration') !== 'renewal';
+        });
+
+        // Validate contact selection only if cart has new registrations
+        if ($hasNewRegistrations && ! $this->selectedContactId) {
             $this->errorMessage = 'Please select a contact for domain registration.';
             $this->showContactSelection = true;
 

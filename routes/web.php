@@ -22,6 +22,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterDomainController;
 use App\Http\Controllers\SearchDomainController;
+use App\Http\Controllers\SmartCheckoutController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
@@ -67,7 +68,14 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 });
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
-    Route::get('/cart/checkout/payment/', [RenewalCheckoutController::class, 'index'])->name('checkout.index');
+    // Smart checkout route - automatically routes to correct checkout flow
+    Route::get('/checkout', [SmartCheckoutController::class, 'index'])->name('checkout.index');
+    
+    // Full checkout wizard with contact selection (for new domain registrations)
+    Route::view('/checkout/wizard', 'checkout.wizard')->name('checkout.wizard');
+    
+    // Renewal-only checkout route (direct to payment for renewals)
+    Route::get('/cart/checkout/payment/', [RenewalCheckoutController::class, 'index'])->name('checkout.renewal');
     Route::get('/checkout/success/{order}', [RenewalCheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/checkout/cancel', [RenewalCheckoutController::class, 'cancel'])->name('checkout.cancel');
     Route::get('/checkout/stripe/redirect/{order}', [CheckOutController::class, 'stripeRedirect'])->name('checkout.stripe.redirect');
