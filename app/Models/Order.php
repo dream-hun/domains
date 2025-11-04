@@ -47,4 +47,51 @@ final class Order extends Model
             'processed_at' => 'datetime',
         ];
     }
+
+    // Payment Status Methods
+    public function isPaid(): bool
+    {
+        return $this->payment_status === 'paid';
+    }
+
+    public function isPending(): bool
+    {
+        return $this->payment_status === 'pending';
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->payment_status === 'failed';
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->payment_status === 'cancelled';
+    }
+
+    public function isRefunded(): bool
+    {
+        return $this->payment_status === 'refunded';
+    }
+
+    // Order Status Methods
+    public function isCompleted(): bool
+    {
+        return $this->status === 'completed';
+    }
+
+    public function isProcessing(): bool
+    {
+        return $this->status === 'processing';
+    }
+
+    public function requiresAttention(): bool
+    {
+        return $this->status === 'requires_attention';
+    }
+
+    public function isPartiallyCompleted(): bool
+    {
+        return $this->status === 'partially_completed';
+    }
 }
