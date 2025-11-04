@@ -72,7 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/checkout', [SmartCheckoutController::class, 'index'])->name('checkout.index');
     
     // Full checkout wizard with contact selection (for new domain registrations)
-    Route::view('/checkout/wizard', 'checkout.wizard')->name('checkout.wizard');
+    Route::view('/checkout/register', 'checkout.wizard')->name('checkout.wizard');
     
     // Renewal-only checkout route (direct to payment for renewals)
     Route::get('/cart/checkout/payment/', [RenewalCheckoutController::class, 'index'])->name('checkout.renewal');
