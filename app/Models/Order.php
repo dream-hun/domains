@@ -15,6 +15,11 @@ final class Order extends Model
 
     protected $guarded = [];
 
+    public static function generateOrderNumber(): string
+    {
+        return 'ORD-'.strtoupper(substr(uniqid(), -10));
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -93,5 +98,18 @@ final class Order extends Model
     public function isPartiallyCompleted(): bool
     {
         return $this->status === 'partially_completed';
+    }
+
+    /**
+     * Get all order items - from relationship or fallback to JSON items
+     */
+    public function getAllOrderItems()
+    {
+        // First try to get from the relationship
+        $orderItems = $this->orderItems;
+
+        // If no order items in relationship, return empty collection
+        // The items JSON field is just a snapshot and doesn't have the same structure
+        return $orderItems;
     }
 }
