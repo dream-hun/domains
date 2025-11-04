@@ -30,6 +30,11 @@ final class Order extends Model
         return $this->hasMany(DomainRenewal::class);
     }
 
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
     public function casts(): array
     {
         return [
