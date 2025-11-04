@@ -16,25 +16,21 @@
     <ul class="navbar-nav ml-auto">
         <!-- Navbar Search -->
         <li class="nav-item">
-            <a class="nav-link" data-widget="navbar-search" href="#" role="button">
-                <i class="bi bi-search"></i>
+
+            <a class="nav-link" href="{{ route('cart.index') }}" title="Cart Total: {{ $formattedTotal }}"
+                style="position: relative; display: inline-flex; align-items: center;">
+                <span style="position: relative; display: inline-block;">
+                    <i class="bi bi-cart-fill"></i>
+                    @if ($this->cartItemsCount > 0)
+                        <span class="badge badge-danger"
+                            style="position: absolute; top: -8px; right: -8px; display: inline-flex; justify-content: center; align-items: center; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; padding: 0;">
+                            {{ $this->cartItemsCount }}
+                        </span>
+                    @endif
+                </span>
+                <small class="ml-2">{{ $formattedTotal }}</small>
             </a>
-            <div class="navbar-search-block">
-                <form class="form-inline">
-                    <div class="input-group input-group-sm">
-                        <input class="form-control form-control-navbar" type="search" placeholder="Search"
-                               aria-label="Search">
-                        <div class="input-group-append">
-                            <button class="btn btn-navbar" type="submit">
-                                <i class="bi bi-search"></i>
-                            </button>
-                            <button class="btn btn-navbar" type="button" data-widget="navbar-search">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+
         </li>
 
         <!-- Messages Dropdown Menu -->
@@ -129,7 +125,7 @@
         </li>
         <li class="nav-item">
             <a class="nav-link" data-widget="control-sidebar" data-controlsidebar-slide="true" href="#"
-               role="button">
+                role="button">
                 <i class="bi bi-grid-3x3-gap"></i>
             </a>
         </li>
