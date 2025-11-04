@@ -8,7 +8,7 @@
     @endsection
 
     <div class="container-fluid">
-        @livewire('checkout.checkout-wizard')
+        <livewire:checkout.checkout-wizard />
     </div>
 </x-admin-layout>
 

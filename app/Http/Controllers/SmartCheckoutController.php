@@ -22,17 +22,16 @@ final class SmartCheckoutController extends Controller
                 ->with('error', 'Your cart is empty.');
         }
 
-        // Check if cart has ONLY renewals
+        
         $hasOnlyRenewals = $cartItems->every(function ($item) {
             return ($item->attributes->type ?? 'registration') === 'renewal';
         });
 
-        // If only renewals, go directly to renewal checkout (no contact needed)
+        
         if ($hasOnlyRenewals) {
             return redirect()->route('checkout.renewal');
         }
 
-        // Otherwise, go to full checkout wizard with contact selection
         return redirect()->route('checkout.wizard');
     }
 }

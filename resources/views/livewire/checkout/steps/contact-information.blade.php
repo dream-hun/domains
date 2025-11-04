@@ -14,12 +14,41 @@
                 Create New Contact
             </button>
         @else
-            <div class="mb-4">
-                <button wire:click="createNewContact" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-plus mr-2"></i>
-                    Create New Contact
-                </button>
+            {{-- Quick Contact Selection --}}
+            <div class="mb-4 p-3 bg-light border rounded">
+                <h5 class="mb-3">
+                    <i class="fas fa-bolt mr-2 text-primary"></i>
+                    Quick Selection
+                </h5>
+                <div class="row align-items-end">
+                    <div class="col-md-8">
+                        <label for="contactSelect" class="form-label">Select a contact to use for all roles</label>
+                        <select id="contactSelect" 
+                                class="form-control form-control-lg" 
+                                wire:model.live="quickSelectContactId">
+                            <option value="">-- Choose a contact --</option>
+                            @foreach($this->userContacts as $contact)
+                                <option value="{{ $contact->id }}">
+                                    {{ $contact->full_name }} - {{ $contact->email }}
+                                    @if($contact->is_primary) (Default) @endif
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button wire:click="createNewContact" class="btn btn-outline-primary btn-block">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add New Contact
+                        </button>
+                    </div>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Or customize each role individually below
+                </p>
             </div>
+
+            <hr class="my-4">
 
             {{-- Registrant Contact --}}
             <div class="contact-section mb-4">

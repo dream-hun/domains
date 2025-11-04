@@ -39,6 +39,8 @@ final class CheckoutWizard extends Component
 
     public ?int $selectedBillingId = null;
 
+    public ?int $quickSelectContactId = null;
+
     public ?string $selectedPaymentMethod = null;
 
     public ?string $orderNumber = null;
@@ -200,8 +202,6 @@ final class CheckoutWizard extends Component
         foreach ($this->cartItems as $item) {
             $itemPrice = $item->getPriceSum();
             $itemCurrency = $item->attributes->currency ?? 'USD';
-
-            // Convert to user's currency if different
             if ($itemCurrency !== $this->userCurrencyCode) {
                 $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
             }
@@ -315,6 +315,13 @@ final class CheckoutWizard extends Component
         $this->selectedTechId = $contactId;
         $this->selectedBillingId = $contactId;
         $this->errorMessage = '';
+    }
+
+    public function updatedQuickSelectContactId(?int $contactId): void
+    {
+        if ($contactId) {
+            $this->useContactForAll($contactId);
+        }
     }
 
     public function createNewContact(): void
@@ -456,6 +463,7 @@ final class CheckoutWizard extends Component
             'selected_admin_id' => $this->selectedAdminId,
             'selected_tech_id' => $this->selectedTechId,
             'selected_billing_id' => $this->selectedBillingId,
+            'quick_select_contact_id' => $this->quickSelectContactId,
             'selected_payment_method' => $this->selectedPaymentMethod,
         ]);
     }
@@ -474,6 +482,7 @@ final class CheckoutWizard extends Component
             $this->selectedAdminId = $state['selected_admin_id'] ?? null;
             $this->selectedTechId = $state['selected_tech_id'] ?? null;
             $this->selectedBillingId = $state['selected_billing_id'] ?? null;
+            $this->quickSelectContactId = $state['quick_select_contact_id'] ?? null;
             $this->selectedPaymentMethod = $state['selected_payment_method'] ?? null;
         }
     }
