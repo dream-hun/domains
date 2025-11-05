@@ -1,4 +1,4 @@
-<div class="card shadow-sm">
+<div class="card shadow-sm" x-data="{ useSingleContact: false }">
     <div class="card-header">
         <h4 class="mb-0">Contact Information</h4>
         <p class="text-muted mb-0 mt-1 small">Select contacts for domain registration roles</p>
@@ -20,7 +20,13 @@
                     <i class="fas fa-bolt mr-2 text-primary"></i>
                     Quick Selection
                 </h5>
-                <div class="row align-items-end">
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" id="use_single_contact" x-model="useSingleContact">
+                    <label class="form-check-label" for="use_single_contact">
+                        Use the same contact for all roles
+                    </label>
+                </div>
+                <div class="row align-items-end" x-show="useSingleContact" x-cloak>
                     <div class="col-md-8">
                         <label for="contactSelect" class="form-label">Select a contact to use for all roles</label>
                         <select id="contactSelect" 
@@ -42,204 +48,231 @@
                         </button>
                     </div>
                 </div>
-                <p class="text-muted small mb-0 mt-2">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Or customize each role individually below
-                </p>
             </div>
 
             <hr class="my-4">
 
-            {{-- Registrant Contact --}}
-            <div class="contact-section mb-4">
-                <h5 class="mb-3">
-                    <i class="fas fa-user mr-2 text-primary"></i>
-                    Registrant Contact
-                    <small class="text-muted">(Domain Owner)</small>
-                </h5>
-                <div class="row">
-                    @foreach($this->userContacts as $contact)
-                        <div class="col-md-6 mb-3">
-                            <div class="contact-card {{ $selectedRegistrantId === $contact->id ? 'selected' : '' }}"
-                                 role="button"
-                                 tabindex="0"
-                                 style="cursor: pointer;">
-                                <div class="card h-100">
+            {{-- Domain Contacts --}}
+            <div class="row">
+                {{-- Registrant Contact --}}
+                <div class="col-md-6 mb-4">
+                    <div class="form-group mb-3" x-data="{ contact: { id: @entangle('selectedRegistrantId'), details: null } }" 
+                         x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
+                        <label class="form-label font-weight-bold">
+                            Registrant Contact 
+                            <span class="text-danger">*</span>
+                            <small class="text-muted">(Domain Owner)</small>
+                        </label>
+                        <div class="input-group">
+                            <select 
+                                wire:model.live="selectedRegistrantId"
+                                class="form-control"
+                                x-model="contact.id"
+                                @change="fetchContactDetails($el.value).then(result => contact.details = result)"
+                                required>
+                                <option value="">Select Registrant Contact</option>
+                                @foreach($this->userContacts as $userContact)
+                                    <option value="{{ $userContact->id }}">
+                                        {{ $userContact->full_name }} ({{ $userContact->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="input-group-append">
+                                <button wire:click="createNewContact" class="btn btn-primary" type="button">
+                                    <i class="bi bi-plus-lg"></i> Add New
+                                </button>
+                            </div>
+                        </div>
+                        <template x-if="contact.details">
+                            <div class="contact-details mt-3">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Contact Details</h6>
+                                    </div>
                                     <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h6 class="mb-0">
-                                                {{ $contact->full_name }}
-                                                @if($contact->is_primary)
-                                                    <span class="badge badge-primary ml-2">Default</span>
-                                                @endif
-                                            </h6>
-                                            @if($selectedRegistrantId === $contact->id)
-                                                <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
-                                            @endif
-                                        </div>
-                                        <p class="mb-1 text-muted small">
-                                            <i class="fas fa-envelope mr-2"></i>{{ $contact->email }}
-                                        </p>
-                                        <p class="mb-2 text-muted small">
-                                            <i class="fas fa-map-marker-alt mr-2"></i>
-                                            {{ $contact->city }}, {{ $contact->country_code }}
-                                        </p>
-                                        <div class="btn-group btn-group-sm w-100" role="group">
-                                            <button wire:click="selectRegistrant({{ $contact->id }})" 
-                                                    class="btn btn-outline-primary {{ $selectedRegistrantId === $contact->id ? 'active' : '' }}">
-                                                Select for Registrant
-                                            </button>
-                                            <button wire:click="useContactForAll({{ $contact->id }})" 
-                                                    class="btn btn-outline-success">
-                                                Use for All
-                                            </button>
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <p class="mb-1"><strong>Name:</strong> <span x-text="contact.details.full_name"></span></p>
+                                                <p class="mb-1"><strong>Email:</strong> <span x-text="contact.details.email"></span></p>
+                                                <p class="mb-1"><strong>Phone:</strong> <span x-text="contact.details.phone || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Organization:</strong> <span x-text="contact.details.organization || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Address:</strong> <span x-text="contact.details.address_one || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>City:</strong> <span x-text="contact.details.city || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Province:</strong> <span x-text="contact.details.state_province || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Country:</strong> <span x-text="contact.details.country_code || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Postal Code:</strong> <span x-text="contact.details.postal_code || 'N/A'"></span></p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                        </template>
+                    </div>
                 </div>
-            </div>
 
-            <hr class="my-4">
-
-            {{-- Admin Contact --}}
-            <div class="contact-section mb-4">
-                <h5 class="mb-3">
-                    <i class="fas fa-user-shield mr-2 text-info"></i>
-                    Administrative Contact
-                </h5>
-                <div class="row">
-                    @foreach($this->userContacts as $contact)
-                        <div class="col-md-6 mb-3">
-                            <div class="contact-card {{ $selectedAdminId === $contact->id ? 'selected' : '' }}"
-                                 role="button"
-                                 tabindex="0"
-                                 style="cursor: pointer;">
-                                <div class="card h-100">
+                {{-- Admin Contact --}}
+                <div class="col-md-6 mb-4" x-show="!useSingleContact" x-cloak>
+                    <div class="form-group mb-3" x-data="{ contact: { id: @entangle('selectedAdminId'), details: null } }"
+                         x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
+                        <label class="form-label font-weight-bold">
+                            Admin Contact 
+                            <span class="text-danger" x-show="!useSingleContact">*</span>
+                        </label>
+                        <div class="input-group">
+                            <select 
+                                wire:model.live="selectedAdminId"
+                                class="form-control"
+                                x-model="contact.id"
+                                @change="fetchContactDetails($el.value).then(result => contact.details = result)"
+                                :required="!useSingleContact">
+                                <option value="">Select Admin Contact</option>
+                                @foreach($this->userContacts as $userContact)
+                                    <option value="{{ $userContact->id }}">
+                                        {{ $userContact->full_name }} ({{ $userContact->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="input-group-append">
+                                <button wire:click="createNewContact" class="btn btn-primary" type="button">
+                                    <i class="bi bi-plus-lg"></i> Add New
+                                </button>
+                            </div>
+                        </div>
+                        <template x-if="contact.details">
+                            <div class="contact-details mt-3">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Contact Details</h6>
+                                    </div>
                                     <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h6 class="mb-0">
-                                                {{ $contact->full_name }}
-                                                @if($contact->is_primary)
-                                                    <span class="badge badge-primary ml-2">Default</span>
-                                                @endif
-                                            </h6>
-                                            @if($selectedAdminId === $contact->id)
-                                                <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
-                                            @endif
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <p class="mb-1"><strong>Name:</strong> <span x-text="contact.details.full_name"></span></p>
+                                                <p class="mb-1"><strong>Email:</strong> <span x-text="contact.details.email"></span></p>
+                                                <p class="mb-1"><strong>Phone:</strong> <span x-text="contact.details.phone || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Organization:</strong> <span x-text="contact.details.organization || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Address:</strong> <span x-text="contact.details.address_one || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>City:</strong> <span x-text="contact.details.city || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Province:</strong> <span x-text="contact.details.state_province || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Country:</strong> <span x-text="contact.details.country_code || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Postal Code:</strong> <span x-text="contact.details.postal_code || 'N/A'"></span></p>
+                                            </div>
                                         </div>
-                                        <p class="mb-1 text-muted small">
-                                            <i class="fas fa-envelope mr-2"></i>{{ $contact->email }}
-                                        </p>
-                                        <p class="mb-2 text-muted small">
-                                            <i class="fas fa-map-marker-alt mr-2"></i>
-                                            {{ $contact->city }}, {{ $contact->country_code }}
-                                        </p>
-                                        <button wire:click="selectAdmin({{ $contact->id }})" 
-                                                class="btn btn-outline-info btn-sm w-100 {{ $selectedAdminId === $contact->id ? 'active' : '' }}">
-                                            Select for Admin
-                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                        </template>
+                    </div>
                 </div>
-            </div>
 
-            <hr class="my-4">
-
-            {{-- Technical Contact --}}
-            <div class="contact-section mb-4">
-                <h5 class="mb-3">
-                    <i class="fas fa-tools mr-2 text-warning"></i>
-                    Technical Contact
-                </h5>
-                <div class="row">
-                    @foreach($this->userContacts as $contact)
-                        <div class="col-md-6 mb-3">
-                            <div class="contact-card {{ $selectedTechId === $contact->id ? 'selected' : '' }}"
-                                 role="button"
-                                 tabindex="0"
-                                 style="cursor: pointer;">
-                                <div class="card h-100">
+                {{-- Technical Contact --}}
+                <div class="col-md-6 mb-4" x-show="!useSingleContact" x-cloak>
+                    <div class="form-group mb-3" x-data="{ contact: { id: @entangle('selectedTechId'), details: null } }"
+                         x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
+                        <label class="form-label font-weight-bold">
+                            Technical Contact 
+                            <span class="text-danger" x-show="!useSingleContact">*</span>
+                        </label>
+                        <div class="input-group">
+                            <select 
+                                wire:model.live="selectedTechId"
+                                class="form-control"
+                                x-model="contact.id"
+                                @change="fetchContactDetails($el.value).then(result => contact.details = result)"
+                                :required="!useSingleContact">
+                                <option value="">Select Technical Contact</option>
+                                @foreach($this->userContacts as $userContact)
+                                    <option value="{{ $userContact->id }}">
+                                        {{ $userContact->full_name }} ({{ $userContact->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="input-group-append">
+                                <button wire:click="createNewContact" class="btn btn-primary" type="button">
+                                    <i class="bi bi-plus-lg"></i> Add New
+                                </button>
+                            </div>
+                        </div>
+                        <template x-if="contact.details">
+                            <div class="contact-details mt-3">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Contact Details</h6>
+                                    </div>
                                     <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h6 class="mb-0">
-                                                {{ $contact->full_name }}
-                                                @if($contact->is_primary)
-                                                    <span class="badge badge-primary ml-2">Default</span>
-                                                @endif
-                                            </h6>
-                                            @if($selectedTechId === $contact->id)
-                                                <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
-                                            @endif
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <p class="mb-1"><strong>Name:</strong> <span x-text="contact.details.full_name"></span></p>
+                                                <p class="mb-1"><strong>Email:</strong> <span x-text="contact.details.email"></span></p>
+                                                <p class="mb-1"><strong>Phone:</strong> <span x-text="contact.details.phone || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Organization:</strong> <span x-text="contact.details.organization || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Address:</strong> <span x-text="contact.details.address_one || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>City:</strong> <span x-text="contact.details.city || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Province:</strong> <span x-text="contact.details.state_province || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Country:</strong> <span x-text="contact.details.country_code || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Postal Code:</strong> <span x-text="contact.details.postal_code || 'N/A'"></span></p>
+                                            </div>
                                         </div>
-                                        <p class="mb-1 text-muted small">
-                                            <i class="fas fa-envelope mr-2"></i>{{ $contact->email }}
-                                        </p>
-                                        <p class="mb-2 text-muted small">
-                                            <i class="fas fa-map-marker-alt mr-2"></i>
-                                            {{ $contact->city }}, {{ $contact->country_code }}
-                                        </p>
-                                        <button wire:click="selectTech({{ $contact->id }})" 
-                                                class="btn btn-outline-warning btn-sm w-100 {{ $selectedTechId === $contact->id ? 'active' : '' }}">
-                                            Select for Technical
-                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                        </template>
+                    </div>
                 </div>
-            </div>
 
-            <hr class="my-4">
-
-            {{-- Billing Contact --}}
-            <div class="contact-section mb-4">
-                <h5 class="mb-3">
-                    <i class="fas fa-credit-card mr-2 text-success"></i>
-                    Billing Contact
-                </h5>
-                <div class="row">
-                    @foreach($this->userContacts as $contact)
-                        <div class="col-md-6 mb-3">
-                            <div class="contact-card {{ $selectedBillingId === $contact->id ? 'selected' : '' }}"
-                                 role="button"
-                                 tabindex="0"
-                                 style="cursor: pointer;">
-                                <div class="card h-100">
+                {{-- Billing Contact --}}
+                <div class="col-md-6 mb-4" x-show="!useSingleContact" x-cloak>
+                    <div class="form-group mb-3" x-data="{ contact: { id: @entangle('selectedBillingId'), details: null } }"
+                         x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
+                        <label class="form-label font-weight-bold">
+                            Billing Contact 
+                            <span class="text-danger" x-show="!useSingleContact">*</span>
+                        </label>
+                        <div class="input-group">
+                            <select 
+                                wire:model.live="selectedBillingId"
+                                class="form-control"
+                                x-model="contact.id"
+                                @change="fetchContactDetails($el.value).then(result => contact.details = result)"
+                                :required="!useSingleContact">
+                                <option value="">Select Billing Contact</option>
+                                @foreach($this->userContacts as $userContact)
+                                    <option value="{{ $userContact->id }}">
+                                        {{ $userContact->full_name }} ({{ $userContact->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="input-group-append">
+                                <button wire:click="createNewContact" class="btn btn-primary" type="button">
+                                    <i class="bi bi-plus-lg"></i> Add New
+                                </button>
+                            </div>
+                        </div>
+                        <template x-if="contact.details">
+                            <div class="contact-details mt-3">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Contact Details</h6>
+                                    </div>
                                     <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h6 class="mb-0">
-                                                {{ $contact->full_name }}
-                                                @if($contact->is_primary)
-                                                    <span class="badge badge-primary ml-2">Default</span>
-                                                @endif
-                                            </h6>
-                                            @if($selectedBillingId === $contact->id)
-                                                <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
-                                            @endif
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <p class="mb-1"><strong>Name:</strong> <span x-text="contact.details.full_name"></span></p>
+                                                <p class="mb-1"><strong>Email:</strong> <span x-text="contact.details.email"></span></p>
+                                                <p class="mb-1"><strong>Phone:</strong> <span x-text="contact.details.phone || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Organization:</strong> <span x-text="contact.details.organization || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Address:</strong> <span x-text="contact.details.address_one || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>City:</strong> <span x-text="contact.details.city || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Province:</strong> <span x-text="contact.details.state_province || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Country:</strong> <span x-text="contact.details.country_code || 'N/A'"></span></p>
+                                                <p class="mb-1"><strong>Postal Code:</strong> <span x-text="contact.details.postal_code || 'N/A'"></span></p>
+                                            </div>
                                         </div>
-                                        <p class="mb-1 text-muted small">
-                                            <i class="fas fa-envelope mr-2"></i>{{ $contact->email }}
-                                        </p>
-                                        <p class="mb-2 text-muted small">
-                                            <i class="fas fa-map-marker-alt mr-2"></i>
-                                            {{ $contact->city }}, {{ $contact->country_code }}
-                                        </p>
-                                        <button wire:click="selectBilling({{ $contact->id }})" 
-                                                class="btn btn-outline-success btn-sm w-100 {{ $selectedBillingId === $contact->id ? 'active' : '' }}">
-                                            Select for Billing
-                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                        </template>
+                    </div>
                 </div>
             </div>
         @endif
@@ -258,24 +291,42 @@
     </div>
 </div>
 
+<script>
+    // Global function to fetch contact details
+    window.fetchContactDetails = async function(contactId) {
+        if (!contactId) return null;
+        
+        try {
+            const response = await fetch(`/api/contacts/${contactId}`);
+            const data = await response.json();
+            
+            if (data.success && data.contact) {
+                return data.contact;
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Error fetching contact details:', error);
+            return null;
+        }
+    };
+</script>
+
 <style>
-.contact-card {
-    transition: transform 0.2s, box-shadow 0.2s;
+.contact-details .card {
+    border: 1px solid #dee2e6;
 }
 
-.contact-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.contact-card.selected .card {
-    border: 2px solid #28a745;
-    background-color: #f8fff9;
-}
-
-.contact-section {
+.contact-details .card-header {
     background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.contact-details p {
+    font-size: 0.875rem;
+}
+
+[x-cloak] {
+    display: none !important;
 }
 </style>
