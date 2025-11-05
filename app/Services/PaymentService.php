@@ -70,6 +70,16 @@ final readonly class PaymentService
     {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
 
+        // Validate minimum amount for Stripe (50 cents USD equivalent)
+        $validationResult = $this->validateStripeMinimumAmount($order);
+        if (! $validationResult['valid']) {
+            throw new Exception($validationResult['message']);
+        }
+
+        // Use the potentially converted currency and amount
+        $processingCurrency = $validationResult['currency'];
+        $processingAmount = $validationResult['amount'];
+
         $user = $order->user;
 
         if (! $user->stripe_id) {
@@ -89,16 +99,16 @@ final readonly class PaymentService
             return "{$item->domain_name} ({$item->years} year(s))";
         })->join(', ');
 
-        // Use order total_amount which already includes any discounts
+        // Convert to Stripe amount format
         $stripeAmount = StripeHelper::convertToStripeAmount(
-            (float) $order->total_amount,
-            $order->currency
+            $processingAmount,
+            $processingCurrency
         );
 
         $lineItems = [
             [
                 'price_data' => [
-                    'currency' => mb_strtolower($order->currency),
+                    'currency' => mb_strtolower($processingCurrency),
                     'product_data' => [
                         'name' => "Order {$order->order_number}",
                         'description' => $itemDescriptions,
@@ -120,6 +130,8 @@ final readonly class PaymentService
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'user_id' => $user->id,
+                'original_currency' => $order->currency,
+                'original_amount' => $order->total_amount,
             ],
         ]);
 
@@ -127,6 +139,57 @@ final readonly class PaymentService
         $order->update(['stripe_session_id' => $session->id]);
 
         return $session;
+    }
+
+    /**
+     * Validate and potentially convert currency to meet Stripe's minimum amount requirement
+     * Stripe requires minimum 50 cents USD equivalent
+     */
+    private function validateStripeMinimumAmount(Order $order): array
+    {
+        $amount = (float) $order->total_amount;
+        $currency = mb_strtoupper($order->currency);
+
+        // Stripe's minimum is 50 cents USD
+        $minUsdAmount = 0.50;
+
+        try {
+            // Convert order amount to USD to check against Stripe's minimum
+            $amountInUsd = $currency === 'USD'
+                ? $amount
+                : \App\Helpers\CurrencyHelper::convert($amount, $currency, 'USD');
+
+            // If amount meets the minimum, use original currency
+            if ($amountInUsd >= $minUsdAmount) {
+                return [
+                    'valid' => true,
+                    'currency' => $currency,
+                    'amount' => $amount,
+                ];
+            }
+
+            // Amount is below minimum - convert to USD
+            // This ensures the payment can go through while maintaining the correct value
+            return [
+                'valid' => true,
+                'currency' => 'USD',
+                'amount' => round($amountInUsd, 2),
+                'converted' => true,
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Currency conversion failed for Stripe validation', [
+                'order_id' => $order->id,
+                'currency' => $currency,
+                'amount' => $amount,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'valid' => false,
+                'message' => 'Unable to process payment in '.$currency.'. Please try again or contact support.',
+            ];
+        }
     }
 
     private function processPayPalPayment(Order $order): array

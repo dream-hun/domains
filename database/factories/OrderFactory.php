@@ -22,6 +22,8 @@ final class OrderFactory extends Factory
      */
     public function definition(): array
     {
+        $totalAmount = $this->faker->randomFloat(2, 10, 500);
+
         return [
             'user_id' => User::factory(),
             'order_number' => Order::generateOrderNumber(),
@@ -30,7 +32,8 @@ final class OrderFactory extends Factory
             'payment_status' => $this->faker->randomElement(['pending', 'paid', 'failed', 'cancelled', 'refunded']),
             'stripe_payment_intent_id' => $this->faker->optional()->uuid(),
             'stripe_session_id' => $this->faker->optional()->uuid(),
-            'total_amount' => $this->faker->randomFloat(2, 10, 500),
+            'subtotal' => $totalAmount,
+            'total_amount' => $totalAmount,
             'currency' => 'USD',
             'billing_email' => $this->faker->email(),
             'billing_name' => $this->faker->name(),
