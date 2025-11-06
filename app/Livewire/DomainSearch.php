@@ -248,14 +248,16 @@ final class DomainSearch extends Component
                 Log::debug('Checking international domain:', ['domain' => $domainName]);
                 $checkResult = $this->internationalService->checkAvailability([$domainName]);
 
-                // Always process the result for international domains
-                $rawPrice = (int) ($tld->register_price);
+                // All prices are stored in USD as cents (integer)
+                // Convert from cents to dollars first
+                $rawPriceInCents = (int) ($tld->register_price);
+                $priceInUSD = $rawPriceInCents / 100;
 
-                // Convert price to current currency if needed
-                $convertedPrice = $rawPrice;
+                // Convert USD price to current currency if needed
+                $convertedPrice = $priceInUSD;
                 try {
                     if ($this->currentCurrency !== 'USD') {
-                        $convertedPrice = CurrencyHelper::convertFromUSD($rawPrice / 1000, $this->currentCurrency);
+                        $convertedPrice = CurrencyHelper::convertFromUSD($priceInUSD, $this->currentCurrency);
                     }
                 } catch (Exception $e) {
                     Log::warning('Currency conversion failed', ['error' => $e->getMessage()]);
@@ -276,7 +278,8 @@ final class DomainSearch extends Component
                 Log::debug('International domain check processed', [
                     'domain' => $domainName,
                     'available' => $checkResult['available'] ?? false,
-                    'raw_price' => $rawPrice,
+                    'raw_price_cents' => $rawPriceInCents,
+                    'price_usd' => $priceInUSD,
                 ]);
             } else {
                 // Use EPP service for local domains
@@ -284,13 +287,17 @@ final class DomainSearch extends Component
 
                 if ($eppResults !== [] && isset($eppResults[$domainName])) {
                     $result = $eppResults[$domainName];
-                    $rawPrice = (int) ($tld->register_price);
 
-                    // Convert price to current currency if needed
-                    $convertedPrice = $rawPrice;
+                    // All prices are stored in USD as cents (integer)
+                    // Convert from cents to dollars first
+                    $rawPriceInCents = (int) ($tld->register_price);
+                    $priceInUSD = $rawPriceInCents / 100;
+
+                    // Convert USD price to current currency if needed
+                    $convertedPrice = $priceInUSD;
                     try {
-                        if ($this->currentCurrency !== 'RWF') {
-                            $convertedPrice = CurrencyHelper::convert($rawPrice, 'RWF', $this->currentCurrency);
+                        if ($this->currentCurrency !== 'USD') {
+                            $convertedPrice = CurrencyHelper::convertFromUSD($priceInUSD, $this->currentCurrency);
                         }
                     } catch (Exception $e) {
                         Log::warning('Currency conversion failed', ['error' => $e->getMessage()]);
@@ -311,7 +318,8 @@ final class DomainSearch extends Component
                     Log::debug('Local domain check successful', [
                         'domain' => $domainName,
                         'available' => $result->available,
-                        'raw_price' => $rawPrice,
+                        'raw_price_cents' => $rawPriceInCents,
+                        'price_usd' => $priceInUSD,
                     ]);
                 }
             }

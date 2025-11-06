@@ -39,4 +39,31 @@ trait HasCurrency
     {
         return $this->currencyService()->format($amount, $currency);
     }
+
+    /**
+     * Convert amount from USD (database storage) to user's selected currency
+     * All prices in the database are stored in USD.
+     * This method converts them to the user's preferred currency (e.g., FRW for Rwandan users)
+     */
+    protected function convertFromUSD(float $amountInUSD): float
+    {
+        $userCurrency = $this->getUserCurrency();
+
+        if ($userCurrency->code === 'USD') {
+            return $amountInUSD;
+        }
+
+        return $this->convertCurrency($amountInUSD, 'USD', $userCurrency->code);
+    }
+
+    /**
+     * Convert and format amount from USD to user's selected currency
+     */
+    protected function formatFromUSD(float $amountInUSD): string
+    {
+        $userCurrency = $this->getUserCurrency();
+        $convertedAmount = $this->convertFromUSD($amountInUSD);
+
+        return $this->formatCurrency($convertedAmount, $userCurrency->code);
+    }
 }

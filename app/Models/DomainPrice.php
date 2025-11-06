@@ -92,11 +92,12 @@ final class DomainPrice extends Model
     }
 
     /**
-     * Get the base currency for this domain type
+     * Get the base currency for prices stored in database
+     * All prices in the database are stored in USD
      */
     public function getBaseCurrency(): string
     {
-        return $this->type === DomainType::Local ? 'RWF' : 'USD';
+        return 'USD';
     }
 
     public function getRouteKeyName(): string
