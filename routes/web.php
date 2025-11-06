@@ -9,13 +9,13 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DomainController;
 use App\Http\Controllers\Admin\DomainOperationsController;
 use App\Http\Controllers\Admin\DomainPriceController;
+use App\Http\Controllers\Admin\FailedDomainRegistrationController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
-use App\Http\Controllers\CheckOutController;
 use App\Http\Controllers\CheckoutController as RenewalCheckoutController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentController;
@@ -58,6 +58,13 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::post('currencies/update-rates', [CurrencyController::class, 'updateRates'])->name('currencies.update-rates');
     Route::resource('settings', SettingController::class);
 
+    // Failed domain registration routes
+    Route::get('failed-registrations', [FailedDomainRegistrationController::class, 'index'])->name('failed-registrations.index');
+    Route::get('failed-registrations/manual-register', [FailedDomainRegistrationController::class, 'manualRegisterForm'])->name('failed-registrations.manual-register');
+    Route::post('failed-registrations/manual-register', [FailedDomainRegistrationController::class, 'manualRegisterStore'])->name('failed-registrations.manual-register.store');
+    Route::get('failed-registrations/{failedDomainRegistration}', [FailedDomainRegistrationController::class, 'show'])->name('failed-registrations.show');
+    Route::post('failed-registrations/{failedDomainRegistration}/retry', [FailedDomainRegistrationController::class, 'retry'])->name('failed-registrations.retry');
+
     // Notification routes
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
@@ -68,22 +75,20 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 });
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
-    // Smart checkout route - automatically routes to correct checkout flow
+
     Route::get('/checkout', [SmartCheckoutController::class, 'index'])->name('checkout.index');
-    
-    // Full checkout wizard with contact selection (for new domain registrations)
+
     Route::view('/checkout/register', 'checkout.wizard')->name('checkout.wizard');
-    
-    // Renewal-only checkout route (direct to payment for renewals)
+
     Route::get('/cart/checkout/payment/', [RenewalCheckoutController::class, 'index'])->name('checkout.renewal');
     Route::get('/checkout/success/{order}', [RenewalCheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/checkout/cancel', [RenewalCheckoutController::class, 'cancel'])->name('checkout.cancel');
-    Route::get('/checkout/stripe/redirect/{order}', [CheckOutController::class, 'stripeRedirect'])->name('checkout.stripe.redirect');
-    Route::get('/checkout/stripe/success/{order}', [CheckOutController::class, 'stripeSuccess'])->name('checkout.stripe.success');
-    Route::get('/checkout/stripe/cancel/{order}', [CheckOutController::class, 'stripeCancel'])->name('checkout.stripe.cancel');
+    Route::get('/checkout/stripe/redirect/{order}', [RenewalCheckoutController::class, 'stripeRedirect'])->name('checkout.stripe.redirect');
+    Route::get('/checkout/stripe/success/{order}', [RenewalCheckoutController::class, 'stripeSuccess'])->name('checkout.stripe.success');
+    Route::get('/checkout/stripe/cancel/{order}', [RenewalCheckoutController::class, 'stripeCancel'])->name('checkout.stripe.cancel');
     Route::get('/domains/register', [RegisterDomainController::class, 'index'])->name('domains.register');
     Route::post('/domains/register', [RegisterDomainController::class, 'register'])->name('domains.register.store');
-    
+
     // Domain renewal cart routes
     Route::post('/domains/{domain}/renew/add-to-cart', [CartController::class, 'addRenewalToCart'])->name('domains.renewal.add-to-cart');
 

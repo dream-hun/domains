@@ -64,6 +64,8 @@ final class PermissionSeeder extends Seeder
             ['id' => 50, 'title' => 'currency_edit'],
             ['id' => 51, 'title' => 'currency_delete'],
             ['id' => 52, 'title' => 'currency_update_rates'],
+            ['id' => 53, 'title' => 'failed_registration_access'],
+            ['id' => 54, 'title' => 'failed_registration_retry'],
         ];
 
         Permission::insert($permissions);

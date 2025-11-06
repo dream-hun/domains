@@ -88,6 +88,17 @@
                         </a>
                     </li>
                 @endcan
+                @can('failed_registration_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.failed-registrations.index') }}"
+                            class="nav-link {{ request()->is('admin/failed-registrations*') ? 'active' : '' }}">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <p>
+                                Failed Registrations
+                            </p>
+                        </a>
+                    </li>
+                @endcan
                 @can('setting_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.settings.index') }}"
