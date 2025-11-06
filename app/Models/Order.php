@@ -17,7 +17,7 @@ final class Order extends Model
 
     public static function generateOrderNumber(): string
     {
-        return 'ORD-'.strtoupper(substr(uniqid(), -10));
+        return 'ORD-'.mb_strtoupper(mb_substr(uniqid(), -10));
     }
 
     public function user(): BelongsTo
@@ -38,6 +38,11 @@ final class Order extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function failedDomainRegistrations(): HasMany
+    {
+        return $this->hasMany(FailedDomainRegistration::class);
     }
 
     public function casts(): array

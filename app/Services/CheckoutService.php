@@ -12,8 +12,9 @@ use Throwable;
 final readonly class CheckoutService
 {
     public function __construct(
-        private PaymentService        $paymentService,
-        private OrderService $orderService
+        private PaymentService $paymentService,
+        private OrderService $orderService,
+        private DomainRegistrationService $domainRegistrationService
     ) {}
 
     /**
@@ -21,7 +22,8 @@ final readonly class CheckoutService
      */
     public function processCheckout(array $data): Order
     {
-        return DB::transaction(function () use ($data) {
+        // Transaction 1: Create order and process payment
+        $order = DB::transaction(function () use ($data) {
             $order = $this->orderService->createOrder([
                 'user_id' => $data['user_id'],
                 'currency' => $data['currency'],
@@ -48,19 +50,33 @@ final readonly class CheckoutService
                     'stripe_payment_intent_id' => $paymentResult['transaction_id'] ?? null,
                 ]);
 
-                $this->orderService->processDomainRegistrations($order, $data['contact_ids']);
-
-                $this->orderService->sendOrderConfirmation($order);
-            } else {
-                $order->update([
-                    'payment_status' => 'failed',
-                    'notes' => $paymentResult['error'] ?? 'Payment failed',
-                ]);
-
-                throw new Exception($paymentResult['error'] ?? 'Payment processing failed');
+                return $order;
             }
 
-            return $order->fresh(['orderItems']);
+            $order->update([
+                'payment_status' => 'failed',
+                'notes' => $paymentResult['error'] ?? 'Payment failed',
+            ]);
+
+            throw new Exception($paymentResult['error'] ?? 'Payment processing failed');
         });
+
+        // Payment is now committed - process domain registrations outside transaction
+        if ($order->isPaid()) {
+            try {
+                $this->domainRegistrationService->processDomainRegistrations($order, $data['contact_ids']);
+                $this->orderService->sendOrderConfirmation($order);
+            } catch (Exception $e) {
+                // Registration failed but payment succeeded - this is handled by DomainRegistrationService
+                // Order status will be updated to 'requires_attention' and notifications sent
+                \Illuminate\Support\Facades\Log::error('Domain registration failed after successful payment', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $order->fresh(['orderItems']);
     }
 }

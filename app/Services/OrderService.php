@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Log;
 final readonly class OrderService
 {
     public function __construct(
-        private BillingService      $billingService,
+        private DomainRegistrationService $domainRegistrationService,
         private NotificationService $notificationService,
-        private RenewalService      $renewalService
+        private RenewalService $renewalService
     ) {}
 
     public function createOrder(array $data): Order
@@ -119,6 +119,67 @@ final readonly class OrderService
         return $order->fresh(['orderItems']);
     }
 
+    public function processDomainRegistrations(Order $order, array $contactIds = []): void
+    {
+        $order->update(['status' => 'processing']);
+
+        try {
+            // Check order type
+            if ($order->type === 'renewal') {
+                // Process renewals
+                Log::info('Processing renewal order', ['order_id' => $order->id]);
+                $results = $this->renewalService->processDomainRenewals($order);
+
+                // Update order status based on results (for renewals)
+                if (empty($results['failed'])) {
+                    $order->update(['status' => 'completed']);
+                } elseif (empty($results['successful'])) {
+                    $order->update(['status' => 'failed']);
+                    $this->notificationService->notifyAdminOfFailedRegistration($order, $results);
+                } else {
+                    $order->update(['status' => 'partially_completed']);
+                    $this->notificationService->notifyAdminOfPartialFailure($order, $results);
+                }
+            } else {
+                // Process registrations
+                if (! isset($contactIds['registrant'], $contactIds['admin'], $contactIds['tech'], $contactIds['billing'])) {
+                    throw new Exception('All contact IDs (registrant, admin, tech, billing) are required for domain registration.');
+                }
+
+                $contacts = [
+                    'registrant' => $contactIds['registrant'],
+                    'admin' => $contactIds['admin'],
+                    'technical' => $contactIds['tech'],
+                    'billing' => $contactIds['billing'],
+                ];
+
+                Log::info('Processing registration order', ['order_id' => $order->id]);
+
+                // Use DomainRegistrationService which handles status updates and notifications
+                $this->domainRegistrationService->processDomainRegistrations($order, $contacts);
+            }
+
+        } catch (Exception $e) {
+            Log::error('Order processing failed', [
+                'order_id' => $order->id,
+                'order_type' => $order->type,
+                'error' => $e->getMessage(),
+            ]);
+
+            $order->update([
+                'status' => 'requires_attention',
+                'notes' => 'Payment succeeded but processing failed: '.$e->getMessage(),
+            ]);
+
+            $this->notificationService->notifyAdminOfCriticalFailure($order, $e);
+        }
+    }
+
+    public function sendOrderConfirmation(Order $order): void
+    {
+        $order->user->notify(new OrderConfirmationNotification($order));
+    }
+
     /**
      * Determine order type based on cart items
      */
@@ -152,65 +213,6 @@ final readonly class OrderService
         return 'registration';
     }
 
-    public function processDomainRegistrations(Order $order, array $contactIds = []): void
-    {
-        $order->update(['status' => 'processing']);
-
-        try {
-            // Check order type
-            if ($order->type === 'renewal') {
-                // Process renewals
-                Log::info('Processing renewal order', ['order_id' => $order->id]);
-                $results = $this->renewalService->processDomainRenewals($order);
-            } else {
-                // Process registrations
-                if (! isset($contactIds['registrant'], $contactIds['admin'], $contactIds['tech'], $contactIds['billing'])) {
-                    throw new Exception('All contact IDs (registrant, admin, tech, billing) are required for domain registration.');
-                }
-
-                $contacts = [
-                    'registrant' => $contactIds['registrant'],
-                    'admin' => $contactIds['admin'],
-                    'technical' => $contactIds['tech'],
-                    'billing' => $contactIds['billing'],
-                ];
-
-                Log::info('Processing registration order', ['order_id' => $order->id]);
-                $results = $this->billingService->processDomainRegistrations($order, $contacts);
-            }
-
-            // Update order status based on results
-            if (empty($results['failed'])) {
-                $order->update(['status' => 'completed']);
-            } elseif (empty($results['successful'])) {
-                $order->update(['status' => 'failed']);
-                $this->notificationService->notifyAdminOfFailedRegistration($order, $results);
-            } else {
-                $order->update(['status' => 'partially_completed']);
-                $this->notificationService->notifyAdminOfPartialFailure($order, $results);
-            }
-
-        } catch (Exception $e) {
-            Log::error('Order processing failed', [
-                'order_id' => $order->id,
-                'order_type' => $order->type,
-                'error' => $e->getMessage(),
-            ]);
-
-            $order->update([
-                'status' => 'requires_attention',
-                'notes' => 'Payment succeeded but processing failed: '.$e->getMessage(),
-            ]);
-
-            $this->notificationService->notifyAdminOfCriticalFailure($order, $e);
-        }
-    }
-
-    public function sendOrderConfirmation(Order $order): void
-    {
-        $order->user->notify(new OrderConfirmationNotification($order));
-    }
-
     /**
      * Get selected contact for domain registration
      */
@@ -227,6 +229,7 @@ final readonly class OrderService
         if ($contact) {
             return $contact;
         }
+
         return $user->contacts()->first();
     }
 }

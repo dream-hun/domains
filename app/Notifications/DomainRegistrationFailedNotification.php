@@ -25,19 +25,37 @@ final class DomainRegistrationFailedNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $failedDomains = collect($this->results['failed'])
+        $failedDomainsDetails = collect($this->results['failed'])
+            ->map(fn ($failed) => $failed['domain'].': '.$failed['message'])
+            ->implode("\n");
+
+        $failedDomainsList = collect($this->results['failed'])
             ->pluck('domain')
             ->implode(', ');
 
-        return (new MailMessage)
+        $successfulCount = count($this->results['successful']);
+        $failedCount = count($this->results['failed']);
+
+        $message = (new MailMessage)
             ->error()
-            ->subject('URGENT: Domain Registration Failed - Order '.$this->order->order_number)
-            ->greeting('Domain Registration Failure')
-            ->line('Payment was successful but ALL domain registrations failed for order '.$this->order->order_number)
-            ->line('**Failed Domains:** '.$failedDomains)
+            ->subject('Domain Registration Issues - Order '.$this->order->order_number)
+            ->greeting('Domain Registration Alert')
+            ->line('Payment was successful, but some domain registrations encountered issues for order '.$this->order->order_number);
+
+        if ($successfulCount > 0) {
+            $message->line('**Successful Registrations:** '.$successfulCount);
+        }
+
+        $message->line('**Failed Domains:** '.$failedDomainsList)
+            ->line('**Failed Domains Details:**')
+            ->line($failedDomainsDetails)
             ->line('**Order Total:** '.$this->order->currency.' '.$this->order->total_amount)
             ->line('**Customer:** '.$this->order->user->name.' ('.$this->order->user->email.')')
-            ->line('Please investigate and manually register these domains or process a refund.')
+            ->line('**Status:** Automatic retry has been scheduled.')
+            ->line('The system will automatically retry registration every 1 hour (up to 3 attempts).')
+            ->line('If all retries fail, you will receive another notification to take manual action.')
             ->action('View Order', url('/admin/orders/'.$this->order->order_number));
+
+        return $message;
     }
 }

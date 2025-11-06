@@ -127,15 +127,18 @@ final class PaymentController extends Controller
             $session = Session::retrieve($sessionId);
 
             if ($session->payment_status === 'paid') {
-                $order->update([
-                    'payment_status' => 'paid',
-                    'status' => 'processing',
-                    'stripe_payment_intent_id' => $session->payment_intent,
-                    'stripe_session_id' => $sessionId,
-                    'processed_at' => now(),
-                ]);
+                // Transaction 1: Update payment status (commit payment)
+                DB::transaction(function () use ($order, $session, $sessionId) {
+                    $order->update([
+                        'payment_status' => 'paid',
+                        'status' => 'processing',
+                        'stripe_payment_intent_id' => $session->payment_intent,
+                        'stripe_session_id' => $sessionId,
+                        'processed_at' => now(),
+                    ]);
+                });
 
-                // Process domain registrations
+                // Payment is now committed - process domain registrations outside transaction
                 try {
                     // Get contact ID from checkout session (use same contact for all roles)
                     $checkoutData = session('checkout', []);
@@ -148,6 +151,8 @@ final class PaymentController extends Controller
                             'tech' => $contactId,
                             'billing' => $contactId,
                         ];
+
+                        // Process registrations - failures are handled internally
                         $this->orderService->processDomainRegistrations($order, $contactIds);
                     }
 
@@ -162,22 +167,27 @@ final class PaymentController extends Controller
                     if ($order->isCompleted()) {
                         $message = 'Payment successful! Your domain has been registered.';
                     } elseif ($order->isPartiallyCompleted()) {
-                        $message = 'Payment successful! Some domains were registered successfully, but others failed. Check your email for details.';
+                        $message = 'Payment successful! Some domains were registered successfully. We\'re retrying others automatically.';
+                    } elseif ($order->requiresAttention()) {
+                        $message = 'Payment successful! We\'re processing your domain registration and will notify you once complete.';
                     } else {
-                        $message = 'Payment successful, but domain registration failed. Our support team will contact you shortly.';
+                        $message = 'Payment successful! Your order is being processed.';
                     }
 
                     return redirect()->route('payment.success.show', $order)
                         ->with('success', $message);
 
                 } catch (Exception $e) {
+                    // Registration failed but payment succeeded - this is OK
+                    // The DomainRegistrationService has already logged and scheduled retries
                     Log::error('Domain registration failed after payment', [
                         'order_id' => $order->id,
                         'error' => $e->getMessage(),
                     ]);
 
+                    // Still show success page since payment succeeded
                     return redirect()->route('payment.success.show', $order)
-                        ->with('warning', 'Payment successful, but there was an issue with domain registration. Our support team will contact you shortly.');
+                        ->with('success', 'Payment successful! We\'re processing your domain registration and will notify you once complete.');
                 }
             }
         } catch (ApiErrorException $e) {

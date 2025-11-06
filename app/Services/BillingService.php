@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Actions\RegisterDomainAction;
 use App\Helpers\CurrencyHelper;
 use App\Livewire\CartComponent;
 use App\Models\Currency;
@@ -19,9 +18,7 @@ use Throwable;
 
 final readonly class BillingService
 {
-    public function __construct(
-        private RegisterDomainAction $registerDomainAction
-    ) {}
+    public function __construct() {}
 
     /**
      * Create an order from cart items
@@ -108,98 +105,6 @@ final readonly class BillingService
 
             return $order;
         });
-    }
-
-    /**
-     * Process domain registrations after successful payment
-     *
-     * @throws Exception
-     */
-    public function processDomainRegistrations(Order $order, array $contacts): array
-    {
-        $results = [
-            'successful' => [],
-            'failed' => [],
-        ];
-
-        try {
-
-            // Process each order item (domain)
-            foreach ($order->orderItems as $orderItem) {
-                try {
-                    $result = $this->registerDomainAction->handle(
-                        $orderItem->domain_name,
-                        $contacts,
-                        $orderItem->years,
-                        [], // Use default nameservers
-                        true, // Use single contact
-                        $order->user_id // Pass the order's user_id
-                    );
-
-                    if ($result['success']) {
-                        $results['successful'][] = [
-                            'domain' => $orderItem->domain_name,
-                            'domain_id' => $result['domain_id'] ?? null,
-                            'message' => $result['message'] ?? 'Domain registered successfully',
-                        ];
-
-                        // Update order item with domain ID if available
-                        if (isset($result['domain_id'])) {
-                            $orderItem->update(['domain_id' => $result['domain_id']]);
-                        }
-
-                        Log::info('Domain registered successfully via billing service', [
-                            'order_id' => $order->id,
-                            'domain' => $orderItem->domain_name,
-                            'domain_id' => $result['domain_id'] ?? null,
-                        ]);
-                    } else {
-                        $results['failed'][] = [
-                            'domain' => $orderItem->domain_name,
-                            'message' => $result['message'] ?? 'Registration failed',
-                        ];
-
-                        Log::error('Domain registration failed via billing service', [
-                            'order_id' => $order->id,
-                            'domain' => $orderItem->domain_name,
-                            'error' => $result['message'] ?? 'Unknown error',
-                        ]);
-                    }
-                } catch (Exception $e) {
-                    $results['failed'][] = [
-                        'domain' => $orderItem->domain_name,
-                        'message' => $e->getMessage(),
-                    ];
-
-                    Log::error('Domain registration exception via billing service', [
-                        'order_id' => $order->id,
-                        'domain' => $orderItem->domain_name,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-
-            // Update order status based on results
-            if (empty($results['failed'])) {
-                $order->update(['status' => 'completed']);
-            } elseif (empty($results['successful'])) {
-                $order->update(['status' => 'failed']);
-            } else {
-                $order->update(['status' => 'partially_completed']);
-            }
-
-        } catch (Exception $e) {
-            Log::error('Failed to process domain registrations for order', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            $order->update(['status' => 'failed']);
-
-            throw $e;
-        }
-
-        return $results;
     }
 
     /**
