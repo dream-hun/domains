@@ -68,6 +68,6 @@ final class PermissionSeeder extends Seeder
             ['id' => 54, 'title' => 'failed_registration_retry'],
         ];
 
-        Permission::insert($permissions);
+        Permission::createOrUpdate($permissions);
     }
 }
