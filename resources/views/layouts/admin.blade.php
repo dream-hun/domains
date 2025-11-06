@@ -210,6 +210,27 @@
         });
     </script>
 
+    <script>
+        // Global function to fetch contact details via API
+        window.fetchContactDetails = async function(contactId) {
+            if (!contactId) return null;
+            
+            try {
+                const response = await fetch(`/api/contacts/${contactId}`);
+                const data = await response.json();
+                
+                if (data.success && data.contact) {
+                    return data.contact;
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Error fetching contact details:', error);
+                return null;
+            }
+        };
+    </script>
+
     @yield('scripts')
 </body>
 

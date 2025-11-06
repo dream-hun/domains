@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StripePaymentRequest;
 use App\Models\Order;
 use App\Services\BillingService;
 use App\Services\OrderService;
@@ -33,7 +34,7 @@ final class PaymentController extends Controller
     /**
      * Show the payment page with available payment methods
      */
-    public function showPaymentPage(Request $request)
+    public function showPaymentPage(Request $request): View|RedirectResponse
     {
         $checkoutData = session('checkout', []);
 
@@ -55,17 +56,8 @@ final class PaymentController extends Controller
     /**
      * Process Stripe payment
      */
-    public function processStripePayment(Request $request): RedirectResponse
+    public function processStripePayment(StripePaymentRequest $request): RedirectResponse
     {
-        $request->validate([
-            'billing_name' => 'required|string|max:255',
-            'billing_email' => 'required|email|max:255',
-            'billing_address' => 'nullable|string|max:255',
-            'billing_city' => 'nullable|string|max:255',
-            'billing_country' => 'nullable|string|max:255',
-            'billing_postal_code' => 'nullable|string|max:20',
-        ]);
-
         $checkoutData = session('checkout', []);
         $cartItems = Cart::getContent();
 

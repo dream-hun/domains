@@ -291,27 +291,6 @@
     </div>
 </div>
 
-<script>
-    // Global function to fetch contact details
-    window.fetchContactDetails = async function(contactId) {
-        if (!contactId) return null;
-        
-        try {
-            const response = await fetch(`/api/contacts/${contactId}`);
-            const data = await response.json();
-            
-            if (data.success && data.contact) {
-                return data.contact;
-            }
-            
-            return null;
-        } catch (error) {
-            console.error('Error fetching contact details:', error);
-            return null;
-        }
-    };
-</script>
-
 <style>
 .contact-details .card {
     border: 1px solid #dee2e6;
