@@ -8,6 +8,7 @@ use App\Http\Requests\AddDomainRenewalToCartRequest;
 use App\Models\Domain;
 use App\Models\DomainPrice;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -38,7 +39,7 @@ final class DomainRenewalController extends Controller
     /**
      * Add a domain renewal to the cart
      */
-    public function addToCart(AddDomainRenewalToCartRequest $request, Domain $domain): RedirectResponse
+    public function addToCart(AddDomainRenewalToCartRequest $request, Domain $domain): RedirectResponse|JsonResponse
     {
         // Ensure the user owns this domain
         abort_if($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin(), 403, 'You do not have permission to renew this domain.');
@@ -50,6 +51,13 @@ final class DomainRenewalController extends Controller
         $domainPrice = DomainPrice::query()->where('tld', '.'.$tld)->first();
 
         if (! $domainPrice) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pricing information not available for this domain.',
+                ], 404);
+            }
+
             return back()
                 ->with('error', 'Pricing information not available for this domain.');
         }
@@ -76,6 +84,13 @@ final class DomainRenewalController extends Controller
                 'currency' => $currency,
             ],
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => sprintf('Domain %s added to cart for %s year(s) renewal.', $domain->name, $years),
+            ]);
+        }
 
         return to_route('checkout.index')
             ->with('success', sprintf('Domain %s added to cart for %s year(s) renewal.', $domain->name, $years));

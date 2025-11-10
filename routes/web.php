@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController as RenewalCheckoutController;
+use App\Http\Controllers\DomainRenewalController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
@@ -90,8 +91,9 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/domains/register', [RegisterDomainController::class, 'index'])->name('domains.register');
     Route::post('/domains/register', [RegisterDomainController::class, 'register'])->name('domains.register.store');
 
-    // Domain renewal cart routes
-    Route::post('/domains/{domain}/renew/add-to-cart', [CartController::class, 'addRenewalToCart'])->name('domains.renewal.add-to-cart');
+    // Domain renewal routes
+    Route::get('/domains/{domain}/renew', [DomainRenewalController::class, 'show'])->name('domains.renew.show');
+    Route::post('/domains/{domain}/renew', [DomainRenewalController::class, 'addToCart'])->name('domains.renew.add-to-cart');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

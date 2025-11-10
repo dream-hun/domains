@@ -34,9 +34,17 @@ final class CartController extends Controller
     {
         try {
             $years = $request->input('years', 1);
+            $user = auth()->user();
+
+            if (! $user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You must be logged in to renew a domain',
+                ], 401);
+            }
 
             // Validate ownership
-            if ($domain->owner_id !== auth()->id()) {
+            if ($domain->owner_id !== $user->id && ! $user->isAdmin()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You do not own this domain',
@@ -45,7 +53,7 @@ final class CartController extends Controller
 
             // Validate domain can be renewed
             $renewalService = app(RenewalService::class);
-            $canRenew = $renewalService->canRenewDomain($domain, auth()->id());
+            $canRenew = $renewalService->canRenewDomain($domain, $user);
 
             if (! $canRenew['can_renew']) {
                 return response()->json([

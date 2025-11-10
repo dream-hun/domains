@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Domain;
 use App\Models\DomainRenewal;
 use App\Models\Order;
+use App\Models\User;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
@@ -167,13 +168,13 @@ final readonly class RenewalService
      * Validate if a domain can be renewed
      *
      * @param  Domain  $domain  The domain to check
-     * @param  int  $userId  The user attempting to renew
+     * @param  User  $user  The user attempting to renew
      * @return array{can_renew: bool, reason?: string}
      */
-    public function canRenewDomain(Domain $domain, int $userId): array
+    public function canRenewDomain(Domain $domain, User $user): array
     {
         // Check ownership
-        if ($domain->owner_id !== $userId) {
+        if ($domain->owner_id !== $user->id && ! $user->isAdmin()) {
             return [
                 'can_renew' => false,
                 'reason' => 'You do not own this domain',

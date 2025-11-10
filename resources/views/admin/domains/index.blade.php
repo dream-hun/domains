@@ -190,6 +190,8 @@
                 });
             })
 
+            const renewalAddToCartUrlTemplate = @json(route('domains.renew.add-to-cart', ['domain' => '__DOMAIN_UUID__']));
+
             // Add domain renewal to cart
             function addRenewalToCart(domainUuid, domainName, domainId) {
                 // Disable the button to prevent double-clicks
@@ -197,7 +199,9 @@
                 event.target.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Adding...';
 
                 // Send AJAX request to add to cart
-                fetch(`/domains/${domainUuid}/renew/add-to-cart`, {
+                const addToCartUrl = renewalAddToCartUrlTemplate.replace('__DOMAIN_UUID__', domainUuid);
+
+                fetch(addToCartUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

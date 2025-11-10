@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Domain;
 use App\Models\DomainPrice;
+use App\Models\Role;
 use App\Models\User;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 
@@ -11,6 +12,16 @@ use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 
 beforeEach(function (): void {
+    Role::query()->firstOrCreate(
+        ['id' => 1],
+        ['title' => 'Admin']
+    );
+
+    Role::query()->firstOrCreate(
+        ['id' => 2],
+        ['title' => 'Customer']
+    );
+
     $this->user = User::factory()->create();
 
     // Create a domain price
@@ -49,14 +60,12 @@ it('prevents non-owners from accessing renewal page', function (): void {
 
 it('allows admin to access any domain renewal page', function (): void {
     $admin = User::factory()->create();
-    // Assuming there's a way to make a user admin
-    // This might need to be adjusted based on your actual admin logic
+    $admin->roles()->attach(1);
 
     $response = actingAs($admin)
         ->get(route('domains.renew.show', $this->domain));
 
-    // This test may need adjustment based on actual admin implementation
-    expect($response->status())->toBeIn([200, 403]);
+    $response->assertOk();
 });
 
 it('adds domain to cart for renewal', function (): void {

@@ -327,9 +327,19 @@ final class CartComponent extends Component
     {
         try {
             $domain = Domain::with('domainPrice')->findOrFail($domainId);
+            $user = auth()->user();
+
+            if (! $user) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'You must be logged in to renew a domain',
+                ]);
+
+                return;
+            }
 
             // Validate ownership
-            if ($domain->owner_id !== auth()->id()) {
+            if ($domain->owner_id !== $user->id && ! $user->isAdmin()) {
                 $this->dispatch('notify', [
                     'type' => 'error',
                     'message' => 'You do not own this domain',
@@ -340,7 +350,7 @@ final class CartComponent extends Component
 
             // Validate domain can be renewed
             $renewalService = app(RenewalService::class);
-            $canRenew = $renewalService->canRenewDomain($domain, auth()->id());
+            $canRenew = $renewalService->canRenewDomain($domain, $user);
 
             if (! $canRenew['can_renew']) {
                 $this->dispatch('notify', [

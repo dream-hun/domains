@@ -95,11 +95,11 @@ final class DomainController extends Controller
         abort_if(Gate::denies('domain_renew'), 403);
         $domain->load(['owner']);
 
-        $users = User::query()->with('roles')->whereHas('roles', function ($query) {
+        $users = User::query()->with('roles')->whereHas('roles', function ($query): void {
             $query->where('roles.id', '!=', 1);
         })->where('id', '!=', $domain->owner_id)->get();
 
-        return view('admin.domains.owner', compact('domain', 'users'));
+        return view('admin.domains.owner', ['domain' => $domain, 'users' => $users]);
     }
 
     public function assignOwner(Domain $domain, AssignDomainOwnerRequest $request): RedirectResponse

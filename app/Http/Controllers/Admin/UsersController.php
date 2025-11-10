@@ -73,7 +73,7 @@ final class UsersController extends Controller
         $roles = $data['roles'] ?? [];
         unset($data['roles']);
 
-        if (! filled($data['password'] ?? null)) {
+        if (blank($data['password'] ?? null)) {
             unset($data['password']);
         }
 
