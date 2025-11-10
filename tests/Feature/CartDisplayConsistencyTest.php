@@ -19,7 +19,7 @@ beforeEach(function (): void {
     ]);
 
     Currency::query()->create([
-        'code' => 'FRW',
+        'code' => 'RWF',
         'name' => 'Rwandan Franc',
         'symbol' => 'FRW',
         'exchange_rate' => 1350.0,
@@ -28,15 +28,15 @@ beforeEach(function (): void {
     ]);
 });
 
-it('shows consistent FRW amounts between header and cart page', function (): void {
+it('shows consistent RWF amounts between header and cart page', function (): void {
     $testAmount = 203755.41; // The exact amount from the screenshot
 
     // Simulate CartTotal formatting (uses Currency::format via formatCurrency)
-    $currencyModel = Currency::query()->where('code', 'FRW')->first();
+    $currencyModel = Currency::query()->where('code', 'RWF')->first();
     $headerFormat = $currencyModel->format($testAmount);
 
     // Simulate CartComponent formatting (uses CurrencyHelper::formatMoney)
-    $cartPageFormat = CurrencyHelper::formatMoney($testAmount, 'FRW');
+    $cartPageFormat = CurrencyHelper::formatMoney($testAmount, 'RWF');
 
     // Both should be identical
     expect($headerFormat)->toBe($cartPageFormat);
@@ -44,7 +44,7 @@ it('shows consistent FRW amounts between header and cart page', function (): voi
     expect($cartPageFormat)->toBe('FRW203,755');
 });
 
-it('rounds fractional FRW amounts consistently', function (): void {
+it('rounds fractional RWF amounts consistently', function (): void {
     $amounts = [
         203755.41 => 'FRW203,755', // Rounds down
         203755.51 => 'FRW203,756', // Rounds up
@@ -53,9 +53,9 @@ it('rounds fractional FRW amounts consistently', function (): void {
     ];
 
     foreach ($amounts as $amount => $expected) {
-        $currencyModel = Currency::query()->where('code', 'FRW')->first();
+        $currencyModel = Currency::query()->where('code', 'RWF')->first();
         $formatted1 = $currencyModel->format($amount);
-        $formatted2 = CurrencyHelper::formatMoney($amount, 'FRW');
+        $formatted2 = CurrencyHelper::formatMoney($amount, 'RWF');
 
         expect($formatted1)->toBe($expected, sprintf('Currency::format(%s) should be %s', $amount, $expected));
         expect($formatted2)->toBe($expected, sprintf('CurrencyHelper::formatMoney(%s) should be %s', $amount, $expected));

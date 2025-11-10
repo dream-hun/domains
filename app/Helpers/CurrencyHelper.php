@@ -82,12 +82,20 @@ final class CurrencyHelper
         $fromCurrency = mb_strtoupper($fromCurrency);
         $targetCurrency = mb_strtoupper($targetCurrency);
 
+        if ($fromCurrency === 'FRW') {
+            $fromCurrency = 'RWF';
+        }
+
+        if ($targetCurrency === 'FRW') {
+            $targetCurrency = 'RWF';
+        }
+
         if ($fromCurrency === $targetCurrency) {
             return $amount;
         }
 
-        // Use CurrencyExchangeHelper for USD/FRW conversions
-        if (self::isUsdFrwPair($fromCurrency, $targetCurrency)) {
+        // Use CurrencyExchangeHelper for USD/RWF conversions
+        if (self::isUsdRwfPair($fromCurrency, $targetCurrency)) {
             try {
                 $exchangeHelper = app(CurrencyExchangeHelper::class);
                 $money = $exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
@@ -122,8 +130,12 @@ final class CurrencyHelper
     {
         $currency = mb_strtoupper($currency);
 
-        // Use CurrencyExchangeHelper formatting for USD/FRW
-        if (in_array($currency, ['USD', 'FRW'], true)) {
+        if ($currency === 'FRW') {
+            $currency = 'RWF';
+        }
+
+        // Use CurrencyExchangeHelper formatting for USD/RWF
+        if (in_array($currency, ['USD', 'RWF'], true)) {
             try {
                 $exchangeHelper = app(CurrencyExchangeHelper::class);
                 $money = $exchangeHelper->convertWithAmount($currency, $currency, $amount);
@@ -159,6 +171,7 @@ final class CurrencyHelper
         // Common currency symbols for better performance
         $commonSymbols = [
             'USD' => '$',
+            'FRW' => 'FRW',
             'RWF' => 'FRW',
 
         ];
@@ -193,14 +206,22 @@ final class CurrencyHelper
     }
 
     /**
-     * Check if currency pair is USD/FRW
+     * Check if currency pair is USD/RWF
      */
-    private static function isUsdFrwPair(string $from, string $to): bool
+    private static function isUsdRwfPair(string $from, string $to): bool
     {
+        if ($from === 'FRW') {
+            $from = 'RWF';
+        }
+
+        if ($to === 'FRW') {
+            $to = 'RWF';
+        }
+
         $pair = [$from, $to];
         sort($pair);
 
-        return $pair === ['FRW', 'USD'];
+        return $pair === ['RWF', 'USD'];
     }
 
     /**
@@ -210,10 +231,14 @@ final class CurrencyHelper
     {
         // Currencies that don't use decimal places
         $noDecimalCurrencies = [
-            'FRW', // Rwandan Franc
+            'RWF', // Rwandan Franc
             'JPY', // Japanese Yen
             'KRW', // South Korean Won
         ];
+
+        if ($currency === 'FRW') {
+            $currency = 'RWF';
+        }
 
         if (in_array($currency, $noDecimalCurrencies, true)) {
             return 0;

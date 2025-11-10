@@ -34,14 +34,14 @@ final class DomainFactory extends Factory
 
     public function rwDomain(): static
     {
-        return $this->state(fn(array $attributes): array => [
+        return $this->state(fn (array $attributes): array => [
             'name' => fake()->unique()->domainWord().'.rw',
         ])->for(DomainPrice::factory()->local(), 'domainPrice');
     }
 
     public function comDomain(): static
     {
-        return $this->state(fn(array $attributes): array => [
+        return $this->state(fn (array $attributes): array => [
             'name' => fake()->unique()->domainWord().'.com',
         ])->for(DomainPrice::factory()->international(), 'domainPrice');
     }

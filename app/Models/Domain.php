@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\DomainStatus;
 use App\Models\Scopes\DomainScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -81,6 +82,7 @@ final class Domain extends Model
             'expires_at' => 'datetime',
             'last_renewed_at' => 'datetime',
             'is_locked' => 'boolean',
+            'status' => DomainStatus::class,
         ];
     }
 }

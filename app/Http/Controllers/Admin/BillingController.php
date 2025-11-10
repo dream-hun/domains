@@ -17,7 +17,10 @@ final class BillingController extends Controller
     {
         $user = Auth::user();
 
-        $orders = Order::with(['orderItems', 'user'])
+        $user->loadMissing('roles');
+
+        $orders = Order::query()
+            ->with(['orderItems', 'user.roles'])
             ->unless($user->isAdmin(), function ($query) use ($user): void {
                 $query->where('user_id', $user->id);
             })->latest()
@@ -30,7 +33,8 @@ final class BillingController extends Controller
     {
         $user = Auth::user();
 
-        // Check authorization: either admin or order owner
+        $user->loadMissing('roles');
+
         abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
         $order->load(['orderItems', 'user']);
@@ -41,6 +45,8 @@ final class BillingController extends Controller
     public function invoice(Order $order): View
     {
         $user = Auth::user();
+
+        $user->loadMissing('roles');
 
         // Check authorization: either admin or order owner
         abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
@@ -53,6 +59,8 @@ final class BillingController extends Controller
     public function downloadInvoice(Order $order): Response
     {
         $user = Auth::user();
+
+        $user->loadMissing('roles');
 
         // Check authorization: either admin or order owner
         abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
@@ -68,7 +76,8 @@ final class BillingController extends Controller
     {
         $user = Auth::user();
 
-        // Check authorization: either admin or order owner
+        $user->loadMissing('roles');
+
         abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
         $order->load(['orderItems', 'user']);

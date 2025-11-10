@@ -107,6 +107,23 @@ it('processes orders with amount meeting Stripe minimum in original currency', f
     expect($result)->toHaveKey('success', false);
 });
 
+it('builds payment success and cancel URLs for registration orders', function (): void {
+    $user = User::factory()->create();
+    $order = Order::factory()->for($user)->create([
+        'type' => 'registration',
+    ]);
+
+    $successUrlMethod = new ReflectionMethod($this->paymentService, 'resolveStripeSuccessUrl');
+
+    $cancelUrlMethod = new ReflectionMethod($this->paymentService, 'resolveStripeCancelUrl');
+
+    $successUrl = $successUrlMethod->invoke($this->paymentService, $order);
+    $cancelUrl = $cancelUrlMethod->invoke($this->paymentService, $order);
+
+    expect($successUrl)->toBe(route('payment.success', ['order' => $order]))
+        ->and($cancelUrl)->toBe(route('payment.cancel', ['order' => $order]));
+});
+
 // Note: The following tests would require extensive Stripe API mocking which is complex
 // without proper mocking libraries for non-facade classes. In a real-world scenario,
 // you would use Stripe's test mode or create integration tests instead of unit tests

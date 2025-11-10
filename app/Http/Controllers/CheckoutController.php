@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Services\TransactionLogger;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
+use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -255,6 +256,47 @@ final class CheckoutController extends Controller
         }
 
         return view('checkout.cancel');
+    }
+
+    /**
+     * Redirect user to existing Stripe checkout session.
+     */
+    public function stripeRedirect(string $orderNumber): RedirectResponse
+    {
+        $order = Order::query()->where('order_number', $orderNumber)->firstOrFail();
+
+        abort_if($order->user_id !== auth()->id(), 403);
+
+        if ($order->stripe_session_id) {
+            $session = Session::retrieve($order->stripe_session_id);
+
+            return redirect()->away($session->url);
+        }
+
+        Log::warning('Stripe redirect attempted without session', [
+            'order_number' => $orderNumber,
+            'user_id' => auth()->id(),
+        ]);
+
+        return to_route('checkout.wizard')->with('error', 'Unable to locate the payment session. Please restart checkout.');
+    }
+
+    /**
+     * Stripe success callback wrapper to retain legacy route.
+     */
+    public function stripeSuccess(Request $request, string $orderNumber): View|RedirectResponse|ViewContract
+    {
+        return $this->success($request, $orderNumber);
+    }
+
+    /**
+     * Stripe cancel callback wrapper to retain legacy route.
+     */
+    public function stripeCancel(Request $request, string $orderNumber): View|RedirectResponse
+    {
+        $request->query->set('order', $orderNumber);
+
+        return $this->cancel($request);
     }
 
     /**

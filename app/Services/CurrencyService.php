@@ -53,6 +53,8 @@ final readonly class CurrencyService
      */
     public function getCurrency(string $code): ?Currency
     {
+        $code = $this->normalizeCurrencyCode($code);
+
         if (! $this->isValidCurrencyCode($code)) {
             return null;
         }
@@ -70,7 +72,7 @@ final readonly class CurrencyService
 
     /**
      * Convert amount between currencies
-     * Uses API-based conversion for USD/FRW pairs, database for others
+     * Uses API-based conversion for USD/RWF pairs, database for others
      *
      * @throws Exception
      */
@@ -78,11 +80,14 @@ final readonly class CurrencyService
     {
         throw_if($amount < 0, Exception::class, 'Amount cannot be negative');
 
+        $fromCurrency = $this->normalizeCurrencyCode($fromCurrency);
+        $targetCurrency = $this->normalizeCurrencyCode($targetCurrency);
+
         if ($fromCurrency === $targetCurrency) {
             return $amount;
         }
 
-        if ($this->isUsdFrwPair($fromCurrency, $targetCurrency)) {
+        if ($this->isUsdRwfPair($fromCurrency, $targetCurrency)) {
             try {
                 $money = $this->exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
 
@@ -108,6 +113,8 @@ final readonly class CurrencyService
      */
     public function format(float $amount, string $currencyCode): string
     {
+        $currencyCode = $this->normalizeCurrencyCode($currencyCode);
+
         $currency = $this->getCurrency($currencyCode);
 
         if (! $currency instanceof Currency) {
@@ -202,7 +209,10 @@ final readonly class CurrencyService
     {
         throw_if($amount < 0, Exception::class, 'Amount cannot be negative');
 
-        if ($this->isUsdFrwPair($from, $to)) {
+        $from = $this->normalizeCurrencyCode($from);
+        $to = $this->normalizeCurrencyCode($to);
+
+        if ($this->isUsdRwfPair($from, $to)) {
             return $this->exchangeHelper->convertWithAmount($from, $to, $amount);
         }
 
@@ -220,8 +230,10 @@ final readonly class CurrencyService
      */
     public function formatAsMoney(float $amount, string $currencyCode): string
     {
-        // Use CurrencyExchangeHelper formatting for USD/FRW
-        if (in_array($currencyCode, ['USD', 'FRW'], true)) {
+        $currencyCode = $this->normalizeCurrencyCode($currencyCode);
+
+        // Use CurrencyExchangeHelper formatting for USD/RWF
+        if (in_array($currencyCode, ['USD', 'RWF'], true)) {
             try {
                 $money = $this->exchangeHelper->convertWithAmount($currencyCode, $currencyCode, $amount);
 
@@ -235,14 +247,17 @@ final readonly class CurrencyService
     }
 
     /**
-     * Check if currency pair is USD/FRW
+     * Check if currency pair is USD/RWF
      */
-    private function isUsdFrwPair(string $from, string $to): bool
+    private function isUsdRwfPair(string $from, string $to): bool
     {
+        $from = $this->normalizeCurrencyCode($from);
+        $to = $this->normalizeCurrencyCode($to);
+
         $pair = [$from, $to];
         sort($pair);
 
-        return $pair === ['FRW', 'USD'];
+        return $pair === ['RWF', 'USD'];
     }
 
     /**
@@ -251,5 +266,12 @@ final readonly class CurrencyService
     private function isValidCurrencyCode(string $code): bool
     {
         return preg_match('/^[A-Z]{3}$/', $code) === 1;
+    }
+
+    private function normalizeCurrencyCode(string $code): string
+    {
+        $code = mb_strtoupper($code);
+
+        return $code === 'FRW' ? 'RWF' : $code;
     }
 }

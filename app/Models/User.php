@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Models\Role;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -78,7 +77,7 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function isAdmin(): bool
     {
         if ($this->relationLoaded('roles')) {
-            return $this->roles->contains(fn(Role $role): bool => (int) $role->id === 1);
+            return $this->roles->contains(fn (Role $role): bool => (int) $role->id === 1);
         }
 
         return $this->roles()->where('roles.id', 1)->exists();

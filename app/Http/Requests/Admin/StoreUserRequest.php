@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 
 final class StoreUserRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return Gate::allows('user_create');
     }
@@ -17,23 +17,36 @@ final class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => [
-                'string',
+            'first_name' => [
                 'required',
+                'string',
+                'max:255',
+            ],
+            'last_name' => [
+                'required',
+                'string',
+                'max:255',
             ],
             'email' => [
                 'required',
-                'unique:users',
+                'string',
+                'email',
+                'max:255',
+                'unique:users,email',
             ],
             'password' => [
                 'required',
-            ],
-            'roles.*' => [
-                'integer',
+                'string',
+                'min:8',
             ],
             'roles' => [
                 'required',
                 'array',
+                'min:1',
+            ],
+            'roles.*' => [
+                'integer',
+                'exists:roles,id',
             ],
         ];
     }

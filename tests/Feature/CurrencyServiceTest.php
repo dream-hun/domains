@@ -25,7 +25,7 @@ beforeEach(function (): void {
     ]);
 
     Currency::query()->create([
-        'code' => 'FRW',
+        'code' => 'RWF',
         'name' => 'Rwandan Franc',
         'symbol' => 'FRW',
         'exchange_rate' => 1350.0,
@@ -43,9 +43,9 @@ beforeEach(function (): void {
     ]);
 });
 
-it('uses CurrencyExchangeHelper for USD to FRW conversion', function (): void {
+it('uses CurrencyExchangeHelper for USD to RWF conversion', function (): void {
     Http::fake([
-        '*/pair/USD/FRW' => Http::response([
+        '*/pair/USD/RWF' => Http::response([
             'result' => 'success',
             'conversion_rate' => 1350.0,
             'time_last_update_utc' => 'Fri, 27 Mar 2020 00:00:00 +0000',
@@ -54,14 +54,14 @@ it('uses CurrencyExchangeHelper for USD to FRW conversion', function (): void {
     ]);
 
     $service = app(CurrencyService::class);
-    $result = $service->convert(100.0, 'USD', 'FRW');
+    $result = $service->convert(100.0, 'USD', 'RWF');
 
     expect($result)->toBe(135000.0);
 });
 
-it('uses CurrencyExchangeHelper for FRW to USD conversion', function (): void {
+it('uses CurrencyExchangeHelper for RWF to USD conversion', function (): void {
     Http::fake([
-        '*/pair/FRW/USD' => Http::response([
+        '*/pair/RWF/USD' => Http::response([
             'result' => 'success',
             'conversion_rate' => 0.00074074,
             'time_last_update_utc' => 'Fri, 27 Mar 2020 00:00:00 +0000',
@@ -70,34 +70,34 @@ it('uses CurrencyExchangeHelper for FRW to USD conversion', function (): void {
     ]);
 
     $service = app(CurrencyService::class);
-    $result = $service->convert(100000.0, 'FRW', 'USD');
+    $result = $service->convert(100000.0, 'RWF', 'USD');
 
     expect($result)->toBeGreaterThan(0);
     expect($result)->toBeLessThan(100);
 });
 
-it('uses database conversion for non-USD/FRW pairs', function (): void {
+it('uses database conversion for non-USD/RWF pairs', function (): void {
     $service = app(CurrencyService::class);
     $result = $service->convert(100.0, 'USD', 'EUR');
 
     expect($result)->toBe(92.0); // 100 * 0.92
 });
 
-it('falls back to database when API fails for USD/FRW', function (): void {
+it('falls back to database when API fails for USD/RWF', function (): void {
     Http::fake([
-        '*/pair/USD/FRW' => Http::response(null, 500),
+        '*/pair/USD/RWF' => Http::response(null, 500),
     ]);
 
     $service = app(CurrencyService::class);
-    $result = $service->convert(100.0, 'USD', 'FRW');
+    $result = $service->convert(100.0, 'USD', 'RWF');
 
     // Should fall back to database rate
     expect($result)->toBe(135000.0);
 });
 
-it('returns Money object from convertToMoney for USD/FRW', function (): void {
+it('returns Money object from convertToMoney for USD/RWF', function (): void {
     Http::fake([
-        '*/pair/USD/FRW' => Http::response([
+        '*/pair/USD/RWF' => Http::response([
             'result' => 'success',
             'conversion_rate' => 1350.0,
             'time_last_update_utc' => 'Fri, 27 Mar 2020 00:00:00 +0000',
@@ -106,13 +106,13 @@ it('returns Money object from convertToMoney for USD/FRW', function (): void {
     ]);
 
     $service = app(CurrencyService::class);
-    $money = $service->convertToMoney(100.0, 'USD', 'FRW');
+    $money = $service->convertToMoney(100.0, 'USD', 'RWF');
 
     expect($money)->toBeInstanceOf(Money::class);
-    expect($money->getCurrency()->getCode())->toBe('FRW');
+    expect($money->getCurrency()->getCode())->toBe('RWF');
 });
 
-it('returns Money object from convertToMoney for non-USD/FRW pairs', function (): void {
+it('returns Money object from convertToMoney for non-USD/RWF pairs', function (): void {
     $service = app(CurrencyService::class);
     $money = $service->convertToMoney(100.0, 'USD', 'EUR');
 
@@ -138,9 +138,9 @@ it('formats as Money for USD', function (): void {
     expect($formatted)->toContain('100.50');
 });
 
-it('formats as Money for FRW', function (): void {
+it('formats as Money for RWF', function (): void {
     Http::fake([
-        '*/pair/FRW/FRW' => Http::response([
+        '*/pair/RWF/RWF' => Http::response([
             'result' => 'success',
             'conversion_rate' => 1.0,
             'time_last_update_utc' => 'Fri, 27 Mar 2020 00:00:00 +0000',
@@ -149,7 +149,7 @@ it('formats as Money for FRW', function (): void {
     ]);
 
     $service = app(CurrencyService::class);
-    $formatted = $service->formatAsMoney(1350.0, 'FRW');
+    $formatted = $service->formatAsMoney(1350.0, 'RWF');
 
     expect($formatted)->toContain('FRW');
     expect($formatted)->toContain('1,350');
@@ -206,7 +206,7 @@ it('gets all active currencies', function (): void {
     $currencies = $service->getActiveCurrencies();
 
     expect($currencies)->toHaveCount(3);
-    expect($currencies->pluck('code')->toArray())->toContain('USD', 'FRW', 'EUR');
+    expect($currencies->pluck('code')->toArray())->toContain('USD', 'RWF', 'EUR');
 });
 
 it('formats currency with symbol', function (): void {

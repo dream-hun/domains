@@ -30,6 +30,7 @@ final readonly class BillingService
             $cartData = $this->getPreparedCartData($preparedCartData);
 
             $items = $cartData['items'];
+            $orderType = $this->determineOrderType($items);
             $subtotal = $cartData['subtotal'];
             $total = $cartData['total'];
             $currency = $cartData['currency'];
@@ -53,9 +54,12 @@ final readonly class BillingService
             $order = Order::query()->create([
                 'user_id' => $user->id,
                 'order_number' => Order::generateOrderNumber(),
+                'type' => $orderType,
                 'status' => 'pending',
                 'payment_method' => $checkoutData['payment_method'] ?? 'stripe',
                 'payment_status' => 'pending',
+                'subtotal' => $subtotal,
+                'tax' => 0,
                 'total_amount' => $total,
                 'currency' => $currency,
                 'coupon_code' => $couponCode,
@@ -169,5 +173,32 @@ final readonly class BillingService
             Log::warning('Cart data is missing currency, defaulting to USD');
             $cartData['currency'] = 'USD';
         }
+    }
+
+    private function determineOrderType(array $items): string
+    {
+        $hasRegistration = false;
+        $hasRenewal = false;
+        $hasTransfer = false;
+
+        foreach ($items as $item) {
+            $itemType = $item['domain_type'] ?? 'registration';
+
+            match ($itemType) {
+                'renewal' => $hasRenewal = true,
+                'transfer' => $hasTransfer = true,
+                default => $hasRegistration = true,
+            };
+        }
+
+        if ($hasRenewal && ! $hasRegistration && ! $hasTransfer) {
+            return 'renewal';
+        }
+
+        if ($hasTransfer && ! $hasRegistration && ! $hasRenewal) {
+            return 'transfer';
+        }
+
+        return 'registration';
     }
 }

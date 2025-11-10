@@ -98,6 +98,7 @@ it('creates order from cart using billing service', function (): void {
 
     expect($order)->toBeInstanceOf(Order::class);
     expect($order->user_id)->toBe($this->user->id);
+    expect($order->type)->toBe('registration');
     expect($order->payment_method)->toBe('stripe');
     expect($order->total_amount)->toBe('25.98');
     expect($order->status)->toBe('pending');

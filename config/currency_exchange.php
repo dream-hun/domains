@@ -10,7 +10,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | List of currency codes supported by the currency exchange helper.
-    | Currently limited to USD and FRW (Rwandan Franc) pair conversions.
+    | Currently limited to USD and RWF (Rwandan Franc) pair conversions.
     |
     */
 
@@ -19,7 +19,7 @@ return [
             'name' => 'US Dollar',
             'symbol' => '$',
         ],
-        'FRW' => [
+        'RWF' => [
             'name' => 'Rwandan Franc',
             'symbol' => 'FRW',
         ],
@@ -52,8 +52,8 @@ return [
     */
 
     'fallback_rates' => [
-        'USD_TO_FRW' => env('FALLBACK_USD_TO_FRW', 1350.0),
-        'FRW_TO_USD' => env('FALLBACK_FRW_TO_USD', 0.00074074),
+        'USD_TO_RWF' => env('FALLBACK_USD_TO_RWF', env('FALLBACK_USD_TO_FRW', 1350.0)),
+        'RWF_TO_USD' => env('FALLBACK_RWF_TO_USD', env('FALLBACK_FRW_TO_USD', 0.00074074)),
     ],
 
     /*

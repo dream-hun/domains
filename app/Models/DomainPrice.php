@@ -108,11 +108,6 @@ final class DomainPrice extends Model
         return 'uuid';
     }
 
-    protected function setDomainIdAttribute(int|string|null $value): void
-    {
-        $this->pendingDomainId = $value !== null ? (int) $value : null;
-    }
-
     protected static function booted(): void
     {
         self::created(function (DomainPrice $domainPrice): void {
@@ -124,5 +119,10 @@ final class DomainPrice extends Model
                 ->whereKey($domainPrice->pendingDomainId)
                 ->update(['domain_price_id' => $domainPrice->id]);
         });
+    }
+
+    protected function setDomainIdAttribute(int|string|null $value): void
+    {
+        $this->pendingDomainId = $value !== null ? (int) $value : null;
     }
 }

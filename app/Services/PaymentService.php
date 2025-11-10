@@ -134,6 +134,9 @@ final readonly class PaymentService
             $processingCurrency
         );
 
+        $successUrl = $this->resolveStripeSuccessUrl($order);
+        $cancelUrl = $this->resolveStripeCancelUrl($order);
+
         $lineItems = [
             [
                 'price_data' => [
@@ -153,8 +156,12 @@ final readonly class PaymentService
             'payment_method_types' => ['card'],
             'line_items' => $lineItems,
             'mode' => 'payment',
-            'success_url' => route('checkout.stripe.success', ['order' => $order->order_number]).'?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('checkout.stripe.cancel', ['order' => $order->order_number]),
+            'success_url' => sprintf(
+                '%s%ssession_id={CHECKOUT_SESSION_ID}',
+                $successUrl,
+                str_contains($successUrl, '?') ? '&' : '?'
+            ),
+            'cancel_url' => $cancelUrl,
             'metadata' => [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
@@ -169,6 +176,24 @@ final readonly class PaymentService
         $order->update(['stripe_session_id' => $session->id]);
 
         return $session;
+    }
+
+    private function resolveStripeSuccessUrl(Order $order): string
+    {
+        if ($order->type === 'renewal') {
+            return route('checkout.stripe.success', ['order' => $order->order_number]);
+        }
+
+        return route('payment.success', ['order' => $order]);
+    }
+
+    private function resolveStripeCancelUrl(Order $order): string
+    {
+        if ($order->type === 'renewal') {
+            return route('checkout.stripe.cancel', ['order' => $order->order_number]);
+        }
+
+        return route('payment.cancel', ['order' => $order]);
     }
 
     /**
@@ -275,7 +300,7 @@ final readonly class PaymentService
 
     private function markPaymentFailed(?Payment $payment, string $message, int|string|null $code = null): void
     {
-        if (!$payment instanceof Payment) {
+        if (! $payment instanceof Payment) {
             Log::warning('Attempted to mark payment as failed but no payment record was available', [
                 'message' => $message,
                 'code' => $code,

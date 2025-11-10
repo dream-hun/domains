@@ -79,7 +79,7 @@ final class AppServiceProvider extends ServiceProvider
                 echo format_money(\$__money);
             ?>");
 
-        // @usd_to_frw($amount) - Quick USD to FRW conversion
+        // @usd_to_frw($amount) - Quick USD to RWF conversion (legacy directive name)
         Blade::directive('usd_to_frw', fn (string $expression): string => "<?php
                 try {
                     \$__money = usd_to_frw({$expression});
@@ -89,7 +89,7 @@ final class AppServiceProvider extends ServiceProvider
                 }
             ?>");
 
-        // @frw_to_usd($amount) - Quick FRW to USD conversion
+        // @frw_to_usd($amount) - Quick RWF to USD conversion (legacy directive name)
         Blade::directive('frw_to_usd', fn (string $expression): string => "<?php
                 try {
                     \$__money = frw_to_usd({$expression});

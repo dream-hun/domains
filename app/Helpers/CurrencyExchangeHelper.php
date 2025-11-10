@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 final readonly class CurrencyExchangeHelper
 {
-    private const SUPPORTED_CURRENCIES = ['USD', 'FRW'];
+    private const SUPPORTED_CURRENCIES = ['USD', 'RWF'];
 
     public function __construct(
         private ExchangeRateClient $client
@@ -26,6 +26,9 @@ final readonly class CurrencyExchangeHelper
      */
     public function getExchangeRate(string $from, string $to): float
     {
+        $from = $this->normalizeCurrency($from);
+        $to = $this->normalizeCurrency($to);
+
         $this->validateCurrencies($from, $to);
 
         if ($from === $to) {
@@ -77,28 +80,28 @@ final readonly class CurrencyExchangeHelper
     }
 
     /**
-     * Convert USD to FRW
+     * Convert USD to RWF
      */
-    public function convertUsdToFrw(float $amount): Money
+    public function convertUsdToRwf(float $amount): Money
     {
         $this->validateAmount($amount);
 
-        $rate = $this->getExchangeRate('USD', 'FRW');
+        $rate = $this->getExchangeRate('USD', 'RWF');
         $convertedAmount = $amount * $rate;
 
         // Money expects amount in smallest unit (minor units)
-        // For FRW, 1 FRW = 1 minor unit (no cents)
-        return Money::FRW((int) round($convertedAmount * 100));
+        // For RWF, 1 RWF = 1 minor unit (no cents)
+        return Money::RWF((int) round($convertedAmount * 100));
     }
 
     /**
-     * Convert FRW to USD
+     * Convert RWF to USD
      */
-    public function convertFrwToUsd(float $amount): Money
+    public function convertRwfToUsd(float $amount): Money
     {
         $this->validateAmount($amount);
 
-        $rate = $this->getExchangeRate('FRW', 'USD');
+        $rate = $this->getExchangeRate('RWF', 'USD');
         $convertedAmount = $amount * $rate;
 
         // Money expects amount in smallest unit (cents for USD)
@@ -112,6 +115,9 @@ final readonly class CurrencyExchangeHelper
      */
     public function convertWithAmount(string $from, string $to, float $amount): Money
     {
+        $from = $this->normalizeCurrency($from);
+        $to = $this->normalizeCurrency($to);
+
         $this->validateCurrencies($from, $to);
         $this->validateAmount($amount);
 
@@ -130,7 +136,7 @@ final readonly class CurrencyExchangeHelper
      */
     public function formatMoney(Money $money): string
     {
-        $currency = $money->getCurrency()->getCode();
+        $currency = $this->normalizeCurrency($money->getCurrency()->getCode());
         $amount = $money->getAmount() / 100;
 
         $config = config('currency_exchange.supported_currencies', []);
@@ -146,9 +152,9 @@ final readonly class CurrencyExchangeHelper
             return sprintf('%s%s', $symbol, number_format($amount, $decimals));
         }
 
-        // FRW typically doesn't use decimal places
-        if ($currency === 'FRW') {
-            // Always round to whole number for FRW
+        // RWF typically doesn't use decimal places
+        if ($currency === 'RWF') {
+            // Always round to whole number for RWF
             $amount = round($amount, 0);
 
             return sprintf('%s%s', $symbol, number_format($amount, 0));
@@ -167,6 +173,9 @@ final readonly class CurrencyExchangeHelper
      */
     public function getRateMetadata(string $from, string $to): array
     {
+        $from = $this->normalizeCurrency($from);
+        $to = $this->normalizeCurrency($to);
+
         $this->validateCurrencies($from, $to);
 
         $metadataKey = $this->getMetadataKey($from, $to);
@@ -192,6 +201,9 @@ final readonly class CurrencyExchangeHelper
     public function clearCache(?string $from = null, ?string $to = null): void
     {
         if ($from !== null && $to !== null) {
+            $from = $this->normalizeCurrency($from);
+            $to = $this->normalizeCurrency($to);
+
             Cache::forget($this->getCacheKey($from, $to));
             Cache::forget($this->getMetadataKey($from, $to));
 
@@ -218,7 +230,9 @@ final readonly class CurrencyExchangeHelper
     private function validateCurrencies(string ...$currencies): void
     {
         foreach ($currencies as $currency) {
-            if (! in_array($currency, self::SUPPORTED_CURRENCIES, true)) {
+            $normalized = $this->normalizeCurrency($currency);
+
+            if (! in_array($normalized, self::SUPPORTED_CURRENCIES, true)) {
                 throw CurrencyExchangeException::unsupportedCurrency($currency);
             }
         }
@@ -258,6 +272,9 @@ final readonly class CurrencyExchangeHelper
      */
     private function useFallbackRate(string $from, string $to): float
     {
+        $from = $this->normalizeCurrency($from);
+        $to = $this->normalizeCurrency($to);
+
         if (! config('currency_exchange.error_handling.use_fallback_on_error', true)) {
             throw CurrencyExchangeException::apiError('fallback_disabled', 'API failed and fallback is disabled');
         }
@@ -285,6 +302,9 @@ final readonly class CurrencyExchangeHelper
      */
     private function cacheRate(string $from, string $to, float $rate, array $response = [], bool $isFallback = false): void
     {
+        $from = $this->normalizeCurrency($from);
+        $to = $this->normalizeCurrency($to);
+
         if (! config('currency_exchange.cache.enabled', true)) {
             return;
         }
@@ -314,6 +334,9 @@ final readonly class CurrencyExchangeHelper
      */
     private function getCacheKey(string $from, string $to): string
     {
+        $from = $this->normalizeCurrency($from);
+        $to = $this->normalizeCurrency($to);
+
         $prefix = config('currency_exchange.cache.prefix', 'exchange_rate');
 
         return sprintf('%s:%s:%s', $prefix, $from, $to);
@@ -324,6 +347,9 @@ final readonly class CurrencyExchangeHelper
      */
     private function getMetadataKey(string $from, string $to): string
     {
+        $from = $this->normalizeCurrency($from);
+        $to = $this->normalizeCurrency($to);
+
         $prefix = config('currency_exchange.cache.prefix', 'exchange_rate');
 
         return sprintf('%s_metadata:%s:%s', $prefix, $from, $to);
@@ -334,13 +360,22 @@ final readonly class CurrencyExchangeHelper
      */
     private function createMoney(float $amount, string $currency): Money
     {
+        $currency = $this->normalizeCurrency($currency);
+
         // Convert to minor units (cents/smallest unit)
         $minorUnits = (int) round($amount * 100);
 
         return match ($currency) {
             'USD' => Money::USD($minorUnits),
-            'FRW' => Money::FRW($minorUnits),
+            'RWF' => Money::RWF($minorUnits),
             default => throw CurrencyExchangeException::unsupportedCurrency($currency),
         };
+    }
+
+    private function normalizeCurrency(string $currency): string
+    {
+        $currency = mb_strtoupper($currency);
+
+        return $currency === 'FRW' ? 'RWF' : $currency;
     }
 }

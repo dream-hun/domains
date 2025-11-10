@@ -121,7 +121,7 @@ final class Currency extends Model
     {
         // Currencies that don't use decimal places - ALWAYS 0 decimals
         $noDecimalCurrencies = [
-            'FRW', // Rwandan Franc
+            'RWF', // Rwandan Franc
             'RWF', // Rwandan Franc (alternative code)
             'JPY', // Japanese Yen
             'KRW', // South Korean Won

@@ -249,7 +249,7 @@ final readonly class DomainSearchHelper
                 ->pluck('tld')->map(fn ($tld): string => mb_ltrim($tld, '.'))
                 ->all();
 
-            $domainsToSuggest = array_map(fn ($tld): string => $domainBase.'.'.$tld, $suggestionTlds);
+            $domainsToSuggest = array_map(fn (string $tld): string => $domainBase.'.'.$tld, $suggestionTlds);
 
             if ($domainsToSuggest !== []) {
                 $suggestionResults = $this->internationalDomainService->checkAvailability($domainsToSuggest);

@@ -153,8 +153,8 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
             // Sort available domains by price (lowest first)
             usort(
                 $available,
-                static fn(array $a, array $b): int => ($a['price'] ? (float) preg_replace('/[^0-9.]/', '', (string) $a['price']) : PHP_FLOAT_MAX)
-                    <=> ($b['price'] ? (float) preg_replace('/[^0-9.]/', '', (string) $b['price']) : PHP_FLOAT_MAX)
+                static fn (array $a, array $b): int => ($a['price'] ? (float) preg_replace('/[^0-9.]/', '', $a['price']) : PHP_FLOAT_MAX)
+                    <=> ($b['price'] ? (float) preg_replace('/[^0-9.]/', '', $b['price']) : PHP_FLOAT_MAX)
             );
 
             return array_merge($available, $unavailable);

@@ -10,7 +10,7 @@ final class CurrencyExchangeException extends Exception
 {
     public static function unsupportedCurrency(string $currency): self
     {
-        return new self(sprintf("Currency code '%s' is not supported. Only USD and FRW are supported.", $currency));
+        return new self(sprintf("Currency code '%s' is not supported. Only USD and RWF are supported.", $currency));
     }
 
     public static function invalidAmount(float $amount): self

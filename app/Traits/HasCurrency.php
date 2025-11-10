@@ -44,7 +44,7 @@ trait HasCurrency
     /**
      * Convert amount from USD (database storage) to user's selected currency
      * All prices in the database are stored in USD.
-     * This method converts them to the user's preferred currency (e.g., FRW for Rwandan users)
+     * This method converts them to the user's preferred currency (e.g., RWF for Rwandan users)
      */
     protected function convertFromUSD(float $amountInUSD): float
     {

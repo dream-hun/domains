@@ -19,7 +19,7 @@ beforeEach(function (): void {
     ]);
 
     Currency::query()->create([
-        'code' => 'FRW',
+        'code' => 'RWF',
         'name' => 'Rwandan Franc',
         'symbol' => 'FRW',
         'exchange_rate' => 1350.0,
@@ -42,15 +42,15 @@ it('formats dollar amounts with cents using 2 decimals', function (): void {
     expect($formatted)->toBe('$99.50');
 });
 
-it('formats FRW amounts without decimals', function (): void {
-    $currency = Currency::query()->where('code', 'FRW')->first();
+it('formats RWF amounts without decimals', function (): void {
+    $currency = Currency::query()->where('code', 'RWF')->first();
     $formatted = $currency->format(135000.0);
 
     expect($formatted)->toBe('FRW135,000');
 });
 
-it('formats FRW amounts even with fractional parts', function (): void {
-    $currency = Currency::query()->where('code', 'FRW')->first();
+it('formats RWF amounts even with fractional parts', function (): void {
+    $currency = Currency::query()->where('code', 'RWF')->first();
     $formatted = $currency->format(135000.75);
 
     expect($formatted)->toBe('FRW135,001'); // Rounds to whole number
@@ -70,8 +70,8 @@ it('formats zero amounts without decimals', function (): void {
     expect($formatted)->toBe('$0');
 });
 
-it('rounds FRW amounts with fractional cents consistently', function (): void {
-    $currency = Currency::query()->where('code', 'FRW')->first();
+it('rounds RWF amounts with fractional cents consistently', function (): void {
+    $currency = Currency::query()->where('code', 'RWF')->first();
 
     // Test the exact scenario from the cart issue
     $formatted1 = $currency->format(203755.41);
@@ -83,7 +83,7 @@ it('rounds FRW amounts with fractional cents consistently', function (): void {
 });
 
 it('ensures consistent rounding across multiple calls', function (): void {
-    $currency = Currency::query()->where('code', 'FRW')->first();
+    $currency = Currency::query()->where('code', 'RWF')->first();
 
     // Multiple calls with the same fractional value should be consistent
     $formatted1 = $currency->format(203755.41);

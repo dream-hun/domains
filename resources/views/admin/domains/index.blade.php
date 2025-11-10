@@ -58,7 +58,10 @@
                                     {{ $domain->name ?? '' }}
                                 </td>
                                 <td>
-                                    {{ $domain->status ?? '' }}
+                                    <span class="btn btn-sm {{ $domain->status->color() }}">
+                                        <i class="bi bi-{{ $domain->status->icon() }}"></i>
+                                        {{ $domain->status->label() }}
+                                    </span>
                                 </td>
                                 <td>
                                     {{ $domain->expiresAt() ?? '' }}
@@ -92,6 +95,14 @@
                                                     </button>
                                                 </form>
                                             @endif
+                                        @endcan
+                                        @can('domain_edit')
+                                            
+                                                <a href="{{ route('admin.domains.assign', $domain->uuid) }}"
+                                                class="btn btn-sm btn-primary">
+                                                <i class="bi bi-person"></i> Assign Owner
+                                            </a>
+                                            
                                         @endcan
                                     </div>
                                 </td>

@@ -7,13 +7,12 @@ namespace App\Http\Controllers\Admin;
 use App\Actions\Domains\GetDomainInfoAction;
 use App\Actions\Domains\ListDomainAction;
 use App\Actions\Domains\ReactivateDomainAction;
-use App\Actions\Domains\RenewDomainAction;
 use App\Actions\Domains\ToggleDomainLockAction;
 use App\Actions\Domains\TransferDomainAction;
 use App\Actions\Domains\UpdateDomainContactsAction;
 use App\Actions\Domains\UpdateNameserversAction;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\DomainRenewalRequest;
+use App\Http\Requests\Admin\AssignDomainOwnerRequest;
 use App\Http\Requests\Admin\DomainTransferRequest;
 use App\Http\Requests\Admin\ReactivateDomainRequest;
 use App\Http\Requests\Admin\UpdateDomainContactsRequest;
@@ -21,7 +20,7 @@ use App\Http\Requests\Admin\UpdateNameserversRequest;
 use App\Models\Contact;
 use App\Models\Country;
 use App\Models\Domain;
-use App\Models\DomainPrice;
+use App\Models\User;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -91,38 +90,25 @@ final class DomainController extends Controller
             ->withInput();
     }
 
-    public function showRenewForm(Domain $domain): View
+    public function ownerShipForm(Domain $domain): View
     {
         abort_if(Gate::denies('domain_renew'), 403);
-        $tld = $this->extractTld($domain->name);
-        $domainPrice = DomainPrice::query()->where('tld', $tld)->first();
+        $domain->load(['owner']);
 
-        $pricing = [];
-        if ($domainPrice) {
-            for ($i = 1; $i <= 10; $i++) {
-                $pricing[$i] = ($domainPrice->renewal_price ?? $domainPrice->register_price) * $i / 100;
-            }
-        }
+        $users = User::query()->with('roles')->whereHas('roles', function ($query) {
+            $query->where('roles.id', '!=', 1);
+        })->where('id', '!=', $domain->owner_id)->get();
 
-        return view('admin.domains.renew', [
-            'domain' => $domain,
-            'pricing' => $pricing,
-        ]);
+        return view('admin.domains.owner', compact('domain', 'users'));
     }
 
-    public function renewDomain(Domain $domain, DomainRenewalRequest $request, RenewDomainAction $action): RedirectResponse
+    public function assignOwner(Domain $domain, AssignDomainOwnerRequest $request): RedirectResponse
     {
-        $years = (int) $request->validated()['years'];
-        $result = $action->handle($domain, $years);
+        $domain->update([
+            'owner_id' => $request->validated('owner_id'),
+        ]);
 
-        if ($result['success']) {
-            return to_route('admin.domains.index')
-                ->with('success', $result['message'] ?? 'Domain renewed successfully');
-        }
-
-        return back()
-            ->withErrors(['error' => $result['message'] ?? 'Domain renewal failed'])
-            ->withInput();
+        return to_route('admin.domains.index')->with('success', 'Owner assigned successfully');
     }
 
     public function edit(Domain $domain): View

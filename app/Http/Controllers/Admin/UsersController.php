@@ -39,12 +39,19 @@ final class UsersController extends Controller
 
     public function store(StoreUserRequest $request): Redirector|RedirectResponse
     {
+        $data = $request->validated();
+        $roles = $data['roles'] ?? [];
+        unset($data['roles']);
+
         $user = User::query()->create(array_merge(
-            ['uuid' => Str::uuid()],
-            $request->all()
+            [
+                'uuid' => (string) Str::uuid(),
+                'client_code' => User::generateCustomerNumber(),
+            ],
+            $data
         ));
 
-        $user->roles()->sync($request->input('roles', []));
+        $user->roles()->sync($roles);
 
         return to_route('admin.users.index');
     }
@@ -62,8 +69,16 @@ final class UsersController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): Redirector|RedirectResponse
     {
-        $user->update($request->all());
-        $user->roles()->sync($request->input('roles', []));
+        $data = $request->validated();
+        $roles = $data['roles'] ?? [];
+        unset($data['roles']);
+
+        if (! filled($data['password'] ?? null)) {
+            unset($data['password']);
+        }
+
+        $user->update($data);
+        $user->roles()->sync($roles);
 
         return to_route('admin.users.index');
     }
