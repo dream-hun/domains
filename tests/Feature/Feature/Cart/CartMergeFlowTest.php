@@ -5,11 +5,12 @@ declare(strict_types=1);
 use App\Models\CartItem;
 use App\Models\User;
 use App\Services\Cart\CartService;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('merges guest cart into user cart on login', function () {
+it('merges guest cart into user cart on login', function (): void {
     $user = User::factory()->create();
     $cartService = app(CartService::class);
 
@@ -28,7 +29,7 @@ it('merges guest cart into user cart on login', function () {
     $this->actingAs($user);
 
     // Trigger login event manually (in real app, this happens automatically)
-    event(new Illuminate\Auth\Events\Login('web', $user, false));
+    event(new Login('web', $user, false));
 
     // Check that items were merged
     $items = CartItem::where('user_id', $user->id)->get();
@@ -38,7 +39,7 @@ it('merges guest cart into user cart on login', function () {
         ->and(session()->has('cart.items'))->toBeFalse();
 });
 
-it('keeps higher quantity when merging duplicate domains', function () {
+it('keeps higher quantity when merging duplicate domains', function (): void {
     $user = User::factory()->create();
     $cartService = app(CartService::class);
 
@@ -66,7 +67,7 @@ it('keeps higher quantity when merging duplicate domains', function () {
 
     // Login again
     $this->actingAs($user);
-    event(new Illuminate\Auth\Events\Login('web', $user, false));
+    event(new Login('web', $user, false));
 
     // Check that higher quantity was kept
     $item = CartItem::where('user_id', $user->id)
@@ -76,7 +77,7 @@ it('keeps higher quantity when merging duplicate domains', function () {
     expect($item->years)->toBe(5);
 });
 
-it('adds unique domains from guest cart to user cart', function () {
+it('adds unique domains from guest cart to user cart', function (): void {
     $user = User::factory()->create();
     $cartService = app(CartService::class);
 
@@ -98,7 +99,7 @@ it('adds unique domains from guest cart to user cart', function () {
 
     // Login again
     $this->actingAs($user);
-    event(new Illuminate\Auth\Events\Login('web', $user, false));
+    event(new Login('web', $user, false));
 
     // Check that both domains exist
     $items = CartItem::where('user_id', $user->id)->get();
@@ -107,7 +108,7 @@ it('adds unique domains from guest cart to user cart', function () {
         ->and($items->pluck('domain_name')->toArray())->toContain('user-domain.com', 'guest-domain.com');
 });
 
-it('clears session cart after successful merge', function () {
+it('clears session cart after successful merge', function (): void {
     $user = User::factory()->create();
     $cartService = app(CartService::class);
 
@@ -124,18 +125,18 @@ it('clears session cart after successful merge', function () {
 
     // Login
     $this->actingAs($user);
-    event(new Illuminate\Auth\Events\Login('web', $user, false));
+    event(new Login('web', $user, false));
 
     // Session cart should be cleared
     expect(session()->has('cart.items'))->toBeFalse();
 });
 
-it('handles empty guest cart on login', function () {
+it('handles empty guest cart on login', function (): void {
     $user = User::factory()->create();
 
     // Login without any guest cart
     $this->actingAs($user);
-    event(new Illuminate\Auth\Events\Login('web', $user, false));
+    event(new Login('web', $user, false));
 
     // Should not cause any errors
     $items = CartItem::where('user_id', $user->id)->get();
@@ -143,7 +144,7 @@ it('handles empty guest cart on login', function () {
     expect($items)->toHaveCount(0);
 });
 
-it('preserves cart item attributes during merge', function () {
+it('preserves cart item attributes during merge', function (): void {
     $user = User::factory()->create();
     $cartService = app(CartService::class);
 
@@ -161,7 +162,7 @@ it('preserves cart item attributes during merge', function () {
 
     // Login
     $this->actingAs($user);
-    event(new Illuminate\Auth\Events\Login('web', $user, false));
+    event(new Login('web', $user, false));
 
     // Check that fees were preserved
     $item = CartItem::where('user_id', $user->id)

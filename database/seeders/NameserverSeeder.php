@@ -53,6 +53,6 @@ final class NameserverSeeder extends Seeder
                 'status' => 'active',
             ],
         ];
-        Nameserver::insert($nameservers);
+        Nameserver::query()->insert($nameservers);
     }
 }

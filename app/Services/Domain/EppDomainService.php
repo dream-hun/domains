@@ -24,14 +24,14 @@ use App\Enums\DomainType;
 use App\Models\Contact;
 use App\Models\Domain;
 use App\Models\DomainPrice;
-use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 
-final class EppDomainService implements DomainRegistrationServiceInterface, DomainServiceInterface
+class EppDomainService implements DomainRegistrationServiceInterface, DomainServiceInterface
 {
     private EPPClient $client;
 
@@ -60,17 +60,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     {
         $this->config = config('services.epp');
 
-        if ($this->config === []) {
-            throw new Exception('EPP configuration not found');
-        }
+        throw_if($this->config === [], Exception::class, 'EPP configuration not found');
 
-        if (empty($this->config['host'])) {
-            throw new Exception('EPP host is not configured. Please set EPP_HOST in your .env file.');
-        }
+        throw_if(empty($this->config['host']), Exception::class, 'EPP host is not configured. Please set EPP_HOST in your .env file.');
 
-        if (empty($this->config['certificate']) || ! file_exists($this->config['certificate'])) {
-            throw new Exception('EPP certificate not found. Please check the certificate path in your configuration.');
-        }
+        throw_if(empty($this->config['certificate']) || ! file_exists($this->config['certificate']), Exception::class, 'EPP certificate not found. Please check the certificate path in your configuration.');
 
         $this->initializeClient();
     }
@@ -106,15 +100,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'available' => false,
                 'reason' => 'Domain check failed',
             ];
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain availability check failed', [
                 'domains' => $domains,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'available' => false,
-                'reason' => 'Service temporarily unavailable: '.$e->getMessage(),
+                'reason' => 'Service temporarily unavailable: '.$exception->getMessage(),
             ];
         }
     }
@@ -140,7 +134,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             // Process results and add pricing information
             foreach ($suggestedDomains as $suggestedDomain) {
                 $tld = $this->extractTld($suggestedDomain);
-                $priceInfo = DomainPrice::where('tld', $tld)->first();
+                $priceInfo = DomainPrice::query()->where('tld', $tld)->first();
 
                 $suggestions[] = [
                     'domain' => $suggestedDomain,
@@ -157,19 +151,18 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $unavailable = array_filter($suggestions, fn (array $s): bool => ! $s['available']);
 
             // Sort available domains by price (lowest first)
-            usort($available, function (array $a, array $b): int {
-                $priceA = $a['price'] ? (float) preg_replace('/[^0-9.]/', '', $a['price']) : PHP_FLOAT_MAX;
-                $priceB = $b['price'] ? (float) preg_replace('/[^0-9.]/', '', $b['price']) : PHP_FLOAT_MAX;
-
-                return $priceA <=> $priceB;
-            });
+            usort(
+                $available,
+                static fn(array $a, array $b): int => ($a['price'] ? (float) preg_replace('/[^0-9.]/', '', (string) $a['price']) : PHP_FLOAT_MAX)
+                    <=> ($b['price'] ? (float) preg_replace('/[^0-9.]/', '', (string) $b['price']) : PHP_FLOAT_MAX)
+            );
 
             return array_merge($available, $unavailable);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain suggestions failed', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [];
@@ -194,9 +187,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $technicalContactId = $contactInfo['technical'] ?? null;
             $billingContactId = $contactInfo['billing'] ?? null;
 
-            if (! $registrantContactId || ! $adminContactId || ! $technicalContactId || ! $billingContactId) {
-                throw new Exception('All contact IDs are required for domain registration');
-            }
+            throw_if(! $registrantContactId || ! $adminContactId || ! $technicalContactId || ! $billingContactId, Exception::class, 'All contact IDs are required for domain registration');
 
             // Create domain frame using existing contact IDs
             $period = $years.'y';
@@ -225,15 +216,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'message' => 'Domain registered successfully with EPP registry',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain registration failed', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Domain registration failed: '.$e->getMessage(),
+                'message' => 'Domain registration failed: '.$exception->getMessage(),
             ];
         }
     }
@@ -258,9 +249,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             // Use exDate from domain info - this is the exact format expected by the registry
             $currentExpiry = $domainInfo['exDate'] ?? null;
-            if (! $currentExpiry) {
-                throw new Exception('Failed to get current expiry date from domain info');
-            }
+            throw_unless($currentExpiry, Exception::class, 'Failed to get current expiry date from domain info');
 
             $period = $years.'y';
 
@@ -275,7 +264,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             // Update domain record in database
-            $domainModel = Domain::where('name', $domain)->first();
+            $domainModel = Domain::query()->where('name', $domain)->first();
             $domainModel?->update([
                 'expires_at' => $domainModel->expires_at->addYears($years),
                 'last_renewed_at' => now(),
@@ -290,15 +279,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'message' => 'Domain renewed successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain renewal failed', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Domain renewal failed: '.$e->getMessage(),
+                'message' => 'Domain renewal failed: '.$exception->getMessage(),
             ];
         }
     }
@@ -318,9 +307,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             // Check if domain is available for transfer
             $transferCheck = $this->checkDomainForTransfer($domain);
-            if ($transferCheck['available']) {
-                throw new Exception('Domain is available for registration, not transfer');
-            }
+            throw_if($transferCheck['available'], Exception::class, 'Domain is available for registration, not transfer');
 
             // Create contacts
             $registrantContact = $this->createContact($contactInfo['registrant'] ?? []);
@@ -338,7 +325,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             // Create domain record in database
-            $domainModel = Domain::create([
+            $domainModel = Domain::query()->create([
                 'name' => $domain,
                 'owner_id' => $contactInfo['user_id'] ?? null,
                 'registered_at' => now(),
@@ -359,15 +346,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'message' => 'Domain transfer initiated successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain transfer failed', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Domain transfer failed: '.$e->getMessage(),
+                'message' => 'Domain transfer failed: '.$exception->getMessage(),
             ];
         }
     }
@@ -384,7 +371,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     {
         try {
             // Create contact in database first
-            $contact = Contact::create([
+            $contact = Contact::query()->create([
                 'uuid' => Str::uuid(),
                 'first_name' => $contactData['first_name'] ?? '',
                 'last_name' => $contactData['last_name'] ?? '',
@@ -418,18 +405,16 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             $eppResult = $this->createContacts($eppContactData);
 
-            if ($eppResult === []) {
-                throw new Exception('Failed to create contact in EPP registry');
-            }
+            throw_if($eppResult === [], Exception::class, 'Failed to create contact in EPP registry');
 
             return $contact;
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Contact creation failed', [
                 'contact_data' => $contactData,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -443,7 +428,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     {
         try {
             $tld = $this->extractTld($domain);
-            $priceInfo = DomainPrice::where('tld', $tld)->first();
+            $priceInfo = DomainPrice::query()->where('tld', $tld)->first();
 
             if (! $priceInfo) {
                 return [
@@ -459,10 +444,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'message' => 'Pricing information retrieved successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to get domain pricing', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
@@ -488,34 +473,32 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $domains = $query->skip(($page - 1) * $pageSize)
                 ->take($pageSize)
                 ->get()
-                ->map(function ($domain): array {
-                    return [
-                        'id' => $domain->id,
-                        'name' => $domain->name,
-                        'status' => $domain->status,
-                        'registered_at' => $domain->registered_at?->format('Y-m-d'),
-                        'expires_at' => $domain->expires_at?->format('Y-m-d'),
-                        'contacts' => $domain->contacts->map(fn ($c): array => [
-                            'id' => $c->id,
-                            'name' => $c->full_name,
-                            'type' => $c->pivot->type,
-                        ]),
-                        'nameservers' => $domain->nameservers->pluck('name'),
-                    ];
-                });
+                ->map(fn ($domain): array => [
+                    'id' => $domain->id,
+                    'name' => $domain->name,
+                    'status' => $domain->status,
+                    'registered_at' => $domain->registered_at?->format('Y-m-d'),
+                    'expires_at' => $domain->expires_at?->format('Y-m-d'),
+                    'contacts' => $domain->contacts->map(fn ($c): array => [
+                        'id' => $c->id,
+                        'name' => $c->full_name,
+                        'type' => $c->pivot->type,
+                    ]),
+                    'nameservers' => $domain->nameservers->pluck('name'),
+                ]);
 
             return [
                 'success' => true,
-                'domains' => $domains->toArray(),
+                'domains' => $domains->all(),
                 'total' => $total,
                 'message' => 'Domain list retrieved successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to get domain list', [
                 'page' => $page,
                 'page_size' => $pageSize,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
@@ -543,26 +526,24 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             // Send update request
             $response = $this->client->request($frame);
 
-            if (! $response || ! $response->success()) {
-                throw new Exception('Nameserver update failed: '.($response?->message() ?? 'Unknown error'));
-            }
+            throw_if(! $response || ! $response->success(), Exception::class, 'Nameserver update failed: '.($response?->message() ?? 'Unknown error'));
 
             // Update was successful
             return [
                 'success' => true,
                 'message' => 'Nameservers updated successfully',
             ];
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('EPP nameserver update failed', [
                 'domain' => $domain,
                 'nameservers' => $nameservers,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Nameserver update failed: '.$e->getMessage(),
+                'message' => 'Nameserver update failed: '.$exception->getMessage(),
             ];
         }
     }
@@ -581,9 +562,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             // Get domain info from EPP
             $domainInfo = $this->getDomainInfo($domain);
 
-            if (! $domainInfo['success']) {
-                throw new Exception('Failed to get domain information');
-            }
+            throw_unless($domainInfo['success'], Exception::class, 'Failed to get domain information');
 
             $nameservers = $domainInfo['nameservers'] ?? [];
 
@@ -593,15 +572,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'message' => 'Nameservers retrieved successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to get nameservers', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to retrieve nameservers: '.$e->getMessage(),
+                'message' => 'Failed to retrieve nameservers: '.$exception->getMessage(),
             ];
         }
     }
@@ -638,16 +617,16 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'message' => $message,
                 'code' => $response->code(),
             ];
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('EPP delete contact failed', [
                 'contact_id' => $contactId,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
+                'message' => $exception->getMessage(),
+                'code' => $exception->getCode(),
             ];
         }
     }
@@ -675,10 +654,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             } catch (Exception $e) {
                 $lastException = $e;
                 $attempts++;
-                Log::warning("EPP Connection attempt $attempts failed: ".$e->getMessage());
+                Log::warning(sprintf('EPP Connection attempt %d failed: ', $attempts).$e->getMessage());
 
                 if ($attempts < $this->maxRetries) {
-                    sleep($this->retryDelay);
+                    Sleep::sleep($this->retryDelay);
                 }
             }
         }
@@ -706,14 +685,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             $response = $this->client->request($frame);
 
-            if (! $response) {
-                throw new Exception('No response received from EPP server');
-            }
+            throw_unless($response, Exception::class, 'No response received from EPP server');
 
             $results = $response->results();
-            if (empty($results)) {
-                throw new Exception('Empty response from EPP server');
-            }
+            throw_if(empty($results), Exception::class, 'Empty response from EPP server');
 
             $result = $results[0];
             if ($result->code() !== 1000) {
@@ -758,13 +733,13 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                     'auth_info' => $contactData['authInfo']['pw'] ?? '',
                 ],
             ];
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Exception while getting contact info from EPP', [
                 'contact_id' => $contactId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -784,9 +759,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             $response = $this->client->request($frame);
-            if (! $response) {
-                throw new Exception('No response received from EPP server');
-            }
+            throw_unless($response, Exception::class, 'No response received from EPP server');
 
             $results = [];
             $data = $response->data();
@@ -819,11 +792,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             return $results;
-        } catch (Exception $e) {
-            Log::error('Domain check error: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Domain check error: '.$exception->getMessage());
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -843,9 +816,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             $response = $this->client->request($frame);
-            if (! $response) {
-                throw new Exception('No response received from EPP server');
-            }
+            throw_unless($response, Exception::class, 'No response received from EPP server');
 
             $results = [];
             $data = $response->data();
@@ -884,11 +855,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             return $results;
-        } catch (Exception $e) {
-            Log::error('Contact check failed: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Contact check failed: '.$exception->getMessage());
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -905,18 +876,13 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             Log::debug('Creating contact with data:', ['contacts' => $contacts]);
 
             // Validate required contact data
-            if (! is_array($contacts)) {
-                throw new Exception('Invalid contact data: must be an array');
-            }
+            throw_unless(is_array($contacts), Exception::class, 'Invalid contact data: must be an array');
 
             $requiredFields = ['contact_id', 'name', 'street1', 'city', 'country_code', 'voice', 'email'];
             foreach ($requiredFields as $field) {
-                if (empty($contacts[$field])) {
-                    throw new Exception("Invalid contact data: {$field} is required");
-                }
-                if (! is_string($contacts[$field])) {
-                    throw new Exception("Invalid contact data: {$field} must be a string");
-                }
+                throw_if(empty($contacts[$field]), Exception::class, sprintf('Invalid contact data: %s is required', $field));
+
+                throw_unless(is_string($contacts[$field]), Exception::class, sprintf('Invalid contact data: %s must be a string', $field));
             }
 
             $frame = new CreateContact;
@@ -924,9 +890,8 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $frame->setName($contacts['name']);
 
             if (! empty($contacts['organization'])) {
-                if (! is_string($contacts['organization'])) {
-                    throw new Exception('Invalid contact data: organization must be a string');
-                }
+                throw_unless(is_string($contacts['organization']), Exception::class, 'Invalid contact data: organization must be a string');
+
                 $frame->setOrganization($contacts['organization']);
             }
 
@@ -934,16 +899,14 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $frame->addStreet($contacts['street1']);
 
             if (! empty($contacts['street2'])) {
-                if (! is_string($contacts['street2'])) {
-                    throw new Exception('Invalid contact data: street2 must be a string');
-                }
+                throw_unless(is_string($contacts['street2']), Exception::class, 'Invalid contact data: street2 must be a string');
+
                 $frame->addStreet($contacts['street2']);
             }
 
             // Validate and set required city
-            if (empty($contacts['city'])) {
-                throw new Exception('Invalid contact data: city is required');
-            }
+            throw_if(empty($contacts['city']), Exception::class, 'Invalid contact data: city is required');
+
             $frame->setCity($contacts['city']);
 
             // Optional province
@@ -957,20 +920,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             // Validate and set required country code
-            if (empty($contacts['country_code'])) {
-                throw new Exception('Invalid contact data: country_code is required');
-            }
+            throw_if(empty($contacts['country_code']), Exception::class, 'Invalid contact data: country_code is required');
+
             $frame->setCountryCode($contacts['country_code']);
 
             // Format phone number to EPP format (+CC.number)
-            if (empty($contacts['voice'])) {
-                throw new Exception('Invalid contact data: voice (phone) is required');
-            }
+            throw_if(empty($contacts['voice']), Exception::class, 'Invalid contact data: voice (phone) is required');
 
             $phone = $contacts['voice'];
-            if (! is_string($phone)) {
-                throw new Exception('Invalid contact data: voice (phone) must be a string');
-            }
+            throw_unless(is_string($phone), Exception::class, 'Invalid contact data: voice (phone) must be a string');
 
             if (! str_starts_with($phone, '+')) {
                 // Add country code for Rwanda if not present
@@ -979,14 +937,13 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
                 $phone = '+250.'.mb_ltrim($phone, '0');
             }
+
             $frame->setVoice($phone);
 
             // Handle optional fax
             if (! empty($contacts['fax'])) {
                 $fax = $contacts['fax'];
-                if (! is_string($fax)) {
-                    throw new Exception('Invalid contact data: fax must be a string');
-                }
+                throw_unless(is_string($fax), Exception::class, 'Invalid contact data: fax must be a string');
 
                 if (! str_starts_with($fax, '+')) {
 
@@ -994,16 +951,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
                     $fax = '+250.'.mb_ltrim($fax, '0');
                 }
+
                 $frame->setFax($fax, $contacts['fax_ext'] ?? '');
             }
 
             // Validate and set required email
-            if (empty($contacts['email'])) {
-                throw new Exception('Invalid contact data: email is required');
-            }
-            if (! is_string($contacts['email'])) {
-                throw new Exception('Invalid contact data: email must be a string');
-            }
+            throw_if(empty($contacts['email']), Exception::class, 'Invalid contact data: email is required');
+
+            throw_unless(is_string($contacts['email']), Exception::class, 'Invalid contact data: email must be a string');
+
             $frame->setEmail($contacts['email']);
 
             $auth = $frame->setAuthInfo();
@@ -1011,14 +967,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             // Send the frame and get response
             $response = $this->client->request($frame);
 
-            if (! $response) {
-                throw new Exception('No response received from EPP server');
-            }
+            throw_unless($response, Exception::class, 'No response received from EPP server');
 
             $results = $response->results();
-            if (empty($results)) {
-                throw new Exception('Empty response from EPP server');
-            }
+            throw_if(empty($results), Exception::class, 'Empty response from EPP server');
 
             $result = $results[0];
             if ($result->code() !== 1000) {
@@ -1041,11 +993,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'code' => $result->code(),
                 'message' => $result->message(),
             ];
-        } catch (Exception $e) {
-            Log::error('Contact creation failed: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Contact creation failed: '.$exception->getMessage());
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1139,14 +1091,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             // Send the request and get the response
             $response = $this->client->request($frame);
 
-            if (! $response) {
-                throw new Exception('No response received from EPP server');
-            }
+            throw_unless($response, Exception::class, 'No response received from EPP server');
 
             $results = $response->results();
-            if (empty($results)) {
-                throw new Exception('Empty response from EPP server');
-            }
+            throw_if(empty($results), Exception::class, 'Empty response from EPP server');
 
             $result = $results[0];
 
@@ -1171,15 +1119,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'code' => $result->code(),
                 'auth' => $auth,
             ];
-        } catch (Exception $e) {
-            Log::error('Contact update failed: '.$e->getMessage(), [
+        } catch (Exception $exception) {
+            Log::error('Contact update failed: '.$exception->getMessage(), [
                 'contact_id' => $contactId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1199,11 +1147,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             return $frame;
-        } catch (Exception $e) {
-            Log::error('Host check failed: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Host check failed: '.$exception->getMessage());
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1224,11 +1172,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             return $frame;
-        } catch (Exception $e) {
-            Log::error('Host creation failed: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Host creation failed: '.$exception->getMessage());
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1271,11 +1219,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $frame->setAuthInfo();
 
             return $frame;
-        } catch (Exception $e) {
-            Log::error('Domain creation failed: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Domain creation failed: '.$exception->getMessage());
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1295,9 +1243,9 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $response = $this->client->request($frame);
 
             throw new Exception('EPP InfoDomain command failed: '.$response->message());
-        } catch (Exception $e) {
-            Log::error('EPP getAuthorizationCode failed: '.$e->getMessage());
-            throw $e;
+        } catch (Exception $exception) {
+            Log::error('EPP getAuthorizationCode failed: '.$exception->getMessage());
+            throw $exception;
         }
     }
 
@@ -1352,17 +1300,17 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             ]);
 
             return $frame;
-        } catch (Exception $e) {
-            Log::error('Domain renewal failed: '.$e->getMessage(), [
+        } catch (Exception $exception) {
+            Log::error('Domain renewal failed: '.$exception->getMessage(), [
                 'domain' => $domain,
                 'expiration_date' => $currentExpirationDate,
                 'period' => $period,
                 'epp_host' => $this->config['host'],
-                'trace' => $e->getTraceAsString(),
+                'trace' => $exception->getTraceAsString(),
             ]);
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1389,16 +1337,12 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $client = $this->client;
             $response = $client->request($frame);
 
-            if (! ($response instanceof Response)) {
-                throw new Exception('Invalid response from registry');
-            }
+            throw_unless($response instanceof Response, Exception::class, 'Invalid response from registry');
 
             $result = $response->results()[0];
             $responseData = $response->data();
 
-            if (! is_array($responseData) || ! isset($responseData['chkData']['cd'])) {
-                throw new Exception('Unexpected response data format');
-            }
+            throw_if(! is_array($responseData) || ! isset($responseData['chkData']['cd']), Exception::class, 'Unexpected response data format');
 
             $checkData = $responseData['chkData']['cd'][0];
             $available = (bool) ($checkData['avail'] ?? false);
@@ -1414,14 +1358,14 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'available' => $available,
                 'reason' => $reason,
             ];
-        } catch (Exception $e) {
-            Log::error('Domain check failed: '.$e->getMessage(), [
+        } catch (Exception $exception) {
+            Log::error('Domain check failed: '.$exception->getMessage(), [
                 'domain' => $domain,
                 'epp_host' => $this->config['host'],
-                'trace' => $e->getTraceAsString(),
+                'trace' => $exception->getTraceAsString(),
             ]);
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1438,11 +1382,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $frame->setDomain($domain);
 
             return $frame;
-        } catch (Exception $e) {
-            Log::error('Domain deletion failed: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Domain deletion failed: '.$exception->getMessage());
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1459,11 +1403,11 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $frame->ack($messageId);
 
             return $frame;
-        } catch (Exception $e) {
-            Log::error('Poll acknowledge failed: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Poll acknowledge failed: '.$exception->getMessage());
             // Try to reconnect on next request
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1517,7 +1461,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                     // If the host doesn't exist and contains the domain we're updating,
                     // we need to create it as a subordinate host
                     if (mb_strpos($responseXml, '<host:name avail="1">') !== false && mb_strpos($ns, $domain) !== false && (mb_strpos($responseXml, '<host:name avail="1">') !== false && mb_strpos($ns, $domain) !== false)) {
-                        Log::info("Creating subordinate host: $ns");
+                        Log::info('Creating subordinate host: '.$ns);
                         // Create the host
                         $createFrame = new CreateHost;
                         $createFrame->setHost($ns);
@@ -1526,13 +1470,14 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                         $createFrame->addAddr('127.0.0.1');
                         $createResponse = $this->client->request($createFrame);
                         if ($createResponse->code() !== 1000) {
-                            Log::warning("Failed to create host $ns: {$createResponse->message()}");
+                            Log::warning(sprintf('Failed to create host %s: %s', $ns, $createResponse->message()));
                         } else {
-                            Log::info("Successfully created host $ns");
+                            Log::info('Successfully created host '.$ns);
                         }
                     }
                 }
             }
+
             // Now update the domain with the new nameservers
             // Following the example from the PHP-EPP2 library
 
@@ -1545,14 +1490,14 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 preg_match_all('/<domain:hostObj>([^<]+)<\/domain:hostObj>/', $responseXml, $matches);
 
                 foreach ($matches[1] as $currentNs) {
-                    Log::info("Removing nameserver: $currentNs");
+                    Log::info('Removing nameserver: '.$currentNs);
                     $frame->removeHostObj($currentNs);
                 }
             }
 
             // Add the new nameservers
             foreach ($nameservers as $ns) {
-                Log::info("Adding nameserver: $ns");
+                Log::info('Adding nameserver: '.$ns);
                 $frame->addHostObj($ns);
             }
 
@@ -1568,13 +1513,13 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             ]);
 
             return $frame;
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('EPP update domain nameservers error', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1609,6 +1554,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                     $contactId = $match[2];
                     $currentContacts[$contactType] = $contactId;
                 }
+
                 preg_match('/<domain:registrant>([^<]+)<\/domain:registrant>/', $responseXml, $registrantMatch);
                 if (isset($registrantMatch[1]) && ($registrantMatch[1] !== '' && $registrantMatch[1] !== '0')) {
                     $currentContacts['registrant'] = $registrantMatch[1];
@@ -1633,13 +1579,13 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             return ['success' => false, 'message' => $response ? $response->message() : 'Unknown error updating contacts.'];
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain contact update failed', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Service error: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Service error: '.$exception->getMessage()];
         }
     }
 
@@ -1665,15 +1611,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             $frame->setPeriod($period);
 
             return $frame;
-        } catch (Exception $e) {
-            Log::error('Domain transfer failed: '.$e->getMessage(), [
+        } catch (Exception $exception) {
+            Log::error('Domain transfer failed: '.$exception->getMessage(), [
                 'domain' => $domain,
                 'period' => $period,
                 'epp_host' => $this->config['host'],
-                'trace' => $e->getTraceAsString(),
+                'trace' => $exception->getTraceAsString(),
             ]);
             $this->connected = false;
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1700,6 +1646,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     {
         $frame = new CheckHost();
         $frame->addHost($hostname);
+
         $response = $this->client->request($frame);
 
         return $response->code() === 1000;
@@ -1722,7 +1669,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             // Get all active TLDs from DomainPrice if no specific TLDs provided
             if ($specificTlds === null) {
-                $query = DomainPrice::where('status', 'active');
+                $query = DomainPrice::query()->where('status', 'active');
 
                 // Filter by domain type if specified
                 if ($domainType instanceof DomainType) {
@@ -1777,7 +1724,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
                                 // Get pricing information
                                 $tld = $this->extractTld($domainName);
-                                $priceInfo = DomainPrice::where('tld', '.'.$tld)
+                                $priceInfo = DomainPrice::query()->where('tld', '.'.$tld)
                                     ->where('status', 'active')
                                     ->first();
 
@@ -1801,7 +1748,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                         ]);
 
                         if ($attempt < $maxAttempts) {
-                            sleep(1);
+                            Sleep::sleep(1);
                             $this->disconnect();
                             $this->ensureConnection();
                         } else {
@@ -1826,20 +1773,20 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 }
 
                 // Extract numeric values from price strings for comparison
-                $priceA = $a['price'] ? (float) preg_replace('/[^0-9.]/', '', $a['price']) : PHP_FLOAT_MAX;
-                $priceB = $b['price'] ? (float) preg_replace('/[^0-9.]/', '', $b['price']) : PHP_FLOAT_MAX;
+                $priceA = $a['price'] ? (float) preg_replace('/[^0-9.]/', '', (string) $a['price']) : PHP_FLOAT_MAX;
+                $priceB = $b['price'] ? (float) preg_replace('/[^0-9.]/', '', (string) $b['price']) : PHP_FLOAT_MAX;
 
                 return $priceA <=> $priceB; // Lower prices first
             });
 
             return $results;
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain search failed', [
                 'search_term' => $searchTerm,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -1891,16 +1838,16 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 'message' => $lock ? 'Domain locked successfully' : 'Domain unlocked successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('EPP domain lock update error', [
                 'domain' => $domain,
                 'lock' => $lock,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to update domain lock: '.$e->getMessage(),
+                'message' => 'Failed to update domain lock: '.$exception->getMessage(),
             ];
         }
     }
@@ -1932,15 +1879,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
 
             return $result;
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('EPP domain reactivation failed', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to reactivate domain: '.$e->getMessage(),
+                'message' => 'Failed to reactivate domain: '.$exception->getMessage(),
             ];
         }
     }
@@ -2016,15 +1963,15 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             }
 
             return $result;
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to get domain info', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Service error: '.$e->getMessage(),
+                'message' => 'Service error: '.$exception->getMessage(),
             ];
         }
     }
@@ -2035,13 +1982,13 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     private function getCommonTlds(): array
     {
         if ($this->commonTlds === []) {
-            $this->commonTlds = DomainPrice::where('status', 'active')
+            $this->commonTlds = DomainPrice::query()->where('status', 'active')
                 ->whereIn('type', [DomainType::Local, DomainType::International])
                 ->latest()
                 ->limit(20) // Limit to top 20 most recent TLDs
                 ->pluck('tld')
                 ->map(fn ($tld): string => mb_ltrim($tld, '.'))
-                ->toArray();
+                ->all();
         }
 
         return $this->commonTlds;
@@ -2079,10 +2026,10 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             } catch (Exception $e) {
                 $lastException = $e;
                 $attempts++;
-                Log::warning("EPP Client initialization attempt $attempts failed: ".$e->getMessage());
+                Log::warning(sprintf('EPP Client initialization attempt %d failed: ', $attempts).$e->getMessage());
 
                 if ($attempts < $this->maxRetries) {
-                    sleep($this->retryDelay);
+                    Sleep::sleep($this->retryDelay);
                 }
             }
         }
@@ -2098,9 +2045,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
      */
     private function ensureConnection(): void
     {
-        if (! isset($this->client)) {
-            throw new Exception('EPP client not initialized');
-        }
+        throw_unless(isset($this->client), Exception::class, 'EPP client not initialized');
 
         try {
             if (! $this->connected) {
@@ -2136,13 +2081,13 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
                 $this->connected = false;
                 throw new Exception('EPP connection test failed: '.$e->getMessage(), $e->getCode(), $e);
             }
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             $this->connected = false;
-            Log::error('EPP connection error: '.$e->getMessage(), [
+            Log::error('EPP connection error: '.$exception->getMessage(), [
                 'host' => $this->config['host'],
-                'trace' => $e->getTraceAsString(),
+                'trace' => $exception->getTraceAsString(),
             ]);
-            throw new Exception('Failed to establish EPP connection: '.$e->getMessage(), $e->getCode(), $e);
+            throw new Exception('Failed to establish EPP connection: '.$exception->getMessage(), $exception->getCode(), $exception);
         }
     }
 
@@ -2153,8 +2098,8 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
     {
         // Try multiple possible paths for the domain name
         $namePaths = [
-            "{$key}._text",
-            "{$key}",
+            $key.'._text',
+            $key,
             '_text',
         ];
 
@@ -2198,7 +2143,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
         foreach ($availabilityPaths as $path) {
             $value = $this->getNestedValue($item, $path);
             if ($value !== null) {
-                Log::debug("Found availability value at path {$path}:", ['value' => $value]);
+                Log::debug(sprintf('Found availability value at path %s:', $path), ['value' => $value]);
 
                 // Check for both string '1' and boolean true
                 return in_array($value, ['1', 1, true], true);
@@ -2276,6 +2221,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
         if ($suggestedLength > $baseLength) {
             return 'prefix';
         }
+
         if ($suggestedLength < $baseLength) {
             return 'suffix';
         }
@@ -2295,6 +2241,7 @@ final class EppDomainService implements DomainRegistrationServiceInterface, Doma
             if (! is_array($value) || ! isset($value[$key])) {
                 return null;
             }
+
             $value = $value[$key];
         }
 

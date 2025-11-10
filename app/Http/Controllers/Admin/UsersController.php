@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,40 +32,40 @@ final class UsersController extends Controller
     {
         abort_if(Gate::denies('user_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $roles = Role::pluck('title', 'id');
+        $roles = Role::query()->pluck('title', 'id');
 
         return view('admin.users.create', ['roles' => $roles]);
     }
 
-    public function store(StoreUserRequest $request)
+    public function store(StoreUserRequest $request): Redirector|RedirectResponse
     {
-        $user = User::create(array_merge(
+        $user = User::query()->create(array_merge(
             ['uuid' => Str::uuid()],
             $request->all()
         ));
 
         $user->roles()->sync($request->input('roles', []));
 
-        return redirect()->route('admin.users.index');
+        return to_route('admin.users.index');
     }
 
     public function edit(User $user): View|Factory
     {
         abort_if(Gate::denies('user_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $roles = Role::pluck('title', 'id');
+        $roles = Role::query()->pluck('title', 'id');
 
         $user->load('roles');
 
         return view('admin.users.edit', ['roles' => $roles, 'user' => $user]);
     }
 
-    public function update(UpdateUserRequest $request, User $user)
+    public function update(UpdateUserRequest $request, User $user): Redirector|RedirectResponse
     {
         $user->update($request->all());
         $user->roles()->sync($request->input('roles', []));
 
-        return redirect()->route('admin.users.index');
+        return to_route('admin.users.index');
     }
 
     public function show(User $user): View|Factory

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\ContactType;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -21,7 +22,7 @@ final class UpdateContactRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -36,7 +37,7 @@ final class UpdateContactRequest extends FormRequest
             'city' => ['required', 'string', 'max:255'],
             'state_province' => ['required', 'string', 'max:255'],
             'postal_code' => ['required', 'string', 'max:20'],
-            'country_code' => ['required', 'string', 'max:3'],
+            'country_code' => ['sometimes', 'string', 'max:3'],
             'phone' => ['required', 'string', 'max:20'],
             'phone_extension' => ['nullable', 'string', 'max:10'],
             'fax_number' => ['nullable', 'string', 'max:20'],

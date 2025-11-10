@@ -13,8 +13,8 @@ use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use Log;
 
 final class RegisterDomainController extends Controller
 {
@@ -72,8 +72,7 @@ final class RegisterDomainController extends Controller
             $cartItems = Cart::getContent();
 
             if ($cartItems->isEmpty()) {
-                return redirect()
-                    ->back()
+                return back()
                     ->with('error', 'No domains found in cart to register.');
             }
 
@@ -138,49 +137,46 @@ final class RegisterDomainController extends Controller
             if ($successfulRegistrations !== []) {
                 $successCount = count($successfulRegistrations);
                 if ($successCount === 1) {
-                    $messages[] = "Domain $successfulRegistrations[0] has been successfully registered!";
+                    $messages[] = sprintf('Domain %s has been successfully registered!', $successfulRegistrations[0]);
                 } else {
-                    $messages[] = "$successCount domains have been successfully registered: ".implode(', ', $successfulRegistrations);
+                    $messages[] = $successCount.' domains have been successfully registered: '.implode(', ', $successfulRegistrations);
                 }
             }
 
             if ($failedRegistrations !== []) {
                 $failureCount = count($failedRegistrations);
                 if ($failureCount === 1) {
-                    $messages[] = "Failed to register {$failedRegistrations[0]['domain']}: {$failedRegistrations[0]['message']}";
+                    $messages[] = sprintf('Failed to register %s: %s', $failedRegistrations[0]['domain'], $failedRegistrations[0]['message']);
                 } else {
-                    $messages[] = "$failureCount domains failed to register. Please check your email for details or contact support.";
+                    $messages[] = $failureCount.' domains failed to register. Please check your email for details or contact support.';
                 }
             }
 
             // Determine redirect and message type
             if ($successfulRegistrations !== [] && $failedRegistrations === []) {
                 // All successful
-                return redirect()
-                    ->route('dashboard')
+                return to_route('dashboard')
                     ->with('success', implode(' ', $messages));
             }
+
             if ($successfulRegistrations !== [] && $failedRegistrations !== []) {
                 // Partial success
-                return redirect()
-                    ->route('dashboard')
+                return to_route('dashboard')
                     ->with('warning', implode(' ', $messages));
             }
 
             // All failed
-            return redirect()
-                ->back()
+            return back()
                 ->withInput()
                 ->with('error', implode(' ', $messages));
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain registration process failed', [
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
                 'user_id' => $user->id,
             ]);
 
-            return redirect()
-                ->back()
+            return back()
                 ->withInput()
                 ->with('error', 'An error occurred during domain registration. Please contact support.');
         }
@@ -218,9 +214,7 @@ final class RegisterDomainController extends Controller
             // Ensure all required contact types are present
             $requiredTypes = ['registrant', 'admin', 'technical', 'billing'];
             foreach ($requiredTypes as $type) {
-                if (! isset($processedContacts[$type])) {
-                    throw new Exception("Missing contact for type: $type");
-                }
+                throw_unless(isset($processedContacts[$type]), Exception::class, 'Missing contact for type: '.$type);
             }
         }
 
@@ -291,12 +285,12 @@ final class RegisterDomainController extends Controller
 
         try {
             return $this->currencyService->convert($amount, $fromCurrency, $toCurrency);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::warning('Currency conversion failed', [
                 'from' => $fromCurrency,
                 'to' => $toCurrency,
                 'amount' => $amount,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return $amount; // Fallback to original amount
@@ -310,11 +304,11 @@ final class RegisterDomainController extends Controller
     {
         try {
             return $this->currencyService->format($amount, $currency);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::warning('Currency formatting failed', [
                 'currency' => $currency,
                 'amount' => $amount,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return $currency.' '.number_format($amount, 2);

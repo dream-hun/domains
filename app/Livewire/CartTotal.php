@@ -10,8 +10,9 @@ use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Log;
 
 final class CartTotal extends Component
 {
@@ -48,7 +49,7 @@ final class CartTotal extends Component
 
     public function updatedSelectedCurrency(): void
     {
-        $currency = Currency::where('code', $this->selectedCurrency)
+        $currency = Currency::query()->where('code', $this->selectedCurrency)
             ->where('is_active', true)
             ->first();
 
@@ -93,7 +94,7 @@ final class CartTotal extends Component
                         $this->selectedCurrency
                     );
                     $subtotal += $convertedPrice * $item->quantity;
-                } catch (Exception $e) {
+                } catch (Exception) {
                     $subtotal += $item->price * $item->quantity;
                 }
             } else {
@@ -108,7 +109,8 @@ final class CartTotal extends Component
         return $this->formatCurrency($total, $this->selectedCurrency);
     }
 
-    public function getCartItemsCountProperty(): int
+    #[Computed]
+    public function cartItemsCount(): int
     {
         return Cart::getContent()->count();
     }
@@ -139,7 +141,7 @@ final class CartTotal extends Component
                     $couponCurrency,
                     $this->selectedCurrency
                 );
-            } catch (Exception $e) {
+            } catch (Exception) {
                 // Fallback to recalculating discount
                 $type = $couponData['type'] ?? 'percentage';
                 $value = $couponData['value'] ?? 0;
@@ -154,7 +156,7 @@ final class CartTotal extends Component
                             $couponCurrency,
                             $this->selectedCurrency
                         );
-                    } catch (Exception $e) {
+                    } catch (Exception) {
                         $discountAmount = $value;
                     }
                 }

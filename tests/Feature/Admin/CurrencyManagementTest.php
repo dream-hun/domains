@@ -6,31 +6,31 @@ use App\Models\Currency;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Darryldecode\Cart\Facades\CartFacade as Cart;
+use App\Services\CurrencyService;
 use Illuminate\Support\Facades\DB;
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create both necessary roles (user model automatically attaches role id 2)
-    Role::firstOrCreate(['id' => 1, 'title' => 'Admin']);
-    Role::firstOrCreate(['id' => 2, 'title' => 'User']);
+    Role::query()->firstOrCreate(['id' => 1, 'title' => 'Admin']);
+    Role::query()->firstOrCreate(['id' => 2, 'title' => 'User']);
 
     // Create admin user
     $this->admin = User::factory()->create();
 
     // Attach admin role and permissions
-    $adminRole = Role::find(1);
+    $adminRole = Role::query()->find(1);
     $permissionIds = [
-        Permission::firstOrCreate(['id' => 48, 'title' => 'currency_access'])->id,
-        Permission::firstOrCreate(['id' => 49, 'title' => 'currency_create'])->id,
-        Permission::firstOrCreate(['id' => 50, 'title' => 'currency_edit'])->id,
-        Permission::firstOrCreate(['id' => 51, 'title' => 'currency_delete'])->id,
-        Permission::firstOrCreate(['id' => 52, 'title' => 'currency_update_rates'])->id,
+        Permission::query()->firstOrCreate(['id' => 48, 'title' => 'currency_access'])->id,
+        Permission::query()->firstOrCreate(['id' => 49, 'title' => 'currency_create'])->id,
+        Permission::query()->firstOrCreate(['id' => 50, 'title' => 'currency_edit'])->id,
+        Permission::query()->firstOrCreate(['id' => 51, 'title' => 'currency_delete'])->id,
+        Permission::query()->firstOrCreate(['id' => 52, 'title' => 'currency_update_rates'])->id,
     ];
     $adminRole->permissions()->sync($permissionIds);
     $this->admin->roles()->sync([1]); // Detach default role 2, attach admin role 1
 });
 
-it('displays currencies on index page', function () {
+it('displays currencies on index page', function (): void {
     Currency::factory()->create(['code' => 'USD', 'is_base' => true]);
     Currency::factory()->create(['code' => 'EUR', 'is_base' => false]);
 
@@ -41,7 +41,7 @@ it('displays currencies on index page', function () {
     $response->assertSee('EUR');
 });
 
-it('allows admin to create a new currency', function () {
+it('allows admin to create a new currency', function (): void {
     $this->actingAs($this->admin)->post('/admin/currencies', [
         'code' => 'GBP',
         'name' => 'British Pound',
@@ -58,13 +58,13 @@ it('allows admin to create a new currency', function () {
     ]);
 });
 
-it('validates required fields when creating currency', function () {
+it('validates required fields when creating currency', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/currencies', []);
 
     $response->assertSessionHasErrors(['code', 'name', 'symbol', 'exchange_rate']);
 });
 
-it('validates currency code is exactly 3 uppercase letters', function () {
+it('validates currency code is exactly 3 uppercase letters', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/currencies', [
         'code' => 'abcd',
         'name' => 'Test',
@@ -75,10 +75,10 @@ it('validates currency code is exactly 3 uppercase letters', function () {
     $response->assertSessionHasErrors('code');
 });
 
-it('allows admin to update a currency', function () {
+it('allows admin to update a currency', function (): void {
     $currency = Currency::factory()->create(['code' => 'USD', 'name' => 'US Dollar']);
 
-    $this->actingAs($this->admin)->put("/admin/currencies/{$currency->id}", [
+    $this->actingAs($this->admin)->put('/admin/currencies/'.$currency->id, [
         'name' => 'United States Dollar',
         'symbol' => '$',
         'exchange_rate' => '1.0',
@@ -90,10 +90,10 @@ it('allows admin to update a currency', function () {
     ]);
 });
 
-it('allows toggling active status of a currency', function () {
+it('allows toggling active status of a currency', function (): void {
     $currency = Currency::factory()->create(['is_active' => true]);
 
-    $this->actingAs($this->admin)->put("/admin/currencies/{$currency->id}", [
+    $this->actingAs($this->admin)->put('/admin/currencies/'.$currency->id, [
         'name' => $currency->name,
         'symbol' => $currency->symbol,
         'exchange_rate' => $currency->exchange_rate,
@@ -103,49 +103,49 @@ it('allows toggling active status of a currency', function () {
     expect($currency->fresh()->is_active)->toBeFalse();
 });
 
-it('prevents deletion of base currency', function () {
+it('prevents deletion of base currency', function (): void {
     $currency = Currency::factory()->create(['code' => 'USD', 'is_base' => true]);
 
-    $response = $this->actingAs($this->admin)->delete("/admin/currencies/{$currency->id}");
+    $response = $this->actingAs($this->admin)->delete('/admin/currencies/'.$currency->id);
 
     $response->assertSessionHas('error');
     $this->assertDatabaseHas('currencies', ['id' => $currency->id]);
 });
 
-it('allows deletion of non-base currency', function () {
+it('allows deletion of non-base currency', function (): void {
     $currency = Currency::factory()->create(['code' => 'EUR', 'is_base' => false]);
 
-    $this->actingAs($this->admin)->delete("/admin/currencies/{$currency->id}")
+    $this->actingAs($this->admin)->delete('/admin/currencies/'.$currency->id)
         ->assertRedirect('/admin/currencies');
 
     $this->assertDatabaseMissing('currencies', ['id' => $currency->id]);
 });
 
-it('ensures only one base currency exists', function () {
+it('ensures only one base currency exists', function (): void {
     Currency::factory()->create(['code' => 'USD', 'is_base' => true]);
     $eur = Currency::factory()->create(['code' => 'EUR', 'is_base' => false]);
 
-    $this->actingAs($this->admin)->put("/admin/currencies/{$eur->id}", [
+    $this->actingAs($this->admin)->put('/admin/currencies/'.$eur->id, [
         'name' => $eur->name,
         'symbol' => $eur->symbol,
         'exchange_rate' => $eur->exchange_rate,
         'is_base' => '1',
     ]);
 
-    expect(Currency::where('is_base', true)->count())->toBe(1);
+    expect(Currency::query()->where('is_base', true)->count())->toBe(1);
     expect($eur->fresh()->is_base)->toBeTrue();
 });
 
-it('requires authentication to access currencies', function () {
+it('requires authentication to access currencies', function (): void {
     $this->get('/admin/currencies')->assertRedirect('/login');
 });
 
-it('requires permission to access currencies', function () {
+it('requires permission to access currencies', function (): void {
     $user = User::factory()->create();
     $this->actingAs($user)->get('/admin/currencies')->assertForbidden();
 });
 
-it('clears all user carts when exchange rates are updated', function () {
+it('clears all user carts when exchange rates are updated', function (): void {
     // Create a user session with cart data
     $sessionId = 'test-session-123';
     $cartData = ['cart' => ['items' => [['id' => 'test-domain', 'price' => 10]]]];
@@ -161,19 +161,19 @@ it('clears all user carts when exchange rates are updated', function () {
 
     // Verify cart exists
     $session = DB::table('sessions')->where('id', $sessionId)->first();
-    expect(unserialize(base64_decode($session->payload, true)))->toHaveKey('cart');
+    expect(unserialize(base64_decode((string) $session->payload, true)))->toHaveKey('cart');
 
     // Update exchange rates
-    $currencyService = app(App\Services\CurrencyService::class);
+    $currencyService = app(CurrencyService::class);
     $currencyService->clearAllCarts();
 
     // Verify cart is cleared
     $session = DB::table('sessions')->where('id', $sessionId)->first();
-    $payload = unserialize(base64_decode($session->payload, true));
+    $payload = unserialize(base64_decode((string) $session->payload, true));
     expect($payload)->not->toHaveKey('cart');
 });
 
-it('prevents non-admins from accessing update rates', function () {
+it('prevents non-admins from accessing update rates', function (): void {
     $user = User::factory()->create();
 
     // Don't mock the client, just let it fail gracefully at the permission check

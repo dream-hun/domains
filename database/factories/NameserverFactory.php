@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Models\Nameserver;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Nameserver>
+ * @extends Factory<Nameserver>
  */
 final class NameserverFactory extends Factory
 {
@@ -21,7 +22,7 @@ final class NameserverFactory extends Factory
     {
         return [
             'uuid' => Str::uuid(),
-            'name' => $this->faker->domainName(),
+            'name' => $this->faker->unique()->domainName(),
             'type' => 'default',
             'ipv4' => $this->faker->ipv4(),
             'ipv6' => $this->faker->ipv6(),
@@ -32,14 +33,14 @@ final class NameserverFactory extends Factory
 
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'inactive',
         ]);
     }
 
     public function priority(int $priority): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'priority' => $priority,
         ]);
     }

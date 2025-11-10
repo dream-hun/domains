@@ -11,10 +11,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
-final class SyncDomainContactsAction
+final readonly class SyncDomainContactsAction
 {
     public function __construct(
-        private readonly NamecheapDomainService $domainService
+        private NamecheapDomainService $domainService
     ) {}
 
     public function execute(Domain $domain): array
@@ -50,16 +50,16 @@ final class SyncDomainContactsAction
 
             return $this->syncContacts($domain, $contacts);
 
-        } catch (Throwable $e) {
+        } catch (Throwable $throwable) {
             Log::error('Failed to sync domain contacts', [
                 'domain' => $domain->name,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $throwable->getMessage(),
+                'trace' => $throwable->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to sync contacts: '.$e->getMessage(),
+                'message' => 'Failed to sync contacts: '.$throwable->getMessage(),
             ];
         }
     }
@@ -83,7 +83,7 @@ final class SyncDomainContactsAction
         // Process each contact type
         foreach ($contactTypes as $type) {
             if (! isset($contacts[$type])) {
-                Log::warning("Contact type '{$type}' not found in registry response", [
+                Log::warning(sprintf("Contact type '%s' not found in registry response", $type), [
                     'available_types' => array_keys($contacts),
                 ]);
 
@@ -94,7 +94,7 @@ final class SyncDomainContactsAction
 
             // Validate required fields
             if (empty($contactData['email'])) {
-                Log::warning("Skipping contact type '{$type}' - missing email", [
+                Log::warning(sprintf("Skipping contact type '%s' - missing email", $type), [
                     'contact_data' => $contactData,
                 ]);
 
@@ -170,16 +170,13 @@ final class SyncDomainContactsAction
             'user_id' => auth()->id(),
         ];
 
-        Log::info("Processing contact type '{$enumContactType}'", [
+        Log::info(sprintf("Processing contact type '%s'", $enumContactType), [
             'email' => $contactPayload['email'],
         ]);
 
         try {
             // Create or update contact based on email only
-            $contactModel = Contact::updateOrCreate(
-                ['email' => $contactPayload['email']],
-                $contactPayload
-            );
+            $contactModel = Contact::query()->updateOrCreate(['email' => $contactPayload['email']], $contactPayload);
 
             Log::info('Contact upserted successfully', [
                 'contact_id' => $contactModel->id,
@@ -189,11 +186,11 @@ final class SyncDomainContactsAction
 
             return $contactModel;
 
-        } catch (Throwable $e) {
-            Log::error("Failed to upsert contact for type '{$enumContactType}'", [
-                'error' => $e->getMessage(),
+        } catch (Throwable $throwable) {
+            Log::error(sprintf("Failed to upsert contact for type '%s'", $enumContactType), [
+                'error' => $throwable->getMessage(),
                 'email' => $contactPayload['email'],
-                'trace' => $e->getTraceAsString(),
+                'trace' => $throwable->getTraceAsString(),
             ]);
 
             return null;

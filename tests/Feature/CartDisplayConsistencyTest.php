@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    Currency::create([
+    Currency::query()->create([
         'code' => 'USD',
         'name' => 'US Dollar',
         'symbol' => '$',
@@ -18,7 +18,7 @@ beforeEach(function (): void {
         'is_active' => true,
     ]);
 
-    Currency::create([
+    Currency::query()->create([
         'code' => 'FRW',
         'name' => 'Rwandan Franc',
         'symbol' => 'FRW',
@@ -32,7 +32,7 @@ it('shows consistent FRW amounts between header and cart page', function (): voi
     $testAmount = 203755.41; // The exact amount from the screenshot
 
     // Simulate CartTotal formatting (uses Currency::format via formatCurrency)
-    $currencyModel = Currency::where('code', 'FRW')->first();
+    $currencyModel = Currency::query()->where('code', 'FRW')->first();
     $headerFormat = $currencyModel->format($testAmount);
 
     // Simulate CartComponent formatting (uses CurrencyHelper::formatMoney)
@@ -53,20 +53,20 @@ it('rounds fractional FRW amounts consistently', function (): void {
     ];
 
     foreach ($amounts as $amount => $expected) {
-        $currencyModel = Currency::where('code', 'FRW')->first();
+        $currencyModel = Currency::query()->where('code', 'FRW')->first();
         $formatted1 = $currencyModel->format($amount);
         $formatted2 = CurrencyHelper::formatMoney($amount, 'FRW');
 
-        expect($formatted1)->toBe($expected, "Currency::format($amount) should be $expected");
-        expect($formatted2)->toBe($expected, "CurrencyHelper::formatMoney($amount) should be $expected");
-        expect($formatted1)->toBe($formatted2, "Both methods should return the same value for $amount");
+        expect($formatted1)->toBe($expected, sprintf('Currency::format(%s) should be %s', $amount, $expected));
+        expect($formatted2)->toBe($expected, sprintf('CurrencyHelper::formatMoney(%s) should be %s', $amount, $expected));
+        expect($formatted1)->toBe($formatted2, 'Both methods should return the same value for '.$amount);
     }
 });
 
 it('shows consistent USD amounts with cents', function (): void {
     $testAmount = 99.50;
 
-    $currencyModel = Currency::where('code', 'USD')->first();
+    $currencyModel = Currency::query()->where('code', 'USD')->first();
     $format1 = $currencyModel->format($testAmount);
     $format2 = CurrencyHelper::formatMoney($testAmount, 'USD');
 
@@ -77,7 +77,7 @@ it('shows consistent USD amounts with cents', function (): void {
 it('shows consistent USD whole amounts without decimals', function (): void {
     $testAmount = 100.0;
 
-    $currencyModel = Currency::where('code', 'USD')->first();
+    $currencyModel = Currency::query()->where('code', 'USD')->first();
     $format1 = $currencyModel->format($testAmount);
     $format2 = CurrencyHelper::formatMoney($testAmount, 'USD');
 

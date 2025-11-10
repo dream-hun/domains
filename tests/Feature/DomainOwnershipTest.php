@@ -13,7 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-test('domain registration sets owner_id correctly with authenticated user', function () {
+test('domain registration sets owner_id correctly with authenticated user', function (): void {
     // Create test user and authenticate
     $user = User::factory()->create();
     $this->actingAs($user);
@@ -75,13 +75,13 @@ test('domain registration sets owner_id correctly with authenticated user', func
     expect($result['domain_id'])->not->toBeNull();
 
     // Verify domain was created with correct owner_id
-    $domain = Domain::find($result['domain_id']);
+    $domain = Domain::query()->find($result['domain_id']);
     expect($domain)->not->toBeNull();
     expect($domain->owner_id)->toBe($user->id);
     expect($domain->owner->id)->toBe($user->id);
 });
 
-test('domain registration sets owner_id correctly with explicit user id', function () {
+test('domain registration sets owner_id correctly with explicit user id', function (): void {
     // Create test user (not authenticated)
     $user = User::factory()->create();
 
@@ -144,13 +144,13 @@ test('domain registration sets owner_id correctly with explicit user id', functi
     expect($result['domain_id'])->not->toBeNull();
 
     // Verify domain was created with correct owner_id
-    $domain = Domain::find($result['domain_id']);
+    $domain = Domain::query()->find($result['domain_id']);
     expect($domain)->not->toBeNull();
     expect($domain->owner_id)->toBe($user->id);
     expect($domain->owner->id)->toBe($user->id);
 });
 
-test('domain registration fails when no user id is provided and no authenticated user', function () {
+test('domain registration fails when no user id is provided and no authenticated user', function (): void {
     // Create test country
     Country::factory()->create(['iso_code' => 'US']);
 

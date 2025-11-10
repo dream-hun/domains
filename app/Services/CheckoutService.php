@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Order;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 final readonly class CheckoutService
@@ -23,7 +24,7 @@ final readonly class CheckoutService
     public function processCheckout(array $data): Order
     {
         // Transaction 1: Create order and process payment
-        $order = DB::transaction(function () use ($data) {
+        $order = DB::transaction(function () use ($data): Order {
             $order = $this->orderService->createOrder([
                 'user_id' => $data['user_id'],
                 'currency' => $data['currency'],
@@ -69,7 +70,7 @@ final readonly class CheckoutService
             } catch (Exception $e) {
                 // Registration failed but payment succeeded - this is handled by DomainRegistrationService
                 // Order status will be updated to 'requires_attention' and notifications sent
-                \Illuminate\Support\Facades\Log::error('Domain registration failed after successful payment', [
+                Log::error('Domain registration failed after successful payment', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'error' => $e->getMessage(),

@@ -9,10 +9,10 @@ use App\Models\Scopes\DomainScope;
 use App\Models\User;
 use App\Notifications\DomainImportedNotification;
 use App\Services\Domain\NamecheapDomainService;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -34,11 +34,12 @@ final class FetchDomainsJob implements ShouldQueue
         try {
             do {
                 $result = $this->domainService->getDomainList($page, $perPage);
-                \Log::debug('Namecheap getDomainList result', ['page' => $page, 'result' => $result]);
+                Log::debug('Namecheap getDomainList result', ['page' => $page, 'result' => $result]);
                 if (! ($result['success'] ?? false) || empty($result['domains'])) {
                     if ($page === 1) {
                         Log::warning('No domains fetched from Namecheap.', ['result' => $result]);
                     }
+
                     break;
                 }
 
@@ -47,11 +48,11 @@ final class FetchDomainsJob implements ShouldQueue
                 $count = 0;
                 foreach ($result['domains'] as $domainData) {
                     $registeredAt = isset($domainData['created_date'])
-                        ? Carbon::parse($domainData['created_date'])
+                        ? Date::parse($domainData['created_date'])
                         : now();
 
                     $expiresAt = isset($domainData['expiry_date'])
-                        ? Carbon::parse($domainData['expiry_date'])
+                        ? Date::parse($domainData['expiry_date'])
                         : now()->addYear();
 
                     $years = $registeredAt->diffInYears($expiresAt) ?: 1;
@@ -117,6 +118,7 @@ final class FetchDomainsJob implements ShouldQueue
 
                     $count++;
                 }
+
                 $totalFetched += $count;
                 $page++;
 
@@ -125,9 +127,9 @@ final class FetchDomainsJob implements ShouldQueue
                     break;
                 }
 
-            } while (count($result['domains']) > 0);
+            } while ($result['domains'] !== []);
 
-            Log::info("Fetched and upserted $totalFetched domains from Namecheap.");
+            Log::info(sprintf('Fetched and upserted %d domains from Namecheap.', $totalFetched));
 
             // Send notifications for newly imported domains
             if ($importedDomains !== []) {
@@ -180,7 +182,7 @@ final class FetchDomainsJob implements ShouldQueue
     private function getOrCreateDomainPrice(array $domainData): int
     {
 
-        $domainParts = explode('.', $domainData['name']);
+        $domainParts = explode('.', (string) $domainData['name']);
         end($domainParts);
 
         return 1;
@@ -195,7 +197,7 @@ final class FetchDomainsJob implements ShouldQueue
         $ownerIds = collect($importedDomains)->pluck('owner_id')->unique()->filter();
 
         foreach ($ownerIds as $ownerId) {
-            $user = User::find($ownerId);
+            $user = User::query()->find($ownerId);
             if ($user) {
                 // Get domains for this specific user
                 $userDomains = collect($importedDomains)->where('owner_id', $ownerId);

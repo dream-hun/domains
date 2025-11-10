@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Checkout;
 
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -74,7 +76,7 @@ final class ContactCreateModal extends Component
         session()->flash('success', 'Contact created successfully!');
     }
 
-    public function render()
+    public function render(): Factory|View
     {
         return view('livewire.checkout.contact-create-modal');
     }

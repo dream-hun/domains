@@ -15,13 +15,13 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
 
-final class CurrencyService
+final readonly class CurrencyService
 {
     private const CACHE_TTL = 3600; // 1 hour
 
     public function __construct(
-        private readonly UpdateExchangeRatesAction $updateAction,
-        private readonly CurrencyExchangeHelper $exchangeHelper
+        private UpdateExchangeRatesAction $updateAction,
+        private CurrencyExchangeHelper $exchangeHelper
     ) {}
 
     /**
@@ -45,9 +45,7 @@ final class CurrencyService
      */
     public function getActiveCurrencies(): Collection
     {
-        return Cache::remember('active_currencies', self::CACHE_TTL, function (): Collection {
-            return Currency::getActiveCurrencies();
-        });
+        return Cache::remember('active_currencies', self::CACHE_TTL, Currency::getActiveCurrencies(...));
     }
 
     /**
@@ -59,9 +57,7 @@ final class CurrencyService
             return null;
         }
 
-        return Cache::remember("currency_$code", self::CACHE_TTL, function () use ($code): ?Currency {
-            return Currency::where('code', $code)->first();
-        });
+        return Cache::remember('currency_'.$code, self::CACHE_TTL, fn (): ?Currency => Currency::query()->where('code', $code)->first());
     }
 
     /**
@@ -69,9 +65,7 @@ final class CurrencyService
      */
     public function getBaseCurrency(): Currency
     {
-        return Cache::remember('base_currency', self::CACHE_TTL, function (): Currency {
-            return Currency::getBaseCurrency();
-        });
+        return Cache::remember('base_currency', self::CACHE_TTL, Currency::getBaseCurrency(...));
     }
 
     /**
@@ -82,14 +76,11 @@ final class CurrencyService
      */
     public function convert(float $amount, string $fromCurrency, string $targetCurrency): float
     {
-        if ($amount < 0) {
-            throw new Exception('Amount cannot be negative');
-        }
+        throw_if($amount < 0, Exception::class, 'Amount cannot be negative');
 
         if ($fromCurrency === $targetCurrency) {
             return $amount;
         }
-
 
         if ($this->isUsdFrwPair($fromCurrency, $targetCurrency)) {
             try {
@@ -103,17 +94,11 @@ final class CurrencyService
         $fromCurrencyModel = $this->getCurrency($fromCurrency);
         $targetCurrencyModel = $this->getCurrency($targetCurrency);
 
-        if (! $fromCurrencyModel instanceof Currency) {
-            throw new Exception("Currency not found: $fromCurrency");
-        }
+        throw_unless($fromCurrencyModel instanceof Currency, Exception::class, 'Currency not found: '.$fromCurrency);
 
-        if (! $targetCurrencyModel instanceof Currency) {
-            throw new Exception("Currency not found: $targetCurrency");
-        }
+        throw_unless($targetCurrencyModel instanceof Currency, Exception::class, 'Currency not found: '.$targetCurrency);
 
-        if (! $fromCurrencyModel->is_active || ! $targetCurrencyModel->is_active) {
-            throw new Exception('One or both currencies are inactive');
-        }
+        throw_if(! $fromCurrencyModel->is_active || ! $targetCurrencyModel->is_active, Exception::class, 'One or both currencies are inactive');
 
         return $fromCurrencyModel->convertTo($amount, $targetCurrencyModel);
     }
@@ -159,11 +144,9 @@ final class CurrencyService
     {
         $stalenessHours = config('services.exchange_rate.staleness_hours', 24);
 
-        $lastUpdate = Cache::remember('last_rate_update', self::CACHE_TTL, function () {
-            return Currency::where('is_base', false)
-                ->whereNotNull('rate_updated_at')
-                ->max('rate_updated_at');
-        });
+        $lastUpdate = Cache::remember('last_rate_update', self::CACHE_TTL, fn () => Currency::query()->where('is_base', false)
+            ->whereNotNull('rate_updated_at')
+            ->max('rate_updated_at'));
 
         if (! $lastUpdate) {
             return true;
@@ -188,28 +171,26 @@ final class CurrencyService
     {
         $stalenessHours = config('services.exchange_rate.staleness_hours', 24);
 
-        return Cache::remember('current_rates', self::CACHE_TTL / 4, function () use ($stalenessHours) {
-            return Currency::where('is_active', true)
-                ->orderBy('is_base', 'desc')
-                ->orderBy('code')
-                ->get()
-                ->map(function (Currency $currency) use ($stalenessHours): array {
-                    $hoursSinceUpdate = $currency->rate_updated_at
-                        ? now()->diffInHours($currency->rate_updated_at)
-                        : null;
+        return Cache::remember('current_rates', self::CACHE_TTL / 4, fn () => Currency::query()->where('is_active', true)
+            ->orderBy('is_base', 'desc')
+            ->orderBy('code')
+            ->get()
+            ->map(function (Currency $currency) use ($stalenessHours): array {
+                $hoursSinceUpdate = $currency->rate_updated_at
+                    ? now()->diffInHours($currency->rate_updated_at)
+                    : null;
 
-                    return [
-                        'code' => $currency->code,
-                        'name' => $currency->name,
-                        'symbol' => $currency->symbol,
-                        'is_base' => $currency->is_base,
-                        'exchange_rate' => $currency->exchange_rate,
-                        'rate_updated_at' => $currency->rate_updated_at,
-                        'hours_since_update' => $hoursSinceUpdate,
-                        'is_stale' => $hoursSinceUpdate === null || $hoursSinceUpdate > $stalenessHours,
-                    ];
-                });
-        });
+                return [
+                    'code' => $currency->code,
+                    'name' => $currency->name,
+                    'symbol' => $currency->symbol,
+                    'is_base' => $currency->is_base,
+                    'exchange_rate' => $currency->exchange_rate,
+                    'rate_updated_at' => $currency->rate_updated_at,
+                    'hours_since_update' => $hoursSinceUpdate,
+                    'is_stale' => $hoursSinceUpdate === null || $hoursSinceUpdate > $stalenessHours,
+                ];
+            }));
     }
 
     /**
@@ -219,9 +200,7 @@ final class CurrencyService
      */
     public function convertToMoney(float $amount, string $from, string $to): Money
     {
-        if ($amount < 0) {
-            throw new Exception('Amount cannot be negative');
-        }
+        throw_if($amount < 0, Exception::class, 'Amount cannot be negative');
 
         if ($this->isUsdFrwPair($from, $to)) {
             return $this->exchangeHelper->convertWithAmount($from, $to, $amount);
@@ -233,7 +212,7 @@ final class CurrencyService
             return $currency->toMoney($convertedAmount);
         }
 
-        throw new Exception("Currency not found: $to");
+        throw new Exception('Currency not found: '.$to);
     }
 
     /**

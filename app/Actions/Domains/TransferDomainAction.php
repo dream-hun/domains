@@ -11,11 +11,11 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-final class TransferDomainAction
+final readonly class TransferDomainAction
 {
     public function __construct(
-        private readonly EppDomainService $eppDomainService,
-        private readonly NamecheapDomainService $namecheapDomainService
+        private EppDomainService $eppDomainService,
+        private NamecheapDomainService $namecheapDomainService
     ) {}
 
     public function handle(Domain $domain, array $transferData): array
@@ -31,17 +31,17 @@ final class TransferDomainAction
 
                 return $this->transferWithNamecheap($domain, $transferData);
             });
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain transfer failed', [
                 'domain_id' => $domain->id,
                 'domain_name' => $domain->name,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Domain transfer failed: '.$e->getMessage(),
+                'message' => 'Domain transfer failed: '.$exception->getMessage(),
             ];
         }
     }

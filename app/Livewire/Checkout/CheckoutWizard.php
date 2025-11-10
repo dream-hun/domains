@@ -89,8 +89,8 @@ final class CheckoutWizard extends Component
         // Restore coupon from session if exists
         if (session()->has('coupon')) {
             $couponData = session('coupon');
-            $this->appliedCoupon = Coupon::where('code', $couponData['code'])->first();
-            if ($this->appliedCoupon) {
+            $this->appliedCoupon = Coupon::query()->where('code', $couponData['code'])->first();
+            if ($this->appliedCoupon instanceof Coupon) {
                 $this->isCouponApplied = true;
                 $this->calculateDiscount();
             }
@@ -116,9 +116,7 @@ final class CheckoutWizard extends Component
             return false;
         }
 
-        return $cartItems->every(function ($item) {
-            return ($item->attributes->type ?? 'registration') === 'renewal';
-        });
+        return $cartItems->every(fn ($item): bool => ($item->attributes->type ?? 'registration') === 'renewal');
     }
 
     #[Computed(persist: false)]
@@ -134,7 +132,7 @@ final class CheckoutWizard extends Component
             return null;
         }
 
-        return Contact::find($this->selectedRegistrantId);
+        return Contact::query()->find($this->selectedRegistrantId);
     }
 
     #[Computed(persist: false)]
@@ -144,7 +142,7 @@ final class CheckoutWizard extends Component
             return null;
         }
 
-        return Contact::find($this->selectedAdminId);
+        return Contact::query()->find($this->selectedAdminId);
     }
 
     #[Computed(persist: false)]
@@ -154,7 +152,7 @@ final class CheckoutWizard extends Component
             return null;
         }
 
-        return Contact::find($this->selectedTechId);
+        return Contact::query()->find($this->selectedTechId);
     }
 
     #[Computed(persist: false)]
@@ -164,7 +162,7 @@ final class CheckoutWizard extends Component
             return null;
         }
 
-        return Contact::find($this->selectedBillingId);
+        return Contact::query()->find($this->selectedBillingId);
     }
 
     /**
@@ -378,24 +376,25 @@ final class CheckoutWizard extends Component
             // Check if we need to redirect to Stripe Checkout
             if ($this->selectedPaymentMethod === 'stripe' && $order->stripe_session_id) {
                 // Redirect to Stripe Checkout
-                return redirect()->route('checkout.stripe.redirect', ['order' => $order->order_number]);
+                return to_route('checkout.stripe.redirect', ['order' => $order->order_number]);
             }
-
 
             $this->orderNumber = $order->order_number;
             $this->currentStep = self::STEP_CONFIRMATION;
 
             Cart::clear();
             $this->clearCheckoutState();
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             $this->errorMessage = 'Payment processing failed. Please try again.';
             logger()->error('Checkout failed', [
                 'user_id' => auth()->id(),
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         } finally {
             $this->isProcessing = false;
         }
+
+        return null;
     }
 
     public function render(): Factory|View

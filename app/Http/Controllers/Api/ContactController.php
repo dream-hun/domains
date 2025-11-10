@@ -17,7 +17,7 @@ final class ContactController extends Controller
     public function details(string $id): JsonResponse
     {
         try {
-            $contact = Contact::findOrFail($id);
+            $contact = Contact::query()->findOrFail($id);
 
             return response()->json([
                 'success' => true,

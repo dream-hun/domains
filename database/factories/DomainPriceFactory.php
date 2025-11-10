@@ -17,7 +17,7 @@ final class DomainPriceFactory extends Factory
     {
         return [
             'uuid' => fake()->uuid(),
-            'tld' => '.'.fake()->randomElement(['com', 'net', 'org', 'rw', 'co.rw']),
+            'tld' => '.'.fake()->unique()->lexify('????'),
             'register_price' => fake()->numberBetween(1000, 10000),
             'renewal_price' => fake()->numberBetween(1000, 10000),
             'transfer_price' => fake()->numberBetween(1000, 10000),
@@ -28,7 +28,7 @@ final class DomainPriceFactory extends Factory
 
     public function local(): self
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => DomainType::Local,
             'tld' => '.rw',
         ]);
@@ -36,9 +36,14 @@ final class DomainPriceFactory extends Factory
 
     public function international(): self
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => DomainType::International,
             'tld' => '.com',
         ]);
+    }
+
+    public function com(): self
+    {
+        return $this->international();
     }
 }

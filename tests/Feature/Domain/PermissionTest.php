@@ -16,7 +16,7 @@ final class PermissionTest extends TestCase
     public function test_can_create_and_assign_permission(): void
     {
         $user = User::factory()->create();
-        $permission = Permission::create(['title' => 'domain_show']);
+        $permission = Permission::query()->create(['title' => 'domain_show']);
 
         $user->permissions()->attach($permission);
 

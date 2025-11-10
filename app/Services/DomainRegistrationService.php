@@ -118,12 +118,12 @@ final readonly class DomainRegistrationService
                 'failed_registration_id' => $failedRegistration->id,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             // Exception during registration - record failure and dispatch retry job
             $failedRegistration = $this->recordFailedRegistration(
                 $order,
                 $orderItem,
-                $e->getMessage(),
+                $exception->getMessage(),
                 $contactIds
             );
 
@@ -133,14 +133,14 @@ final readonly class DomainRegistrationService
             Log::error('Domain registration exception', [
                 'order_id' => $order->id,
                 'domain' => $orderItem->domain_name,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
                 'domain' => $orderItem->domain_name,
-                'message' => $e->getMessage(),
+                'message' => $exception->getMessage(),
                 'failed_registration_id' => $failedRegistration->id,
             ];
         }
@@ -151,7 +151,7 @@ final readonly class DomainRegistrationService
      */
     private function recordFailedRegistration(Order $order, $orderItem, string $reason, array $contactIds): FailedDomainRegistration
     {
-        return FailedDomainRegistration::create([
+        return FailedDomainRegistration::query()->create([
             'order_id' => $order->id,
             'order_item_id' => $orderItem->id,
             'domain_name' => $orderItem->domain_name,
@@ -173,7 +173,7 @@ final readonly class DomainRegistrationService
         // Retry after 1 hour
         $delay = 3600;
 
-        RetryDomainRegistrationJob::dispatch($failedRegistration)
+        dispatch(new RetryDomainRegistrationJob($failedRegistration))
             ->delay(now()->addSeconds($delay));
 
         Log::info('Retry job dispatched', [

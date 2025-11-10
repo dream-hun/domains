@@ -19,17 +19,13 @@ final class DomainRenewalController extends Controller
     public function show(Domain $domain): View
     {
         // Ensure the user owns this domain
-        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
-            abort(403, 'You do not have permission to renew this domain.');
-        }
+        abort_if($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin(), 403, 'You do not have permission to renew this domain.');
 
         // Get the TLD and pricing information
         $tld = $this->extractTld($domain->name);
-        $domainPrice = DomainPrice::where('tld', '.'.$tld)->first();
+        $domainPrice = DomainPrice::query()->where('tld', '.'.$tld)->first();
 
-        if (! $domainPrice) {
-            abort(404, 'Pricing information not available for this domain.');
-        }
+        abort_unless($domainPrice, 404, 'Pricing information not available for this domain.');
 
         return view('domains.renew', [
             'domain' => $domain,
@@ -45,19 +41,16 @@ final class DomainRenewalController extends Controller
     public function addToCart(AddDomainRenewalToCartRequest $request, Domain $domain): RedirectResponse
     {
         // Ensure the user owns this domain
-        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
-            abort(403, 'You do not have permission to renew this domain.');
-        }
+        abort_if($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin(), 403, 'You do not have permission to renew this domain.');
 
         $years = $request->validated()['years'];
 
         // Get the TLD and pricing information
         $tld = $this->extractTld($domain->name);
-        $domainPrice = DomainPrice::where('tld', '.'.$tld)->first();
+        $domainPrice = DomainPrice::query()->where('tld', '.'.$tld)->first();
 
         if (! $domainPrice) {
-            return redirect()
-                ->back()
+            return back()
                 ->with('error', 'Pricing information not available for this domain.');
         }
 
@@ -84,9 +77,8 @@ final class DomainRenewalController extends Controller
             ],
         ]);
 
-        return redirect()
-            ->route('checkout.index')
-            ->with('success', "Domain {$domain->name} added to cart for {$years} year(s) renewal.");
+        return to_route('checkout.index')
+            ->with('success', sprintf('Domain %s added to cart for %s year(s) renewal.', $domain->name, $years));
     }
 
     /**

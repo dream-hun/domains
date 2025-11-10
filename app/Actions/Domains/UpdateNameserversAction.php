@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Domains;
 
 use App\Models\Domain;
+use App\Models\Nameserver;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use Exception;
@@ -103,24 +104,40 @@ final readonly class UpdateNameserversAction
      */
     private function syncNameserversInDatabase(Domain $domain, array $nameservers): void
     {
-        // Delete existing nameservers for this domain
-        $domain->nameservers()->delete();
+        $normalized = collect($nameservers)
+            ->map(fn ($nameserver): string => mb_strtolower(mb_trim((string) $nameserver)))
+            ->filter(fn (string $nameserver): bool => $nameserver !== '' && $nameserver !== '0')
+            ->unique()
+            ->values();
 
-        // Create new nameservers
-        foreach ($nameservers as $nameserver) {
-            $domain->nameservers()->create([
-                'uuid' => Str::uuid(),
-                'name' => mb_strtolower($nameserver),
-                'priority' => 1,
-                'status' => 'active',
-            ]);
-        }
+        $nameserverIds = $normalized->map(function (string $nameserver, int $index): int {
+            $record = Nameserver::query()->firstOrCreate(
+                ['name' => $nameserver],
+                [
+                    'uuid' => (string) Str::uuid(),
+                    'type' => 'custom',
+                    'priority' => $index + 1,
+                    'status' => 'active',
+                ]
+            );
 
+            if (! $record->wasRecentlyCreated) {
+                $record->update([
+                    'priority' => $index + 1,
+                    'status' => 'active',
+                ]);
+            }
+
+            return $record->id;
+        })->all();
+
+        $domain->nameservers()->sync($nameserverIds);
         $domain->touch();
+
         Log::info('Nameservers synchronized in database', [
             'domain_id' => $domain->id,
             'domain_name' => $domain->name,
-            'nameservers' => $nameservers,
+            'nameservers' => $normalized->all(),
         ]);
     }
 

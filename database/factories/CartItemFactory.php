@@ -49,7 +49,7 @@ final class CartItemFactory extends Factory
      */
     public function forGuest(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'user_id' => null,
             'session_id' => fake()->uuid(),
         ]);
@@ -60,7 +60,7 @@ final class CartItemFactory extends Factory
      */
     public function transfer(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'domain_type' => 'transfer',
         ]);
     }
@@ -70,7 +70,7 @@ final class CartItemFactory extends Factory
      */
     public function renewal(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'domain_type' => 'renewal',
         ]);
     }
@@ -80,7 +80,7 @@ final class CartItemFactory extends Factory
      */
     public function withEapFee(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'eap_fee' => fake()->randomFloat(2, 50, 500),
         ]);
     }
@@ -90,7 +90,7 @@ final class CartItemFactory extends Factory
      */
     public function withPremiumFee(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'premium_fee' => fake()->randomFloat(2, 100, 5000),
         ]);
     }
@@ -100,7 +100,7 @@ final class CartItemFactory extends Factory
      */
     public function withPrivacy(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'privacy_fee' => fake()->randomFloat(2, 5, 15),
         ]);
     }
@@ -110,7 +110,7 @@ final class CartItemFactory extends Factory
      */
     public function premiumWithEap(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'premium_fee' => fake()->randomFloat(2, 100, 5000),
             'eap_fee' => fake()->randomFloat(2, 50, 500),
         ]);
@@ -121,7 +121,7 @@ final class CartItemFactory extends Factory
      */
     public function years(int $years): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'years' => $years,
         ]);
     }
@@ -131,7 +131,7 @@ final class CartItemFactory extends Factory
      */
     public function currency(string $currency): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'base_currency' => $currency,
         ]);
     }

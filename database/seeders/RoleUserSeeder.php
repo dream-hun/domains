@@ -11,7 +11,7 @@ final class RoleUserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::findOrFail(1)->roles()->sync(1);
-        User::findOrFail(2)->roles()->sync(2);
+        User::query()->findOrFail(1)->roles()->sync(1);
+        User::query()->findOrFail(2)->roles()->sync(2);
     }
 }

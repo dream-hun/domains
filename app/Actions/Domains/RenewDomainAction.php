@@ -11,11 +11,11 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-final class RenewDomainAction
+final readonly class RenewDomainAction
 {
     public function __construct(
-        private readonly EppDomainService $eppDomainService,
-        private readonly NamecheapDomainService $namecheapDomainService
+        private EppDomainService $eppDomainService,
+        private NamecheapDomainService $namecheapDomainService
     ) {}
 
     public function handle(Domain $domain, int $years): array
@@ -31,18 +31,18 @@ final class RenewDomainAction
 
                 return $this->renewWithNamecheap($domain, $years);
             });
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain renewal failed', [
                 'domain_id' => $domain->id,
                 'domain_name' => $domain->name,
                 'years' => $years,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Domain renewal failed: '.$e->getMessage(),
+                'message' => 'Domain renewal failed: '.$exception->getMessage(),
             ];
         }
     }

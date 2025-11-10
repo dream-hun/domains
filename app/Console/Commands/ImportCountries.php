@@ -30,6 +30,7 @@ final class ImportCountries extends Command
 
             return 1;
         }
+
         $countries = $response->json();
         foreach ($countries as $country) {
             // Extract currency information
@@ -43,18 +44,16 @@ final class ImportCountries extends Command
                 }
             }
 
-            Country::updateOrCreate(
-                ['iso_code' => $country['cca3'] ?? null],
-                [
-                    'name' => $country['name']['common'] ?? null,
-                    'capital' => isset($country['capital']) ? implode(', ', $country['capital']) : null,
-                    'region' => $country['region'] ?? null,
-                    'currency' => $currency,
-                    'symbol' => $symbol,
-                    'flag' => $country['flags']['svg'] ?? ($country['flags']['png'] ?? null),
-                ]
-            );
+            Country::query()->updateOrCreate(['iso_code' => $country['cca3'] ?? null], [
+                'name' => $country['name']['common'] ?? null,
+                'capital' => isset($country['capital']) ? implode(', ', $country['capital']) : null,
+                'region' => $country['region'] ?? null,
+                'currency' => $currency,
+                'symbol' => $symbol,
+                'flag' => $country['flags']['svg'] ?? ($country['flags']['png'] ?? null),
+            ]);
         }
+
         $this->info('✅ Countries imported successfully!');
 
         return 0;

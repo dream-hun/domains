@@ -842,6 +842,6 @@ final class DomainPriceSeeder extends Seeder
                 'description' => null,
             ],
         ];
-        DomainPrice::insert($tlds);
+        DomainPrice::query()->insert($tlds);
     }
 }

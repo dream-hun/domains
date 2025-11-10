@@ -23,10 +23,10 @@ use App\Models\Country;
 use App\Models\Domain;
 use App\Models\DomainPrice;
 use Exception;
-use Gate;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
 final class DomainController extends Controller
@@ -55,12 +55,12 @@ final class DomainController extends Controller
                 'domainInfo' => $domain,
                 'registrarInfo' => $registrarInfo['success'] ? $registrarInfo : null,
             ]);
-        } catch (Exception $e) {
-            Log::error('Failed to get domain info: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Failed to get domain info: '.$exception->getMessage());
 
             return view('admin.domains.domainInfo', [
                 'domainInfo' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
@@ -69,7 +69,7 @@ final class DomainController extends Controller
     {
         abort_if(Gate::denies('domain_transfer'), 403);
 
-        $contacts = Contact::where('user_id', auth()->id())->get();
+        $contacts = Contact::query()->where('user_id', auth()->id())->get();
 
         return view('admin.domains.transfer', [
             'domain' => $domain,
@@ -82,11 +82,11 @@ final class DomainController extends Controller
         $result = $action->handle($domain, $request->validated());
 
         if ($result['success']) {
-            return redirect()->route('admin.domains.index')
+            return to_route('admin.domains.index')
                 ->with('success', $result['message'] ?? 'Domain transfer initiated successfully');
         }
 
-        return redirect()->back()
+        return back()
             ->withErrors(['error' => $result['message'] ?? 'Domain transferRegister failed'])
             ->withInput();
     }
@@ -95,7 +95,7 @@ final class DomainController extends Controller
     {
         abort_if(Gate::denies('domain_renew'), 403);
         $tld = $this->extractTld($domain->name);
-        $domainPrice = DomainPrice::where('tld', $tld)->first();
+        $domainPrice = DomainPrice::query()->where('tld', $tld)->first();
 
         $pricing = [];
         if ($domainPrice) {
@@ -116,31 +116,32 @@ final class DomainController extends Controller
         $result = $action->handle($domain, $years);
 
         if ($result['success']) {
-            return redirect()->route('admin.domains.index')
+            return to_route('admin.domains.index')
                 ->with('success', $result['message'] ?? 'Domain renewed successfully');
         }
 
-        return redirect()->back()
+        return back()
             ->withErrors(['error' => $result['message'] ?? 'Domain renewal failed'])
             ->withInput();
     }
 
     public function edit(Domain $domain): View
     {
-        abort_if(Gate::denies('domain_edit'), 403);
-        $countries = Country::select('name', 'iso_code')->get();
+        $canEdit = Gate::allows('domain_edit') || $domain->owner_id === auth()->id();
+        abort_unless($canEdit, 403);
+        $countries = Country::query()->select('name', 'iso_code')->get();
         $domain->load(['owner', 'nameservers']);
         $domain->load(['contacts' => function ($query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
         $user = auth()->user();
         if ($user->isAdmin()) {
-            $availableContacts = Contact::withoutGlobalScopes()
+            $availableContacts = Contact::query()->withoutGlobalScopes()
                 ->orderBy('is_primary', 'desc')
                 ->orderBy('first_name')
                 ->get();
         } else {
-            $availableContacts = Contact::withoutGlobalScopes()
+            $availableContacts = Contact::query()->withoutGlobalScopes()
                 ->where(function ($query) use ($user, $domain): void {
                     $query->where('user_id', $user->id)
                         ->orWhereHas('domains', function ($q) use ($domain): void {
@@ -178,49 +179,52 @@ final class DomainController extends Controller
 
     public function updateNameservers(Domain $domain, UpdateNameserversRequest $request, UpdateNameserversAction $action): RedirectResponse
     {
+        $canEdit = Gate::allows('domain_edit') || $domain->owner_id === auth()->id();
+        abort_unless($canEdit, 403);
+
         $result = $action->handle($domain, $request->validated()['nameservers']);
 
         if ($result['success']) {
-            return redirect()->route('admin.domains.index')
+            return to_route('admin.domains.index')
                 ->with('success', $result['message'] ?? 'Nameservers updated successfully');
         }
 
-        return redirect()->back()
+        return back()
             ->withErrors(['error' => $result['message'] ?? 'Nameserver update failed'])
             ->withInput();
     }
 
     public function toggleLock(Domain $domain, ToggleDomainLockAction $action): RedirectResponse
     {
-        abort_if(Gate::denies('domain_edit'), 403);
+        $canEdit = Gate::allows('domain_edit') || $domain->owner_id === auth()->id();
+        abort_unless($canEdit, 403);
         $lock = ! $domain->is_locked;
         $result = $action->execute($domain, $lock);
 
         if ($result['success']) {
-            return redirect()->back()->with('success', $result['message']);
+            return back()->with('success', $result['message']);
         }
 
-        return redirect()->back()->withErrors(['error' => $result['message'] ?? 'Failed to update domain lock status']);
+        return back()->withErrors(['error' => $result['message'] ?? 'Failed to update domain lock status']);
     }
 
     public function editContact(Domain $domain, string $type): View
     {
         abort_if(Gate::denies('domain_edit'), 403);
         $validTypes = ['registrant', 'admin', 'technical', 'billing'];
-        if (! in_array($type, $validTypes)) {
-            abort(404, 'Invalid contact type');
-        }
+        abort_unless(in_array($type, $validTypes), 404, 'Invalid contact type');
+
         $domain->load(['contacts' => function ($query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
         $user = auth()->user();
         if ($user->isAdmin()) {
-            $availableContacts = Contact::withoutGlobalScopes()
+            $availableContacts = Contact::query()->withoutGlobalScopes()
                 ->orderBy('is_primary', 'desc')
                 ->orderBy('first_name')
                 ->get();
         } else {
-            $availableContacts = Contact::withoutGlobalScopes()
+            $availableContacts = Contact::query()->withoutGlobalScopes()
                 ->where(function ($query) use ($user, $domain): void {
                     $query->where('user_id', $user->id)
                         ->orWhereHas('domains', function ($q) use ($domain): void {
@@ -232,6 +236,7 @@ final class DomainController extends Controller
                 ->orderBy('first_name')
                 ->get();
         }
+
         $currentContact = null;
         foreach ($domain->contacts as $contact) {
             $contactType = $contact->pivot->type;
@@ -243,7 +248,7 @@ final class DomainController extends Controller
             }
         }
 
-        $countries = Country::select('name', 'iso_code')->get();
+        $countries = Country::query()->select('name', 'iso_code')->get();
 
         return view('admin.domains.contacts.edit', [
             'domain' => $domain,
@@ -256,23 +261,25 @@ final class DomainController extends Controller
 
     public function updateContacts(Domain $domain, UpdateDomainContactsRequest $request, UpdateDomainContactsAction $action): RedirectResponse
     {
-        abort_if(Gate::denies('domain_edit') || $domain->owner_id !== auth()->id(), 403);
+        $canEdit = Gate::allows('domain_edit') || $domain->owner_id === auth()->id();
+
+        abort_unless($canEdit, 403);
 
         $result = $action->handle($domain, $request->validated());
 
         if ($result['success']) {
-            return redirect()->route('admin.domains.edit', $domain->uuid)
+            return to_route('admin.domains.edit', $domain->uuid)
                 ->with('success', 'Domain contacts updated successfully');
         }
 
-        return redirect()->back()
+        return back()
             ->withErrors(['error' => $result['message'] ?? 'Failed to update domain contacts']);
     }
 
     public function reactivate(ReactivateDomainRequest $request, ReactivateDomainAction $action): RedirectResponse
     {
         try {
-            $domain = Domain::where('name', $request->validated('domain'))->firstOrFail();
+            $domain = Domain::query()->where('name', $request->validated('domain'))->firstOrFail();
 
             $result = $action->handle($domain);
 
@@ -282,13 +289,13 @@ final class DomainController extends Controller
 
             return back()->with('success', $result['message'] ?? 'Domain reactivated successfully');
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain reactivation controller error', [
                 'domain' => $request->validated('domain'),
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
-            return back()->withErrors(['error' => 'Failed to reactivate domain: '.$e->getMessage()]);
+            return back()->withErrors(['error' => 'Failed to reactivate domain: '.$exception->getMessage()]);
         }
     }
 

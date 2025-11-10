@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
+use App\Models\Currency;
 use App\Services\CurrencyService;
 
 trait HasCurrency
@@ -19,7 +20,7 @@ trait HasCurrency
     /**
      * Get user's preferred currency
      */
-    protected function getUserCurrency(): \App\Models\Currency
+    protected function getUserCurrency(): Currency
     {
         return $this->currencyService()->getUserCurrency();
     }

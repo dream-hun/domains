@@ -8,7 +8,10 @@ use App\Helpers\CurrencyHelper;
 use App\Services\Coupon\CouponService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 final class CheckoutProcess extends Component
@@ -23,7 +26,7 @@ final class CheckoutProcess extends Component
 
     public $currency = 'USD';
 
-    public $appliedCoupon = null;
+    public $appliedCoupon;
 
     public $paymentMethod = 'stripe';
 
@@ -36,7 +39,7 @@ final class CheckoutProcess extends Component
     // Contact selection properties
     public $userContacts = [];
 
-    public $selectedContactId = null;
+    public $selectedContactId;
 
     public $showContactSelection = false;
 
@@ -134,26 +137,24 @@ final class CheckoutProcess extends Component
         if (empty($this->cartItems)) {
             $this->errorMessage = 'Your cart is empty.';
 
-            return;
+            return null;
         }
 
         if ($this->total <= 0) {
             $this->errorMessage = 'Invalid order total.';
 
-            return;
+            return null;
         }
 
         // Check if cart has any new domain registrations (not renewals)
-        $hasNewRegistrations = collect($this->cartItems)->contains(function ($item) {
-            return ($item['attributes']['type'] ?? 'registration') !== 'renewal';
-        });
+        $hasNewRegistrations = collect($this->cartItems)->contains(fn (array $item): bool => ($item['attributes']['type'] ?? 'registration') !== 'renewal');
 
         // Validate contact selection only if cart has new registrations
         if ($hasNewRegistrations && ! $this->selectedContactId) {
             $this->errorMessage = 'Please select a contact for domain registration.';
             $this->showContactSelection = true;
 
-            return;
+            return null;
         }
 
         try {
@@ -194,20 +195,22 @@ final class CheckoutProcess extends Component
             ]);
 
             // Redirect to payment page
-            return redirect()->route('payment.index');
+            return to_route('payment.index');
 
-        } catch (Exception $e) {
-            $this->errorMessage = 'Failed to proceed to payment: '.$e->getMessage();
+        } catch (Exception $exception) {
+            $this->errorMessage = 'Failed to proceed to payment: '.$exception->getMessage();
             Log::error('Checkout process failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
         } finally {
             $this->isProcessing = false;
         }
+
+        return null;
     }
 
-    public function render()
+    public function render(): Factory|View
     {
         return view('livewire.checkout-process');
     }
@@ -215,7 +218,8 @@ final class CheckoutProcess extends Component
     /**
      * Get formatted subtotal with currency
      */
-    public function getFormattedSubtotalProperty(): string
+    #[Computed]
+    public function formattedSubtotal(): string
     {
         try {
             return CurrencyHelper::formatMoney($this->subtotal, $this->currency);
@@ -227,7 +231,8 @@ final class CheckoutProcess extends Component
     /**
      * Get formatted total with currency
      */
-    public function getFormattedTotalProperty(): string
+    #[Computed]
+    public function formattedTotal(): string
     {
         try {
             return CurrencyHelper::formatMoney($this->total, $this->currency);
@@ -239,7 +244,8 @@ final class CheckoutProcess extends Component
     /**
      * Get formatted discount with currency
      */
-    public function getFormattedDiscountProperty(): string
+    #[Computed]
+    public function formattedDiscount(): string
     {
         try {
             return CurrencyHelper::formatMoney($this->discount, $this->currency);
@@ -251,7 +257,7 @@ final class CheckoutProcess extends Component
     /**
      * Get formatted price for individual cart item
      */
-    public function getFormattedItemPrice($item): string
+    public function getFormattedItemPrice(array $item): string
     {
         $itemCurrency = $item['attributes']['currency'] ?? 'USD';
         $itemPrice = $item['price'];
@@ -279,7 +285,7 @@ final class CheckoutProcess extends Component
     /**
      * Get formatted total price for individual cart item
      */
-    public function getFormattedItemTotal($item): string
+    public function getFormattedItemTotal(array $item): string
     {
         $itemCurrency = $item['attributes']['currency'] ?? 'USD';
         $itemPrice = $item['price'];

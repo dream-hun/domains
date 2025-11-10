@@ -38,32 +38,6 @@ final class Contact extends Model
     }
 
     /**
-     * Get the contact's full name
-     */
-    public function getFullNameAttribute(): string
-    {
-        return mb_trim($this->first_name.' '.$this->last_name);
-    }
-
-    /**
-     * Get the contact's full address
-     */
-    public function getFullAddressAttribute(): string
-    {
-        $address = $this->address_one;
-
-        if ($this->address_two) {
-            $address .= ', '.$this->address_two;
-        }
-
-        $address .= ', '.$this->city;
-        $address .= ', '.$this->state_province;
-        $address .= ' '.$this->postal_code;
-
-        return $address.(', '.$this->country_code);
-    }
-
-    /**
      * Get the route key for the model.
      */
     public function getRouteKeyName(): string
@@ -80,5 +54,31 @@ final class Contact extends Model
                 $contact->uuid = (string) Str::uuid();
             }
         });
+    }
+
+    /**
+     * Get the contact's full name
+     */
+    protected function getFullNameAttribute(): string
+    {
+        return mb_trim($this->first_name.' '.$this->last_name);
+    }
+
+    /**
+     * Get the contact's full address
+     */
+    protected function getFullAddressAttribute(): string
+    {
+        $address = $this->address_one;
+
+        if ($this->address_two) {
+            $address .= ', '.$this->address_two;
+        }
+
+        $address .= ', '.$this->city;
+        $address .= ', '.$this->state_province;
+        $address .= ' '.$this->postal_code;
+
+        return $address.(', '.$this->country_code);
     }
 }

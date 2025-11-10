@@ -200,10 +200,7 @@ final class DomainPricingSeeder extends Seeder
         ];
 
         foreach ($prices as $price) {
-            DomainPrice::updateOrCreate(
-                ['tld' => $price['tld']],
-                $price
-            );
+            DomainPrice::query()->updateOrCreate(['tld' => $price['tld']], $price);
         }
     }
 }

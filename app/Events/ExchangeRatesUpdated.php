@@ -7,12 +7,13 @@ namespace App\Events;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-final class ExchangeRatesUpdated
+final readonly class ExchangeRatesUpdated
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
+    use SerializesModels;
 
     public function __construct(
-        public readonly int $updatedCount,
-        public readonly array $updatedCurrencies
+        public int $updatedCount,
+        public array $updatedCurrencies
     ) {}
 }

@@ -13,8 +13,8 @@ final class ExchangeRateClient
     public function __construct(
         private ?string $apiKey = null,
         private ?string $baseUrl = null,
-        private int $timeout = 30,
-        private int $extendedTimeout = 45
+        private readonly int $timeout = 30,
+        private readonly int $extendedTimeout = 45
     ) {
         $this->apiKey = $apiKey ?? config('services.exchange_rate.api_key');
         $this->baseUrl = $baseUrl ?? config('services.exchange_rate.base_url');
@@ -48,10 +48,10 @@ final class ExchangeRateClient
     public function fetchPairConversion(string $from, string $to, ?float $amount = null): ?array
     {
         try {
-            $endpoint = "{$this->baseUrl}/{$this->apiKey}/pair/{$from}/{$to}";
+            $endpoint = sprintf('%s/%s/pair/%s/%s', $this->baseUrl, $this->apiKey, $from, $to);
 
             if ($amount !== null) {
-                $endpoint .= "/{$amount}";
+                $endpoint .= '/'.$amount;
             }
 
             $response = Http::timeout($this->timeout)
@@ -88,11 +88,11 @@ final class ExchangeRateClient
 
             return $data;
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Exchange rate pair conversion exception', [
                 'from' => $from,
                 'to' => $to,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return null;
@@ -113,7 +113,7 @@ final class ExchangeRateClient
                     'Accept' => 'application/json',
                     'User-Agent' => config('app.name', 'Laravel').'/1.0',
                 ])
-                ->get("{$this->baseUrl}/{$this->apiKey}/latest/{$baseCurrencyCode}");
+                ->get(sprintf('%s/%s/latest/%s', $this->baseUrl, $this->apiKey, $baseCurrencyCode));
 
             if (! $response->successful()) {
                 Log::warning('Exchange rate API request failed', [
@@ -140,9 +140,9 @@ final class ExchangeRateClient
 
             return $rates;
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::warning('Exchange rate API exception', [
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
                 'timeout' => $timeout,
                 'retries' => $retries,
             ]);

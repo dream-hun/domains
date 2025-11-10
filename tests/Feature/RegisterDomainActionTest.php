@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Actions\RegisterDomainAction;
 use App\Models\Contact;
 use App\Models\Country;
+use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Models\Role;
 use App\Models\User;
@@ -30,7 +31,7 @@ final class RegisterDomainActionTest extends TestCase
         parent::setUp();
 
         // Create default role required by User model
-        Role::create(['id' => 2, 'title' => 'User']);
+        Role::query()->create(['id' => 2, 'title' => 'User']);
 
         // Create test user
         $this->user = User::factory()->create();
@@ -203,7 +204,7 @@ final class RegisterDomainActionTest extends TestCase
         $this->assertEquals('example.com', $result['domain']);
 
         // Verify the domain has the default nameservers
-        $domain = \App\Models\Domain::where('name', 'example.com')->first();
+        $domain = Domain::query()->where('name', 'example.com')->first();
         $this->assertNotNull($domain);
         $this->assertCount(2, $domain->nameservers);
         $this->assertEquals('dns1.registrar-servers.com', $domain->nameservers[0]->name);

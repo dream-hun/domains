@@ -112,7 +112,7 @@ final class RetryDomainRegistrationJob implements ShouldQueue
                 }
             }
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             // Exception during retry - increment retry count
             $this->failedRegistration->incrementRetryCount();
 
@@ -120,13 +120,13 @@ final class RetryDomainRegistrationJob implements ShouldQueue
                 'failed_registration_id' => $this->failedRegistration->id,
                 'domain' => $this->failedRegistration->domain_name,
                 'retry_count' => $this->failedRegistration->retry_count,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             // Update failure reason with latest error
             $this->failedRegistration->update([
-                'failure_reason' => $e->getMessage(),
+                'failure_reason' => $exception->getMessage(),
             ]);
 
             // If we've exhausted retries, mark as abandoned
@@ -135,7 +135,7 @@ final class RetryDomainRegistrationJob implements ShouldQueue
                 $this->notifyAbandoned();
             } else {
                 // Re-throw to trigger job retry mechanism
-                throw $e;
+                throw $exception;
             }
         }
     }
@@ -170,7 +170,7 @@ final class RetryDomainRegistrationJob implements ShouldQueue
             'next_retry_at' => $nextRetryAt,
         ]);
 
-        self::dispatch($this->failedRegistration)
+        dispatch(new self($this->failedRegistration))
             ->delay($nextRetryAt);
 
         Log::info('Next retry scheduled', [

@@ -6,12 +6,15 @@ namespace App\Livewire;
 
 use App\Helpers\CurrencyHelper;
 use App\Models\Coupon;
+use App\Models\Domain;
 use App\Services\Coupon\CouponService;
+use App\Services\RenewalService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Log;
 
 final class CartComponent extends Component
 {
@@ -40,8 +43,8 @@ final class CartComponent extends Component
         // Restore coupon from session if exists
         if (session()->has('coupon')) {
             $couponData = session('coupon');
-            $this->appliedCoupon = Coupon::where('code', $couponData['code'])->first();
-            if ($this->appliedCoupon) {
+            $this->appliedCoupon = Coupon::query()->where('code', $couponData['code'])->first();
+            if ($this->appliedCoupon instanceof Coupon) {
                 $this->isCouponApplied = true;
                 $this->couponCode = $this->appliedCoupon->code;
             }
@@ -87,9 +90,7 @@ final class CartComponent extends Component
 
         // Sort by creation timestamp to maintain consistent order
         // This ensures items stay in the same order regardless of updates
-        $this->items = $cartContent->sortBy(function ($item) {
-            return $item->attributes->get('added_at', 0);
-        });
+        $this->items = $cartContent->sortBy(fn ($item) => $item->attributes->get('added_at', 0));
 
         // Calculate totals with currency conversion
         $subtotal = 0;
@@ -128,7 +129,8 @@ final class CartComponent extends Component
     /**
      * @throws Exception
      */
-    public function getFormattedSubtotalProperty(): string
+    #[Computed]
+    public function formattedSubtotal(): string
     {
         return CurrencyHelper::formatMoney($this->subtotalAmount, $this->currency);
     }
@@ -136,7 +138,8 @@ final class CartComponent extends Component
     /**
      * @throws Exception
      */
-    public function getFormattedTotalProperty(): string
+    #[Computed]
+    public function formattedTotal(): string
     {
         return CurrencyHelper::formatMoney($this->totalAmount, $this->currency);
     }
@@ -144,11 +147,12 @@ final class CartComponent extends Component
     /**
      * @throws Exception
      */
-    public function getFormattedDiscountProperty(): string
+    #[Computed]
+    public function formattedDiscount(): string
     {
         try {
             return CurrencyHelper::formatMoney($this->discountAmount, $this->currency);
-        } catch (Exception $e) {
+        } catch (Exception) {
             return CurrencyHelper::formatMoney(0, $this->currency);
         }
     }
@@ -269,7 +273,7 @@ final class CartComponent extends Component
     {
         try {
             // Convert price string to numeric value (remove currency symbols)
-            $numericPrice = (float) preg_replace('/[^\d.]/', '', $price);
+            $numericPrice = (float) preg_replace('/[^\d.]/', '', (string) $price);
             $itemCurrency = $currency ?? $this->currency;
 
             Cart::add([
@@ -322,7 +326,7 @@ final class CartComponent extends Component
     public function addRenewalToCart(int $domainId, int $years = 1): void
     {
         try {
-            $domain = \App\Models\Domain::with('domainPrice')->findOrFail($domainId);
+            $domain = Domain::with('domainPrice')->findOrFail($domainId);
 
             // Validate ownership
             if ($domain->owner_id !== auth()->id()) {
@@ -335,7 +339,7 @@ final class CartComponent extends Component
             }
 
             // Validate domain can be renewed
-            $renewalService = app(\App\Services\RenewalService::class);
+            $renewalService = app(RenewalService::class);
             $canRenew = $renewalService->canRenewDomain($domain, auth()->id());
 
             if (! $canRenew['can_renew']) {
@@ -404,17 +408,17 @@ final class CartComponent extends Component
 
             $this->dispatch('notify', [
                 'type' => 'success',
-                'message' => "Domain renewal for {$domain->name} added to cart for {$years} year(s)",
+                'message' => sprintf('Domain renewal for %s added to cart for %d year(s)', $domain->name, $years),
             ]);
-        } catch (Exception $e) {
-            \Log::error('Failed to add renewal to cart', [
+        } catch (Exception $exception) {
+            Log::error('Failed to add renewal to cart', [
                 'domain_id' => $domainId,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Failed to add renewal to cart: '.$e->getMessage(),
+                'message' => 'Failed to add renewal to cart: '.$exception->getMessage(),
             ]);
         }
     }
@@ -459,7 +463,7 @@ final class CartComponent extends Component
     {
         try {
             // Validate coupon code is not empty
-            if (empty($this->couponCode)) {
+            if (in_array($this->couponCode, [null, '', '0'], true)) {
                 $this->dispatch('notify', [
                     'type' => 'error',
                     'message' => 'Please enter a coupon code',
@@ -503,9 +507,9 @@ final class CartComponent extends Component
 
             $this->dispatch('notify', [
                 'type' => 'success',
-                'message' => "Coupon '{$this->appliedCoupon->code}' applied! You saved ".CurrencyHelper::formatMoney($this->discountAmount, $this->currency),
+                'message' => sprintf("Coupon '%s' applied! You saved ", $this->appliedCoupon->code).CurrencyHelper::formatMoney($this->discountAmount, $this->currency),
             ]);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             // Clear any partial coupon state
             $this->appliedCoupon = null;
             $this->isCouponApplied = false;
@@ -513,7 +517,7 @@ final class CartComponent extends Component
 
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => $e->getMessage(),
+                'message' => $exception->getMessage(),
             ]);
         }
     }

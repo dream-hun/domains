@@ -9,11 +9,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->user = User::factory()->create();
 });
 
-it('stores cart items in database for authenticated users', function () {
+it('stores cart items in database for authenticated users', function (): void {
     $this->actingAs($this->user);
 
     $cartService = app(CartService::class);
@@ -33,7 +33,7 @@ it('stores cart items in database for authenticated users', function () {
         ->and(CartItem::where('user_id', $this->user->id)->count())->toBe(1);
 });
 
-it('persists cart across sessions for authenticated users', function () {
+it('persists cart across sessions for authenticated users', function (): void {
     $this->actingAs($this->user);
 
     $cartService = app(CartService::class);
@@ -54,7 +54,7 @@ it('persists cart across sessions for authenticated users', function () {
     expect($items)->toHaveCount(1);
 });
 
-it('allows authenticated user to update cart items', function () {
+it('allows authenticated user to update cart items', function (): void {
     $this->actingAs($this->user);
 
     $cartService = app(CartService::class);
@@ -74,7 +74,7 @@ it('allows authenticated user to update cart items', function () {
     expect($updatedItem->years)->toBe(5);
 });
 
-it('allows authenticated user to remove cart items', function () {
+it('allows authenticated user to remove cart items', function (): void {
     $this->actingAs($this->user);
 
     $cartService = app(CartService::class);
@@ -93,7 +93,7 @@ it('allows authenticated user to remove cart items', function () {
         ->and($cartService->getItemCount())->toBe(0);
 });
 
-it('preserves cart after logout and login', function () {
+it('preserves cart after logout and login', function (): void {
     $this->actingAs($this->user);
 
     $cartService = app(CartService::class);
@@ -117,7 +117,7 @@ it('preserves cart after logout and login', function () {
     expect($items)->toHaveCount(1);
 });
 
-it('calculates totals correctly for authenticated users', function () {
+it('calculates totals correctly for authenticated users', function (): void {
     $this->actingAs($this->user);
 
     $cartService = app(CartService::class);
@@ -139,7 +139,7 @@ it('calculates totals correctly for authenticated users', function () {
         ->and($total)->toBe(90.00);
 });
 
-it('allows multiple items in authenticated cart', function () {
+it('allows multiple items in authenticated cart', function (): void {
     $this->actingAs($this->user);
 
     $cartService = app(CartService::class);

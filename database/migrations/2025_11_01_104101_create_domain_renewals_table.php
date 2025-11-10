@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('domain_renewals', function (Blueprint $table) {
+        Schema::create('domain_renewals', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('domain_id')->constrained()->onDelete('cascade');
             $table->foreignId('order_id')->constrained()->onDelete('cascade');

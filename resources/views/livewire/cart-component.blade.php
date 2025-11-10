@@ -115,7 +115,7 @@
 
                     <div class="mt-3">
                         @if ($items && $items->isNotEmpty())
-                            <a href="{{ route('checkout.index') }}" class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
+                            <a href="{{ route('checkout.wizard') }}" class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
                                 style="font-size: 16px !important;">
 
                                     <i class="bi bi-credit-card me-2"></i>Proceed to Payment

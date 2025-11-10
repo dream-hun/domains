@@ -19,8 +19,8 @@ use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use Log;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ContactController extends Controller
@@ -33,7 +33,8 @@ final class ContactController extends Controller
 
     public function index(ListContactAction $action): View
     {
-        abort_if(Gate::denies('contact_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        abort_if(Gate::denies('contact_access') && ! Auth::check(), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
         $contacts = $action->handle();
 
         return view('admin.contacts.index', [
@@ -44,7 +45,7 @@ final class ContactController extends Controller
 
     public function create(): View
     {
-        $countries = Country::orderBy('name')->get();
+        $countries = Country::query()->orderBy('name')->get();
         $contactTypes = ContactType::cases();
 
         return view('admin.contacts.create', [
@@ -58,21 +59,25 @@ final class ContactController extends Controller
      */
     public function store(StoreContactRequest $request): RedirectResponse
     {
-        $result = $this->createContactAction->handle(
-            Auth::user(),
-            $request->validated()
-        );
+        try {
+            $result = $this->createContactAction->handle(
+                Auth::user(),
+                $request->validated()
+            );
+        } catch (Exception $exception) {
+            return back()
+                ->withInput()
+                ->with('error', $exception->getMessage());
+        }
 
         if ($result['success']) {
-            return redirect()
-                ->route('admin.contacts.index')
+            return to_route('admin.contacts.index')
                 ->with('success', $result['message']);
         }
 
-        return redirect()
-            ->back()
+        return back()
             ->withInput()
-            ->with('error', $result['message']);
+            ->with('error', $result['message'] ?? 'Failed to create contact.');
     }
 
     /**
@@ -80,7 +85,8 @@ final class ContactController extends Controller
      */
     public function show(Contact $contact): View
     {
-        abort_if(Gate::denies('contact_show'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $canView = Gate::allows('contact_show') || $contact->user_id === Auth::id();
+        abort_unless($canView, Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $contact->load(['user', 'domains']);
 
@@ -124,7 +130,8 @@ final class ContactController extends Controller
      */
     public function edit(Contact $contact): View
     {
-        abort_if(Gate::denies('contact_edit', $contact), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $canEdit = Gate::allows('contact_edit', $contact) || $contact->user_id === Auth::id();
+        abort_unless($canEdit, Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $countries = Country::all();
         $contactTypes = ContactType::cases();
@@ -141,17 +148,17 @@ final class ContactController extends Controller
      */
     public function update(UpdateContactRequest $request, Contact $contact): RedirectResponse
     {
+        $canEdit = Gate::allows('contact_edit', $contact) || $contact->user_id === Auth::id();
+        abort_unless($canEdit, Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $result = $this->updateContactAction->handle($contact, $request->validated());
 
         if ($result['success']) {
-            return redirect()
-                ->route('admin.contacts.show', $contact)
+            return to_route('admin.contacts.show', $contact)
                 ->with('success', $result['message']);
         }
 
-        return redirect()
-            ->back()
+        return back()
             ->withInput()
             ->with('error', $result['message']);
     }
@@ -161,18 +168,17 @@ final class ContactController extends Controller
      */
     public function destroy(Contact $contact): RedirectResponse
     {
-        abort_if(Gate::denies('contact_delete'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $canDelete = Gate::allows('contact_delete') || $contact->user_id === auth()->id();
+        abort_unless($canDelete, Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $result = $this->deleteContactAction->handle($contact);
 
         if ($result['success']) {
-            return redirect()
-                ->route('admin.contacts.index')
+            return to_route('admin.contacts.index')
                 ->with('success', $result['message']);
         }
 
-        return redirect()
-            ->back()
+        return back()
             ->with('error', $result['message']);
     }
 

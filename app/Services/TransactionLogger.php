@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Log;
 
@@ -17,7 +18,8 @@ final class TransactionLogger
         Order $order,
         string $method,
         string $transactionId,
-        float $amount
+        float $amount,
+        ?Payment $payment = null
     ): Transaction {
         Log::info('Transaction successful', [
             'order_id' => $order->id,
@@ -26,10 +28,12 @@ final class TransactionLogger
             'transaction_id' => $transactionId,
             'amount' => $amount,
             'currency' => $order->currency,
+            'payment_id' => $payment?->id,
         ]);
 
-        return Transaction::create([
+        return Transaction::query()->create([
             'order_id' => $order->id,
+            'payment_id' => $payment?->id,
             'user_id' => $order->user_id,
             'payment_method' => $method,
             'transaction_id' => $transactionId,
@@ -47,7 +51,8 @@ final class TransactionLogger
         Order $order,
         string $method,
         string $error,
-        ?string $details = null
+        ?string $details = null,
+        ?Payment $payment = null
     ): Transaction {
         Log::error('Transaction failed', [
             'order_id' => $order->id,
@@ -57,10 +62,12 @@ final class TransactionLogger
             'details' => $details,
             'amount' => $order->total_amount,
             'currency' => $order->currency,
+            'payment_id' => $payment?->id,
         ]);
 
-        return Transaction::create([
+        return Transaction::query()->create([
             'order_id' => $order->id,
+            'payment_id' => $payment?->id,
             'user_id' => $order->user_id,
             'payment_method' => $method,
             'amount' => $order->total_amount,

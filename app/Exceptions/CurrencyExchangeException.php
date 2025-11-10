@@ -10,12 +10,12 @@ final class CurrencyExchangeException extends Exception
 {
     public static function unsupportedCurrency(string $currency): self
     {
-        return new self("Currency code '{$currency}' is not supported. Only USD and FRW are supported.");
+        return new self(sprintf("Currency code '%s' is not supported. Only USD and FRW are supported.", $currency));
     }
 
     public static function invalidAmount(float $amount): self
     {
-        return new self("Amount must be positive, got: {$amount}");
+        return new self('Amount must be positive, got: '.$amount);
     }
 
     public static function invalidApiKey(): self
@@ -45,7 +45,7 @@ final class CurrencyExchangeException extends Exception
 
     public static function apiError(string $errorType, string $details = ''): self
     {
-        $message = "Exchange rate API error: {$errorType}";
+        $message = 'Exchange rate API error: '.$errorType;
         if ($details !== '') {
             $message .= '. Details: '.$details;
         }
@@ -55,7 +55,7 @@ final class CurrencyExchangeException extends Exception
 
     public static function networkError(string $details): self
     {
-        return new self("Network error while fetching exchange rates: {$details}");
+        return new self('Network error while fetching exchange rates: '.$details);
     }
 
     public static function unexpectedResponse(string $details = ''): self

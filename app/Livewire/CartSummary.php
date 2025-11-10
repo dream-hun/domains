@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 final class CartSummary extends Component
@@ -38,7 +39,8 @@ final class CartSummary extends Component
     /**
      * @throws Exception
      */
-    public function getFormattedTotalProperty(): string
+    #[Computed]
+    public function formattedTotal(): string
     {
         $cartItems = Cart::getContent();
         $subtotal = 0;
@@ -68,7 +70,8 @@ final class CartSummary extends Component
         return CurrencyHelper::formatMoney($total, $this->currency);
     }
 
-    public function getCartItemsCountProperty(): int
+    #[Computed]
+    public function cartItemsCount(): int
     {
         return Cart::getContent()->count();
     }
@@ -99,7 +102,7 @@ final class CartSummary extends Component
                     $couponCurrency,
                     $this->currency
                 );
-            } catch (Exception $e) {
+            } catch (Exception) {
                 // Fallback to recalculating discount
                 $type = $couponData['type'] ?? 'percentage';
                 $value = $couponData['value'] ?? 0;
@@ -114,7 +117,7 @@ final class CartSummary extends Component
                             $couponCurrency,
                             $this->currency
                         );
-                    } catch (Exception $e) {
+                    } catch (Exception) {
                         $discountAmount = $value;
                     }
                 }

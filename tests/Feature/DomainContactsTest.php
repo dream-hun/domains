@@ -43,9 +43,9 @@ it('saves contacts from namecheap response', function (): void {
 
     $response = $this->get(route('admin.domains.contacts', $this->domain));
 
-    expect(Contact::count())->toBe(1);
+    expect(Contact::query()->count())->toBe(1);
 
-    $contact = Contact::first();
+    $contact = Contact::query()->first();
     expect($contact)->email->toBe('test@example.com')
         ->and($contact)->first_name->toBe('John')
         ->and($contact)->last_name->toBe('Doe');
@@ -73,8 +73,8 @@ it('handles missing contact data gracefully', function (): void {
 
     $response = $this->get(route('admin.domains.contacts', $this->domain));
 
-    expect(Contact::count())->toBe(1);
-    $contact = Contact::first();
+    expect(Contact::query()->count())->toBe(1);
+    $contact = Contact::query()->first();
     expect($contact)->email->toBe('test@example.com')
         ->and($contact)->first_name->toBe('')
         ->and($contact)->last_name->toBe('');

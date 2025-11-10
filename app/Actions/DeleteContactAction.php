@@ -36,15 +36,15 @@ final class DeleteContactAction
                 'success' => true,
                 'message' => 'Contact deleted successfully.',
             ];
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Contact deletion failed', [
                 'contact_id' => $contact->id,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to delete contact: '.$e->getMessage(),
+                'message' => 'Failed to delete contact: '.$exception->getMessage(),
             ];
         }
     }

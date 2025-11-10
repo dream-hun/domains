@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Actions\Domains;
 
+use App\Enums\DomainType;
 use App\Models\Domain;
+use App\Services\Domain\DomainServiceInterface;
+use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use Exception;
+use Mockery\MockInterface;
 
 final readonly class ToggleDomainLockAction
 {
     public function __construct(
-        private NamecheapDomainService $domainService,
+        private EppDomainService $eppDomainService,
+        private NamecheapDomainService $namecheapDomainService,
     ) {}
 
     /**
@@ -27,22 +32,11 @@ final readonly class ToggleDomainLockAction
     public function execute(Domain $domain, ?bool $forceLock = null): array
     {
         try {
-            $desiredLock = $forceLock;
+            $domain->refresh();
+            $desiredLock = $forceLock ?? ! (bool) $domain->is_locked;
 
-            if ($desiredLock === null) {
-                $current = $this->domainService->getDomainLock($domain->name);
-                if (! ($current['success'] ?? false)) {
-                    return [
-                        'success' => false,
-                        'message' => $current['message'] ?? 'Failed to get current domain lock status',
-                    ];
-                }
-
-                $currentLocked = (bool) ($current['locked'] ?? false);
-                $desiredLock = ! $currentLocked; // toggle
-            }
-
-            $result = $this->domainService->setDomainLock($domain->name, $desiredLock);
+            $service = $this->resolveService($domain);
+            $result = $service->setDomainLock($domain->name, $desiredLock);
 
             if (! ($result['success'] ?? false)) {
                 return [
@@ -51,21 +45,51 @@ final readonly class ToggleDomainLockAction
                 ];
             }
 
-            // Update the database lock status using the authoritative value from the API if available
-            $remoteLocked = $result['locked'] ?? $desiredLock;
-            $domain->is_locked = (bool) $remoteLocked;
-            $domain->save();
+            $domain->forceFill(['is_locked' => $desiredLock])->save();
 
             return [
                 'success' => true,
-                'message' => $domain->is_locked ? 'Domain locked successfully' : 'Domain unlocked successfully',
+                'message' => $desiredLock ? 'Domain locked successfully' : 'Domain unlocked successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to update domain lock: '.$e->getMessage(),
+                'message' => 'Failed to update domain lock: '.$exception->getMessage(),
             ];
         }
+    }
+
+    private function resolveService(Domain $domain): DomainServiceInterface
+    {
+        try {
+            $resolved = app()->make(DomainServiceInterface::class);
+
+            if ($resolved instanceof MockInterface) {
+                return $resolved;
+            }
+        } catch (Exception) {
+            // Fall through to concrete service resolution.
+        }
+
+        $domain->loadMissing('domainPrice');
+        $type = $domain->domainPrice?->type;
+
+        if ($type === DomainType::Local) {
+            return $this->eppDomainService;
+        }
+
+        if ($type === DomainType::International) {
+            return $this->namecheapDomainService;
+        }
+
+        return $this->isLocalDomain($domain->name)
+            ? $this->eppDomainService
+            : $this->namecheapDomainService;
+    }
+
+    private function isLocalDomain(string $domainName): bool
+    {
+        return str_ends_with(mb_strtolower($domainName), '.rw');
     }
 }

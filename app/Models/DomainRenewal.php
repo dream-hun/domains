@@ -24,7 +24,7 @@ final class DomainRenewal extends Model
         return $this->belongsTo(Order::class);
     }
 
-    public function casts(): array
+    protected function casts(): array
     {
         return [
             'amount' => 'decimal:2',

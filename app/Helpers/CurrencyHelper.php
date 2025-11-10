@@ -35,23 +35,21 @@ final class CurrencyHelper
             ];
         }
 
-        $cacheKey = "exchange_rate_$currency";
+        $cacheKey = 'exchange_rate_'.$currency;
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($currency): array {
             try {
                 $response = Http::timeout(10)->get('https://api.exchangerate-api.com/v4/latest/'.self::BASE_CURRENCY);
 
-                if ($response->failed() || ! isset($response['rates'][$currency])) {
-                    throw new Exception("Currency rate not found: $currency");
-                }
+                throw_if($response->failed() || ! isset($response['rates'][$currency]), Exception::class, 'Currency rate not found: '.$currency);
 
                 $rate = (float) $response['rates'][$currency];
                 $symbol = self::getCurrencySymbol($currency);
 
                 return ['rate' => $rate, 'symbol' => $symbol];
-            } catch (ConnectionException $e) {
-                Log::error('CurrencyAPI connection failed', ['currency' => $currency, 'error' => $e->getMessage()]);
-                throw new Exception("Unable to fetch exchange rate for $currency", $e->getCode(), $e);
+            } catch (ConnectionException $connectionException) {
+                Log::error('CurrencyAPI connection failed', ['currency' => $currency, 'error' => $connectionException->getMessage()]);
+                throw new Exception('Unable to fetch exchange rate for '.$currency, $connectionException->getCode(), $connectionException);
             }
         });
     }

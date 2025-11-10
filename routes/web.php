@@ -23,6 +23,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterDomainController;
 use App\Http\Controllers\SearchDomainController;
 use App\Http\Controllers\SmartCheckoutController;
+use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
@@ -117,6 +118,6 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 });
 
 // Stripe webhook route (no auth required)
-Route::post('/stripe/webhook', [App\Http\Controllers\StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
 
 require __DIR__.'/auth.php';

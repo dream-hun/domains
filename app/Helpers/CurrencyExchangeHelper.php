@@ -11,7 +11,7 @@ use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
-final class CurrencyExchangeHelper
+final readonly class CurrencyExchangeHelper
 {
     private const SUPPORTED_CURRENCIES = ['USD', 'FRW'];
 
@@ -203,8 +203,8 @@ final class CurrencyExchangeHelper
         foreach (self::SUPPORTED_CURRENCIES as $fromCurrency) {
             foreach (self::SUPPORTED_CURRENCIES as $toCurrency) {
                 if ($fromCurrency !== $toCurrency) {
-                    Cache::forget("{$prefix}:{$fromCurrency}:{$toCurrency}");
-                    Cache::forget("{$prefix}_metadata:{$fromCurrency}:{$toCurrency}");
+                    Cache::forget(sprintf('%s:%s:%s', $prefix, $fromCurrency, $toCurrency));
+                    Cache::forget(sprintf('%s_metadata:%s:%s', $prefix, $fromCurrency, $toCurrency));
                 }
             }
         }
@@ -267,11 +267,11 @@ final class CurrencyExchangeHelper
             'to' => $to,
         ]);
 
-        $fallbackKey = "{$from}_TO_{$to}";
-        $rate = config("currency_exchange.fallback_rates.{$fallbackKey}");
+        $fallbackKey = sprintf('%s_TO_%s', $from, $to);
+        $rate = config('currency_exchange.fallback_rates.'.$fallbackKey);
 
         if ($rate === null) {
-            throw CurrencyExchangeException::unexpectedResponse("No fallback rate configured for {$from} to {$to}");
+            throw CurrencyExchangeException::unexpectedResponse(sprintf('No fallback rate configured for %s to %s', $from, $to));
         }
 
         // Cache the fallback rate
@@ -316,7 +316,7 @@ final class CurrencyExchangeHelper
     {
         $prefix = config('currency_exchange.cache.prefix', 'exchange_rate');
 
-        return "{$prefix}:{$from}:{$to}";
+        return sprintf('%s:%s:%s', $prefix, $from, $to);
     }
 
     /**
@@ -326,7 +326,7 @@ final class CurrencyExchangeHelper
     {
         $prefix = config('currency_exchange.cache.prefix', 'exchange_rate');
 
-        return "{$prefix}_metadata:{$from}:{$to}";
+        return sprintf('%s_metadata:%s:%s', $prefix, $from, $to);
     }
 
     /**

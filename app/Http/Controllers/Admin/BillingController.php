@@ -18,13 +18,12 @@ final class BillingController extends Controller
         $user = Auth::user();
 
         $orders = Order::with(['orderItems', 'user'])
-            ->when(! $user->isAdmin(), function ($query) use ($user): void {
+            ->unless($user->isAdmin(), function ($query) use ($user): void {
                 $query->where('user_id', $user->id);
-            })
-            ->orderBy('created_at', 'desc')
+            })->latest()
             ->paginate(15);
 
-        return view('admin.billing.index', compact('orders'));
+        return view('admin.billing.index', ['orders' => $orders]);
     }
 
     public function show(Order $order): View
@@ -32,13 +31,11 @@ final class BillingController extends Controller
         $user = Auth::user();
 
         // Check authorization: either admin or order owner
-        if (! $user->isAdmin() && $order->user_id !== $user->id) {
-            abort(403);
-        }
+        abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
         $order->load(['orderItems', 'user']);
 
-        return view('admin.billing.show', compact('order'));
+        return view('admin.billing.show', ['order' => $order]);
     }
 
     public function invoice(Order $order): View
@@ -46,13 +43,11 @@ final class BillingController extends Controller
         $user = Auth::user();
 
         // Check authorization: either admin or order owner
-        if (! $user->isAdmin() && $order->user_id !== $user->id) {
-            abort(403);
-        }
+        abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
         $order->load(['orderItems', 'user']);
 
-        return view('admin.billing.invoice', compact('order'));
+        return view('admin.billing.invoice', ['order' => $order]);
     }
 
     public function downloadInvoice(Order $order): Response
@@ -60,13 +55,11 @@ final class BillingController extends Controller
         $user = Auth::user();
 
         // Check authorization: either admin or order owner
-        if (! $user->isAdmin() && $order->user_id !== $user->id) {
-            abort(403);
-        }
+        abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
         $order->load(['orderItems', 'user']);
 
-        $pdf = Pdf::loadView('admin.billing.invoice-pdf', compact('order'));
+        $pdf = Pdf::loadView('admin.billing.invoice-pdf', ['order' => $order]);
 
         return $pdf->download('invoice-'.$order->order_number.'.pdf');
     }
@@ -76,13 +69,11 @@ final class BillingController extends Controller
         $user = Auth::user();
 
         // Check authorization: either admin or order owner
-        if (! $user->isAdmin() && $order->user_id !== $user->id) {
-            abort(403);
-        }
+        abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
         $order->load(['orderItems', 'user']);
 
-        $pdf = Pdf::loadView('admin.billing.invoice-pdf', compact('order'));
+        $pdf = Pdf::loadView('admin.billing.invoice-pdf', ['order' => $order]);
 
         return $pdf->stream('invoice-'.$order->order_number.'.pdf');
     }

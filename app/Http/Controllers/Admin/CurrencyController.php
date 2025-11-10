@@ -42,7 +42,7 @@ final class CurrencyController extends Controller
     {
         $action->handle($request->validated());
 
-        return redirect()->route('admin.currencies.index')->with('success', 'Currency created successfully.');
+        return to_route('admin.currencies.index')->with('success', 'Currency created successfully.');
     }
 
     public function edit(Currency $currency): View|Factory
@@ -56,7 +56,7 @@ final class CurrencyController extends Controller
     {
         $action->handle($currency, $request->validated());
 
-        return redirect()->route('admin.currencies.index')->with('success', 'Currency updated successfully.');
+        return to_route('admin.currencies.index')->with('success', 'Currency updated successfully.');
     }
 
     public function destroy(Currency $currency, DeleteCurrencyAction $action): RedirectResponse
@@ -66,9 +66,9 @@ final class CurrencyController extends Controller
         try {
             $action->handle($currency);
 
-            return redirect()->route('admin.currencies.index')->with('success', 'Currency deleted successfully.');
-        } catch (Exception $e) {
-            return redirect()->route('admin.currencies.index')->with('error', $e->getMessage());
+            return to_route('admin.currencies.index')->with('success', 'Currency deleted successfully.');
+        } catch (Exception $exception) {
+            return to_route('admin.currencies.index')->with('error', $exception->getMessage());
         }
     }
 
@@ -80,12 +80,12 @@ final class CurrencyController extends Controller
             $success = $action->handle();
 
             if ($success) {
-                return redirect()->route('admin.currencies.index')->with('success', 'Exchange rates updated successfully. All user carts have been cleared.');
+                return to_route('admin.currencies.index')->with('success', 'Exchange rates updated successfully. All user carts have been cleared.');
             }
 
-            return redirect()->route('admin.currencies.index')->with('error', 'Failed to update exchange rates. Please try again.');
-        } catch (Exception $e) {
-            return redirect()->route('admin.currencies.index')->with('error', 'Error updating exchange rates: '.$e->getMessage());
+            return to_route('admin.currencies.index')->with('error', 'Failed to update exchange rates. Please try again.');
+        } catch (Exception $exception) {
+            return to_route('admin.currencies.index')->with('error', 'Error updating exchange rates: '.$exception->getMessage());
         }
     }
 }

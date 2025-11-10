@@ -32,7 +32,7 @@ final class NotificationController extends Controller
             $notification->markAsRead();
         }
 
-        return redirect()->back()->with('success', 'Notification marked as read.');
+        return back()->with('success', 'Notification marked as read.');
     }
 
     /**
@@ -42,7 +42,7 @@ final class NotificationController extends Controller
     {
         $request->user()->unreadNotifications->markAsRead();
 
-        return redirect()->back()->with('success', 'All notifications marked as read.');
+        return back()->with('success', 'All notifications marked as read.');
     }
 
     /**
@@ -56,7 +56,7 @@ final class NotificationController extends Controller
             $notification->delete();
         }
 
-        return redirect()->back()->with('success', 'Notification deleted.');
+        return back()->with('success', 'Notification deleted.');
     }
 
     /**
@@ -66,6 +66,6 @@ final class NotificationController extends Controller
     {
         $request->user()->notifications()->delete();
 
-        return redirect()->back()->with('success', 'All notifications deleted.');
+        return back()->with('success', 'All notifications deleted.');
     }
 }

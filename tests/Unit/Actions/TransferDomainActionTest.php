@@ -12,8 +12,6 @@ use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-use function Pest\Laravel\actingAs;
-
 final class TransferDomainActionTest extends TestCase
 {
     use RefreshDatabase;
@@ -39,7 +37,7 @@ final class TransferDomainActionTest extends TestCase
 
     public function test_handle_transfer_for_local_domain(): void
     {
-        actingAs($this->user);
+        $this->actingAs($this->user);
 
         $domain = Domain::factory()->rwDomain()->for($this->user, 'owner')->create();
         $transferData = [
@@ -64,7 +62,7 @@ final class TransferDomainActionTest extends TestCase
 
     public function test_handle_transfer_for_international_domain(): void
     {
-        actingAs($this->user);
+        $this->actingAs($this->user);
 
         $domain = Domain::factory()->comDomain()->for($this->user, 'owner')->create();
         $transferData = [

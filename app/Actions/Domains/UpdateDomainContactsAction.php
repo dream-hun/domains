@@ -6,6 +6,7 @@ namespace App\Actions\Domains;
 
 use App\Models\Contact;
 use App\Models\Domain;
+use App\Models\DomainContact;
 use App\Services\Domain\DomainServiceInterface;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -27,15 +28,15 @@ final readonly class UpdateDomainContactsAction
 
             return $this->handleOldFormFormat($domain, $contactData);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to update domain contacts', [
                 'domain' => $domain->name,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to update domain contacts: '.$e->getMessage(),
+                'message' => 'Failed to update domain contacts: '.$exception->getMessage(),
             ];
         }
     }
@@ -125,9 +126,11 @@ final readonly class UpdateDomainContactsAction
             if (! empty($contactData['use_for_registrant']) && $contactType !== 'registrant') {
                 $contactsToSync['registrant'] = ['contact_id' => $contact->id];
             }
+
             if (! empty($contactData['use_for_admin']) && $contactType !== 'admin') {
                 $contactsToSync['admin'] = ['contact_id' => $contact->id];
             }
+
             if (! empty($contactData['use_for_technical']) && $contactType !== 'technical') {
                 $contactsToSync['technical'] = ['contact_id' => $contact->id];
             }
@@ -195,7 +198,7 @@ final readonly class UpdateDomainContactsAction
         ];
 
         // Try to find existing contact by email or create new one
-        $contact = Contact::where('email', $data['email'])->first();
+        $contact = Contact::query()->where('email', $data['email'])->first();
 
         if ($contact) {
             $contact->update($contactData);
@@ -203,7 +206,7 @@ final readonly class UpdateDomainContactsAction
             $contactData['uuid'] = (string) Str::uuid();
             $contactData['contact_id'] = 'NC'.mb_strtoupper(Str::random(8));
             $contactData['contact_type'] = $data['contact_type'];
-            $contact = Contact::create($contactData);
+            $contact = Contact::query()->create($contactData);
         }
 
         return $contact;
@@ -220,7 +223,7 @@ final readonly class UpdateDomainContactsAction
         // Remove leading + from country code if present
         $countryCode = mb_ltrim($countryCode, '+');
 
-        return "+$countryCode.$number";
+        return sprintf('+%s.%s', $countryCode, $number);
     }
 
     /**
@@ -279,12 +282,12 @@ final readonly class UpdateDomainContactsAction
         // Use DomainContact model directly to avoid sync() issues
         foreach ($desired as $type => $newContactId) {
             // Remove existing contact for this specific type
-            \App\Models\DomainContact::where('domain_id', $domain->id)
+            DomainContact::query()->where('domain_id', $domain->id)
                 ->where('type', $type)
                 ->delete();
 
             // Create new contact relationship for this type
-            \App\Models\DomainContact::create([
+            DomainContact::query()->create([
                 'domain_id' => $domain->id,
                 'contact_id' => $newContactId,
                 'type' => $type,
@@ -326,6 +329,7 @@ final readonly class UpdateDomainContactsAction
                         break;
                     }
                 }
+
                 $contactId = $fallback;
             }
 
@@ -334,7 +338,7 @@ final readonly class UpdateDomainContactsAction
                 continue;
             }
 
-            $contact = Contact::findOrFail($contactId);
+            $contact = Contact::query()->findOrFail($contactId);
 
             $contactInfo[$role] = [
                 'first_name' => $contact->first_name,

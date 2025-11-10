@@ -32,7 +32,7 @@ final class ProcessExchangeRatesAction
             $skippedCount = 0;
 
             // Get all currencies that need updating
-            $currencies = Currency::whereIn('code', array_keys($rates))
+            $currencies = Currency::query()->whereIn('code', array_keys($rates))
                 ->where('is_base', false)
                 ->get()
                 ->keyBy('code');
@@ -44,7 +44,7 @@ final class ProcessExchangeRatesAction
 
             foreach ($rates as $currencyCode => $rate) {
                 if (! isset($currencies[$currencyCode])) {
-                    Log::debug("Currency $currencyCode not found in database, skipping");
+                    Log::debug(sprintf('Currency %s not found in database, skipping', $currencyCode));
 
                     continue;
                 }
@@ -61,7 +61,7 @@ final class ProcessExchangeRatesAction
                 // Skip if rate hasn't changed significantly
                 if (! $this->hasSignificantChange($oldRate, $newRate)) {
                     $skippedCount++;
-                    Log::debug("Rate change for $currencyCode too small, skipping", [
+                    Log::debug(sprintf('Rate change for %s too small, skipping', $currencyCode), [
                         'old' => $oldRate,
                         'new' => $newRate,
                     ]);
@@ -102,7 +102,7 @@ final class ProcessExchangeRatesAction
             $this->clearCaches();
 
             // Dispatch event for side effects
-            ExchangeRatesUpdated::dispatch($updatedCount, $updatedCurrencies);
+            event(new ExchangeRatesUpdated($updatedCount, $updatedCurrencies));
 
             // Log results
             $this->logResults($rates, $updatedCount, $updatedCurrencies, $now);
@@ -114,7 +114,7 @@ final class ProcessExchangeRatesAction
     private function isValidRate(mixed $rate, string $currencyCode): bool
     {
         if (! is_numeric($rate) || $rate <= 0) {
-            Log::warning("Invalid exchange rate for $currencyCode", ['rate' => $rate]);
+            Log::warning('Invalid exchange rate for '.$currencyCode, ['rate' => $rate]);
 
             return false;
         }
@@ -140,15 +140,15 @@ final class ProcessExchangeRatesAction
         Cache::forget('last_rate_update');
 
         // Clear individual currency caches
-        $currencies = Currency::pluck('code');
+        $currencies = Currency::query()->pluck('code');
         foreach ($currencies as $code) {
-            Cache::forget("currency_$code");
+            Cache::forget('currency_'.$code);
         }
     }
 
     private function logResults(array $rates, int $updatedCount, array $updatedCurrencies, mixed $now): void
     {
-        Log::info("Updated $updatedCount exchange rates", [
+        Log::info(sprintf('Updated %d exchange rates', $updatedCount), [
             'total_rates_received' => count($rates),
             'currencies_updated' => $updatedCount,
             'timestamp' => $now->toISOString(),
@@ -156,7 +156,7 @@ final class ProcessExchangeRatesAction
 
         // Log first 10 updated currencies
         foreach (array_slice($updatedCurrencies, 0, 10) as $currency) {
-            Log::info("Currency rate updated: {$currency['code']} ({$currency['name']})", [
+            Log::info(sprintf('Currency rate updated: %s (%s)', $currency['code'], $currency['name']), [
                 'old_rate' => $currency['old_rate'],
                 'new_rate' => $currency['new_rate'],
             ]);

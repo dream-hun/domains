@@ -19,7 +19,7 @@ final class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $currencies = Currency::select(['code', 'name'])->get();
+        $currencies = Currency::query()->select(['code', 'name'])->get();
 
         return view('profile.edit', [
             'user' => $request->user(), 'currencies' => $currencies,
@@ -31,7 +31,31 @@ final class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $data = $request->validated();
+
+        if (isset($data['name']) && $data['name'] !== null) {
+            $name = mb_trim((string) $data['name']);
+            unset($data['name']);
+
+            if ($name !== '') {
+                $parts = preg_split('/\s+/', $name, -1, PREG_SPLIT_NO_EMPTY);
+                $first = array_shift($parts) ?? $request->user()->first_name;
+                $last = $parts !== [] ? implode(' ', $parts) : ($request->user()->last_name ?? '');
+
+                $data['first_name'] ??= $first;
+                $data['last_name'] ??= $last !== '' ? $last : null;
+            }
+        }
+
+        if (! isset($data['first_name']) || $data['first_name'] === null) {
+            $data['first_name'] = $request->user()->first_name;
+        }
+
+        if (! isset($data['last_name']) || $data['last_name'] === null) {
+            $data['last_name'] = $request->user()->last_name;
+        }
+
+        $request->user()->fill($data);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
@@ -39,7 +63,7 @@ final class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit')->with('profile_status', $request->user()->first_name.' your profile has been updated.');
+        return to_route('profile.edit')->with('profile_status', $request->user()->first_name.' your profile has been updated.');
     }
 
     /**

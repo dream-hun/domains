@@ -50,9 +50,7 @@ final class DomainSearch extends Component
     public function mount(): void
     {
         // Set default extension to first TLD
-        $firstTld = Cache::remember('active_tld', 3600, function () {
-            return DomainPrice::where('status', 'active')->first();
-        });
+        $firstTld = Cache::remember('active_tld', 3600, fn () => DomainPrice::query()->where('status', 'active')->first());
 
         if ($firstTld) {
             $this->extension = $firstTld->tld;
@@ -71,9 +69,7 @@ final class DomainSearch extends Component
 
     public function render(): View
     {
-        $tlds = Cache::remember('active_tlds', 3600, function () {
-            return DomainPrice::where('status', 'active')->get();
-        });
+        $tlds = Cache::remember('active_tlds', 3600, fn () => DomainPrice::query()->where('status', 'active')->get());
 
         return view('livewire.domain-search', [
             'tlds' => $tlds,
@@ -99,9 +95,7 @@ final class DomainSearch extends Component
 
         try {
             // Get cached TLDs
-            $tlds = Cache::remember('active_tlds', 3600, function () {
-                return DomainPrice::where('status', 'active')->get();
-            });
+            $tlds = Cache::remember('active_tlds', 3600, fn () => DomainPrice::query()->where('status', 'active')->get());
 
             if ($tlds->isEmpty()) {
                 $this->error = 'No TLDs configured in the system.';
@@ -133,10 +127,10 @@ final class DomainSearch extends Component
             $this->results = $results;
             Log::debug('Final search results:', ['count' => count($results)]);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain check error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             $this->error = 'An error occurred while searching for domains.';
@@ -185,13 +179,14 @@ final class DomainSearch extends Component
             if (isset($this->results[$domain])) {
                 $this->results[$domain]['in_cart'] = true;
             }
+
             $this->dispatch('update-cart')->to(CartTotal::class);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Add to cart error:', [
                 'domain' => $domain,
                 'price' => $price,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             $this->dispatch('notify', [
@@ -221,10 +216,10 @@ final class DomainSearch extends Component
                 'message' => $domain.' removed from cart.',
             ]);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Remove from cart error:', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             $this->dispatch('notify', [
@@ -323,11 +318,11 @@ final class DomainSearch extends Component
                     ]);
                 }
             }
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain check error:', [
                 'domain' => $domainName,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
         }
     }

@@ -13,9 +13,7 @@ final class DeleteCurrencyAction
     public function handle(Currency $currency): void
     {
         // Prevent deletion of base currency
-        if ($currency->is_base) {
-            throw new Exception('Cannot delete the base currency. Please set another currency as base first.');
-        }
+        throw_if($currency->is_base, Exception::class, 'Cannot delete the base currency. Please set another currency as base first.');
 
         $code = $currency->code;
 
@@ -25,6 +23,6 @@ final class DeleteCurrencyAction
         Cache::forget('active_currencies');
         Cache::forget('base_currency');
         Cache::forget('current_rates');
-        Cache::forget("currency_{$code}");
+        Cache::forget('currency_'.$code);
     }
 }

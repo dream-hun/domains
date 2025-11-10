@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('coupons', function (Blueprint $table) {
+        Schema::create('coupons', function (Blueprint $table): void {
             $table->id();
             $table->uuid();
             $table->string('code')->unique();

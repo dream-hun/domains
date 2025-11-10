@@ -11,11 +11,11 @@ final class StoreDomainPriceAction
 {
     public function handle(array $data): DomainPrice
     {
-        $data['uuid'] = $data['uuid'] ?? (string) Str::uuid();
+        $data['uuid'] ??= (string) Str::uuid();
         if (array_key_exists('redemption_price', $data) && $data['redemption_price'] === '') {
             $data['redemption_price'] = null;
         }
 
-        return DomainPrice::create($data);
+        return DomainPrice::query()->create($data);
     }
 }

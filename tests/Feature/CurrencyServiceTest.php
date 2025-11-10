@@ -15,7 +15,7 @@ beforeEach(function (): void {
     Cache::flush();
 
     // Seed currencies
-    Currency::create([
+    Currency::query()->create([
         'code' => 'USD',
         'name' => 'US Dollar',
         'symbol' => '$',
@@ -24,7 +24,7 @@ beforeEach(function (): void {
         'is_active' => true,
     ]);
 
-    Currency::create([
+    Currency::query()->create([
         'code' => 'FRW',
         'name' => 'Rwandan Franc',
         'symbol' => 'FRW',
@@ -33,7 +33,7 @@ beforeEach(function (): void {
         'is_active' => true,
     ]);
 
-    Currency::create([
+    Currency::query()->create([
         'code' => 'EUR',
         'name' => 'Euro',
         'symbol' => '€',
@@ -175,7 +175,7 @@ it('throws exception for non-existent currency', function (): void {
 })->throws(Exception::class, 'not found');
 
 it('throws exception when currency is inactive', function (): void {
-    Currency::where('code', 'EUR')->update(['is_active' => false]);
+    Currency::query()->where('code', 'EUR')->update(['is_active' => false]);
 
     $service = app(CurrencyService::class);
 
@@ -223,7 +223,7 @@ it('caches currency lookups', function (): void {
     $currency1 = $service->getCurrency('USD');
 
     // Clear the database to test cache
-    Currency::where('code', 'USD')->delete();
+    Currency::query()->where('code', 'USD')->delete();
 
     // Second call should use cache
     $currency2 = $service->getCurrency('USD');

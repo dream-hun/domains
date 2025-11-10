@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Helpers\StripeHelper;
 use App\Jobs\ProcessDomainRenewalJob;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Services\TransactionLogger;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -37,8 +38,7 @@ final class CheckoutController extends Controller
         $cartItems = Cart::getContent();
 
         if ($cartItems->isEmpty()) {
-            return redirect()
-                ->route('dashboard')
+            return to_route('dashboard')
                 ->with('error', 'Your cart is empty.');
         }
 
@@ -49,7 +49,7 @@ final class CheckoutController extends Controller
             $currency = $cartItems->first()->attributes['currency'] ?? 'USD';
             $user = auth()->user();
 
-            $order = Order::create([
+            $order = Order::query()->create([
                 'user_id' => $user->id,
                 'order_number' => $orderNumber,
                 'type' => 'renewal',
@@ -64,25 +64,197 @@ final class CheckoutController extends Controller
                 'items' => $cartItems->toArray(),
             ]);
 
+            $paymentAttempt = $this->createPaymentAttempt($order);
+
             // Create Stripe Checkout Session
-            $session = $this->createStripeCheckoutSession($order, $cartItems);
-            
+            $session = $this->createStripeCheckoutSession($order, $cartItems, $paymentAttempt);
+
             // Store session ID in order
             $order->update(['stripe_session_id' => $session->id]);
 
             // Redirect to Stripe Checkout (external URL)
             return redirect()->away($session->url);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
+            $this->failPaymentAttempt($paymentAttempt, $exception->getMessage());
+            $this->transactionLogger->logFailure(
+                order: $order,
+                method: 'stripe',
+                error: 'Failed to create checkout session',
+                details: $exception->getMessage(),
+                payment: $paymentAttempt
+            );
             Log::error('Failed to create checkout session', [
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
                 'user_id' => auth()->id(),
             ]);
 
-            return redirect()
-                ->route('cart.index')
+            return to_route('cart.index')
                 ->with('error', 'Failed to initialize checkout. Please try again.');
         }
+    }
+
+    /**
+     * Handle successful payment from Stripe
+     */
+    public function success(Request $request, string $order): View|RedirectResponse
+    {
+        try {
+            $sessionId = $request->query('session_id');
+
+            if (! $sessionId) {
+                return to_route('dashboard')
+                    ->with('error', 'Invalid session.');
+            }
+
+            // Retrieve the order
+            $order = Order::query()->where('order_number', $order)->firstOrFail();
+
+            // Verify order belongs to current user
+            abort_if($order->user_id !== auth()->id(), 403);
+
+            $session = Session::retrieve($sessionId);
+
+            $paymentAttempt = $order->payments()
+                ->where(function ($query) use ($sessionId, $session): void {
+                    $query->where('stripe_session_id', $sessionId);
+
+                    if (! empty($session->payment_intent)) {
+                        $query->orWhere('stripe_payment_intent_id', $session->payment_intent);
+                    }
+                })
+                ->orderByDesc('attempt_number')
+                ->orderByDesc('id')
+                ->first();
+
+            if (! $paymentAttempt) {
+                Log::warning('Checkout success without matching payment attempt', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'session_id' => $sessionId,
+                    'payment_intent' => $session->payment_intent,
+                ]);
+            }
+
+            if ($session->payment_status !== 'paid') {
+                $this->markPaymentAttemptFailed($order, $sessionId, $session->last_payment_error->message ?? 'Payment was not successful.');
+
+                return to_route('checkout.cancel')
+                    ->with('error', 'Payment was not successful.');
+            }
+
+            DB::beginTransaction();
+
+            try {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'processing',
+                    'processed_at' => now(),
+                    'stripe_payment_intent_id' => $session->payment_intent,
+                ]);
+
+                if ($paymentAttempt && ! $paymentAttempt->isSuccessful()) {
+                    $paymentAttempt->update([
+                        'status' => 'succeeded',
+                        'stripe_payment_intent_id' => $session->payment_intent,
+                        'paid_at' => now(),
+                        'metadata' => array_merge($paymentAttempt->metadata ?? [], [
+                            'stripe_payment_status' => $session->payment_status,
+                        ]),
+                        'last_attempted_at' => now(),
+                    ]);
+                }
+
+                DB::commit();
+
+                Cart::clear();
+
+                dispatch(new ProcessDomainRenewalJob($order));
+
+                $order->refresh();
+                $paymentAttempt?->refresh();
+
+                $this->transactionLogger->logSuccess(
+                    order: $order,
+                    method: 'stripe',
+                    transactionId: (string) $session->payment_intent,
+                    amount: (float) ($paymentAttempt?->amount ?? $order->total_amount),
+                    payment: $paymentAttempt
+                );
+
+                Log::info('Renewal order completed', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'user_id' => $order->user_id,
+                ]);
+
+                return view('checkout.success', ['order' => $order]);
+
+            } catch (Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+
+        } catch (Exception $exception) {
+            Log::error('Payment success handling failed', [
+                'error' => $exception->getMessage(),
+                'user_id' => auth()->id(),
+            ]);
+
+            $this->markPaymentAttemptFailed(
+                $order,
+                (string) $request->query('session_id', ''),
+                $exception->getMessage()
+            );
+
+            return to_route('dashboard')
+                ->with('error', 'An error occurred while processing your payment.');
+        }
+    }
+
+    /**
+     * Handle payment cancellation
+     */
+    public function cancel(Request $request): View|RedirectResponse
+    {
+        $orderNumber = $request->query('order');
+
+        if ($orderNumber) {
+            try {
+                $order = Order::query()->where('order_number', $orderNumber)->first();
+
+                if ($order && $order->user_id === auth()->id()) {
+                    $order->update([
+                        'payment_status' => 'cancelled',
+                        'status' => 'cancelled',
+                        'notes' => 'Payment cancelled by user',
+                    ]);
+
+                    $pendingPayment = $order->payments()
+                        ->where('status', 'pending')
+                        ->orderByDesc('attempt_number')
+                        ->orderByDesc('id')
+                        ->first();
+
+                    if ($pendingPayment) {
+                        $pendingPayment->update([
+                            'status' => 'cancelled',
+                            'failure_details' => array_merge($pendingPayment->failure_details ?? [], [
+                                'message' => 'Payment cancelled by user',
+                            ]),
+                            'last_attempted_at' => now(),
+                        ]);
+                    }
+                }
+            } catch (Exception $e) {
+                Log::error('Failed to update cancelled order', [
+                    'order_number' => $orderNumber,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return view('checkout.cancel');
     }
 
     /**
@@ -90,7 +262,7 @@ final class CheckoutController extends Controller
      *
      * @throws ApiErrorException
      */
-    private function createStripeCheckoutSession(Order $order, $cartItems): Session
+    private function createStripeCheckoutSession(Order $order, $cartItems, Payment $paymentAttempt): Session
     {
         $user = $order->user;
 
@@ -141,121 +313,20 @@ final class CheckoutController extends Controller
                 'order_number' => $order->order_number,
                 'user_id' => $user->id,
                 'order_type' => 'renewal',
+                'payment_id' => $paymentAttempt->id,
             ],
         ]);
 
+        $paymentAttempt->update([
+            'stripe_session_id' => $session->id,
+            'metadata' => array_merge($paymentAttempt->metadata ?? [], [
+                'stripe_checkout_url' => $session->url,
+                'stripe_payment_status' => $session->payment_status ?? 'open',
+            ]),
+            'last_attempted_at' => now(),
+        ]);
+
         return $session;
-    }
-
-    /**
-     * Handle successful payment from Stripe
-     */
-    public function success(Request $request, string $order): View|RedirectResponse
-    {
-        try {
-            $sessionId = $request->query('session_id');
-            
-            if (! $sessionId) {
-                return redirect()
-                    ->route('dashboard')
-                    ->with('error', 'Invalid session.');
-            }
-
-            // Retrieve the order
-            $order = Order::where('order_number', $order)->firstOrFail();
-
-            // Verify order belongs to current user
-            if ($order->user_id !== auth()->id()) {
-                abort(403);
-            }
-
-            // Verify the session with Stripe
-            $session = Session::retrieve($sessionId);
-
-            if ($session->payment_status !== 'paid') {
-                return redirect()
-                    ->route('checkout.cancel')
-                    ->with('error', 'Payment was not successful.');
-            }
-
-            // Update order
-            DB::beginTransaction();
-
-            try {
-                $order->update([
-                    'payment_status' => 'paid',
-                    'status' => 'processing',
-                    'processed_at' => now(),
-                    'stripe_payment_intent_id' => $session->payment_intent,
-                ]);
-
-                DB::commit();
-
-                // Clear cart
-                Cart::clear();
-
-                // Dispatch job to process domain renewals
-                ProcessDomainRenewalJob::dispatch($order);
-
-                $this->transactionLogger->logSuccess(
-                    order: $order,
-                    method: 'stripe',
-                    transactionId: $session->payment_intent,
-                    amount: (float) $order->total_amount
-                );
-
-                Log::info('Renewal order completed', [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'user_id' => $order->user_id,
-                ]);
-
-                return view('checkout.success', ['order' => $order]);
-
-            } catch (Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
-
-        } catch (Exception $e) {
-            Log::error('Payment success handling failed', [
-                'error' => $e->getMessage(),
-                'user_id' => auth()->id(),
-            ]);
-
-            return redirect()
-                ->route('dashboard')
-                ->with('error', 'An error occurred while processing your payment.');
-        }
-    }
-
-    /**
-     * Handle payment cancellation
-     */
-    public function cancel(Request $request): View|RedirectResponse
-    {
-        $orderNumber = $request->query('order');
-        
-        if ($orderNumber) {
-            try {
-                $order = Order::where('order_number', $orderNumber)->first();
-                
-                if ($order && $order->user_id === auth()->id()) {
-                    $order->update([
-                        'payment_status' => 'cancelled',
-                        'status' => 'cancelled',
-                        'notes' => 'Payment cancelled by user',
-                    ]);
-                }
-            } catch (Exception $e) {
-                Log::error('Failed to update cancelled order', [
-                    'order_number' => $orderNumber,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        return view('checkout.cancel');
     }
 
     /**
@@ -264,5 +335,64 @@ final class CheckoutController extends Controller
     private function generateOrderNumber(): string
     {
         return 'ORD-'.mb_strtoupper(Str::random(10));
+    }
+
+    private function createPaymentAttempt(Order $order): Payment
+    {
+        $nextAttempt = (int) ($order->payments()->max('attempt_number') ?? 0) + 1;
+
+        return $order->payments()->create([
+            'user_id' => $order->user_id,
+            'status' => 'pending',
+            'payment_method' => 'stripe',
+            'amount' => $order->total_amount,
+            'currency' => $order->currency,
+            'metadata' => [
+                'order_type' => $order->type,
+            ],
+            'attempt_number' => $nextAttempt,
+            'stripe_payment_intent_id' => Payment::generatePendingIntentId($order, $nextAttempt),
+            'last_attempted_at' => now(),
+        ]);
+    }
+
+    private function failPaymentAttempt(Payment $payment, string $message): void
+    {
+        $payment->update([
+            'status' => 'failed',
+            'failure_details' => array_merge($payment->failure_details ?? [], [
+                'message' => $message,
+            ]),
+            'last_attempted_at' => now(),
+        ]);
+    }
+
+    private function markPaymentAttemptFailed(Order $order, string $sessionId, ?string $message = null): void
+    {
+        if ($sessionId === '') {
+            return;
+        }
+
+        $paymentAttempt = $order->payments()
+            ->where('stripe_session_id', $sessionId)
+            ->orderByDesc('attempt_number')
+            ->orderByDesc('id')
+            ->first();
+
+        if (! $paymentAttempt || $paymentAttempt->isSuccessful() || $paymentAttempt->status === 'failed') {
+            return;
+        }
+
+        $failureDetails = $paymentAttempt->failure_details ?? [];
+
+        if ($message) {
+            $failureDetails['message'] = $message;
+        }
+
+        $paymentAttempt->update([
+            'status' => 'failed',
+            'failure_details' => $failureDetails,
+            'last_attempted_at' => now(),
+        ]);
     }
 }

@@ -8,7 +8,7 @@ use App\Models\Currency;
 use App\Services\ExchangeRateClient;
 use Illuminate\Support\Facades\Log;
 
-final class UpdateExchangeRatesAction
+final readonly class UpdateExchangeRatesAction
 {
     public function __construct(
         private ExchangeRateClient $client,
@@ -20,12 +20,6 @@ final class UpdateExchangeRatesAction
         Log::info('Starting exchange rate update');
 
         $baseCurrency = Currency::getBaseCurrency();
-
-        if (! $baseCurrency instanceof Currency) {
-            Log::error('No base currency found');
-
-            return false;
-        }
 
         $rates = $this->client->fetchRates($baseCurrency->code);
 

@@ -13,10 +13,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('domain_prices', function (Blueprint $table) {
+        Schema::create('domain_prices', function (Blueprint $table): void {
             $table->id();
             $table->uuid();
-            $table->string('tld')->unique();
+            $table->string('tld');
             $table->string('type')->default('international');
             $table->integer('register_price');
             $table->integer('renewal_price');

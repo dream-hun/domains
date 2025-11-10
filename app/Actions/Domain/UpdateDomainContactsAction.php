@@ -9,10 +9,10 @@ use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class UpdateDomainContactsAction
+final readonly class UpdateDomainContactsAction
 {
     public function __construct(
-        private readonly NamecheapDomainService $domainService
+        private NamecheapDomainService $domainService
     ) {}
 
     public function execute(Domain $domain): array
@@ -97,16 +97,16 @@ final class UpdateDomainContactsAction
                 'message' => 'Successfully updated contacts in registry.',
             ];
 
-        } catch (Throwable $e) {
+        } catch (Throwable $throwable) {
             Log::error('Failed to update domain contacts in registry', [
                 'domain' => $domain->name,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $throwable->getMessage(),
+                'trace' => $throwable->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to update contacts: '.$e->getMessage(),
+                'message' => 'Failed to update contacts: '.$throwable->getMessage(),
             ];
         }
     }

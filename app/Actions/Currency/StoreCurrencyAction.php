@@ -13,10 +13,10 @@ final class StoreCurrencyAction
     {
         // If setting as base currency, unset all other base currencies
         if (isset($data['is_base']) && $data['is_base']) {
-            Currency::where('is_base', true)->update(['is_base' => false]);
+            Currency::query()->where('is_base', true)->update(['is_base' => false]);
         }
 
-        $currency = Currency::create($data);
+        $currency = Currency::query()->create($data);
 
         // Clear currency caches
         Cache::forget('active_currencies');

@@ -80,11 +80,11 @@ final class SearchDomainController extends Controller
 
             return view('domains.search', $responseData);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain search controller error', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
                 'isAjax' => $request->ajax(),
             ]);
 
@@ -92,15 +92,29 @@ final class SearchDomainController extends Controller
         }
     }
 
-    private function handleError(string $message, Request $request): RedirectResponse|JsonResponse
+    private function handleError(string $message, Request $request): View|JsonResponse
     {
         if ($request->ajax()) {
             return response()->json(['error' => $message], 400);
         }
 
-        return back()
-            ->withInput()
-            ->with('error', $message);
+        $data = [
+            'errorMessage' => $message,
+            'searchPerformed' => true,
+            'popularDomains' => $this->getPopularDomainsForDisplay(),
+            'details' => null,
+            'suggestions' => [],
+            'domainType' => null,
+            'searchedDomain' => $request->input('domain'),
+        ];
+
+        if (! $request->ajax()) {
+            session()->flash('error', $message);
+
+            return view('domains.search', $data);
+        }
+
+        return response()->json(['error' => $message], 400);
     }
 
     /**
@@ -142,9 +156,9 @@ final class SearchDomainController extends Controller
             // Get popular international domains
             $popularDomains['international'] = $this->domainSearchHelper->getPopularDomains(DomainType::International);
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::warning('Failed to load popular domains', [
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             // Fallback to default popular domains

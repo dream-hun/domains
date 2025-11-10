@@ -36,6 +36,6 @@ final class UserSeeder extends Seeder
                 'remember_token' => null,
             ],
         ];
-        User::insert($users);
+        User::query()->insert($users);
     }
 }

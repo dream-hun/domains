@@ -6,6 +6,7 @@ use App\Actions\RegisterDomainAction;
 use App\Jobs\RetryDomainRegistrationJob;
 use App\Models\Contact;
 use App\Models\Currency;
+use App\Models\Domain;
 use App\Models\FailedDomainRegistration;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Queue;
 
 use function Pest\Laravel\assertDatabaseHas;
 
-beforeEach(function () {
+beforeEach(function (): void {
     Queue::fake();
     Notification::fake();
 
@@ -34,7 +35,7 @@ beforeEach(function () {
     ]);
 });
 
-it('records failed domain registration and dispatches retry job when registration fails', function () {
+it('records failed domain registration and dispatches retry job when registration fails', function (): void {
     // Create order with paid status
     $order = Order::factory()->create([
         'user_id' => $this->user->id,
@@ -93,7 +94,7 @@ it('records failed domain registration and dispatches retry job when registratio
     Notification::assertNothingSentTo($order->user);
 });
 
-it('updates order status to completed when retry succeeds', function () {
+it('updates order status to completed when retry succeeds', function (): void {
     $order = Order::factory()->create([
         'user_id' => $this->user->id,
         'payment_status' => 'paid',
@@ -106,7 +107,7 @@ it('updates order status to completed when retry succeeds', function () {
         'years' => 1,
     ]);
 
-    $failedRegistration = FailedDomainRegistration::create([
+    $failedRegistration = FailedDomainRegistration::query()->create([
         'order_id' => $order->id,
         'order_item_id' => $orderItem->id,
         'domain_name' => 'test.rw',
@@ -123,12 +124,14 @@ it('updates order status to completed when retry succeeds', function () {
     ]);
 
     // Mock successful registration on retry
+    $domain = Domain::factory()->create(['owner_id' => $this->user->id]);
+
     $mockAction = mock(RegisterDomainAction::class);
     $mockAction->shouldReceive('handle')
         ->once()
         ->andReturn([
             'success' => true,
-            'domain_id' => 123,
+            'domain_id' => $domain->id,
             'message' => 'Domain registered successfully',
         ]);
 
@@ -148,7 +151,7 @@ it('updates order status to completed when retry succeeds', function () {
     expect($order->status)->toBe('completed');
 });
 
-it('marks registration as abandoned after max retries', function () {
+it('marks registration as abandoned after max retries', function (): void {
     $order = Order::factory()->create([
         'user_id' => $this->user->id,
         'payment_status' => 'paid',
@@ -161,7 +164,7 @@ it('marks registration as abandoned after max retries', function () {
         'years' => 1,
     ]);
 
-    $failedRegistration = FailedDomainRegistration::create([
+    $failedRegistration = FailedDomainRegistration::query()->create([
         'order_id' => $order->id,
         'order_item_id' => $orderItem->id,
         'domain_name' => 'test.rw',
@@ -198,7 +201,7 @@ it('marks registration as abandoned after max retries', function () {
     expect($failedRegistration->retry_count)->toBe(3);
 });
 
-it('handles payment success with multiple domains where some fail', function () {
+it('handles payment success with multiple domains where some fail', function (): void {
     $order = Order::factory()->create([
         'user_id' => $this->user->id,
         'payment_status' => 'paid',
@@ -218,11 +221,13 @@ it('handles payment success with multiple domains where some fail', function () 
     ]);
 
     // Mock mixed results
+    $successfulDomain = Domain::factory()->create(['owner_id' => $this->user->id]);
+
     $mockAction = mock(RegisterDomainAction::class);
     $mockAction->shouldReceive('handle')
         ->twice()
         ->andReturn(
-            ['success' => true, 'domain_id' => 1, 'message' => 'Success'],
+            ['success' => true, 'domain_id' => $successfulDomain->id, 'message' => 'Success'],
             ['success' => false, 'message' => 'Failed']
         );
 
@@ -255,7 +260,7 @@ it('handles payment success with multiple domains where some fail', function () 
     ]);
 });
 
-it('maintains payment integrity even when all registrations fail', function () {
+it('maintains payment integrity even when all registrations fail', function (): void {
     $order = Order::factory()->create([
         'user_id' => $this->user->id,
         'payment_status' => 'paid',

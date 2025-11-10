@@ -5,10 +5,13 @@
         <div class="container">
             <div class="row">
                 <div class="rts-ht__wrapper">
-                    <div class="rts-ht__email">
-                        <a href="mailto:{{ $settings->email }}"><img src="assets/images/icon/email.svg" alt=""
-                                class="icon">{{ $settings->email }}</a>
-                    </div>
+                    @php($supportEmail = data_get($settings, 'email'))
+                    @if ($supportEmail)
+                        <div class="rts-ht__email">
+                            <a href="mailto:{{ $supportEmail }}"><img src="assets/images/icon/email.svg" alt=""
+                                    class="icon">{{ $supportEmail }}</a>
+                        </div>
+                    @endif
 
                     <div class="rts-ht__links">
                         <div class="live-chat-has-dropdown">
