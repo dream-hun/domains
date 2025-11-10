@@ -11,11 +11,11 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-final class ReactivateDomainAction
+final readonly class ReactivateDomainAction
 {
     public function __construct(
-        private readonly EppDomainService $eppDomainService,
-        private readonly NamecheapDomainService $namecheapDomainService
+        private EppDomainService $eppDomainService,
+        private NamecheapDomainService $namecheapDomainService
     ) {}
 
     public function handle(Domain $domain): array
@@ -39,17 +39,17 @@ final class ReactivateDomainAction
 
                 return $this->reactivateWithNamecheap($domain);
             });
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain reactivation failed', [
                 'domain_id' => $domain->id,
                 'domain_name' => $domain->name,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Domain reactivation failed: '.$e->getMessage(),
+                'message' => 'Domain reactivation failed: '.$exception->getMessage(),
             ];
         }
     }

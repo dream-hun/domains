@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\DomainType;
 use App\Models\Scopes\DomainPriceScope;
+use App\Services\CurrencyService;
 use Exception;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,6 +30,8 @@ final class DomainPrice extends Model
         'type' => DomainType::class,
     ];
 
+    private ?int $pendingDomainId = null;
+
     public function getFormattedPrice(string $priceType = 'register_price', ?string $targetCurrency = null): string
     {
         $priceAmount = $this->getPriceInBaseCurrency($priceType);
@@ -36,24 +39,24 @@ final class DomainPrice extends Model
 
         // If no target currency specified, use user's preferred currency
         if (in_array($targetCurrency, [null, '', '0'], true)) {
-            $targetCurrency = app(\App\Services\CurrencyService::class)->getUserCurrency()->code;
+            $targetCurrency = app(CurrencyService::class)->getUserCurrency()->code;
         }
 
         try {
             if ($targetCurrency !== $baseCurrency) {
-                $convertedAmount = app(\App\Services\CurrencyService::class)->convert(
+                $convertedAmount = app(CurrencyService::class)->convert(
                     $priceAmount,
                     $baseCurrency,
                     $targetCurrency
                 );
 
-                return app(\App\Services\CurrencyService::class)->format($convertedAmount, $targetCurrency);
+                return app(CurrencyService::class)->format($convertedAmount, $targetCurrency);
             }
 
-            return app(\App\Services\CurrencyService::class)->format($priceAmount, $baseCurrency);
-        } catch (Exception $e) {
+            return app(CurrencyService::class)->format($priceAmount, $baseCurrency);
+        } catch (Exception) {
             // Fallback to base currency if conversion fails
-            return app(\App\Services\CurrencyService::class)->format($priceAmount, $baseCurrency);
+            return app(CurrencyService::class)->format($priceAmount, $baseCurrency);
         }
     }
 
@@ -70,7 +73,7 @@ final class DomainPrice extends Model
         }
 
         try {
-            return app(\App\Services\CurrencyService::class)->convert(
+            return app(CurrencyService::class)->convert(
                 $priceAmount,
                 $baseCurrency,
                 $targetCurrency
@@ -103,5 +106,23 @@ final class DomainPrice extends Model
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    protected function setDomainIdAttribute(int|string|null $value): void
+    {
+        $this->pendingDomainId = $value !== null ? (int) $value : null;
+    }
+
+    protected static function booted(): void
+    {
+        self::created(function (DomainPrice $domainPrice): void {
+            if ($domainPrice->pendingDomainId === null) {
+                return;
+            }
+
+            Domain::query()
+                ->whereKey($domainPrice->pendingDomainId)
+                ->update(['domain_price_id' => $domainPrice->id]);
+        });
     }
 }

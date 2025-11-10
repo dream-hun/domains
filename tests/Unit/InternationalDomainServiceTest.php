@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Models\Contact;
 use App\Services\Domain\InternationalDomainService;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function (): void {
@@ -226,10 +225,8 @@ it('can extract first and last names correctly', function (): void {
     $reflection = new ReflectionClass($this->service);
 
     $extractFirstName = $reflection->getMethod('extractFirstName');
-    $extractFirstName->setAccessible(true);
 
     $extractLastName = $reflection->getMethod('extractLastName');
-    $extractLastName->setAccessible(true);
 
     expect($extractFirstName->invoke($this->service, 'John Doe Smith'))->toBe('John')
         ->and($extractLastName->invoke($this->service, 'John Doe Smith'))->toBe('Doe Smith')

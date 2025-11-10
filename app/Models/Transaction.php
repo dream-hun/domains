@@ -14,6 +14,7 @@ final class Transaction extends Model
 
     protected $fillable = [
         'order_id',
+        'payment_id',
         'user_id',
         'payment_method',
         'transaction_id',
@@ -33,6 +34,11 @@ final class Transaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
     }
 
     public function isSuccessful(): bool

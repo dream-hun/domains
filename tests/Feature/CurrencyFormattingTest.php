@@ -9,7 +9,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Seed currencies
-    Currency::create([
+    Currency::query()->create([
         'code' => 'USD',
         'name' => 'US Dollar',
         'symbol' => '$',
@@ -18,7 +18,7 @@ beforeEach(function (): void {
         'is_active' => true,
     ]);
 
-    Currency::create([
+    Currency::query()->create([
         'code' => 'FRW',
         'name' => 'Rwandan Franc',
         'symbol' => 'FRW',
@@ -29,49 +29,49 @@ beforeEach(function (): void {
 });
 
 it('formats whole dollar amounts without decimals', function (): void {
-    $currency = Currency::where('code', 'USD')->first();
+    $currency = Currency::query()->where('code', 'USD')->first();
     $formatted = $currency->format(100.0);
 
     expect($formatted)->toBe('$100');
 });
 
 it('formats dollar amounts with cents using 2 decimals', function (): void {
-    $currency = Currency::where('code', 'USD')->first();
+    $currency = Currency::query()->where('code', 'USD')->first();
     $formatted = $currency->format(99.50);
 
     expect($formatted)->toBe('$99.50');
 });
 
 it('formats FRW amounts without decimals', function (): void {
-    $currency = Currency::where('code', 'FRW')->first();
+    $currency = Currency::query()->where('code', 'FRW')->first();
     $formatted = $currency->format(135000.0);
 
     expect($formatted)->toBe('FRW135,000');
 });
 
 it('formats FRW amounts even with fractional parts', function (): void {
-    $currency = Currency::where('code', 'FRW')->first();
+    $currency = Currency::query()->where('code', 'FRW')->first();
     $formatted = $currency->format(135000.75);
 
     expect($formatted)->toBe('FRW135,001'); // Rounds to whole number
 });
 
 it('formats small dollar amounts correctly', function (): void {
-    $currency = Currency::where('code', 'USD')->first();
+    $currency = Currency::query()->where('code', 'USD')->first();
     $formatted = $currency->format(0.99);
 
     expect($formatted)->toBe('$0.99');
 });
 
 it('formats zero amounts without decimals', function (): void {
-    $currency = Currency::where('code', 'USD')->first();
+    $currency = Currency::query()->where('code', 'USD')->first();
     $formatted = $currency->format(0.0);
 
     expect($formatted)->toBe('$0');
 });
 
 it('rounds FRW amounts with fractional cents consistently', function (): void {
-    $currency = Currency::where('code', 'FRW')->first();
+    $currency = Currency::query()->where('code', 'FRW')->first();
 
     // Test the exact scenario from the cart issue
     $formatted1 = $currency->format(203755.41);
@@ -83,7 +83,7 @@ it('rounds FRW amounts with fractional cents consistently', function (): void {
 });
 
 it('ensures consistent rounding across multiple calls', function (): void {
-    $currency = Currency::where('code', 'FRW')->first();
+    $currency = Currency::query()->where('code', 'FRW')->first();
 
     // Multiple calls with the same fractional value should be consistent
     $formatted1 = $currency->format(203755.41);

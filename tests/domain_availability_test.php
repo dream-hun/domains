@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Illuminate\Contracts\Console\Kernel;
+
 require __DIR__.'/../vendor/autoload.php';
 
 use App\Services\Domain\InternationalDomainService;
@@ -9,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 // Bootstrap Laravel application
 $app = require_once __DIR__.'/../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
 // Test domains
 $testDomains = [
@@ -25,7 +27,7 @@ $domainService = app(InternationalDomainService::class);
 echo "Testing domain availability checking...\n\n";
 
 foreach ($testDomains as $domain) {
-    echo "Checking domain: $domain\n";
+    echo sprintf('Checking domain: %s%s', $domain, PHP_EOL);
 
     try {
         $result = $domainService->checkAvailability($domain);

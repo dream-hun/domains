@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class FailedDomainRegistration extends Model
 {
+    use HasFactory;
+    use HasFactory;
+
     protected $fillable = [
         'order_id',
         'order_item_id',
@@ -22,16 +26,6 @@ final class FailedDomainRegistration extends Model
         'status',
         'contact_ids',
     ];
-
-    public function casts(): array
-    {
-        return [
-            'contact_ids' => 'array',
-            'last_attempted_at' => 'datetime',
-            'next_retry_at' => 'datetime',
-            'resolved_at' => 'datetime',
-        ];
-    }
 
     public function order(): BelongsTo
     {
@@ -52,11 +46,7 @@ final class FailedDomainRegistration extends Model
             return false;
         }
 
-        if ($this->retry_count >= $this->max_retries) {
-            return false;
-        }
-
-        return true;
+        return $this->retry_count < $this->max_retries;
     }
 
     /**
@@ -90,5 +80,15 @@ final class FailedDomainRegistration extends Model
         $this->update([
             'status' => 'abandoned',
         ]);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'contact_ids' => 'array',
+            'last_attempted_at' => 'datetime',
+            'next_retry_at' => 'datetime',
+            'resolved_at' => 'datetime',
+        ];
     }
 }

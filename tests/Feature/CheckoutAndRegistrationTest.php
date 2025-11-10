@@ -10,7 +10,7 @@ use App\Models\User;
 use App\Services\BillingService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Seed roles first
     $this->artisan('db:seed', ['--class' => 'RolesSeeder']);
 
@@ -35,7 +35,7 @@ beforeEach(function () {
     ]);
 });
 
-it('allows user to view checkout page with items in cart', function () {
+it('allows user to view checkout page with items in cart', function (): void {
     // Add item to cart
     Cart::add([
         'id' => 'example.com',
@@ -54,16 +54,16 @@ it('allows user to view checkout page with items in cart', function () {
     $response->assertSeeLivewire('checkout-process');
 });
 
-it('shows empty cart message when cart is empty', function () {
+it('shows empty cart message when cart is empty', function (): void {
     Cart::clear();
 
     $response = $this->actingAs($this->user)->get(route('checkout.index'));
 
-    $response->assertOk();
-    $response->assertSee('Your cart is empty');
+    $response->assertRedirect(route('dashboard'));
+    $response->assertSessionHas('error', 'Your cart is empty.');
 });
 
-it('creates order from cart using billing service', function () {
+it('creates order from cart using billing service', function (): void {
     // Add items to cart
     Cart::add([
         'id' => 'example.com',
@@ -105,6 +105,7 @@ it('creates order from cart using billing service', function () {
 
     // Check order items
     expect($order->orderItems)->toHaveCount(1);
+
     $orderItem = $order->orderItems->first();
     expect($orderItem->domain_name)->toBe('example.com');
     expect($orderItem->price)->toBe('12.99');
@@ -112,7 +113,7 @@ it('creates order from cart using billing service', function () {
     expect($orderItem->total_amount)->toBe('25.98');
 });
 
-it('stores checkout session data when proceeding to payment', function () {
+it('stores checkout session data when proceeding to payment', function (): void {
     Cart::add([
         'id' => 'example.com',
         'name' => 'example.com',
@@ -141,7 +142,7 @@ it('stores checkout session data when proceeding to payment', function () {
     expect($checkoutData['total'])->toBe(12.99);
 });
 
-it('uses selected contact for domain registration', function () {
+it('uses selected contact for domain registration', function (): void {
     // Add items to cart
     Cart::add([
         'id' => 'example.com',
@@ -175,7 +176,7 @@ it('uses selected contact for domain registration', function () {
     expect($order->user_id)->toBe($this->user->id);
 });
 
-it('stores exchange rate on order items when creating order', function () {
+it('stores exchange rate on order items when creating order', function (): void {
     // Add items to cart with USD currency
     Cart::add([
         'id' => 'example.com',

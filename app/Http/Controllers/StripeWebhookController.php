@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Jobs\ProcessDomainRenewalJob;
-use App\Models\Order;
 use App\Models\Payment;
 use Exception;
 use Illuminate\Http\Request;
@@ -89,39 +88,50 @@ final class StripeWebhookController extends Controller
                 'currency' => $paymentIntent->currency,
             ]);
 
-            // Check if payment already exists
-            $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
+            $payment = $this->findPaymentForIntent($paymentIntent);
 
-            if ($payment) {
-                Log::info('Payment already processed', [
+            if (! $payment instanceof Payment) {
+                Log::info('Payment intent succeeded without matching payment record', [
                     'payment_intent_id' => $paymentIntent->id,
-                    'payment_id' => $payment->id,
+                    'metadata_payment_id' => $paymentIntent->metadata->payment_id ?? null,
+                    'metadata_order_id' => $paymentIntent->metadata->order_id ?? null,
                 ]);
-
-                // If payment exists but order is still processing, dispatch the renewal job again
-                $order = $payment->order;
-                if ($order && $order->status === 'processing') {
-                    Log::info('Re-dispatching renewal job for existing order', [
-                        'order_id' => $order->id,
-                        'order_number' => $order->order_number,
-                    ]);
-                    ProcessDomainRenewalJob::dispatch($order);
-                }
 
                 return;
             }
 
-            // Payment doesn't exist yet - this means webhook arrived before user returned to success page
-            // The payment and order will be created when user returns to success page
-            Log::info('Payment intent succeeded but payment record not yet created - will be created on success page', [
-                'payment_intent_id' => $paymentIntent->id,
-            ]);
+            if (! $payment->isSuccessful()) {
+                $payment->update([
+                    'status' => 'succeeded',
+                    'stripe_payment_intent_id' => $paymentIntent->id,
+                    'paid_at' => now(),
+                    'last_attempted_at' => now(),
+                    'metadata' => array_merge($payment->metadata ?? [], [
+                        'stripe_payment_status' => $paymentIntent->status ?? 'succeeded',
+                    ]),
+                ]);
+            }
 
-        } catch (Exception $e) {
+            $order = $payment->order;
+
+            if ($order && $order->payment_status === 'pending') {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => $order->status === 'pending' ? 'processing' : $order->status,
+                    'stripe_payment_intent_id' => $paymentIntent->id,
+                    'processed_at' => now(),
+                ]);
+
+                if ($order->type === 'renewal') {
+                    dispatch(new ProcessDomainRenewalJob($order));
+                }
+            }
+
+        } catch (Exception $exception) {
             Log::error('Error handling payment_intent.succeeded webhook', [
                 'payment_intent_id' => $paymentIntent->id ?? 'unknown',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
         }
     }
@@ -137,15 +147,22 @@ final class StripeWebhookController extends Controller
                 'failure_message' => $paymentIntent->last_payment_error->message ?? 'Unknown error',
             ]);
 
-            // Update payment record if it exists
-            $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
+            $payment = $this->findPaymentForIntent($paymentIntent);
 
-            if ($payment) {
+            if ($payment instanceof Payment) {
+                $failureDetails = array_filter([
+                    'message' => $paymentIntent->last_payment_error->message ?? null,
+                    'code' => $paymentIntent->last_payment_error->code ?? null,
+                ], static fn ($value): bool => $value !== null);
+
                 $payment->update([
                     'status' => 'failed',
+                    'failure_details' => array_merge($payment->failure_details ?? [], $failureDetails),
                     'metadata' => array_merge($payment->metadata ?? [], [
-                        'failure_reason' => $paymentIntent->last_payment_error->message ?? 'Unknown error',
+                        'stripe_payment_status' => $paymentIntent->status ?? 'failed',
                     ]),
+                    'last_attempted_at' => now(),
+                    'stripe_payment_intent_id' => $payment->stripe_payment_intent_id ?: $paymentIntent->id,
                 ]);
 
                 // Update order status if exists
@@ -157,10 +174,10 @@ final class StripeWebhookController extends Controller
                 }
             }
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Error handling payment_intent.payment_failed webhook', [
                 'payment_intent_id' => $paymentIntent->id ?? 'unknown',
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
@@ -177,7 +194,7 @@ final class StripeWebhookController extends Controller
             ]);
 
             // Find payment by charge ID
-            $payment = Payment::where('stripe_charge_id', $charge->id)->first();
+            $payment = Payment::query()->where('stripe_charge_id', $charge->id)->first();
 
             if ($payment) {
                 $payment->update([
@@ -202,11 +219,25 @@ final class StripeWebhookController extends Controller
                 ]);
             }
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Error handling charge.refunded webhook', [
                 'charge_id' => $charge->id ?? 'unknown',
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
+    }
+
+    private function findPaymentForIntent(object $paymentIntent): ?Payment
+    {
+        $metadataPaymentId = $paymentIntent->metadata->payment_id ?? null;
+
+        if ($metadataPaymentId) {
+            $payment = Payment::query()->find($metadataPaymentId);
+            if ($payment) {
+                return $payment;
+            }
+        }
+
+        return Payment::query()->where('stripe_payment_intent_id', $paymentIntent->id)->first();
     }
 }

@@ -13,11 +13,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('domain_nameservers', function (Blueprint $table) {
+        Schema::create('domain_nameservers', function (Blueprint $table): void {
 
             $table->id();
             $table->foreignId('domain_id')->constrained('domains');
             $table->foreignId('nameserver_id')->constrained('nameservers');
+            $table->unique(['domain_id', 'nameserver_id']);
         });
     }
 };

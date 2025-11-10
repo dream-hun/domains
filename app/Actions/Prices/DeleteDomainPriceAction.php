@@ -10,7 +10,7 @@ final class DeleteDomainPriceAction
 {
     public function handle(string $uuid): void
     {
-        $domainPrice = DomainPrice::where('uuid', $uuid)->firstOrFail();
+        $domainPrice = DomainPrice::query()->where('uuid', $uuid)->firstOrFail();
         $domainPrice->delete();
     }
 }

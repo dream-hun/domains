@@ -15,13 +15,13 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Create permissions
-    Permission::create(['name' => 'domain_show']);
-    Permission::create(['name' => 'domain_edit']);
+    Permission::query()->create(['name' => 'domain_show']);
+    Permission::query()->create(['name' => 'domain_edit']);
 
     $this->user = User::factory()->create(['email' => 'test.user@example.com']);
     $this->user->permissions()->sync([
-        Permission::where('name', 'domain_show')->first()->id,
-        Permission::where('name', 'domain_edit')->first()->id,
+        Permission::query()->where('name', 'domain_show')->first()->id,
+        Permission::query()->where('name', 'domain_edit')->first()->id,
     ]);
 
     // Create a domain price first

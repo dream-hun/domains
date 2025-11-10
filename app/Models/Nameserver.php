@@ -6,7 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 final class Nameserver extends Model
 {
@@ -14,8 +14,8 @@ final class Nameserver extends Model
 
     protected $guarded = [];
 
-    public function domains(): BelongsTo
+    public function domains(): BelongsToMany
     {
-        return $this->belongsTo(Domain::class, 'domain_id');
+        return $this->belongsToMany(Domain::class, 'domain_nameservers', 'nameserver_id', 'domain_id');
     }
 }

@@ -2,18 +2,21 @@
 
 declare(strict_types=1);
 
+use App\Enums\Coupons\CouponType;
+use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Role;
 use App\Models\User;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
+use Illuminate\Support\Str;
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create necessary roles for user creation
-    Role::create(['id' => 1, 'title' => 'Admin']);
-    Role::create(['id' => 2, 'title' => 'User']);
+    Role::query()->create(['id' => 1, 'title' => 'Admin']);
+    Role::query()->create(['id' => 2, 'title' => 'User']);
 
     // Seed currencies for testing
-    Currency::create([
+    Currency::query()->create([
         'code' => 'USD',
         'name' => 'US Dollar',
         'symbol' => '$',
@@ -23,7 +26,7 @@ beforeEach(function () {
     ]);
 });
 
-it('displays checkout page with empty cart', function () {
+it('displays checkout page with empty cart', function (): void {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->get(route('checkout.index'));
@@ -32,7 +35,7 @@ it('displays checkout page with empty cart', function () {
     $response->assertSee('Your cart is empty');
 });
 
-it('displays checkout page with cart items', function () {
+it('displays checkout page with cart items', function (): void {
     $user = User::factory()->create();
 
     // Add items to cart
@@ -55,7 +58,7 @@ it('displays checkout page with cart items', function () {
     $response->assertSee('$10.99');
 });
 
-it('applies coupon successfully', function () {
+it('applies coupon successfully', function (): void {
     $user = User::factory()->create();
 
     // Add items to cart
@@ -71,10 +74,10 @@ it('applies coupon successfully', function () {
     ]);
 
     // Create a test coupon
-    $coupon = App\Models\Coupon::create([
-        'uuid' => Illuminate\Support\Str::uuid(),
+    $coupon = Coupon::query()->create([
+        'uuid' => Str::uuid(),
         'code' => 'TEST10',
-        'type' => App\Enums\Coupons\CouponType::Percentage,
+        'type' => CouponType::Percentage,
         'value' => 10,
         'valid_from' => now()->subDay(),
         'valid_to' => now()->addMonth(),
@@ -92,7 +95,7 @@ it('applies coupon successfully', function () {
     ]);
 });
 
-it('rejects invalid coupon', function () {
+it('rejects invalid coupon', function (): void {
     $user = User::factory()->create();
 
     // Add items to cart
@@ -115,7 +118,7 @@ it('rejects invalid coupon', function () {
     ]);
 });
 
-it('proceeds to payment with valid data', function () {
+it('proceeds to payment with valid data', function (): void {
     $user = User::factory()->create();
 
     // Add items to cart
@@ -146,7 +149,7 @@ it('proceeds to payment with valid data', function () {
     expect(session('checkout'))->not->toBeNull();
 });
 
-it('fails to proceed with empty cart', function () {
+it('fails to proceed with empty cart', function (): void {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->post(route('checkout.proceed'), [

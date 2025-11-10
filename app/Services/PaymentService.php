@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Helpers\CurrencyHelper;
 use App\Helpers\StripeHelper;
 use App\Models\Order;
+use App\Models\Payment;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Stripe\Checkout\Session;
 use Stripe\Customer;
 use Stripe\Exception\ApiErrorException;
@@ -30,6 +33,8 @@ final readonly class PaymentService
 
     private function processStripePayment(Order $order): array
     {
+        $paymentAttempt = null;
+
         try {
 
             if (! $this->isStripeConfigured()) {
@@ -39,21 +44,34 @@ final readonly class PaymentService
                 ];
             }
 
-            $checkoutSession = $this->createStripeCheckoutSession($order);
+            $paymentAttempt = $this->createPaymentAttempt($order, 'stripe');
+
+            $checkoutSession = $this->createStripeCheckoutSession($order, $paymentAttempt);
+
+            $paymentAttempt->update([
+                'stripe_session_id' => $checkoutSession->id,
+                'metadata' => array_merge($paymentAttempt->metadata ?? [], [
+                    'checkout_url' => $checkoutSession->url,
+                ]),
+            ]);
 
             return [
                 'success' => true,
                 'requires_action' => true,
                 'checkout_url' => $checkoutSession->url,
                 'session_id' => $checkoutSession->id,
+                'payment_id' => $paymentAttempt->id,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
+            $this->markPaymentFailed($paymentAttempt, $exception->getMessage(), $exception->getCode());
+
             $this->transactionLogger->logFailure(
                 order: $order,
                 method: 'stripe',
                 error: 'Failed to create checkout session',
-                details: $e->getMessage()
+                details: $exception->getMessage(),
+                payment: $paymentAttempt
             );
 
             return [
@@ -66,7 +84,7 @@ final readonly class PaymentService
     /**
      * @throws ApiErrorException
      */
-    private function createStripeCheckoutSession(Order $order): Session
+    private function createStripeCheckoutSession(Order $order, Payment $payment): Session
     {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
 
@@ -79,6 +97,19 @@ final readonly class PaymentService
         // Use the potentially converted currency and amount
         $processingCurrency = $validationResult['currency'];
         $processingAmount = $validationResult['amount'];
+
+        $payment->update([
+            'currency' => $processingCurrency,
+            'amount' => $processingAmount,
+            'metadata' => array_merge($payment->metadata ?? [], [
+                'original_currency' => $order->currency,
+                'original_amount' => $order->total_amount,
+                'processing_currency' => $processingCurrency,
+                'processing_amount' => $processingAmount,
+                'converted' => $validationResult['converted'] ?? false,
+            ]),
+            'last_attempted_at' => now(),
+        ]);
 
         $user = $order->user;
 
@@ -95,9 +126,7 @@ final readonly class PaymentService
         }
 
         // Build description from order items
-        $itemDescriptions = $order->orderItems->map(function ($item) {
-            return "{$item->domain_name} ({$item->years} year(s))";
-        })->join(', ');
+        $itemDescriptions = $order->orderItems->map(fn ($item): string => sprintf('%s (%s year(s))', $item->domain_name, $item->years))->join(', ');
 
         // Convert to Stripe amount format
         $stripeAmount = StripeHelper::convertToStripeAmount(
@@ -108,9 +137,9 @@ final readonly class PaymentService
         $lineItems = [
             [
                 'price_data' => [
-                    'currency' => mb_strtolower($processingCurrency),
+                    'currency' => mb_strtolower((string) $processingCurrency),
                     'product_data' => [
-                        'name' => "Order {$order->order_number}",
+                        'name' => 'Order '.$order->order_number,
                         'description' => $itemDescriptions,
                     ],
                     'unit_amount' => $stripeAmount,
@@ -130,6 +159,7 @@ final readonly class PaymentService
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'user_id' => $user->id,
+                'payment_id' => $payment->id,
                 'original_currency' => $order->currency,
                 'original_amount' => $order->total_amount,
             ],
@@ -157,7 +187,7 @@ final readonly class PaymentService
             // Convert order amount to USD to check against Stripe's minimum
             $amountInUsd = $currency === 'USD'
                 ? $amount
-                : \App\Helpers\CurrencyHelper::convert($amount, $currency, 'USD');
+                : CurrencyHelper::convert($amount, $currency, 'USD');
 
             // If amount meets the minimum, use original currency
             if ($amountInUsd >= $minUsdAmount) {
@@ -177,12 +207,12 @@ final readonly class PaymentService
                 'converted' => true,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Currency conversion failed for Stripe validation', [
                 'order_id' => $order->id,
                 'currency' => $currency,
                 'amount' => $amount,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
@@ -194,10 +224,20 @@ final readonly class PaymentService
 
     private function processPayPalPayment(Order $order): array
     {
+        $paymentAttempt = $this->createPaymentAttempt($order, 'paypal');
 
         Log::warning('PayPal payment attempted but not implemented', [
             'order_id' => $order->id,
         ]);
+
+        $this->markPaymentFailed($paymentAttempt, 'PayPal integration not yet implemented');
+
+        $this->transactionLogger->logFailure(
+            order: $order,
+            method: 'paypal',
+            error: 'PayPal integration not yet implemented',
+            payment: $paymentAttempt
+        );
 
         return [
             'success' => false,
@@ -214,19 +254,43 @@ final readonly class PaymentService
             && ! empty(config('services.payment.stripe.secret_key'));
     }
 
-    /**
-     * Get user-friendly error message from Stripe error code
-     */
-    private function getStripeErrorMessage(string $code): string
+    private function createPaymentAttempt(Order $order, string $method): Payment
     {
-        return match ($code) {
-            'card_declined' => 'Your card was declined. Please try a different payment method.',
-            'insufficient_funds' => 'Your card has insufficient funds. Please try a different payment method.',
-            'expired_card' => 'Your card has expired. Please use a different payment method.',
-            'incorrect_cvc' => 'The card security code is incorrect. Please check and try again.',
-            'processing_error' => 'An error occurred while processing your card. Please try again.',
-            'rate_limit' => 'Too many requests. Please wait a moment and try again.',
-            default => 'Payment failed. Please check your card details and try again.',
-        };
+        $nextAttemptNumber = (int) ($order->payments()->max('attempt_number') ?? 0) + 1;
+
+        return $order->payments()->create([
+            'user_id' => $order->user_id,
+            'status' => 'pending',
+            'payment_method' => $method,
+            'amount' => $order->total_amount,
+            'currency' => $order->currency,
+            'metadata' => [
+                'attempt_identifier' => Str::uuid()->toString(),
+            ],
+            'attempt_number' => $nextAttemptNumber,
+            'stripe_payment_intent_id' => Payment::generatePendingIntentId($order, $nextAttemptNumber),
+            'last_attempted_at' => now(),
+        ]);
+    }
+
+    private function markPaymentFailed(?Payment $payment, string $message, int|string|null $code = null): void
+    {
+        if (!$payment instanceof Payment) {
+            Log::warning('Attempted to mark payment as failed but no payment record was available', [
+                'message' => $message,
+                'code' => $code,
+            ]);
+
+            return;
+        }
+
+        $payment->update([
+            'status' => 'failed',
+            'failure_details' => array_merge($payment->failure_details ?? [], [
+                'message' => $message,
+                'code' => $code,
+            ]),
+            'last_attempted_at' => now(),
+        ]);
     }
 }

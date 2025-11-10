@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Enums\ContactType;
+use App\Models\Contact;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Contact>
+ * @extends Factory<Contact>
  */
 final class ContactFactory extends Factory
 {
@@ -48,7 +49,7 @@ final class ContactFactory extends Factory
      */
     public function registrant(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'contact_type' => ContactType::Registrant->value,
         ]);
     }
@@ -58,7 +59,7 @@ final class ContactFactory extends Factory
      */
     public function technical(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'contact_type' => ContactType::Technical->value,
         ]);
     }
@@ -68,7 +69,7 @@ final class ContactFactory extends Factory
      */
     public function administrative(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'contact_type' => ContactType::Administrative->value,
         ]);
     }
@@ -78,7 +79,7 @@ final class ContactFactory extends Factory
      */
     public function billing(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'contact_type' => ContactType::Billing->value,
         ]);
     }

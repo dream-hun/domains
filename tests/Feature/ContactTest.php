@@ -13,9 +13,11 @@ beforeEach(function (): void {
 });
 
 test('can view contacts index page', function (): void {
-    Contact::factory(3)->create();
+    Contact::factory(3)->create(['user_id' => $this->user->id]);
 
     $response = $this->get(route('admin.contacts.index'));
+
+    dump($response->status(), $response->baseResponse::class, ($response->original ?? null)::class);
 
     $response->assertSuccessful()
         ->assertViewIs('admin.contacts.index')
@@ -27,12 +29,14 @@ test('can search and filter contacts', function (): void {
         'first_name' => 'John',
         'last_name' => 'Doe',
         'contact_type' => ContactType::Registrant,
+        'user_id' => $this->user->id,
     ]);
 
     $contact2 = Contact::factory()->create([
         'first_name' => 'Jane',
         'last_name' => 'Smith',
         'contact_type' => ContactType::Technical,
+        'user_id' => $this->user->id,
     ]);
 
     // Search by name
@@ -85,9 +89,9 @@ test('can create contact', function (): void {
         ->assertSessionHas('success', 'Contact created successfully in both EPP registry and local database.');
 
     // Verify contact was created
-    expect(Contact::count())->toBe(1);
+    expect(Contact::query()->count())->toBe(1);
 
-    $contact = Contact::first();
+    $contact = Contact::query()->first();
     expect($contact->first_name)->toBe('John');
     expect($contact->last_name)->toBe('Doe');
     expect($contact->email)->toBe('john.doe@example.com');
@@ -135,12 +139,13 @@ test('can view contact details', function (): void {
         'first_name' => 'John',
         'last_name' => 'Doe',
         'email' => 'john.doe@example.com',
+        'user_id' => $this->user->id,
     ]);
 
     $response = $this->get(route('admin.contacts.show', $contact));
 
     $response->assertSuccessful()
-        ->assertViewIs('contacts.show')
+        ->assertViewIs('admin.contacts.show')
         ->assertViewHas('contact', $contact)
         ->assertSee($contact->first_name)
         ->assertSee($contact->last_name)
@@ -148,13 +153,13 @@ test('can view contact details', function (): void {
 });
 
 test('can view edit contact page', function (): void {
-    $contact = Contact::factory()->create();
+    $contact = Contact::factory()->create(['user_id' => $this->user->id]);
     Country::factory()->create(['name' => 'United States']);
 
     $response = $this->get(route('admin.contacts.edit', $contact));
 
     $response->assertSuccessful()
-        ->assertViewIs('contacts.edit')
+        ->assertViewIs('admin.contacts.edit')
         ->assertViewHas('contact', $contact)
         ->assertViewHas('countries');
 });
@@ -163,6 +168,7 @@ test('can update contact', function (): void {
     $contact = Contact::factory()->create([
         'first_name' => 'John',
         'email' => 'john@example.com',
+        'user_id' => $this->user->id,
     ]);
 
     $updateData = [
@@ -189,14 +195,14 @@ test('can update contact', function (): void {
 });
 
 test('can delete contact', function (): void {
-    $contact = Contact::factory()->create();
+    $contact = Contact::factory()->create(['user_id' => $this->user->id]);
 
     $response = $this->delete(route('admin.contacts.destroy', $contact));
 
     $response->assertRedirect(route('admin.contacts.index'))
         ->assertSessionHas('success', 'Contact deleted successfully.');
 
-    expect(Contact::find($contact->id))->toBeNull();
+    expect(Contact::query()->find($contact->id))->toBeNull();
 });
 
 test('requires authentication for all contact routes', function (): void {

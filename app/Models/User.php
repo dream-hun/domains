@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Role;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -15,7 +16,8 @@ use Illuminate\Notifications\Notifiable;
 
 final class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
+    use Notifiable;
 
     protected $fillable = [
         'uuid',
@@ -43,17 +45,15 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public static function generateCustomerNumber(): string
     {
-        $lastUser = self::orderBy('id', 'desc')->first();
+        $lastUser = self::query()->orderBy('id', 'desc')->first();
 
         if (! $lastUser) {
             return 'BLCL-000001';
         }
 
-        preg_match('/\d+/', $lastUser->client_code, $matches);
+        preg_match('/\d+/', (string) $lastUser->client_code, $matches);
 
-        if (! isset($matches[0])) {
-            throw new Exception('Invalid format for client_code');
-        }
+        throw_unless(isset($matches[0]), Exception::class, 'Invalid format for client_code');
 
         $number = (int) $matches[0] + 1;
 
@@ -77,6 +77,10 @@ final class User extends Authenticatable implements MustVerifyEmail
 
     public function isAdmin(): bool
     {
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->contains(fn(Role $role): bool => (int) $role->id === 1);
+        }
+
         return $this->roles()->where('roles.id', 1)->exists();
     }
 
@@ -85,30 +89,43 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Role::class);
     }
 
-    public function getGravatarAttribute(): string
+    protected static function booted(): void
+    {
+        self::created(function (self $user): void {
+            $registrationRole = config('panel.registration_default_role');
+
+            if (in_array($registrationRole, [null, '', '0'], true)) {
+                return;
+            }
+
+            $roleExists = Role::query()->whereKey($registrationRole)->exists();
+
+            if (! $roleExists) {
+                return;
+            }
+
+            if ($user->roles()->whereKey($registrationRole)->exists()) {
+                return;
+            }
+
+            $user->roles()->attach($registrationRole);
+        });
+    }
+
+    protected function getGravatarAttribute(): string
     {
         $emailStr = is_null($this->email) ? '' : (string) $this->email;
         $email = md5(mb_strtolower(mb_trim($emailStr)));
 
-        return "https://www.gravatar.com/avatar/$email";
+        return 'https://www.gravatar.com/avatar/'.$email;
     }
 
     /**
      * Get the user's full name.
      */
-    public function getNameAttribute(): string
+    protected function getNameAttribute(): string
     {
         return mb_trim($this->first_name.' '.$this->last_name);
-    }
-
-    protected static function booted(): void
-    {
-        self::created(function (self $user): void {
-            $registrationRole = config('panel.registration_default_role');
-            if (! $user->roles()->get()->contains($registrationRole)) {
-                $user->roles()->attach($registrationRole);
-            }
-        });
     }
 
     protected function casts(): array

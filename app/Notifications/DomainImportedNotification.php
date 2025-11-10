@@ -37,16 +37,16 @@ final class DomainImportedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $message = $this->totalImported > 1
-            ? "{$this->totalImported} domains have been imported successfully."
-            : "Domain '{$this->domain->name}' has been imported successfully.";
+            ? $this->totalImported.' domains have been imported successfully.'
+            : sprintf("Domain '%s' has been imported successfully.", $this->domain->name);
 
         return (new MailMessage)
             ->subject('Domain Import Notification')
             ->greeting('Hello!')
             ->line($message)
-            ->line("Domain: {$this->domain->name}")
-            ->line("Registered: {$this->domain->registeredAt()}")
-            ->line("Expires: {$this->domain->expiresAt()}")
+            ->line('Domain: '.$this->domain->name)
+            ->line('Registered: '.$this->domain->registeredAt())
+            ->line('Expires: '.$this->domain->expiresAt())
             ->line('Status: '.ucfirst($this->domain->status))
             ->action('View Domains', route('admin.domains.index'))
             ->line('Thank you for using our domain management system!');

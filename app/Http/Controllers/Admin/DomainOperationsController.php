@@ -39,10 +39,10 @@ final class DomainOperationsController extends Controller
         $result = $this->syncContactsAction->execute($domain);
 
         if ($result['success']) {
-            return redirect()->back()->with('success', $result['message']);
+            return back()->with('success', $result['message']);
         }
 
-        return redirect()->back()->with('error', $result['message']);
+        return back()->with('error', $result['message']);
     }
 
     /**
@@ -53,10 +53,10 @@ final class DomainOperationsController extends Controller
         $result = $this->updateContactsAction->execute($domain);
 
         if ($result['success']) {
-            return redirect()->back()->with('success', $result['message']);
+            return back()->with('success', $result['message']);
         }
 
-        return redirect()->back()->with('error', $result['message']);
+        return back()->with('error', $result['message']);
     }
 
     /**

@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('orders', function (Blueprint $table): void {
             $table->string('coupon_code')->nullable()->after('currency');
             $table->string('discount_type')->nullable()->after('coupon_code');
             $table->decimal('discount_amount', 10, 2)->nullable()->after('discount_type');
@@ -25,7 +25,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('orders', function (Blueprint $table): void {
             $table->dropColumn(['coupon_code', 'discount_type', 'discount_amount']);
         });
     }

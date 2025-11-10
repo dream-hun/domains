@@ -12,7 +12,7 @@ final class DomainPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(): bool
     {
         return true;
     }
@@ -29,7 +29,7 @@ final class DomainPolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
         return true;
     }
@@ -73,7 +73,7 @@ final class DomainPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Domain $domain): bool
+    public function delete(User $user): bool
     {
         // Only admin can delete domains
         return $user->isAdmin();
@@ -82,7 +82,7 @@ final class DomainPolicy
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, Domain $domain): bool
+    public function restore(User $user): bool
     {
         // Only admin can restore domains
         return $user->isAdmin();
@@ -91,7 +91,7 @@ final class DomainPolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, Domain $domain): bool
+    public function forceDelete(User $user): bool
     {
         // Only admin can force delete domains
         return $user->isAdmin();

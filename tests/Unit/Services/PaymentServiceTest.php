@@ -9,15 +9,13 @@ use App\Services\PaymentService;
 use App\Services\TransactionLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
-use Stripe\Stripe;
-use Tests\TestCase;
 
-uses(TestCase::class, RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create necessary roles for user creation
-    Role::create(['id' => 1, 'title' => 'Admin']);
-    Role::create(['id' => 2, 'title' => 'User']);
+    Role::query()->create(['id' => 1, 'title' => 'Admin']);
+    Role::query()->create(['id' => 2, 'title' => 'User']);
 
     // Set up Stripe configuration for testing
     Config::set('services.payment.stripe.secret_key', 'sk_test_fake_key');
@@ -29,9 +27,9 @@ beforeEach(function () {
     $this->paymentService = new PaymentService($this->transactionLogger);
 });
 
-it('returns error when Stripe is not configured', function () {
-    Config::set('services.payment.stripe.secret_key', null);
-    Config::set('services.payment.stripe.publishable_key', null);
+it('returns error when Stripe is not configured', function (): void {
+    Config::set('services.payment.stripe.secret_key');
+    Config::set('services.payment.stripe.publishable_key');
 
     $user = User::factory()->create();
     $order = Order::factory()->for($user)->create([
@@ -47,7 +45,7 @@ it('returns error when Stripe is not configured', function () {
         ->and($result['error'])->toContain('not configured');
 });
 
-it('returns error for invalid payment method', function () {
+it('returns error for invalid payment method', function (): void {
     $user = User::factory()->create();
     $order = Order::factory()->for($user)->create();
 
@@ -58,7 +56,7 @@ it('returns error for invalid payment method', function () {
         ->toHaveKey('error', 'Invalid payment method');
 });
 
-it('returns error for paypal payment method', function () {
+it('returns error for paypal payment method', function (): void {
     $user = User::factory()->create();
     $order = Order::factory()->for($user)->create();
 
@@ -70,7 +68,7 @@ it('returns error for paypal payment method', function () {
         ->and($result['error'])->toContain('PayPal');
 });
 
-it('automatically converts to USD when amount is below Stripe minimum', function () {
+it('automatically converts to USD when amount is below Stripe minimum', function (): void {
     $user = User::factory()->create();
 
     // 100 RWF is approximately $0.07 USD, below Stripe's 50 cent minimum
@@ -94,7 +92,7 @@ it('automatically converts to USD when amount is below Stripe minimum', function
     }
 });
 
-it('processes orders with amount meeting Stripe minimum in original currency', function () {
+it('processes orders with amount meeting Stripe minimum in original currency', function (): void {
     $user = User::factory()->create();
 
     // 10 USD is well above Stripe's 50 cent minimum

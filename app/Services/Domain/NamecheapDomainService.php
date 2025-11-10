@@ -14,17 +14,17 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use SimpleXMLElement;
 
-final class NamecheapDomainService implements DomainRegistrationServiceInterface, DomainServiceInterface
+class NamecheapDomainService implements DomainRegistrationServiceInterface, DomainServiceInterface
 {
-    private string $apiUser;
+    private readonly string $apiUser;
 
-    private string $apiKey;
+    private readonly string $apiKey;
 
-    private string $username;
+    private readonly string $username;
 
-    private string $clientIp;
+    private readonly string $clientIp;
 
-    private string $apiBaseUrl;
+    private readonly string $apiBaseUrl;
 
     public function __construct()
     {
@@ -74,9 +74,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 throw new Exception('API request failed with status: '.$response->status());
             }
 
-            if (empty($response->body())) {
-                throw new Exception('Namecheap API error: Empty response from API.');
-            }
+            throw_if(empty($response->body()), Exception::class, 'Namecheap API error: Empty response from API.');
 
             try {
                 $xml = new SimpleXMLElement($response->body());
@@ -91,9 +89,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             // Check for API-level errors
             if (property_exists($xml, 'Errors') && $xml->Errors !== null && (property_exists($xml->Errors, 'Error') && $xml->Errors->Error !== null)) {
                 $errorMsg = (string) $xml->Errors->Error;
-                if ($errorMsg !== '' && $errorMsg !== '0') {
-                    throw new Exception('Namecheap API error: '.$errorMsg);
-                }
+                throw_if($errorMsg !== '' && $errorMsg !== '0', Exception::class, 'Namecheap API error: '.$errorMsg);
             }
 
             // Check for response status
@@ -102,13 +98,13 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 if (property_exists($xml, 'Errors') && $xml->Errors !== null) {
                     $errorMsg = (string) $xml->Errors->Error ?? $errorMsg;
                 }
+
                 throw new Exception('Namecheap API error: '.$errorMsg);
             }
 
             $results = [];
-            if (! property_exists($xml->CommandResponse, 'DomainCheckResult') || $xml->CommandResponse->DomainCheckResult === null) {
-                throw new Exception('Namecheap API error: Missing DomainCheckResult in response.');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainCheckResult') || $xml->CommandResponse->DomainCheckResult === null, Exception::class, 'Namecheap API error: Missing DomainCheckResult in response.');
+
             $domainCheckResults = $xml->CommandResponse->DomainCheckResult;
 
             foreach ($domainCheckResults as $result) {
@@ -120,7 +116,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 if (! $available) {
                     $errorMessage = (string) $result['ErrorMessage'];
                     if ($errorMessage === '' || $errorMessage === '0') {
-                        $errorMessage = 'Domain not available.';
+                        $errorMessage = 'Domain not available';
                     }
                 }
 
@@ -171,6 +167,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
                 $results[$domainName] = (object) [
                     'available' => $available,
+                    'reason' => $errorMessage,
                     'error' => $errorMessage,
                     'is_premium' => $isPremium,
                     'premium_price' => $premiumPrice,
@@ -179,16 +176,19 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             }
 
             return $results;
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Namecheap domain check error', [
                 'domains' => $domain,
-                'message' => $e->getMessage(),
+                'message' => $exception->getMessage(),
             ]);
             $results = [];
             foreach ($domain as $d) {
+                $serviceError = 'Service error: '.$exception->getMessage();
+
                 $results[$d] = (object) [
                     'available' => false,
-                    'error' => $e->getMessage(),
+                    'reason' => $serviceError,
+                    'error' => $exception->getMessage(),
                 ];
             }
 
@@ -203,14 +203,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
     {
         try {
             // Validate domain name
-            if (! $this->isValidDomainName($domain)) {
-                throw new Exception('Invalid domain name format');
-            }
+            throw_unless($this->isValidDomainName($domain), Exception::class, 'Invalid domain name format');
 
             // Validate registration years
-            if ($years < 1 || $years > 10) {
-                throw new Exception('Registration years must be between 1 and 10');
-            }
+            throw_if($years < 1 || $years > 10, Exception::class, 'Registration years must be between 1 and 10');
 
             // Validate required contact information
             $this->validateContactInfo($contactInfo);
@@ -253,9 +249,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             $xml = $this->makeApiCall($params);
 
             // Validate successful registration
-            if (! property_exists($xml->CommandResponse, 'DomainCreateResult') || $xml->CommandResponse->DomainCreateResult === null) {
-                throw new Exception('Invalid API response: Missing DomainCreateResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainCreateResult') || $xml->CommandResponse->DomainCreateResult === null, Exception::class, 'Invalid API response: Missing DomainCreateResult');
 
             $result = $xml->CommandResponse->DomainCreateResult;
             if ((string) $result['Registered'] !== 'true') {
@@ -271,16 +265,16 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'orderid' => (string) ($result['OrderID'] ?? ''),
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Namecheap domain registration failed', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $exception->getMessage(),
             ];
         }
     }
@@ -303,16 +297,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainSetRegistrarLockResult') || $xml->CommandResponse->DomainSetRegistrarLockResult === null) {
-                throw new Exception('Invalid API response: Missing DomainSetRegistrarLockResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainSetRegistrarLockResult') || $xml->CommandResponse->DomainSetRegistrarLockResult === null, Exception::class, 'Invalid API response: Missing DomainSetRegistrarLockResult');
 
             $result = $xml->CommandResponse->DomainSetRegistrarLockResult;
             $isSuccess = mb_strtolower((string) $result['IsSuccess']) === 'true';
 
-            if (! $isSuccess) {
-                throw new Exception('Failed to update domain lock status');
-            }
+            throw_unless($isSuccess, Exception::class, 'Failed to update domain lock status');
 
             return [
                 'success' => true,
@@ -321,10 +311,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => $lock ? 'Domain locked successfully' : 'Domain unlocked successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to update domain lock: '.$e->getMessage(),
+                'message' => 'Failed to update domain lock: '.$exception->getMessage(),
             ];
         }
     }
@@ -346,9 +336,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainGetRegistrarLockResult') || $xml->CommandResponse->DomainGetRegistrarLockResult === null) {
-                throw new Exception('Invalid API response: Missing DomainGetRegistrarLockResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainGetRegistrarLockResult') || $xml->CommandResponse->DomainGetRegistrarLockResult === null, Exception::class, 'Invalid API response: Missing DomainGetRegistrarLockResult');
 
             $result = $xml->CommandResponse->DomainGetRegistrarLockResult;
             $locked = mb_strtolower((string) $result['RegistrarLockStatus']) === 'true';
@@ -359,10 +347,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'locked' => $locked,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to get domain lock status: '.$e->getMessage(),
+                'message' => 'Failed to get domain lock status: '.$exception->getMessage(),
             ];
         }
     }
@@ -385,16 +373,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'WhoisguardEnableResult') || $xml->CommandResponse->WhoisguardEnableResult === null) {
-                throw new Exception('Invalid API response: Missing WhoisguardEnableResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'WhoisguardEnableResult') || $xml->CommandResponse->WhoisguardEnableResult === null, Exception::class, 'Invalid API response: Missing WhoisguardEnableResult');
 
             $result = $xml->CommandResponse->WhoisguardEnableResult;
             $isSuccess = mb_strtolower((string) $result['IsSuccess']) === 'true';
 
-            if (! $isSuccess) {
-                throw new Exception('Failed to enable WhoisGuard');
-            }
+            throw_unless($isSuccess, Exception::class, 'Failed to enable WhoisGuard');
 
             return [
                 'success' => true,
@@ -402,10 +386,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => 'WhoisGuard enabled successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to enable WhoisGuard: '.$e->getMessage(),
+                'message' => 'Failed to enable WhoisGuard: '.$exception->getMessage(),
             ];
         }
     }
@@ -427,16 +411,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'WhoisguardDisableResult') || $xml->CommandResponse->WhoisguardDisableResult === null) {
-                throw new Exception('Invalid API response: Missing WhoisguardDisableResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'WhoisguardDisableResult') || $xml->CommandResponse->WhoisguardDisableResult === null, Exception::class, 'Invalid API response: Missing WhoisguardDisableResult');
 
             $result = $xml->CommandResponse->WhoisguardDisableResult;
             $isSuccess = mb_strtolower((string) $result['IsSuccess']) === 'true';
 
-            if (! $isSuccess) {
-                throw new Exception('Failed to disable WhoisGuard');
-            }
+            throw_unless($isSuccess, Exception::class, 'Failed to disable WhoisGuard');
 
             return [
                 'success' => true,
@@ -444,10 +424,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => 'WhoisGuard disabled successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to disable WhoisGuard: '.$e->getMessage(),
+                'message' => 'Failed to disable WhoisGuard: '.$exception->getMessage(),
             ];
         }
     }
@@ -469,9 +449,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainContactsResult') || $xml->CommandResponse->DomainContactsResult === null) {
-                throw new Exception('Invalid API response: Missing DomainContactsResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainContactsResult') || $xml->CommandResponse->DomainContactsResult === null, Exception::class, 'Invalid API response: Missing DomainContactsResult');
 
             $result = $xml->CommandResponse->DomainContactsResult;
             $contacts = [];
@@ -503,7 +481,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                         'email' => mb_trim((string) ($contact->EmailAddress ?? '')),
                     ];
 
-                    Log::debug("Retrieved contact for type '{$internalType}'", [
+                    Log::debug(sprintf("Retrieved contact for type '%s'", $internalType), [
                         'domain' => $domain,
                         'type' => $internalType,
                         'email' => $contacts[$internalType]['email'],
@@ -512,9 +490,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 }
             }
 
-            if ($contacts === []) {
-                throw new Exception('No contact information found for domain');
-            }
+            throw_if($contacts === [], Exception::class, 'No contact information found for domain');
 
             Log::info('Successfully retrieved domain contacts', [
                 'domain' => $domain,
@@ -528,16 +504,16 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'contacts' => $contacts,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to get domain contacts from Namecheap', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to get domain contacts: '.$e->getMessage(),
+                'message' => 'Failed to get domain contacts: '.$exception->getMessage(),
             ];
         }
     }
@@ -562,16 +538,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainSetContactResult') || $xml->CommandResponse->DomainSetContactResult === null) {
-                throw new Exception('Invalid API response: Missing DomainSetContactResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainSetContactResult') || $xml->CommandResponse->DomainSetContactResult === null, Exception::class, 'Invalid API response: Missing DomainSetContactResult');
 
             $result = $xml->CommandResponse->DomainSetContactResult;
             $isSuccess = mb_strtolower((string) $result['IsSuccess']) === 'true';
 
-            if (! $isSuccess) {
-                throw new Exception('Failed to update domain contacts');
-            }
+            throw_unless($isSuccess, Exception::class, 'Failed to update domain contacts');
 
             return [
                 'success' => true,
@@ -579,10 +551,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => 'Domain contacts updated successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to update domain contacts: '.$e->getMessage(),
+                'message' => 'Failed to update domain contacts: '.$exception->getMessage(),
             ];
         }
     }
@@ -604,16 +576,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainGetEPPCodeResult') || $xml->CommandResponse->DomainGetEPPCodeResult === null) {
-                throw new Exception('Invalid API response: Missing DomainGetEPPCodeResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainGetEPPCodeResult') || $xml->CommandResponse->DomainGetEPPCodeResult === null, Exception::class, 'Invalid API response: Missing DomainGetEPPCodeResult');
 
             $result = $xml->CommandResponse->DomainGetEPPCodeResult;
             $authCode = (string) ($result->EppCode ?? '');
 
-            if ($authCode === '' || $authCode === '0') {
-                throw new Exception('Failed to retrieve EPP code');
-            }
+            throw_if($authCode === '' || $authCode === '0', Exception::class, 'Failed to retrieve EPP code');
 
             return [
                 'success' => true,
@@ -622,10 +590,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => 'EPP code retrieved successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to get EPP code: '.$e->getMessage(),
+                'message' => 'Failed to get EPP code: '.$exception->getMessage(),
             ];
         }
     }
@@ -647,9 +615,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainTransferGetStatusResult') || $xml->CommandResponse->DomainTransferGetStatusResult === null) {
-                throw new Exception('Invalid API response: Missing DomainTransferGetStatusResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainTransferGetStatusResult') || $xml->CommandResponse->DomainTransferGetStatusResult === null, Exception::class, 'Invalid API response: Missing DomainTransferGetStatusResult');
 
             $result = $xml->CommandResponse->DomainTransferGetStatusResult;
 
@@ -661,10 +627,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'transfer_date' => (string) ($result->TransferDate ?? ''),
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to get transfer status: '.$e->getMessage(),
+                'message' => 'Failed to get transfer status: '.$exception->getMessage(),
             ];
         }
     }
@@ -686,16 +652,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainTransferResubmitResult') || $xml->CommandResponse->DomainTransferResubmitResult === null) {
-                throw new Exception('Invalid API response: Missing DomainTransferResubmitResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainTransferResubmitResult') || $xml->CommandResponse->DomainTransferResubmitResult === null, Exception::class, 'Invalid API response: Missing DomainTransferResubmitResult');
 
             $result = $xml->CommandResponse->DomainTransferResubmitResult;
             $isSuccess = mb_strtolower((string) $result['IsSuccess']) === 'true';
 
-            if (! $isSuccess) {
-                throw new Exception('Failed to resubmit domain transfer');
-            }
+            throw_unless($isSuccess, Exception::class, 'Failed to resubmit domain transfer');
 
             return [
                 'success' => true,
@@ -703,10 +665,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => 'Domain transfer resubmitted successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to resubmit transfer: '.$e->getMessage(),
+                'message' => 'Failed to resubmit transfer: '.$exception->getMessage(),
             ];
         }
     }
@@ -729,9 +691,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'UserGetPricingResult') || $xml->CommandResponse->UserGetPricingResult === null) {
-                throw new Exception('Invalid API response: Missing UserGetPricingResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'UserGetPricingResult') || $xml->CommandResponse->UserGetPricingResult === null, Exception::class, 'Invalid API response: Missing UserGetPricingResult');
 
             $result = $xml->CommandResponse->UserGetPricingResult;
             $tlds = [];
@@ -764,10 +724,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'tlds' => $tlds,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to get TLD list: '.$e->getMessage(),
+                'message' => 'Failed to get TLD list: '.$exception->getMessage(),
             ];
         }
     }
@@ -787,40 +747,36 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
         ];
 
         foreach ($roleMapping as $apiRole => $contactKey) {
-            if (! isset($contactInfo[$contactKey])) {
-                throw new Exception("Missing contact information for: $contactKey");
-            }
+            throw_unless(isset($contactInfo[$contactKey]), Exception::class, 'Missing contact information for: '.$contactKey);
 
             $contact = $contactInfo[$contactKey];
 
             // Ensure all required fields are present and not empty
-            $params["{$apiRole}FirstName"] = mb_trim($contact['first_name'] ?? '');
-            $params["{$apiRole}LastName"] = mb_trim($contact['last_name'] ?? '');
-            $params["{$apiRole}Address1"] = mb_trim($contact['address_one'] ?? '');
-            $params["{$apiRole}City"] = mb_trim($contact['city'] ?? '');
-            $params["{$apiRole}StateProvince"] = mb_trim($contact['state_province'] ?? '');
-            $params["{$apiRole}PostalCode"] = mb_trim($contact['postal_code'] ?? '');
-            $params["{$apiRole}Country"] = mb_strtoupper(mb_trim($contact['country_code'] ?? ''));
-            $params["{$apiRole}Phone"] = $this->formatPhoneNumber($contact['phone'] ?? '', $contact['country_code'] ?? '');
-            $params["{$apiRole}EmailAddress"] = mb_trim($contact['email'] ?? '');
-            $params["{$apiRole}OrganizationName"] = mb_trim($contact['organization'] ?? '');
+            $params[$apiRole.'FirstName'] = mb_trim($contact['first_name'] ?? '');
+            $params[$apiRole.'LastName'] = mb_trim($contact['last_name'] ?? '');
+            $params[$apiRole.'Address1'] = mb_trim($contact['address_one'] ?? '');
+            $params[$apiRole.'City'] = mb_trim($contact['city'] ?? '');
+            $params[$apiRole.'StateProvince'] = mb_trim($contact['state_province'] ?? '');
+            $params[$apiRole.'PostalCode'] = mb_trim($contact['postal_code'] ?? '');
+            $params[$apiRole.'Country'] = mb_strtoupper(mb_trim($contact['country_code'] ?? ''));
+            $params[$apiRole.'Phone'] = $this->formatPhoneNumber($contact['phone'] ?? '', $contact['country_code'] ?? '');
+            $params[$apiRole.'EmailAddress'] = mb_trim($contact['email'] ?? '');
+            $params[$apiRole.'OrganizationName'] = mb_trim($contact['organization'] ?? '');
 
             // Add optional address line 2 if provided
             if (! empty($contact['address_two'])) {
-                $params["{$apiRole}Address2"] = mb_trim($contact['address_two']);
+                $params[$apiRole.'Address2'] = mb_trim($contact['address_two']);
             }
 
             // Validate that none of the required fields are empty after trimming
             $requiredParams = [
-                "{$apiRole}FirstName", "{$apiRole}LastName", "{$apiRole}Address1",
-                "{$apiRole}City", "{$apiRole}StateProvince", "{$apiRole}PostalCode",
-                "{$apiRole}Country", "{$apiRole}Phone", "{$apiRole}EmailAddress",
+                $apiRole.'FirstName', $apiRole.'LastName', $apiRole.'Address1',
+                $apiRole.'City', $apiRole.'StateProvince', $apiRole.'PostalCode',
+                $apiRole.'Country', $apiRole.'Phone', $apiRole.'EmailAddress',
             ];
 
             foreach ($requiredParams as $param) {
-                if (empty($params[$param])) {
-                    throw new Exception("Empty required parameter: $param for contact role: $contactKey");
-                }
+                throw_if(empty($params[$param]), Exception::class, sprintf('Empty required parameter: %s for contact role: %s', $param, $contactKey));
             }
         }
 
@@ -846,7 +802,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
         try {
             $availability = $this->checkAvailability([$domain]);
 
-            if (! empty($availability) && isset($availability[$domain])) {
+            if (isset($availability[$domain])) {
                 $domainInfo = (array) $availability[$domain];
 
                 // If it's a premium domain, return the premium price
@@ -860,10 +816,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                     ];
                 }
             }
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::warning('Failed to check premium pricing for domain', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
 
@@ -901,9 +857,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             }
 
             // Get availability for suggested domains
-            $suggestedDomains = array_map(function (string $tld) use ($domain): string {
-                return $domain.'.'.$tld;
-            }, array_slice($tlds, 0, 10));
+            $suggestedDomains = array_map(fn (string $tld): string => $domain.'.'.$tld, array_slice($tlds, 0, 10));
 
             return $this->checkAvailability($suggestedDomains);
 
@@ -919,9 +873,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
      */
     public function createContact(array $contactData): Contact
     {
-        if (empty($contactData['email'])) {
-            throw new Exception('Email is required for contact creation');
-        }
+        throw_if(empty($contactData['email']), Exception::class, 'Email is required for contact creation');
 
         // Format phone number before saving
         $contactData['phone'] = $this->formatPhoneNumber($contactData['phone'] ?? '', $contactData['country_code'] ?? '');
@@ -951,7 +903,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             'user_id' => $contactData['user_id'] ?? auth()->id(),
         ];
 
-        return Contact::create($dbData);
+        return Contact::query()->create($dbData);
     }
 
     /**
@@ -993,10 +945,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => 'Nameservers updated successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to update nameservers: '.$e->getMessage(),
+                'message' => 'Failed to update nameservers: '.$exception->getMessage(),
             ];
         }
     }
@@ -1032,10 +984,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'nameservers' => $nameservers,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to get nameservers: '.$e->getMessage(),
+                'message' => 'Failed to get nameservers: '.$exception->getMessage(),
             ];
         }
     }
@@ -1057,9 +1009,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainGetInfoResult') || $xml->CommandResponse->DomainGetInfoResult === null) {
-                throw new Exception('Invalid API response: Missing DomainGetInfoResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainGetInfoResult') || $xml->CommandResponse->DomainGetInfoResult === null, Exception::class, 'Invalid API response: Missing DomainGetInfoResult');
 
             $domainInfo = $xml->CommandResponse->DomainGetInfoResult;
             $dnsDetails = $domainInfo->DnsDetails;
@@ -1090,15 +1040,15 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'nameservers' => $nameservers,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Namecheap Domain Info API Error:', [
                 'domain' => $domain,
-                'message' => $e->getMessage(),
+                'message' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $exception->getMessage(),
             ];
         }
     }
@@ -1121,9 +1071,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainRenewResult') || $xml->CommandResponse->DomainRenewResult === null) {
-                throw new Exception('Invalid API response: Missing DomainRenewResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainRenewResult') || $xml->CommandResponse->DomainRenewResult === null, Exception::class, 'Invalid API response: Missing DomainRenewResult');
 
             $renewalResult = $xml->CommandResponse->DomainRenewResult;
 
@@ -1134,10 +1082,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => 'Domain renewed successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to renew domain: '.$e->getMessage(),
+                'message' => 'Failed to renew domain: '.$exception->getMessage(),
             ];
         }
     }
@@ -1169,10 +1117,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => 'Domain transfer initiated successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to initiate domain transfer: '.$e->getMessage(),
+                'message' => 'Failed to initiate domain transfer: '.$exception->getMessage(),
             ];
         }
     }
@@ -1224,10 +1172,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'page_size' => $pageSize,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to get domain list: '.$e->getMessage(),
+                'message' => 'Failed to get domain list: '.$exception->getMessage(),
             ];
         }
     }
@@ -1250,16 +1198,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainSetAutoRenewResult') || $xml->CommandResponse->DomainSetAutoRenewResult === null) {
-                throw new Exception('Invalid API response: Missing DomainSetAutoRenewResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainSetAutoRenewResult') || $xml->CommandResponse->DomainSetAutoRenewResult === null, Exception::class, 'Invalid API response: Missing DomainSetAutoRenewResult');
 
             $result = $xml->CommandResponse->DomainSetAutoRenewResult;
             $isSuccess = mb_strtolower((string) $result['IsSuccess']) === 'true';
 
-            if (! $isSuccess) {
-                throw new Exception('Failed to update auto-renewal status');
-            }
+            throw_unless($isSuccess, Exception::class, 'Failed to update auto-renewal status');
 
             return [
                 'success' => true,
@@ -1268,10 +1212,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => $autoRenew ? 'Auto-renewal enabled' : 'Auto-renewal disabled',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to set auto-renewal: '.$e->getMessage(),
+                'message' => 'Failed to set auto-renewal: '.$exception->getMessage(),
             ];
         }
     }
@@ -1292,9 +1236,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'UserGetBalancesResult') || $xml->CommandResponse->UserGetBalancesResult === null) {
-                throw new Exception('Invalid API response: Missing UserGetBalancesResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'UserGetBalancesResult') || $xml->CommandResponse->UserGetBalancesResult === null, Exception::class, 'Invalid API response: Missing UserGetBalancesResult');
 
             $result = $xml->CommandResponse->UserGetBalancesResult;
 
@@ -1305,10 +1247,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'currency' => 'USD',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to get user balance: '.$e->getMessage(),
+                'message' => 'Failed to get user balance: '.$exception->getMessage(),
             ];
         }
     }
@@ -1355,10 +1297,10 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'expiry_date' => $domainInfo['expiry_date'],
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             return [
                 'success' => false,
-                'message' => 'Failed to validate domain for transfer: '.$e->getMessage(),
+                'message' => 'Failed to validate domain for transfer: '.$exception->getMessage(),
             ];
         }
     }
@@ -1380,16 +1322,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
             $xml = $this->makeApiCall($params);
 
-            if (! property_exists($xml->CommandResponse, 'DomainReactivateResult') || $xml->CommandResponse->DomainReactivateResult === null) {
-                throw new Exception('Invalid API response: Missing DomainReactivateResult');
-            }
+            throw_if(! property_exists($xml->CommandResponse, 'DomainReactivateResult') || $xml->CommandResponse->DomainReactivateResult === null, Exception::class, 'Invalid API response: Missing DomainReactivateResult');
 
             $result = $xml->CommandResponse->DomainReactivateResult;
             $isSuccess = mb_strtolower((string) $result['IsSuccess']) === 'true';
 
-            if (! $isSuccess) {
-                throw new Exception('Failed to reactivate domain');
-            }
+            throw_unless($isSuccess, Exception::class, 'Failed to reactivate domain');
 
             return [
                 'success' => true,
@@ -1400,15 +1338,15 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
                 'message' => 'Domain reactivated successfully',
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Namecheap domain reactivation failed', [
                 'domain' => $domain,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to reactivate domain: '.$e->getMessage(),
+                'message' => 'Failed to reactivate domain: '.$exception->getMessage(),
             ];
         }
     }
@@ -1422,9 +1360,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
     {
         $domainInfo = $this->getDomainInfo($domain);
 
-        if (! $domainInfo['success']) {
-            throw new Exception('Failed to get domain information');
-        }
+        throw_unless($domainInfo['success'], Exception::class, 'Failed to get domain information');
 
         // This would need to be extracted from domain info
         // For now, return a placeholder - you'd need to modify getDomainInfo to include WhoisGuard ID
@@ -1442,25 +1378,21 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
         $requiredFields = ['first_name', 'last_name', 'address_one', 'city', 'state_province', 'postal_code', 'country_code', 'phone', 'email'];
 
         foreach ($requiredRoles as $role) {
-            if (! isset($contactInfo[$role])) {
-                throw new Exception("Missing contact information for role: $role");
-            }
+            throw_unless(isset($contactInfo[$role]), Exception::class, 'Missing contact information for role: '.$role);
 
             $contact = $contactInfo[$role];
             foreach ($requiredFields as $field) {
-                if (empty($contact[$field])) {
-                    throw new Exception("Missing required field '$field' for $role contact");
-                }
+                throw_if(empty($contact[$field]), Exception::class, sprintf("Missing required field '%s' for %s contact", $field, $role));
             }
 
             // Validate email format
             if (! filter_var($contact['email'], FILTER_VALIDATE_EMAIL)) {
-                throw new Exception("Invalid email format for $role contact: ".$contact['email']);
+                throw new Exception(sprintf('Invalid email format for %s contact: ', $role).$contact['email']);
             }
 
             // Validate country code
-            if (mb_strlen($contact['country_code']) !== 2) {
-                throw new Exception("Invalid country code for $role contact. Must be 2-letter ISO code: ".$contact['country_code']);
+            if (mb_strlen((string) $contact['country_code']) !== 2) {
+                throw new Exception(sprintf('Invalid country code for %s contact. Must be 2-letter ISO code: ', $role).$contact['country_code']);
             }
         }
     }
@@ -1477,12 +1409,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
         try {
             $response = Http::timeout(60)->get($url);
-        } catch (ConnectionException $e) {
+        } catch (ConnectionException $connectionException) {
             Log::error('Namecheap API connection failed', [
-                'error' => $e->getMessage(),
+                'error' => $connectionException->getMessage(),
                 'url' => $this->apiBaseUrl,
             ]);
-            throw new Exception('Failed to connect to Namecheap API: '.$e->getMessage(), $e->getCode(), $e);
+            throw new Exception('Failed to connect to Namecheap API: '.$connectionException->getMessage(), $connectionException->getCode(), $connectionException);
         }
 
         if (! $response->successful()) {
@@ -1494,9 +1426,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
         }
 
         $responseBody = $response->body();
-        if (empty($responseBody)) {
-            throw new Exception('Empty response from Namecheap API');
-        }
+        throw_if(empty($responseBody), Exception::class, 'Empty response from Namecheap API');
 
         // Log the full response for debugging
         Log::info('Namecheap API Response', [
@@ -1505,12 +1435,12 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
 
         try {
             $xml = new SimpleXMLElement($responseBody);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to parse Namecheap API XML response', [
                 'body' => $responseBody,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
-            throw new Exception('Invalid XML response from Namecheap API: '.$e->getMessage(), $e->getCode(), $e);
+            throw new Exception('Invalid XML response from Namecheap API: '.$exception->getMessage(), $exception->getCode(), $exception);
         }
 
         // Check for API-level errors
@@ -1536,6 +1466,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
             if (property_exists($xml, 'Errors') && $xml->Errors !== null) {
                 $errorMsg = (string) $xml->Errors->Error ?? $errorMsg;
             }
+
             throw new Exception($errorMsg);
         }
 
@@ -1549,9 +1480,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
      */
     private function formatPhoneNumber(string $phone, string $countryCode): string
     {
-        if ($phone === '' || $phone === '0') {
-            throw new Exception('Phone number is required');
-        }
+        throw_if($phone === '' || $phone === '0', Exception::class, 'Phone number is required');
 
         // Remove any non-digit characters except the leading +
         $phone = preg_replace('/[^0-9+]/', '', $phone);
@@ -1583,9 +1512,7 @@ final class NamecheapDomainService implements DomainRegistrationServiceInterface
         // Remove any remaining leading zeros
         $phone = mb_ltrim($phone, '0');
 
-        if ($phone === '' || $phone === '0') {
-            throw new Exception('Invalid phone number format');
-        }
+        throw_if($phone === '' || $phone === '0', Exception::class, 'Invalid phone number format');
 
         // Format according to Namecheap requirements: +NNN.NNNNNNNNNN
         return '+'.$callingCode.'.'.$phone;

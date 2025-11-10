@@ -33,7 +33,7 @@ final class RegisteredUserController extends Controller
      */
     public function store(RegisterUserRequest $request): RedirectResponse
     {
-        $user = User::create([
+        $user = User::query()->create([
             'uuid' => (string) Str::uuid(),
             'client_code' => User::generateCustomerNumber(),
             'first_name' => $request->first_name,
@@ -48,6 +48,6 @@ final class RegisteredUserController extends Controller
         // Log the user in to match typical verification flow
         Auth::login($user);
 
-        return redirect()->route('verification.notice')->with('success', 'An activation email has been sent to your email address.');
+        return to_route('verification.notice')->with('success', 'An activation email has been sent to your email address.');
     }
 }

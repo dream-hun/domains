@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Services\BillingService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
+use App\Services\TransactionLogger;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -26,7 +27,8 @@ final class PaymentController extends Controller
     public function __construct(
         private readonly BillingService $billingService,
         private readonly OrderService $orderService,
-        private readonly PaymentService $paymentService
+        private readonly PaymentService $paymentService,
+        private readonly TransactionLogger $transactionLogger
     ) {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
     }
@@ -39,7 +41,7 @@ final class PaymentController extends Controller
         $checkoutData = session('checkout', []);
 
         if (empty($checkoutData['cart_items'])) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+            return to_route('cart.index')->with('error', 'Your cart is empty.');
         }
 
         $cartItems = $checkoutData['cart_items'];
@@ -62,7 +64,7 @@ final class PaymentController extends Controller
         $cartItems = Cart::getContent();
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+            return to_route('cart.index')->with('error', 'Your cart is empty.');
         }
 
         $user = Auth::user();
@@ -84,7 +86,7 @@ final class PaymentController extends Controller
             if (! $paymentResult['success']) {
                 DB::rollBack();
 
-                return redirect()->back()->with('error', $paymentResult['error'] ?? 'Payment processing failed. Please try again.');
+                return back()->with('error', $paymentResult['error'] ?? 'Payment processing failed. Please try again.');
             }
 
             DB::commit();
@@ -95,12 +97,12 @@ final class PaymentController extends Controller
             DB::rollBack();
             Log::error('Stripe payment error: '.$e->getMessage());
 
-            return redirect()->back()->with('error', 'Payment processing failed. Please try again.');
+            return back()->with('error', 'Payment processing failed. Please try again.');
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Payment processing error: '.$e->getMessage());
 
-            return redirect()->back()->with('error', 'An error occurred while processing your payment.');
+            return back()->with('error', 'An error occurred while processing your payment.');
         }
     }
 
@@ -112,15 +114,39 @@ final class PaymentController extends Controller
         $sessionId = $request->query('session_id');
 
         if (! $sessionId) {
-            return redirect()->route('payment.failed', $order)->with('error', 'Invalid payment session.');
+            return to_route('payment.failed', $order)->with('error', 'Invalid payment session.');
         }
+
+        /** @var Session|null $session */
+        $session = null;
 
         try {
             $session = Session::retrieve($sessionId);
 
             if ($session->payment_status === 'paid') {
+                $paymentAttempt = $order->payments()
+                    ->where(function ($query) use ($sessionId, $session): void {
+                        $query->where('stripe_session_id', $sessionId);
+
+                        if (! empty($session->payment_intent)) {
+                            $query->orWhere('stripe_payment_intent_id', $session->payment_intent);
+                        }
+                    })
+                    ->orderByDesc('attempt_number')
+                    ->orderByDesc('id')
+                    ->first();
+
+                if (! $paymentAttempt) {
+                    Log::warning('Stripe session completed without matching payment attempt', [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'session_id' => $sessionId,
+                        'payment_intent' => $session->payment_intent,
+                    ]);
+                }
+
                 // Transaction 1: Update payment status (commit payment)
-                DB::transaction(function () use ($order, $session, $sessionId) {
+                DB::transaction(function () use ($order, $session, $sessionId, $paymentAttempt): void {
                     $order->update([
                         'payment_status' => 'paid',
                         'status' => 'processing',
@@ -128,6 +154,18 @@ final class PaymentController extends Controller
                         'stripe_session_id' => $sessionId,
                         'processed_at' => now(),
                     ]);
+
+                    if ($paymentAttempt && ! $paymentAttempt->isSuccessful()) {
+                        $paymentAttempt->update([
+                            'status' => 'succeeded',
+                            'stripe_payment_intent_id' => $session->payment_intent,
+                            'paid_at' => now(),
+                            'metadata' => array_merge($paymentAttempt->metadata ?? [], [
+                                'stripe_payment_status' => $session->payment_status,
+                            ]),
+                            'last_attempted_at' => now(),
+                        ]);
+                    }
                 });
 
                 // Payment is now committed - process domain registrations outside transaction
@@ -155,18 +193,30 @@ final class PaymentController extends Controller
                     // Refresh order to get updated status
                     $order->refresh();
 
+                    if (isset($paymentAttempt)) {
+                        $paymentAttempt->refresh();
+                    }
+
+                    $this->transactionLogger->logSuccess(
+                        order: $order,
+                        method: 'stripe',
+                        transactionId: (string) $session->payment_intent,
+                        amount: (float) ($paymentAttempt?->amount ?? $order->total_amount),
+                        payment: $paymentAttempt
+                    );
+
                     // Prepare success message based on order status
                     if ($order->isCompleted()) {
                         $message = 'Payment successful! Your domain has been registered.';
                     } elseif ($order->isPartiallyCompleted()) {
-                        $message = 'Payment successful! Some domains were registered successfully. We\'re retrying others automatically.';
+                        $message = "Payment successful! Some domains were registered successfully. We're retrying others automatically.";
                     } elseif ($order->requiresAttention()) {
-                        $message = 'Payment successful! We\'re processing your domain registration and will notify you once complete.';
+                        $message = "Payment successful! We're processing your domain registration and will notify you once complete.";
                     } else {
                         $message = 'Payment successful! Your order is being processed.';
                     }
 
-                    return redirect()->route('payment.success.show', $order)
+                    return to_route('payment.success.show', $order)
                         ->with('success', $message);
 
                 } catch (Exception $e) {
@@ -178,15 +228,23 @@ final class PaymentController extends Controller
                     ]);
 
                     // Still show success page since payment succeeded
-                    return redirect()->route('payment.success.show', $order)
-                        ->with('success', 'Payment successful! We\'re processing your domain registration and will notify you once complete.');
+                    return to_route('payment.success.show', $order)
+                        ->with('success', "Payment successful! We're processing your domain registration and will notify you once complete.");
                 }
             }
-        } catch (ApiErrorException $e) {
-            Log::error('Stripe session retrieval error: '.$e->getMessage());
+        } catch (ApiErrorException $apiErrorException) {
+            Log::error('Stripe session retrieval error: '.$apiErrorException->getMessage());
         }
 
-        return redirect()->route('payment.failed', $order)->with('error', 'Payment verification failed.');
+        if ($session?->payment_status !== 'paid') {
+            $this->markPaymentAttemptFailed(
+                $order,
+                $sessionId,
+                $session?->last_payment_error->message ?? 'Payment verification failed.'
+            );
+        }
+
+        return to_route('payment.failed', $order)->with('error', 'Payment verification failed.');
     }
 
     /**
@@ -207,7 +265,23 @@ final class PaymentController extends Controller
             'status' => 'cancelled',
         ]);
 
-        return redirect()->route('cart.index')->with('error', 'Payment was cancelled.');
+        $pendingPayment = $order->payments()
+            ->where('status', 'pending')
+            ->orderByDesc('attempt_number')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($pendingPayment) {
+            $pendingPayment->update([
+                'status' => 'cancelled',
+                'failure_details' => array_merge($pendingPayment->failure_details ?? [], [
+                    'message' => 'Payment cancelled by user',
+                ]),
+                'last_attempted_at' => now(),
+            ]);
+        }
+
+        return to_route('cart.index')->with('error', 'Payment was cancelled.');
     }
 
     /**
@@ -216,5 +290,38 @@ final class PaymentController extends Controller
     public function showPaymentFailed(Order $order): View
     {
         return view('payment.failed', ['order' => $order]);
+    }
+
+    private function markPaymentAttemptFailed(Order $order, string $sessionId, ?string $message = null): void
+    {
+        if ($sessionId === '') {
+            return;
+        }
+
+        $paymentAttempt = $order->payments()
+            ->where('stripe_session_id', $sessionId)
+            ->orderByDesc('attempt_number')
+            ->orderByDesc('id')
+            ->first();
+
+        if (! $paymentAttempt) {
+            return;
+        }
+
+        if ($paymentAttempt->isSuccessful() || $paymentAttempt->status === 'failed') {
+            return;
+        }
+
+        $failureDetails = $paymentAttempt->failure_details ?? [];
+
+        if ($message) {
+            $failureDetails['message'] = $message;
+        }
+
+        $paymentAttempt->update([
+            'status' => 'failed',
+            'failure_details' => $failureDetails,
+            'last_attempted_at' => now(),
+        ]);
     }
 }

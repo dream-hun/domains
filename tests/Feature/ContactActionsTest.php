@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Actions\CreateContactAction;
 use App\Actions\CreateDomainContactAction;
+use App\Actions\CreateDualProviderContactAction;
 use App\Actions\UpdateContactAction;
 use App\Models\Contact;
 use App\Models\Country;
@@ -128,7 +129,7 @@ final class ContactActionsTest extends TestCase
 
         // Create the action with mocked services
         $action = new CreateContactAction(
-            new \App\Actions\CreateDualProviderContactAction($eppService, $namecheapService)
+            new CreateDualProviderContactAction($eppService, $namecheapService)
         );
 
         $contactData = [
@@ -228,7 +229,7 @@ final class ContactActionsTest extends TestCase
 
         // Create the action with mocked services
         $action = new CreateContactAction(
-            new \App\Actions\CreateDualProviderContactAction($eppService, $namecheapService)
+            new CreateDualProviderContactAction($eppService, $namecheapService)
         );
 
         $contactData = [

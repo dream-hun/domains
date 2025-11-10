@@ -8,6 +8,7 @@ use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 final class DomainCartButton extends Component
@@ -43,7 +44,8 @@ final class DomainCartButton extends Component
         }
     }
 
-    public function getIsInCartProperty(): bool
+    #[Computed]
+    public function isInCart(): bool
     {
         return Cart::get($this->domain) !== null;
     }
@@ -54,7 +56,7 @@ final class DomainCartButton extends Component
             // Get numeric price in the selected currency
             $numericPrice = $this->domainPrice
                 ? $this->domainPrice->getPriceInCurrency('register_price', $this->currency)
-                : (float) preg_replace('/[^\d.]/', '', $this->price);
+                : (float) preg_replace('/[^\d.]/', '', (string) $this->price);
 
             Cart::add([
                 'id' => $this->domain,

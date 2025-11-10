@@ -68,7 +68,6 @@ final class DomainSearchTest extends TestCase
 
         $reflection = new ReflectionClass($helper);
         $method = $reflection->getMethod('sanitizeDomain');
-        $method->setAccessible(true);
 
         $this->assertEquals('example', $method->invoke($helper, 'example'));
         $this->assertEquals('example', $method->invoke($helper, ' example '));
@@ -152,7 +151,7 @@ final class DomainSearchTest extends TestCase
             // Verify that suggestions contain international TLDs
             if ($result['suggestions'] !== []) {
                 $suggestionDomains = array_column($result['suggestions'], 'domain');
-                $hasInternationalTlds = collect($suggestionDomains)->contains(fn ($domain): bool => str_ends_with($domain, '.net') || str_ends_with($domain, '.org')
+                $hasInternationalTlds = collect($suggestionDomains)->contains(fn ($domain): bool => str_ends_with((string) $domain, '.net') || str_ends_with((string) $domain, '.org')
                 );
                 $this->assertTrue($hasInternationalTlds, 'Should contain international TLD suggestions');
             }
@@ -217,7 +216,6 @@ final class DomainSearchTest extends TestCase
 
         $reflection = new ReflectionClass($helper);
         $method = $reflection->getMethod('detectDomainType');
-        $method->setAccessible(true);
 
         $this->assertEquals(DomainType::Local, $method->invoke($helper, 'example.rw'));
         $this->assertEquals(DomainType::International, $method->invoke($helper, 'example.com'));
@@ -277,7 +275,6 @@ final class DomainSearchTest extends TestCase
 
         // Test findDomainPriceInfo method
         $findPriceMethod = $reflection->getMethod('findDomainPriceInfo');
-        $findPriceMethod->setAccessible(true);
 
         $priceInfo = $findPriceMethod->invoke($helper, 'com');
         $this->assertNotNull($priceInfo, 'Should find price info for .com');
@@ -289,7 +286,6 @@ final class DomainSearchTest extends TestCase
 
         // Test detectDomainType method
         $detectTypeMethod = $reflection->getMethod('detectDomainType');
-        $detectTypeMethod->setAccessible(true);
 
         $this->assertEquals(DomainType::International, $detectTypeMethod->invoke($helper, 'test.com'));
         $this->assertEquals(DomainType::International, $detectTypeMethod->invoke($helper, 'example.net'));
@@ -328,7 +324,6 @@ final class DomainSearchTest extends TestCase
         // Test the searchInternationalDomains method directly
         $reflection = new ReflectionClass($helper);
         $searchMethod = $reflection->getMethod('searchInternationalDomains');
-        $searchMethod->setAccessible(true);
 
         // Test with a domain that has a TLD
         $result = $searchMethod->invoke($helper, 'test.com', 'test');
@@ -353,11 +348,11 @@ final class DomainSearchTest extends TestCase
         // Verify suggestions contain international TLDs
         $suggestionDomains = array_keys($suggestions);
         $this->assertTrue(
-            collect($suggestionDomains)->contains(fn ($domain): bool => str_ends_with($domain, '.net')),
+            collect($suggestionDomains)->contains(fn ($domain): bool => str_ends_with((string) $domain, '.net')),
             'Should contain .net suggestions'
         );
         $this->assertTrue(
-            collect($suggestionDomains)->contains(fn ($domain): bool => str_ends_with($domain, '.org')),
+            collect($suggestionDomains)->contains(fn ($domain): bool => str_ends_with((string) $domain, '.org')),
             'Should contain .org suggestions'
         );
     }
@@ -387,7 +382,7 @@ final class DomainSearchTest extends TestCase
         ]);
 
         // Test that we can query international domain prices
-        $internationalTlds = DomainPrice::where('type', DomainType::International)
+        $internationalTlds = DomainPrice::query()->where('type', DomainType::International)
             ->where('status', 'active')
             ->latest()
             ->limit(15)
@@ -421,7 +416,6 @@ final class DomainSearchTest extends TestCase
 
         // Test findDomainPriceInfo method
         $findPriceMethod = $reflection->getMethod('findDomainPriceInfo');
-        $findPriceMethod->setAccessible(true);
 
         $priceInfo = $findPriceMethod->invoke($helper, 'com');
         $this->assertNotNull($priceInfo, 'Should find price info for com');

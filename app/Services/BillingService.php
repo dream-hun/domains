@@ -18,8 +18,6 @@ use Throwable;
 
 final readonly class BillingService
 {
-    public function __construct() {}
-
     /**
      * Create an order from cart items
      *
@@ -45,14 +43,14 @@ final readonly class BillingService
 
             if ($coupon) {
                 $formattedDiscount = CurrencyHelper::formatMoney($coupon['discount_amount'], $currency);
-                $notes = "Coupon applied: {$coupon['code']} ($formattedDiscount discount)";
+                $notes = sprintf('Coupon applied: %s (%s discount)', $coupon['code'], $formattedDiscount);
                 $couponCode = $coupon['code'];
                 $discountType = $coupon['type'];
                 $discountAmount = $coupon['discount_amount'];
             }
 
             // Create the order
-            $order = Order::create([
+            $order = Order::query()->create([
                 'user_id' => $user->id,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => 'pending',
@@ -75,10 +73,10 @@ final readonly class BillingService
             // Create order items from prepared cart data
             foreach ($items as $item) {
                 // Get the exchange rate for the item's currency
-                $itemCurrency = Currency::where('code', $item['currency'])->first();
+                $itemCurrency = Currency::query()->where('code', $item['currency'])->first();
                 $exchangeRate = $itemCurrency?->exchange_rate ?? 1.0;
 
-                OrderItem::create([
+                OrderItem::query()->create([
                     'order_id' => $order->id,
                     'domain_name' => $item['domain_name'],
                     'domain_type' => $item['domain_type'],
@@ -145,9 +143,7 @@ final readonly class BillingService
         Log::info('Preparing cart data from Cart facade for order creation');
         $cartItems = Cart::getContent();
 
-        if ($cartItems->isEmpty()) {
-            throw new Exception('Cart is empty');
-        }
+        throw_if($cartItems->isEmpty(), Exception::class, 'Cart is empty');
 
         // Instantiate CartComponent to use its prepareCartForPayment method
         $cartComponent = new CartComponent;
@@ -163,17 +159,11 @@ final readonly class BillingService
      */
     private function validateCartData(array &$cartData): void
     {
-        if (empty($cartData['items'])) {
-            throw new Exception('Cart data is missing items');
-        }
+        throw_if(empty($cartData['items']), Exception::class, 'Cart data is missing items');
 
-        if (! isset($cartData['subtotal'])) {
-            throw new Exception('Cart data is missing subtotal');
-        }
+        throw_unless(isset($cartData['subtotal']), Exception::class, 'Cart data is missing subtotal');
 
-        if (! isset($cartData['total'])) {
-            throw new Exception('Cart data is missing total');
-        }
+        throw_unless(isset($cartData['total']), Exception::class, 'Cart data is missing total');
 
         if (! isset($cartData['currency'])) {
             Log::warning('Cart data is missing currency, defaulting to USD');

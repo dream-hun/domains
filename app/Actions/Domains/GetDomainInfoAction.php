@@ -31,15 +31,15 @@ final readonly class GetDomainInfoAction
             }
 
             return $result;
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to get domain info from registrar', [
                 'domain' => $domain->name,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to get domain info: '.$e->getMessage(),
+                'message' => 'Failed to get domain info: '.$exception->getMessage(),
             ];
         }
     }

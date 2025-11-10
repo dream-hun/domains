@@ -16,19 +16,6 @@ use Illuminate\Support\Facades\Log;
 final readonly class RenewalService
 {
     /**
-     * Get the appropriate domain service based on the domain's registrar
-     */
-    private function getDomainService(Domain $domain): DomainRegistrationServiceInterface
-    {
-        // Determine which service to use based on domain registrar
-        return match (strtolower($domain->registrar ?? 'epp')) {
-            'namecheap' => app(NamecheapDomainService::class),
-            'epp', 'local' => app(EppDomainService::class),
-            default => app(EppDomainService::class), // Default to EPP
-        };
-    }
-
-    /**
      * Process domain renewals for an order
      *
      * @param  Order  $order  The order containing renewal items
@@ -48,15 +35,15 @@ final readonly class RenewalService
             }
 
             try {
-                $domain = Domain::find($orderItem->domain_id);
+                $domain = Domain::query()->find($orderItem->domain_id);
 
                 if (! $domain) {
-                    throw new Exception("Domain not found: {$orderItem->domain_name}");
+                    throw new Exception('Domain not found: '.$orderItem->domain_name);
                 }
 
                 // Verify ownership
                 if ($domain->owner_id !== $order->user_id) {
-                    throw new Exception("User does not own domain: {$orderItem->domain_name}");
+                    throw new Exception('User does not own domain: '.$orderItem->domain_name);
                 }
 
                 $oldExpiryDate = $domain->expires_at;
@@ -89,7 +76,7 @@ final readonly class RenewalService
                     ]);
 
                     // Create renewal record
-                    DomainRenewal::create([
+                    DomainRenewal::query()->create([
                         'domain_id' => $domain->id,
                         'order_id' => $order->id,
                         'years' => $orderItem->years,
@@ -120,7 +107,7 @@ final readonly class RenewalService
 
             } catch (Exception $e) {
                 // Create failed renewal record
-                DomainRenewal::create([
+                DomainRenewal::query()->create([
                     'domain_id' => $orderItem->domain_id ?? null,
                     'order_id' => $order->id,
                     'years' => $orderItem->years,
@@ -160,7 +147,7 @@ final readonly class RenewalService
         $domainPrice = $domain->domainPrice;
 
         if (! $domainPrice) {
-            throw new Exception("Pricing information not available for domain: {$domain->name}");
+            throw new Exception('Pricing information not available for domain: '.$domain->name);
         }
 
         // Get renewal price (stored in cents)
@@ -214,5 +201,17 @@ final readonly class RenewalService
 
         return ['can_renew' => true];
     }
-}
 
+    /**
+     * Get the appropriate domain service based on the domain's registrar
+     */
+    private function getDomainService(Domain $domain): DomainRegistrationServiceInterface
+    {
+        // Determine which service to use based on domain registrar
+        return match (mb_strtolower($domain->registrar ?? 'epp')) {
+            'namecheap' => app(NamecheapDomainService::class),
+            'epp', 'local' => app(EppDomainService::class),
+            default => app(EppDomainService::class), // Default to EPP
+        };
+    }
+}

@@ -43,14 +43,14 @@ final class DomainRegistrationFailedUserNotification extends Notification
 
         if ($failedCount > 0) {
             $message->line('**Domains Being Processed:** '.$failedDomains);
-            $message->line('Some domains could not be registered immediately due to registrar processing. Don\'t worry - we\'re automatically retrying the registration and will notify you once complete.');
+            $message->line("Some domains could not be registered immediately due to registrar processing. Don't worry - we're automatically retrying the registration and will notify you once complete.");
         }
 
         $message->line('**Order Number:** '.$this->order->order_number)
             ->line('**Order Total:** '.$this->order->currency.' '.number_format($this->order->total_amount, 2))
             ->line('You can check your order status at any time from your dashboard.')
             ->action('View Order', url('/orders/'.$this->order->order_number))
-            ->line('If you have any questions, please don\'t hesitate to contact our support team.');
+            ->line("If you have any questions, please don't hesitate to contact our support team.");
 
         return $message;
     }

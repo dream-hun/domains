@@ -25,11 +25,6 @@ final class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function payment(): BelongsTo
-    {
-        return $this->belongsTo(Payment::class);
-    }
-
     public function domainRenewals(): HasMany
     {
         return $this->hasMany(DomainRenewal::class);
@@ -45,17 +40,35 @@ final class Order extends Model
         return $this->hasMany(FailedDomainRegistration::class);
     }
 
-    public function casts(): array
+    public function payments(): HasMany
     {
-        return [
-            'subtotal' => 'decimal:2',
-            'tax' => 'decimal:2',
-            'total_amount' => 'decimal:2',
-            'discount_amount' => 'decimal:2',
-            'items' => 'array',
-            'billing_address' => 'array',
-            'processed_at' => 'datetime',
-        ];
+        return $this->hasMany(Payment::class);
+    }
+
+    public function latestPaymentAttempt(): ?Payment
+    {
+        return $this->payments()
+            ->orderByDesc('attempt_number')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public function latestSuccessfulPayment(): ?Payment
+    {
+        return $this->payments()
+            ->successful()
+            ->orderByDesc('paid_at')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public function latestFailedPayment(): ?Payment
+    {
+        return $this->payments()
+            ->failed()
+            ->orderByDesc('last_attempted_at')
+            ->orderByDesc('id')
+            ->first();
     }
 
     // Payment Status Methods
@@ -116,5 +129,18 @@ final class Order extends Model
         // If no order items in relationship, return empty collection
         // The items JSON field is just a snapshot and doesn't have the same structure
         return $orderItems;
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'subtotal' => 'decimal:2',
+            'tax' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'items' => 'array',
+            'billing_address' => 'array',
+            'processed_at' => 'datetime',
+        ];
     }
 }

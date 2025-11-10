@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
+ * @extends Factory<Order>
  */
 final class OrderFactory extends Factory
 {
@@ -51,7 +51,7 @@ final class OrderFactory extends Factory
      */
     public function paid(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'payment_status' => 'paid',
             'status' => 'processing',
             'processed_at' => now(),
@@ -63,7 +63,7 @@ final class OrderFactory extends Factory
      */
     public function pending(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'payment_status' => 'pending',
             'status' => 'pending',
         ]);
@@ -74,7 +74,7 @@ final class OrderFactory extends Factory
      */
     public function failed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'payment_status' => 'failed',
             'status' => 'cancelled',
         ]);

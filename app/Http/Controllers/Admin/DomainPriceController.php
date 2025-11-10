@@ -34,7 +34,7 @@ final class DomainPriceController extends Controller
     {
         $action->handle($request->validated());
 
-        return redirect()->route('admin.prices.index')->with('success', 'Domain price created successfully.');
+        return to_route('admin.prices.index')->with('success', 'Domain price created successfully.');
     }
 
     public function edit(DomainPrice $price): View|Factory
@@ -46,13 +46,13 @@ final class DomainPriceController extends Controller
     {
         $action->handle($price->uuid, $request->validated());
 
-        return redirect()->route('admin.prices.index')->with('success', 'Domain price updated successfully.');
+        return to_route('admin.prices.index')->with('success', 'Domain price updated successfully.');
     }
 
     public function destroy(DomainPrice $price, DeleteDomainPriceAction $action): RedirectResponse
     {
         $action->handle($price->uuid);
 
-        return redirect()->route('admin.prices.index')->with('success', 'Domain price deleted successfully.');
+        return to_route('admin.prices.index')->with('success', 'Domain price deleted successfully.');
     }
 }

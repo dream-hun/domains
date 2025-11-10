@@ -36,7 +36,7 @@ final class CurrencySeeder extends Seeder
 
         ];
 
-        Currency::insert($currencies);
+        Currency::query()->insert($currencies);
 
         $this->command->info('Currencies seeded successfully.');
     }

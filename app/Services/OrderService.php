@@ -23,18 +23,18 @@ final readonly class OrderService
 
     public function createOrder(array $data): Order
     {
-        $currency = Currency::where('code', $data['currency'])->first();
+        $currency = Currency::query()->where('code', $data['currency'])->first();
 
         // Determine order type based on cart items
         $orderType = $this->determineOrderType($data['cart_items']);
 
         // Get billing contact
         $billingContactId = $data['contact_ids']['billing'] ?? null;
-        $contact = $billingContactId ? Contact::find($billingContactId) : null;
+        $contact = $billingContactId ? Contact::query()->find($billingContactId) : null;
 
         // For renewals, use user's email if no contact specified
         if (! $contact && $orderType === 'renewal') {
-            $user = User::find($data['user_id']);
+            $user = User::query()->find($data['user_id']);
             $billingEmail = $user->email;
             $billingName = $user->name;
             $billingAddress = [];
@@ -63,7 +63,7 @@ final readonly class OrderService
         $couponCode = $data['coupon']?->code ?? null;
         $discountType = $data['coupon']?->type->value ?? null;
 
-        $order = Order::create([
+        $order = Order::query()->create([
             'user_id' => $data['user_id'],
             'order_number' => Order::generateOrderNumber(),
             'type' => $orderType,
@@ -80,7 +80,7 @@ final readonly class OrderService
             'billing_email' => $billingEmail,
             'billing_name' => $billingName,
             'billing_address' => $billingAddress,
-            'items' => $data['cart_items']->map(fn ($item) => [
+            'items' => $data['cart_items']->map(fn ($item): array => [
                 'id' => $item->id,
                 'name' => $item->name,
                 'price' => $item->price,
@@ -99,10 +99,10 @@ final readonly class OrderService
             $domainId = $item->attributes->domain_id ?? null;
 
             // Get the exchange rate for the item's currency
-            $itemCurrencyModel = Currency::where('code', $itemCurrency)->first();
+            $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
             $exchangeRate = $itemCurrencyModel?->exchange_rate ?? 1.0;
 
-            OrderItem::create([
+            OrderItem::query()->create([
                 'order_id' => $order->id,
                 'domain_name' => $item->attributes->domain_name ?? $item->name,
                 'domain_type' => $itemType,
@@ -142,36 +142,31 @@ final readonly class OrderService
                 }
             } else {
                 // Process registrations
-                if (! isset($contactIds['registrant'], $contactIds['admin'], $contactIds['tech'], $contactIds['billing'])) {
-                    throw new Exception('All contact IDs (registrant, admin, tech, billing) are required for domain registration.');
-                }
-
+                throw_unless(isset($contactIds['registrant'], $contactIds['admin'], $contactIds['tech'], $contactIds['billing']), Exception::class, 'All contact IDs (registrant, admin, tech, billing) are required for domain registration.');
                 $contacts = [
                     'registrant' => $contactIds['registrant'],
                     'admin' => $contactIds['admin'],
                     'technical' => $contactIds['tech'],
                     'billing' => $contactIds['billing'],
                 ];
-
                 Log::info('Processing registration order', ['order_id' => $order->id]);
-
                 // Use DomainRegistrationService which handles status updates and notifications
                 $this->domainRegistrationService->processDomainRegistrations($order, $contacts);
             }
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Order processing failed', [
                 'order_id' => $order->id,
                 'order_type' => $order->type,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             $order->update([
                 'status' => 'requires_attention',
-                'notes' => 'Payment succeeded but processing failed: '.$e->getMessage(),
+                'notes' => 'Payment succeeded but processing failed: '.$exception->getMessage(),
             ]);
 
-            $this->notificationService->notifyAdminOfCriticalFailure($order, $e);
+            $this->notificationService->notifyAdminOfCriticalFailure($order, $exception);
         }
     }
 
@@ -211,25 +206,5 @@ final readonly class OrderService
 
         // Default to registration (or mixed)
         return 'registration';
-    }
-
-    /**
-     * Get selected contact for domain registration
-     */
-    private function getSelectedContact(User $user, ?int $contactId): ?Contact
-    {
-        if ($contactId) {
-            $contact = $user->contacts()->find($contactId);
-            if ($contact) {
-                return $contact;
-            }
-        }
-
-        $contact = $user->contacts()->where('is_primary', true)->first();
-        if ($contact) {
-            return $contact;
-        }
-
-        return $user->contacts()->first();
     }
 }

@@ -8,15 +8,20 @@ use App\Models\Domain;
 use App\Services\RenewalService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\Log;
 
 final class CartController extends Controller
 {
-    public function __invoke()
+    public function __invoke(): Redirector|RedirectResponse|Factory|View
     {
         if (Cart::isEmpty()) {
-            return redirect()->route('domains');
+            return to_route('domains');
         }
 
         return view('carts.index');
@@ -84,18 +89,18 @@ final class CartController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Domain renewal for {$domain->name} added to cart for {$years} year(s)",
+                'message' => sprintf('Domain renewal for %s added to cart for %s year(s)', $domain->name, $years),
             ]);
 
-        } catch (Exception $e) {
-            \Log::error('Failed to add renewal to cart', [
+        } catch (Exception $exception) {
+            Log::error('Failed to add renewal to cart', [
                 'domain_id' => $domain->id,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to add renewal to cart: '.$e->getMessage(),
+                'message' => 'Failed to add renewal to cart: '.$exception->getMessage(),
             ], 500);
         }
     }

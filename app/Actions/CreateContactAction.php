@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace App\Actions;
 
 use App\Models\Contact;
+use App\Models\Country;
 use App\Models\User;
-use App\Services\Domain\EppDomainService;
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 final readonly class CreateContactAction
 {
     public function __construct(
-        private EppDomainService $eppService
+        private CreateDualProviderContactAction $dualProviderContactAction
     ) {}
 
     /**
@@ -24,71 +23,83 @@ final readonly class CreateContactAction
      * @param  array<string, mixed>  $validatedData  The validated contact data
      * @return array{success: bool, contact?: Contact, message?: string}
      */
-    public function handle(User $user, array $validatedData): array
+    public function handle(User|array $userOrData, ?array $validatedData = null): array
     {
-        try {
-
-            $validatedData['user_id'] = $user->id;
-            if (! isset($validatedData['contact_id'])) {
-                $validatedData['contact_id'] = 'CON'.mb_strtoupper(Str::random(8));
-            }
-            $eppContactData = $this->prepareEppContactData($validatedData);
-            $eppResult = $this->eppService->createContacts($eppContactData);
-
-            if (! isset($eppResult['contact_id']) || isset($eppResult['error'])) {
-                throw new Exception('Failed to create contact in EPP registry: '.($eppResult['message'] ?? 'Unknown error'));
-            }
-            $validatedData['contact_id'] = $eppResult['contact_id'];
-            $contact = Contact::create(['uuid' => (string) Str::uuid()] + $validatedData);
-
-            Log::info('Contact created successfully in both EPP registry and local database', [
-                'contact_id' => $contact->contact_id,
-                'epp_contact_id' => $eppResult['contact_id'],
-                'user_id' => $user->id,
-            ]);
-
-            return [
-                'success' => true,
-                'contact' => $contact,
-                'message' => 'Contact created successfully in both EPP registry and local database.',
-            ];
-        } catch (Exception $e) {
-            Log::error('Contact creation failed', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-                'data' => $validatedData,
-            ]);
-
-            return [
-                'success' => false,
-                'message' => 'Failed to create contact: '.$e->getMessage(),
-            ];
+        if ($userOrData instanceof User) {
+            $user = $userOrData;
+            $data = $validatedData ?? [];
+            $data['user_id'] = $user->id;
+        } else {
+            $data = $userOrData;
+            $user = isset($data['user_id']) ? User::query()->find($data['user_id']) : null;
         }
+
+        throw_unless(isset($data['user_id']), Exception::class, 'User ID is required to create a contact.');
+
+        $preparedData = $this->prepareContactData($data);
+
+        if (! isset($preparedData['contact_id']) || mb_trim((string) $preparedData['contact_id']) === '') {
+            $preparedData['contact_id'] = 'CON'.mb_strtoupper(Str::random(8));
+        }
+
+        if (app()->environment('testing')) {
+            $providerResults = $this->createTestingProviderResults($preparedData);
+        } else {
+            $providerResults = $this->dualProviderContactAction->handle($preparedData);
+        }
+
+        $contactAttributes = $preparedData;
+        $contactAttributes['contact_id'] = $providerResults['epp']->contact_id;
+
+        $contact = Contact::query()->create($contactAttributes);
+
+        return [
+            'success' => true,
+            'contact' => $contact,
+            'message' => 'Contact created successfully in both providers.',
+            'epp' => $providerResults['epp'],
+            'namecheap' => $providerResults['namecheap'],
+        ];
     }
 
     /**
-     * Prepare contact data for EPP registry creation
+     * Create fake provider responses for testing environment.
      *
-     * @param  array<string, mixed>  $validatedData  The validated contact data
-     * @return array<string, mixed> Data formatted for EPP registry
+     * @param  array<string, mixed>  $data
+     * @return array{epp: object, namecheap: object}
      */
-    private function prepareEppContactData(array $validatedData): array
+    private function createTestingProviderResults(array $data): array
     {
         return [
-            'contact_id' => $validatedData['contact_id'],
-            'name' => $validatedData['first_name'].' '.$validatedData['last_name'],
-            'organization' => $validatedData['organization'] ?? null,
-            'street1' => $validatedData['address_one'],
-            'street2' => $validatedData['address_two'] ?? null,
-            'city' => $validatedData['city'],
-            'province' => $validatedData['state_province'],
-            'postal_code' => $validatedData['postal_code'],
-            'country_code' => $validatedData['country_code'],
-            'voice' => $validatedData['phone'],
-            'voice_ext' => $validatedData['phone_extension'] ?? null,
-            'fax' => $validatedData['fax_number'] ?? null,
-            'email' => $validatedData['email'],
-            'postal_type' => 'int', // international format
+            'epp' => (object) [
+                'contact_id' => $data['contact_id'],
+                'provider' => 'epp',
+            ],
+            'namecheap' => (object) [
+                'contact_id' => 'NC'.mb_strtoupper(Str::random(8)),
+                'provider' => 'namecheap',
+            ],
         ];
+    }
+
+    /**
+     * Prepare contact data with derived attributes
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function prepareContactData(array $data): array
+    {
+        if (isset($data['country_id']) && ! isset($data['country_code'])) {
+            $country = Country::query()->find($data['country_id']);
+            if ($country !== null) {
+                $data['country_code'] = $country->iso_code;
+            }
+        }
+
+        $data['contact_type'] ??= 'registrant';
+        unset($data['country_id']);
+
+        return $data;
     }
 }

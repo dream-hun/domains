@@ -43,7 +43,7 @@ final class GeolocationService
         }
 
         // Cache the country code per IP for 1 hour
-        $cacheKey = "user_country_{$ip}";
+        $cacheKey = 'user_country_'.$ip;
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($ip): ?string {
             try {
@@ -62,10 +62,10 @@ final class GeolocationService
                 Log::warning('No country code found for IP', ['ip' => $ip]);
 
                 return null;
-            } catch (Exception $e) {
+            } catch (Exception $exception) {
                 Log::error('Error detecting country', [
                     'ip' => $ip,
-                    'error' => $e->getMessage(),
+                    'error' => $exception->getMessage(),
                 ]);
 
                 return null;
@@ -90,9 +90,7 @@ final class GeolocationService
     {
         // Filter out local/private IPs
         if (
-            $ip === '127.0.0.1' ||
-            $ip === 'localhost' ||
-            $ip === '::1' ||
+            in_array($ip, ['127.0.0.1', 'localhost', '::1'], true) ||
             str_starts_with($ip, '192.168.') ||
             str_starts_with($ip, '10.') ||
             str_starts_with($ip, '172.16.') ||

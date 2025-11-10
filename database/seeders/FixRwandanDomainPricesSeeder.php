@@ -17,7 +17,7 @@ final class FixRwandanDomainPricesSeeder extends Seeder
     {
         // Rwandan domains should be priced in RWF
         // $12 USD ≈ 16,200 RWF (at 1350 RWF per USD)
-        $rwandanDomains = DomainPrice::where('type', 'local')->get();
+        $rwandanDomains = DomainPrice::query()->where('type', 'local')->get();
 
         foreach ($rwandanDomains as $domain) {
             $domain->update([

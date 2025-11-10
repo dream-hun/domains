@@ -25,6 +25,6 @@ final class SettingSeeder extends Seeder
             ],
 
         ];
-        Setting::insert($settings);
+        Setting::query()->insert($settings);
     }
 }

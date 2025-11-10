@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use App\Models\Currency;
 use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 final class NavbarComponent extends Component
@@ -62,7 +62,7 @@ final class NavbarComponent extends Component
                         $this->selectedCurrency
                     );
                     $subtotal += $convertedPrice * $item->quantity;
-                } catch (Exception $e) {
+                } catch (Exception) {
                     $subtotal += $item->price * $item->quantity;
                 }
             } else {
@@ -77,7 +77,8 @@ final class NavbarComponent extends Component
         return $this->formatCurrency($total, $this->selectedCurrency);
     }
 
-    public function getCartItemsCountProperty(): int
+    #[Computed]
+    public function cartItemsCount(): int
     {
         return Cart::getContent()->count();
     }
@@ -105,7 +106,7 @@ final class NavbarComponent extends Component
                     $couponCurrency,
                     $this->selectedCurrency
                 );
-            } catch (Exception $e) {
+            } catch (Exception) {
                 // Fallback to recalculating discount
                 $type = $couponData['type'] ?? 'percentage';
                 $value = $couponData['value'] ?? 0;
@@ -120,7 +121,7 @@ final class NavbarComponent extends Component
                             $couponCurrency,
                             $this->selectedCurrency
                         );
-                    } catch (Exception $e) {
+                    } catch (Exception) {
                         $discountAmount = $value;
                     }
                 }

@@ -37,7 +37,7 @@ final class HandleStripeWebhook implements ShouldQueue
      */
     private function handleCheckoutSessionCompleted(array $session): void
     {
-        $order = Order::where('stripe_session_id', $session['id'])->first();
+        $order = Order::query()->where('stripe_session_id', $session['id'])->first();
 
         if ($order && $order->payment_status === 'pending') {
             $order->update([
@@ -59,7 +59,7 @@ final class HandleStripeWebhook implements ShouldQueue
      */
     private function handlePaymentIntentSucceeded(array $paymentIntent): void
     {
-        $order = Order::where('stripe_payment_intent_id', $paymentIntent['id'])->first();
+        $order = Order::query()->where('stripe_payment_intent_id', $paymentIntent['id'])->first();
 
         if ($order && $order->payment_status === 'pending') {
             $order->update([
@@ -80,7 +80,7 @@ final class HandleStripeWebhook implements ShouldQueue
      */
     private function handlePaymentIntentFailed(array $paymentIntent): void
     {
-        $order = Order::where('stripe_payment_intent_id', $paymentIntent['id'])->first();
+        $order = Order::query()->where('stripe_payment_intent_id', $paymentIntent['id'])->first();
 
         if ($order) {
             $order->update([

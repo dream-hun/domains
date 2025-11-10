@@ -34,8 +34,7 @@ final class FailedDomainRegistrationController extends Controller
         abort_if(Gate::denies('failed_registration_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $query = FailedDomainRegistration::query()
-            ->with(['order', 'orderItem'])
-            ->orderBy('created_at', 'desc');
+            ->with(['order', 'orderItem'])->latest();
 
         // Filter by status if provided
         if ($request->has('status') && $request->status !== '') {
@@ -73,8 +72,7 @@ final class FailedDomainRegistrationController extends Controller
 
         // Check if we can retry
         if (! $failedDomainRegistration->canRetry()) {
-            return redirect()
-                ->back()
+            return back()
                 ->with('error', 'This domain registration cannot be retried. It may have already been resolved or abandoned.');
         }
 
@@ -106,9 +104,8 @@ final class FailedDomainRegistrationController extends Controller
                     'admin_user_id' => auth()->id(),
                 ]);
 
-                return redirect()
-                    ->route('admin.failed-registrations.index')
-                    ->with('success', "Domain {$failedDomainRegistration->domain_name} has been successfully registered!");
+                return to_route('admin.failed-registrations.index')
+                    ->with('success', sprintf('Domain %s has been successfully registered!', $failedDomainRegistration->domain_name));
             }
 
             // Registration failed - increment retry count and update failure reason
@@ -124,27 +121,25 @@ final class FailedDomainRegistrationController extends Controller
                 'admin_user_id' => auth()->id(),
             ]);
 
-            return redirect()
-                ->back()
+            return back()
                 ->with('error', 'Registration failed: '.($result['message'] ?? 'Unknown error'));
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             // Exception during retry
             $failedDomainRegistration->incrementRetryCount();
             $failedDomainRegistration->update([
-                'failure_reason' => $e->getMessage(),
+                'failure_reason' => $exception->getMessage(),
             ]);
 
             Log::error('Exception during manual domain registration retry', [
                 'failed_registration_id' => $failedDomainRegistration->id,
                 'domain' => $failedDomainRegistration->domain_name,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
                 'admin_user_id' => auth()->id(),
             ]);
 
-            return redirect()
-                ->back()
-                ->with('error', 'An error occurred: '.$e->getMessage());
+            return back()
+                ->with('error', 'An error occurred: '.$exception->getMessage());
         }
     }
 
@@ -155,9 +150,9 @@ final class FailedDomainRegistrationController extends Controller
     {
         abort_if(Gate::denies('failed_registration_retry'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $users = User::orderBy('first_name')->get();
-        $countries = Country::orderBy('name')->get();
-        $contacts = Contact::orderBy('first_name')->get();
+        $users = User::query()->orderBy('first_name')->get();
+        $countries = Country::query()->orderBy('name')->get();
+        $contacts = Contact::query()->orderBy('first_name')->get();
 
         return view('admin.failed-registrations.manual-register', [
             'users' => $users,
@@ -210,9 +205,8 @@ final class FailedDomainRegistrationController extends Controller
                     'admin_user_id' => auth()->id(),
                 ]);
 
-                return redirect()
-                    ->route('admin.domains.index')
-                    ->with('success', "Domain {$validated['domain_name']} has been successfully registered!");
+                return to_route('admin.domains.index')
+                    ->with('success', sprintf('Domain %s has been successfully registered!', $validated['domain_name']));
             }
 
             Log::warning('Manual domain registration failed', [
@@ -221,22 +215,20 @@ final class FailedDomainRegistrationController extends Controller
                 'admin_user_id' => auth()->id(),
             ]);
 
-            return redirect()
-                ->back()
+            return back()
                 ->withInput()
                 ->with('error', 'Registration failed: '.($result['message'] ?? 'Unknown error'));
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Exception during manual domain registration', [
                 'domain' => $validated['domain_name'],
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
                 'admin_user_id' => auth()->id(),
             ]);
 
-            return redirect()
-                ->back()
+            return back()
                 ->withInput()
-                ->with('error', 'An error occurred: '.$e->getMessage());
+                ->with('error', 'An error occurred: '.$exception->getMessage());
         }
     }
 }

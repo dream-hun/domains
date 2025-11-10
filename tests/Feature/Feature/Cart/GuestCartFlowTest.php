@@ -8,7 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('allows guest to add items to cart', function () {
+it('allows guest to add items to cart', function (): void {
     $cartService = app(CartService::class);
 
     $pricing = [
@@ -26,7 +26,7 @@ it('allows guest to add items to cart', function () {
         ->and(session()->has('cart.items'))->toBeTrue();
 });
 
-it('persists guest cart in session', function () {
+it('persists guest cart in session', function (): void {
     $cartService = app(CartService::class);
 
     $pricing = [
@@ -44,7 +44,7 @@ it('persists guest cart in session', function () {
         ->and(session('cart.items'))->toHaveCount(2);
 });
 
-it('allows guest to update item quantity', function () {
+it('allows guest to update item quantity', function (): void {
     $cartService = app(CartService::class);
 
     $pricing = [
@@ -63,7 +63,7 @@ it('allows guest to update item quantity', function () {
     expect($updatedItem['years'])->toBe(3);
 });
 
-it('allows guest to remove items from cart', function () {
+it('allows guest to remove items from cart', function (): void {
     $cartService = app(CartService::class);
 
     $pricing = [
@@ -80,7 +80,7 @@ it('allows guest to remove items from cart', function () {
     expect($cartService->getItemCount())->toBe(0);
 });
 
-it('allows guest to apply coupon', function () {
+it('allows guest to apply coupon', function (): void {
     $cartService = app(CartService::class);
 
     $pricing = [
@@ -104,7 +104,7 @@ it('allows guest to apply coupon', function () {
         ->and($cartService->getTotal('USD'))->toBe(80.00);
 });
 
-it('calculates correct totals for guest cart', function () {
+it('calculates correct totals for guest cart', function (): void {
     $cartService = app(CartService::class);
 
     $pricing = [
@@ -125,7 +125,7 @@ it('calculates correct totals for guest cart', function () {
         ->and($total)->toBe(30.00);
 });
 
-it('clears guest cart session', function () {
+it('clears guest cart session', function (): void {
     $cartService = app(CartService::class);
 
     $pricing = [

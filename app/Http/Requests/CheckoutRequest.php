@@ -22,16 +22,16 @@ final class CheckoutRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method' => 'required|string|in:stripe,paypal',
-            'coupon_code' => 'nullable|string|max:50',
-            'discount' => 'nullable|numeric|min:0',
-            'total' => 'required|numeric|min:0',
-            'billing_name' => 'required|string|max:255',
-            'billing_email' => 'required|email|max:255',
-            'billing_address' => 'nullable|string|max:255',
-            'billing_city' => 'nullable|string|max:100',
-            'billing_country' => 'nullable|string|max:100',
-            'billing_postal_code' => 'nullable|string|max:20',
+            'payment_method' => ['required', 'string', 'in:stripe,paypal'],
+            'coupon_code' => ['nullable', 'string', 'max:50'],
+            'discount' => ['nullable', 'numeric', 'min:0'],
+            'total' => ['required', 'numeric', 'min:0'],
+            'billing_name' => ['required', 'string', 'max:255'],
+            'billing_email' => ['required', 'email', 'max:255'],
+            'billing_address' => ['nullable', 'string', 'max:255'],
+            'billing_city' => ['nullable', 'string', 'max:100'],
+            'billing_country' => ['nullable', 'string', 'max:100'],
+            'billing_postal_code' => ['nullable', 'string', 'max:20'],
         ];
     }
 

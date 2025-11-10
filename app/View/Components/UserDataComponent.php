@@ -12,7 +12,7 @@ final class UserDataComponent extends Component
 {
     public function render(): View
     {
-        $totalDomains = Domain::count();
+        $totalDomains = Domain::query()->count();
         $totalSSL = 0;
         $totalHostingPlans = 0;
         $totalVPS = 0;

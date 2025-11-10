@@ -14,8 +14,8 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Create permissions and roles
-    $permission = Permission::create(['title' => 'domain_edit']);
-    $role = Role::create(['title' => 'Admin']);
+    $permission = Permission::query()->create(['title' => 'domain_edit']);
+    $role = Role::query()->create(['title' => 'Admin']);
     $role->permissions()->attach($permission);
 
     $this->user = User::factory()->create();

@@ -6,33 +6,22 @@ namespace App\Http\Controllers;
 
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 final class SmartCheckoutController extends Controller
 {
     /**
      * Route to the appropriate checkout flow based on cart contents
      */
-    public function index(): RedirectResponse
+    public function index(): View|RedirectResponse
     {
         $cartItems = Cart::getContent();
 
         if ($cartItems->isEmpty()) {
-            return redirect()
-                ->route('cart.index')
+            return to_route('dashboard')
                 ->with('error', 'Your cart is empty.');
         }
 
-        
-        $hasOnlyRenewals = $cartItems->every(function ($item) {
-            return ($item->attributes->type ?? 'registration') === 'renewal';
-        });
-
-        
-        if ($hasOnlyRenewals) {
-            return redirect()->route('checkout.renewal');
-        }
-
-        return redirect()->route('checkout.wizard');
+        return view('checkout.index');
     }
 }
-

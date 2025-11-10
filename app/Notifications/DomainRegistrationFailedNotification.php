@@ -26,7 +26,7 @@ final class DomainRegistrationFailedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $failedDomainsDetails = collect($this->results['failed'])
-            ->map(fn ($failed) => $failed['domain'].': '.$failed['message'])
+            ->map(fn ($failed): string => $failed['domain'].': '.$failed['message'])
             ->implode("\n");
 
         $failedDomainsList = collect($this->results['failed'])
@@ -34,7 +34,7 @@ final class DomainRegistrationFailedNotification extends Notification
             ->implode(', ');
 
         $successfulCount = count($this->results['successful']);
-        $failedCount = count($this->results['failed']);
+        count($this->results['failed']);
 
         $message = (new MailMessage)
             ->error()

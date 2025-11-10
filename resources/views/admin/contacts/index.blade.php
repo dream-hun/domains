@@ -52,7 +52,7 @@
                                 </td>
 
                                 <td>
-                                    {{ $contact->getFullNameAttribute() ?? '' }}
+                                    {{ $contact->full_name ?? '' }}
                                     @if ($contact->is_primary)
                                         <span class="badge badge-primary ml-2">Primary</span>
                                     @endif

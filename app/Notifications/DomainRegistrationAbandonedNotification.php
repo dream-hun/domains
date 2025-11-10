@@ -14,15 +14,7 @@ final class DomainRegistrationAbandonedNotification extends Notification
 {
     use Queueable;
 
-    private readonly bool $isForAdmin;
-
-    public function __construct(
-        private readonly Order $order,
-        private readonly FailedDomainRegistration $failedRegistration,
-        bool $isForAdmin = false
-    ) {
-        $this->isForAdmin = $isForAdmin;
-    }
+    public function __construct(private readonly Order $order, private readonly FailedDomainRegistration $failedRegistration, private readonly bool $isForAdmin = false) {}
 
     public function via(object $notifiable): array
     {
@@ -60,7 +52,7 @@ final class DomainRegistrationAbandonedNotification extends Notification
         return (new MailMessage)
             ->subject('Important: Domain Registration Issue - Order '.$this->order->order_number)
             ->greeting('Hello '.$this->order->user->name.',')
-            ->line('We apologize, but we\'ve encountered persistent issues registering your domain.')
+            ->line("We apologize, but we've encountered persistent issues registering your domain.")
             ->line('**Domain:** '.$this->failedRegistration->domain_name)
             ->line('**Order Number:** '.$this->order->order_number)
             ->line('Our support team has been notified and will contact you shortly to resolve this issue. We may need to manually complete the registration or issue a refund.')

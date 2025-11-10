@@ -9,8 +9,8 @@ use App\Models\User;
 
 beforeEach(function (): void {
     // Create roles needed for tests
-    Role::create(['id' => 1, 'title' => 'Admin']);
-    Role::create(['id' => 2, 'title' => 'User']);
+    Role::query()->create(['id' => 1, 'title' => 'Admin']);
+    Role::query()->create(['id' => 2, 'title' => 'User']);
 
     $this->user = User::factory()->create();
     $this->actingAs($this->user);

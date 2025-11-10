@@ -27,7 +27,7 @@ final class SearchDomainTest extends TestCase
     public function test_search_endpoint_returns_correct_structure(): void
     {
         // Create a test domain price
-        DomainPrice::create([
+        DomainPrice::query()->create([
             'uuid' => '123e4567-e89b-12d3-a456-426614174000',
             'tld' => '.com',
             'type' => DomainType::International,
@@ -74,7 +74,7 @@ final class SearchDomainTest extends TestCase
     public function test_search_endpoint_filters_by_type(): void
     {
         // Create test domain prices
-        DomainPrice::create([
+        DomainPrice::query()->create([
             'uuid' => '123e4567-e89b-12d3-a456-426614174000',
             'tld' => '.com',
             'type' => DomainType::International,
@@ -84,7 +84,7 @@ final class SearchDomainTest extends TestCase
             'status' => 'active',
         ]);
 
-        DomainPrice::create([
+        DomainPrice::query()->create([
             'uuid' => '223e4567-e89b-12d3-a456-426614174000',
             'tld' => '.co.ke',
             'type' => DomainType::Local,

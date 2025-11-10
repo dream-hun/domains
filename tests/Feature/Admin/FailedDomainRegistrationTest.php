@@ -15,9 +15,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create base currency (required by admin layout)
-    Currency::create([
+    Currency::query()->create([
         'code' => 'USD',
         'name' => 'US Dollar',
         'symbol' => '$',
@@ -26,14 +26,14 @@ beforeEach(function () {
     ]);
 
     // Create default user role first (required by User model)
-    $defaultRole = Role::create(['id' => 2, 'title' => 'User']);
+    $defaultRole = Role::query()->create(['id' => 2, 'title' => 'User']);
 
     // Create permissions
-    $accessPermission = Permission::create(['title' => 'failed_registration_access']);
-    $retryPermission = Permission::create(['title' => 'failed_registration_retry']);
+    $accessPermission = Permission::query()->create(['title' => 'failed_registration_access']);
+    $retryPermission = Permission::query()->create(['title' => 'failed_registration_retry']);
 
     // Create admin role with permissions
-    $this->adminRole = Role::create(['title' => 'Admin']);
+    $this->adminRole = Role::query()->create(['title' => 'Admin']);
     $this->adminRole->permissions()->attach([$accessPermission->id, $retryPermission->id]);
 
     // Create admin user
@@ -53,7 +53,7 @@ beforeEach(function () {
     $this->order = Order::factory()->create(['user_id' => $this->adminUser->id]);
     $this->orderItem = OrderItem::factory()->create(['order_id' => $this->order->id]);
 
-    $this->failedRegistration = FailedDomainRegistration::create([
+    $this->failedRegistration = FailedDomainRegistration::query()->create([
         'order_id' => $this->order->id,
         'order_item_id' => $this->orderItem->id,
         'domain_name' => 'example.com',
@@ -70,7 +70,7 @@ beforeEach(function () {
     ]);
 });
 
-it('allows admin with permission to view failed registrations index', function () {
+it('allows admin with permission to view failed registrations index', function (): void {
     $response = $this->actingAs($this->adminUser)
         ->get(route('admin.failed-registrations.index'));
 
@@ -80,20 +80,20 @@ it('allows admin with permission to view failed registrations index', function (
     $response->assertSee('example.com');
 });
 
-it('denies access to failed registrations index for user without permission', function () {
+it('denies access to failed registrations index for user without permission', function (): void {
     $response = $this->actingAs($this->regularUser)
         ->get(route('admin.failed-registrations.index'));
 
     $response->assertForbidden();
 });
 
-it('denies access to failed registrations index for guests', function () {
+it('denies access to failed registrations index for guests', function (): void {
     $response = $this->get(route('admin.failed-registrations.index'));
 
     $response->assertRedirect(route('login'));
 });
 
-it('allows admin to view failed registration details', function () {
+it('allows admin to view failed registration details', function (): void {
     $response = $this->actingAs($this->adminUser)
         ->get(route('admin.failed-registrations.show', $this->failedRegistration));
 
@@ -104,7 +104,7 @@ it('allows admin to view failed registration details', function () {
     $response->assertSee('Connection timeout');
 });
 
-it('allows admin to view manual registration form', function () {
+it('allows admin to view manual registration form', function (): void {
     $response = $this->actingAs($this->adminUser)
         ->get(route('admin.failed-registrations.manual-register'));
 
@@ -113,16 +113,16 @@ it('allows admin to view manual registration form', function () {
     $response->assertViewHas(['users', 'countries', 'contacts']);
 });
 
-it('denies access to manual registration form for user without permission', function () {
+it('denies access to manual registration form for user without permission', function (): void {
     $response = $this->actingAs($this->regularUser)
         ->get(route('admin.failed-registrations.manual-register'));
 
     $response->assertForbidden();
 });
 
-it('filters failed registrations by status', function () {
+it('filters failed registrations by status', function (): void {
     // Create another failed registration with different status
-    FailedDomainRegistration::create([
+    FailedDomainRegistration::query()->create([
         'order_id' => $this->order->id,
         'order_item_id' => $this->orderItem->id,
         'domain_name' => 'abandoned.com',
@@ -140,7 +140,7 @@ it('filters failed registrations by status', function () {
     $response->assertSee('abandoned.com');
 });
 
-it('validates required fields for manual registration', function () {
+it('validates required fields for manual registration', function (): void {
     $response = $this->actingAs($this->adminUser)
         ->post(route('admin.failed-registrations.manual-register.store'), []);
 
@@ -155,7 +155,7 @@ it('validates required fields for manual registration', function () {
     ]);
 });
 
-it('validates user_id exists for manual registration', function () {
+it('validates user_id exists for manual registration', function (): void {
     $response = $this->actingAs($this->adminUser)
         ->post(route('admin.failed-registrations.manual-register.store'), [
             'domain_name' => 'test.com',
@@ -170,7 +170,7 @@ it('validates user_id exists for manual registration', function () {
     $response->assertSessionHasErrors(['user_id']);
 });
 
-it('validates contact IDs exist for manual registration', function () {
+it('validates contact IDs exist for manual registration', function (): void {
     $response = $this->actingAs($this->adminUser)
         ->post(route('admin.failed-registrations.manual-register.store'), [
             'domain_name' => 'test.com',
@@ -185,7 +185,7 @@ it('validates contact IDs exist for manual registration', function () {
     $response->assertSessionHasErrors(['registrant_contact_id']);
 });
 
-it('validates years range for manual registration', function () {
+it('validates years range for manual registration', function (): void {
     $response = $this->actingAs($this->adminUser)
         ->post(route('admin.failed-registrations.manual-register.store'), [
             'domain_name' => 'test.com',
@@ -200,7 +200,7 @@ it('validates years range for manual registration', function () {
     $response->assertSessionHasErrors(['years']);
 });
 
-it('prevents retry when registration cannot be retried', function () {
+it('prevents retry when registration cannot be retried', function (): void {
     // Mark registration as resolved
     $this->failedRegistration->update(['status' => 'resolved']);
 
@@ -211,20 +211,20 @@ it('prevents retry when registration cannot be retried', function () {
     $response->assertSessionHas('error');
 });
 
-it('prevents retry for user without permission', function () {
+it('prevents retry for user without permission', function (): void {
     $response = $this->actingAs($this->regularUser)
         ->post(route('admin.failed-registrations.retry', $this->failedRegistration));
 
     $response->assertForbidden();
 });
 
-it('shows failed registrations in paginated list', function () {
+it('shows failed registrations in paginated list', function (): void {
     // Create multiple failed registrations
     for ($i = 1; $i <= 25; $i++) {
-        FailedDomainRegistration::create([
+        FailedDomainRegistration::query()->create([
             'order_id' => $this->order->id,
             'order_item_id' => $this->orderItem->id,
-            'domain_name' => "example{$i}.com",
+            'domain_name' => sprintf('example%d.com', $i),
             'failure_reason' => 'Test failure',
             'retry_count' => 0,
             'max_retries' => 3,
@@ -241,9 +241,9 @@ it('shows failed registrations in paginated list', function () {
     $response->assertViewHas('failedRegistrations');
 });
 
-it('displays correct status badges in index', function () {
+it('displays correct status badges in index', function (): void {
     // Create registrations with different statuses
-    $pending = FailedDomainRegistration::create([
+    $pending = FailedDomainRegistration::query()->create([
         'order_id' => $this->order->id,
         'order_item_id' => $this->orderItem->id,
         'domain_name' => 'pending.com',
@@ -252,7 +252,7 @@ it('displays correct status badges in index', function () {
         'contact_ids' => ['registrant' => $this->contact->id],
     ]);
 
-    $abandoned = FailedDomainRegistration::create([
+    $abandoned = FailedDomainRegistration::query()->create([
         'order_id' => $this->order->id,
         'order_item_id' => $this->orderItem->id,
         'domain_name' => 'abandoned.com',

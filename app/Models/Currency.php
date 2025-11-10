@@ -38,8 +38,22 @@ final class Currency extends Model
      */
     public static function getBaseCurrency(): self
     {
-        return Cache::remember('base_currency', 3600, function () {
-            return self::where('is_base', true)->first() ?? self::where('code', 'USD')->first();
+        return Cache::remember('base_currency', 3600, static function (): self {
+            $baseCurrency = self::query()->where('is_base', true)->first()
+                ?? self::query()->where('code', 'USD')->first();
+
+            if ($baseCurrency instanceof self) {
+                return $baseCurrency;
+            }
+
+            return self::query()->make([
+                'code' => 'USD',
+                'name' => 'US Dollar',
+                'symbol' => '$',
+                'exchange_rate' => 1.0,
+                'is_base' => true,
+                'is_active' => true,
+            ]);
         });
     }
 
@@ -48,9 +62,7 @@ final class Currency extends Model
      */
     public static function getActiveCurrencies(): Collection
     {
-        return Cache::remember('active_currencies', 3600, function () {
-            return self::where('is_active', true)->orderBy('code')->get();
-        });
+        return Cache::remember('active_currencies', 3600, fn () => self::query()->where('is_active', true)->orderBy('code')->get());
     }
 
     /**

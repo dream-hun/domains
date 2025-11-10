@@ -36,9 +36,9 @@ final class LocalDomainServiceTest extends TestCase
 
             // If we get here, the test passes
             $this->assertTrue(true);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             // If we get an exception, the test fails
-            $this->fail('Exception thrown: '.$e->getMessage());
+            $this->fail('Exception thrown: '.$exception->getMessage());
         }
     }
 
@@ -63,7 +63,7 @@ final class LocalDomainServiceTest extends TestCase
             // These calls will fail because we're not setting up the full mock chain
             // But we only care that connectWithRetry is called
             $service->checkAvailability('example.com');
-        } catch (Exception $e) {
+        } catch (Exception) {
             // Expected
         }
 

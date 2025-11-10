@@ -13,7 +13,7 @@ final class UpdateCurrencyAction
     {
         // If setting as base currency, unset all other base currencies
         if (isset($data['is_base']) && $data['is_base'] && ! $currency->is_base) {
-            Currency::where('is_base', true)->where('id', '!=', $currency->id)->update(['is_base' => false]);
+            Currency::query()->where('is_base', true)->where('id', '!=', $currency->id)->update(['is_base' => false]);
         }
 
         $currency->update($data);
@@ -22,7 +22,7 @@ final class UpdateCurrencyAction
         Cache::forget('active_currencies');
         Cache::forget('base_currency');
         Cache::forget('current_rates');
-        Cache::forget("currency_{$currency->code}");
+        Cache::forget('currency_'.$currency->code);
 
         return $currency->fresh();
     }

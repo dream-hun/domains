@@ -22,21 +22,18 @@ final class DomainSuggestionTest extends TestCase
 
         // Test extractBaseName method
         $extractBaseNameMethod = $reflection->getMethod('extractBaseName');
-        $extractBaseNameMethod->setAccessible(true);
 
         $baseName = $extractBaseNameMethod->invoke($service, 'example.com');
         $this->assertEquals('example', $baseName);
 
         // Test extractTld method
         $extractTldMethod = $reflection->getMethod('extractTld');
-        $extractTldMethod->setAccessible(true);
 
         $tld = $extractTldMethod->invoke($service, 'example.com');
         $this->assertEquals('com', $tld);
 
         // Test generateDomainSuggestions method
         $generateSuggestionsMethod = $reflection->getMethod('generateDomainSuggestions');
-        $generateSuggestionsMethod->setAccessible(true);
 
         $suggestions = $generateSuggestionsMethod->invoke($service, 'example');
         $this->assertIsArray($suggestions);
@@ -44,7 +41,6 @@ final class DomainSuggestionTest extends TestCase
 
         // Test getSuggestionType method
         $getSuggestionTypeMethod = $reflection->getMethod('getSuggestionType');
-        $getSuggestionTypeMethod->setAccessible(true);
 
         $suggestionType = $getSuggestionTypeMethod->invoke($service, 'examplehub', 'example');
         $this->assertIsString($suggestionType);
@@ -56,7 +52,6 @@ final class DomainSuggestionTest extends TestCase
         $reflection = new ReflectionClass($service);
 
         $extractBaseNameMethod = $reflection->getMethod('extractBaseName');
-        $extractBaseNameMethod->setAccessible(true);
 
         // Test with subdomain
         $baseName = $extractBaseNameMethod->invoke($service, 'sub.example.co.uk');
@@ -73,7 +68,6 @@ final class DomainSuggestionTest extends TestCase
         $reflection = new ReflectionClass($service);
 
         $extractTldMethod = $reflection->getMethod('extractTld');
-        $extractTldMethod->setAccessible(true);
 
         // Test with multi-level TLD
         $tld = $extractTldMethod->invoke($service, 'example.co.uk');

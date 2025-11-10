@@ -16,11 +16,11 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-final readonly class RegisterDomainAction
+class RegisterDomainAction
 {
-    private DomainRegistrationServiceInterface $eppDomainService;
+    private readonly DomainRegistrationServiceInterface $eppDomainService;
 
-    private DomainRegistrationServiceInterface $namecheapDomainService;
+    private readonly DomainRegistrationServiceInterface $namecheapDomainService;
 
     public function __construct()
     {
@@ -34,10 +34,19 @@ final readonly class RegisterDomainAction
     public function handle(string $domainName, array $contactInfo, int $years, array $nameservers = [], bool $useSingleContact = false, ?int $userId = null): array
     {
         try {
+            if ($userId === null && ! auth()->check()) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot create domain: No user ID provided and no authenticated user found.',
+                    'service' => $this->inferServiceName($domainName),
+                ];
+            }
+
+            $serviceName = null;
             $domainService = $this->getDomainService($domainName);
             $serviceName = $domainService === $this->eppDomainService ? 'EPP' : 'Namecheap';
 
-            Log::info("Starting domain registration with $serviceName service", [
+            Log::info(sprintf('Starting domain registration with %s service', $serviceName), [
                 'domain' => $domainName,
                 'years' => $years,
                 'service' => $serviceName,
@@ -66,7 +75,7 @@ final readonly class RegisterDomainAction
                 // Send notification to the domain owner
                 $domain->owner->notify(new DomainRegisteredNotification($domain, $years));
 
-                Log::info("Domain registered successfully with $serviceName", [
+                Log::info('Domain registered successfully with '.$serviceName, [
                     'domain' => $domainName,
                     'domain_id' => $domain->id,
                     'service' => $serviceName,
@@ -77,13 +86,13 @@ final readonly class RegisterDomainAction
                     'domain' => $domainName,
                     'domain_id' => $domain->id,
                     'service' => $serviceName,
-                    'message' => "Domain $domainName has been successfully registered using $serviceName!",
+                    'message' => sprintf('Domain %s has been successfully registered using %s!', $domainName, $serviceName),
                 ];
             }
 
             $errorMessage = $result['message'] ?? 'Domain registration failed';
             if (str_contains(mb_strtolower($errorMessage), 'not available') || str_contains(mb_strtolower($errorMessage), 'already registered')) {
-                $errorMessage = "The domain $domainName is no longer available. It may have been registered by someone else while you were completing your order.";
+                $errorMessage = sprintf('The domain %s is no longer available. It may have been registered by someone else while you were completing your order.', $domainName);
             }
 
             return [
@@ -92,21 +101,22 @@ final readonly class RegisterDomainAction
                 'service' => $serviceName,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain registration action failed', [
                 'domain' => $domainName,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
-            $errorMessage = $e->getMessage();
+            $errorMessage = $exception->getMessage();
             if (str_contains(mb_strtolower($errorMessage), 'not available') || str_contains(mb_strtolower($errorMessage), 'already registered')) {
-                $errorMessage = "The domain $domainName is no longer available. It may have been registered by someone else while you were completing your order.";
+                $errorMessage = sprintf('The domain %s is no longer available. It may have been registered by someone else while you were completing your order.', $domainName);
             }
 
             return [
                 'success' => false,
                 'message' => 'An error occurred during domain registration: '.$errorMessage,
+                'service' => $serviceName ?? $this->inferServiceName($domainName),
             ];
         }
     }
@@ -122,6 +132,11 @@ final readonly class RegisterDomainAction
         }
 
         return $this->namecheapDomainService;
+    }
+
+    private function inferServiceName(string $domainName): string
+    {
+        return mb_strtolower($this->extractTld($domainName)) === '.rw' ? 'EPP' : 'Namecheap';
     }
 
     /**
@@ -188,15 +203,11 @@ final readonly class RegisterDomainAction
             // Extract contact ID from the contact data
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
-            if (! $contactId) {
-                throw new Exception("Missing contact ID for type: $type");
-            }
+            throw_unless($contactId, Exception::class, 'Missing contact ID for type: '.$type);
 
             // Get the contact from the database
-            $contact = Contact::find($contactId);
-            if (! $contact) {
-                throw new Exception("Contact with ID $contactId not found");
-            }
+            $contact = Contact::query()->find($contactId);
+            throw_unless($contact, Exception::class, sprintf('Contact with ID %s not found', $contactId));
 
             // Check if contact has an EPP contact_id
             if (! $contact->contact_id) {
@@ -242,15 +253,11 @@ final readonly class RegisterDomainAction
             // Extract contact ID from the contact data
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
-            if (! $contactId) {
-                throw new Exception("Missing contact ID for type: $type");
-            }
+            throw_unless($contactId, Exception::class, 'Missing contact ID for type: '.$type);
 
             // Get the contact from the database
-            $contact = Contact::find($contactId);
-            if (! $contact) {
-                throw new Exception("Contact with ID $contactId not found");
-            }
+            $contact = Contact::query()->find($contactId);
+            throw_unless($contact, Exception::class, sprintf('Contact with ID %s not found', $contactId));
 
             // Convert contact model to array format expected by Namecheap
             $preparedContacts[$type] = [
@@ -280,16 +287,14 @@ final readonly class RegisterDomainAction
     {
         // Get the domain price for the TLD
         $tld = $this->extractTld($domainName);
-        $domainPrice = DomainPrice::where('tld', $tld)->firstOrFail();
+        $domainPrice = DomainPrice::query()->where('tld', $tld)->firstOrFail();
 
         // Use provided userId or fall back to authenticated user
         $ownerId = $userId ?? auth()->id();
 
-        if ($ownerId === null) {
-            throw new Exception('Cannot create domain: No user ID provided and no authenticated user found.');
-        }
+        throw_if($ownerId === null, Exception::class, 'Cannot create domain: No user ID provided and no authenticated user found.');
 
-        $domain = Domain::create([
+        $domain = Domain::query()->create([
             'uuid' => (string) Str::uuid(),
             'name' => $domainName,
             'owner_id' => $ownerId,
@@ -309,9 +314,7 @@ final readonly class RegisterDomainAction
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
             // Ensure we have a valid contact ID
-            if (! $contactId) {
-                throw new Exception("Missing contact ID for type: $type");
-            }
+            throw_unless($contactId, Exception::class, 'Missing contact ID for type: '.$type);
 
             $domain->contacts()->attach($contactId, [
                 'type' => $type,
@@ -327,45 +330,49 @@ final readonly class RegisterDomainAction
      */
     private function processNameservers(Domain $domain, array $nameservers): void
     {
-        if ($nameservers === []) {
-            // Use default nameservers from config
-            $defaultNameservers = config('default-nameservers.nameservers', [
+        $hasCustomNameservers = $nameservers !== [];
+        $sourceNameservers = $hasCustomNameservers
+            ? $nameservers
+            : config('default-nameservers.nameservers', [
                 'ns1.example.com',
                 'ns2.example.com',
             ]);
 
-            // Ensure array is numerically indexed
-            $defaultNameservers = array_values($defaultNameservers);
+        $normalized = collect($sourceNameservers)
+            ->map(fn ($nameserver): string => mb_strtolower(mb_trim((string) $nameserver)))
+            ->filter(fn (string $nameserver): bool => $nameserver !== '' && $nameserver !== '0')
+            ->unique()
+            ->values();
 
-            foreach ($defaultNameservers as $index => $nameserver) {
-                Nameserver::create([
+        if ($normalized->isEmpty()) {
+            return;
+        }
+
+        $type = $hasCustomNameservers ? 'custom' : 'default';
+
+        $nameserverIds = $normalized->map(function (string $nameserver, int $index) use ($type): int {
+            $record = Nameserver::query()->firstOrCreate(
+                ['name' => $nameserver],
+                [
                     'uuid' => (string) Str::uuid(),
-                    'domain_id' => $domain->id,
-                    'name' => $nameserver,
-                    'type' => 'default',
+                    'type' => $type,
+                    'priority' => $index + 1,
+                    'status' => 'active',
+                ]
+            );
+
+            if (! $record->wasRecentlyCreated) {
+                $record->update([
+                    'type' => $type,
                     'priority' => $index + 1,
                     'status' => 'active',
                 ]);
             }
 
-            return;
-        }
+            return $record->id;
+        })->all();
 
-        // Process custom nameservers
-        // Ensure array is numerically indexed
-        $nameservers = array_values(array_filter($nameservers, fn ($ns) => ! in_array(mb_trim($ns), ['', '0'], true)));
-
-        foreach ($nameservers as $index => $nameserver) {
-            // Create custom nameserver
-            Nameserver::create([
-                'uuid' => (string) Str::uuid(),
-                'domain_id' => $domain->id,
-                'name' => mb_trim($nameserver),
-                'type' => 'custom',
-                'priority' => $index + 1,
-                'status' => 'active',
-            ]);
-        }
+        $domain->nameservers()->sync($nameserverIds);
     }
 
     /**
@@ -397,7 +404,7 @@ final readonly class RegisterDomainAction
 
         foreach ($requiredFields as $field => $label) {
             if (empty($contact->$field)) {
-                throw new Exception("Contact '$contact->full_name' is missing required field: $label. Please update the contact information before registering the domain.");
+                throw new Exception(sprintf("Contact '%s' is missing required field: %s. Please update the contact information before registering the domain.", $contact->full_name, $label));
             }
         }
 

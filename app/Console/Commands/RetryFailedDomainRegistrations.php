@@ -52,20 +52,18 @@ final class RetryFailedDomainRegistrations extends Command
             return self::SUCCESS;
         }
 
-        $this->info("Found {$failedRegistrations->count()} failed registration(s) to retry.");
+        $this->info(sprintf('Found %d failed registration(s) to retry.', $failedRegistrations->count()));
 
         $this->table(
             ['ID', 'Order', 'Domain', 'Retry Count', 'Status', 'Last Error'],
-            $failedRegistrations->map(function ($registration) {
-                return [
-                    $registration->id,
-                    $registration->order->order_number,
-                    $registration->domain_name,
-                    $registration->retry_count.'/'.$registration->max_retries,
-                    $registration->status,
-                    mb_substr($registration->failure_reason, 0, 50).'...',
-                ];
-            })->toArray()
+            $failedRegistrations->map(fn ($registration): array => [
+                $registration->id,
+                $registration->order->order_number,
+                $registration->domain_name,
+                $registration->retry_count.'/'.$registration->max_retries,
+                $registration->status,
+                mb_substr((string) $registration->failure_reason, 0, 50).'...',
+            ])->all()
         );
 
         if (! $this->confirm('Do you want to dispatch retry jobs for these registrations?', true)) {
@@ -79,21 +77,21 @@ final class RetryFailedDomainRegistrations extends Command
 
         foreach ($failedRegistrations as $failedRegistration) {
             if (! $failedRegistration->canRetry()) {
-                $this->warn("Skipping {$failedRegistration->domain_name} - cannot retry (retry count: {$failedRegistration->retry_count}/{$failedRegistration->max_retries})");
+                $this->warn(sprintf('Skipping %s - cannot retry (retry count: %s/%s)', $failedRegistration->domain_name, $failedRegistration->retry_count, $failedRegistration->max_retries));
                 $skipped++;
 
                 continue;
             }
 
-            RetryDomainRegistrationJob::dispatch($failedRegistration);
+            dispatch(new RetryDomainRegistrationJob($failedRegistration));
             $dispatched++;
-            $this->info("Dispatched retry job for {$failedRegistration->domain_name}");
+            $this->info('Dispatched retry job for '.$failedRegistration->domain_name);
         }
 
         $this->newLine();
         $this->info('Summary:');
-        $this->info("  Dispatched: {$dispatched}");
-        $this->info("  Skipped: {$skipped}");
+        $this->info('  Dispatched: '.$dispatched);
+        $this->info('  Skipped: '.$skipped);
         $this->newLine();
         $this->info('Retry jobs have been dispatched to the queue.');
 

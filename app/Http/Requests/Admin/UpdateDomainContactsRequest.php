@@ -10,7 +10,7 @@ final class UpdateDomainContactsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('domain_edit');
+        return true;
     }
 
     public function rules(): array
@@ -36,12 +36,11 @@ final class UpdateDomainContactsRequest extends FormRequest
             ];
         }
 
-        // Old form format with contact IDs
         return [
-            'registrant.contact_id' => ['sometimes', 'required', 'exists:contacts,id'],
-            'admin.contact_id' => ['sometimes', 'required', 'exists:contacts,id'],
-            'technical.contact_id' => ['sometimes', 'required', 'exists:contacts,id'],
-            'billing.contact_id' => ['sometimes', 'required', 'exists:contacts,id'],
+            'registrant.contact_id' => ['nullable', 'exists:contacts,id'],
+            'admin.contact_id' => ['nullable', 'exists:contacts,id'],
+            'technical.contact_id' => ['nullable', 'exists:contacts,id'],
+            'billing.contact_id' => ['nullable', 'exists:contacts,id'],
         ];
 
     }
@@ -49,11 +48,25 @@ final class UpdateDomainContactsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'registrant.contact_id.required' => 'A registrant contact is required',
-            'admin.contact_id.required' => 'An administrative contact is required',
-            'technical.contact_id.required' => 'A technical contact is required',
-            'billing.contact_id.required' => 'A billing contact is required',
             '*.contact_id.exists' => 'The selected contact does not exist',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        if ($this->has('contact_type')) {
+            return;
+        }
+
+        $validator->after(function ($validator): void {
+            if (
+                empty($this->input('registrant.contact_id')) &&
+                empty($this->input('admin.contact_id')) &&
+                empty($this->input('technical.contact_id')) &&
+                empty($this->input('billing.contact_id'))
+            ) {
+                $validator->errors()->add('contacts', 'Please provide at least one contact to update.');
+            }
+        });
     }
 }

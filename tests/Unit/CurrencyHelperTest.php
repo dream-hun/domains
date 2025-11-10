@@ -8,24 +8,22 @@ use App\Helpers\CurrencyHelper;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 
-uses(\Tests\TestCase::class);
-
-beforeEach(function () {
+beforeEach(function (): void {
     Session::flush();
 });
 
-test('get currency symbol returns correct symbols', function () {
+test('get currency symbol returns correct symbols', function (): void {
     $this->assertEquals('$', CurrencyHelper::getCurrencySymbol('USD'));
     $this->assertEquals('€', CurrencyHelper::getCurrencySymbol('EUR'));
     $this->assertEquals('FRW', CurrencyHelper::getCurrencySymbol('RWF'));
 });
 
-test('convert from usd with same currency', function () {
+test('convert from usd with same currency', function (): void {
     $result = CurrencyHelper::convertFromUSD(100.0, 'USD');
     $this->assertEquals(100.0, $result);
 });
 
-test('format money', function () {
+test('format money', function (): void {
     // Mock the getRateAndSymbol method to be called inside Cache::remember
     Cache::shouldReceive('remember')
         ->zeroOrMoreTimes()
@@ -35,7 +33,7 @@ test('format money', function () {
     $this->assertEquals('$100.50', $formatted);
 });
 
-test('get user currency defaults to usd', function () {
+test('get user currency defaults to usd', function (): void {
     $currency = CurrencyHelper::getUserCurrency();
     $this->assertEquals('USD', $currency);
 });

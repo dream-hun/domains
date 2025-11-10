@@ -8,7 +8,6 @@ use App\Events\ExchangeRatesUpdated;
 use App\Listeners\ClearUserCarts;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
-
 final class EventServiceProvider extends ServiceProvider
 {
     /**

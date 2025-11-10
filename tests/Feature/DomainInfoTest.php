@@ -16,8 +16,8 @@ test('can view domain info with contacts', function (): void {
     $user = User::factory()->create();
 
     // Create and assign necessary permissions
-    $permission = Permission::create(['title' => 'domain_show']);
-    $role = Role::create(['title' => 'Admin']);
+    $permission = Permission::query()->create(['title' => 'domain_show']);
+    $role = Role::query()->create(['title' => 'Admin']);
     $role->permissions()->attach($permission->id);
     $user->roles()->attach($role->id);
 

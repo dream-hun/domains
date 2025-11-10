@@ -19,6 +19,15 @@ final class Domain extends Model
 
     protected $guarded = [];
 
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        $field ??= $this->getRouteKeyName();
+
+        return $this->newQueryWithoutScopes()
+            ->where($field, $value)
+            ->firstOrFail();
+    }
+
     public function contacts(): BelongsToMany
     {
         return $this->belongsToMany(Contact::class, 'domain_contacts', 'domain_id', 'contact_id')->withPivot('type', 'user_id');
@@ -29,9 +38,9 @@ final class Domain extends Model
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    public function nameservers(): HasMany
+    public function nameservers(): BelongsToMany
     {
-        return $this->hasMany(Nameserver::class, 'domain_id');
+        return $this->belongsToMany(Nameserver::class, 'domain_nameservers', 'domain_id', 'nameserver_id');
     }
 
     public function domainPrice(): BelongsTo
@@ -42,16 +51,6 @@ final class Domain extends Model
     public function renewals(): HasMany
     {
         return $this->hasMany(DomainRenewal::class);
-    }
-
-    public function casts(): array
-    {
-        return [
-            'registered_at' => 'datetime',
-            'expires_at' => 'datetime',
-            'last_renewed_at' => 'datetime',
-            'is_locked' => 'boolean',
-        ];
     }
 
     public function registeredAt(): ?string
@@ -73,5 +72,15 @@ final class Domain extends Model
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'registered_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'last_renewed_at' => 'datetime',
+            'is_locked' => 'boolean',
+        ];
     }
 }

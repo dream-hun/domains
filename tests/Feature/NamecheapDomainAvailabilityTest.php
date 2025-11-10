@@ -7,7 +7,6 @@ namespace Tests\Feature;
 use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 final class NamecheapDomainAvailabilityTest extends TestCase
@@ -18,9 +17,6 @@ final class NamecheapDomainAvailabilityTest extends TestCase
     {
         parent::setUp();
         $this->service = app(NamecheapDomainService::class);
-
-        // Prevent actual logging during tests
-        Log::fake();
     }
 
     public function test_it_correctly_checks_domain_availability(): void

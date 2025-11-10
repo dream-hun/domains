@@ -8,7 +8,7 @@ use App\Models\Currency;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Currency>
+ * @extends Factory<Currency>
  */
 final class CurrencyFactory extends Factory
 {
@@ -37,7 +37,7 @@ final class CurrencyFactory extends Factory
      */
     public function base(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_base' => true,
             'exchange_rate' => 1.000000,
         ]);
@@ -48,7 +48,7 @@ final class CurrencyFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => false,
         ]);
     }

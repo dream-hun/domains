@@ -18,14 +18,14 @@ final class UserContactController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $contacts = Contact::where('user_id', auth()->id())
+        $contacts = Contact::query()->where('user_id', auth()->id())
             ->select('id', 'uuid', 'contact_id', 'name', 'organization', 'email')
             ->get();
 
         // Get the domain contacts to determine the contact type
         $contacts->each(function ($contact): void {
             // Get the domain contact types for this contact
-            $domainContacts = DomainContact::where('contact_id', $contact->id)
+            $domainContacts = DomainContact::query()->where('contact_id', $contact->id)
                 ->distinct((array) 'type')
                 ->pluck('type')
                 ->toArray();
@@ -46,7 +46,7 @@ final class UserContactController extends Controller
     public function show(int $id): JsonResponse
     {
         // Find the contact and ensure it belongs to the authenticated user
-        $contact = Contact::where('id', $id)
+        $contact = Contact::query()->where('id', $id)
             ->where('user_id', Auth::id())
             ->first();
 
@@ -58,7 +58,7 @@ final class UserContactController extends Controller
         }
 
         // Get the domain contact type for this contact
-        $domainContact = DomainContact::where('contact_id', $contact->id)
+        $domainContact = DomainContact::query()->where('contact_id', $contact->id)
             ->first();
 
         if ($domainContact) {

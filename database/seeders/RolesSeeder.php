@@ -22,6 +22,6 @@ final class RolesSeeder extends Seeder
             ],
         ];
 
-        Role::insert($roles);
+        Role::query()->insert($roles);
     }
 }

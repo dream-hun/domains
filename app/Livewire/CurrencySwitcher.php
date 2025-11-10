@@ -9,8 +9,8 @@ use App\Services\CurrencyService;
 use App\Services\GeolocationService;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
-use Log;
 
 final class CurrencySwitcher extends Component
 {
@@ -30,6 +30,7 @@ final class CurrencySwitcher extends Component
 
             return;
         }
+
         // No session currency, initialize from geolocation
         $isFromRwanda = $geolocationService->isUserFromRwanda();
         $userCountry = $geolocationService->getUserCountryCode();
@@ -40,11 +41,7 @@ final class CurrencySwitcher extends Component
             'is_from_rwanda' => $isFromRwanda,
         ]);
 
-        if ($isFromRwanda) {
-            $this->selectedCurrency = 'RWF';
-        } else {
-            $this->selectedCurrency = 'USD';
-        }
+        $this->selectedCurrency = $isFromRwanda ? 'RWF' : 'USD';
 
         session(['selected_currency' => $this->selectedCurrency]);
     }
@@ -55,7 +52,7 @@ final class CurrencySwitcher extends Component
             'currency_code' => $currencyCode,
         ]);
 
-        $currency = Currency::where('code', $currencyCode)
+        $currency = Currency::query()->where('code', $currencyCode)
             ->where('is_active', true)
             ->first();
 

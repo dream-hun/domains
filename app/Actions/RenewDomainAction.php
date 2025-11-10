@@ -32,7 +32,7 @@ final readonly class RenewDomainAction
             $domainService = $this->getDomainService($domain);
             $serviceName = $domainService === $this->eppDomainService ? 'EPP' : 'Namecheap';
 
-            Log::info("Starting domain renewal with $serviceName service", [
+            Log::info(sprintf('Starting domain renewal with %s service', $serviceName), [
                 'domain' => $domain->name,
                 'domain_id' => $domain->id,
                 'years' => $years,
@@ -62,7 +62,7 @@ final readonly class RenewDomainAction
                 }
 
                 // Create renewal record
-                DomainRenewal::create([
+                DomainRenewal::query()->create([
                     'domain_id' => $domain->id,
                     'order_id' => $order->id,
                     'years' => $years,
@@ -73,7 +73,7 @@ final readonly class RenewDomainAction
                     'status' => 'completed',
                 ]);
 
-                Log::info("Domain renewed successfully with $serviceName", [
+                Log::info('Domain renewed successfully with '.$serviceName, [
                     'domain' => $domain->name,
                     'domain_id' => $domain->id,
                     'old_expiry' => $oldExpiryDate->toDateString(),
@@ -88,13 +88,13 @@ final readonly class RenewDomainAction
                     'old_expiry' => $oldExpiryDate->toDateString(),
                     'new_expiry' => $newExpiryDate->toDateString(),
                     'service' => $serviceName,
-                    'message' => "Domain {$domain->name} has been successfully renewed for {$years} year(s) using {$serviceName}!",
+                    'message' => sprintf('Domain %s has been successfully renewed for %d year(s) using %s!', $domain->name, $years, $serviceName),
                 ];
             }
 
             $errorMessage = $result['message'] ?? 'Domain renewal failed';
 
-            Log::error("Domain renewal failed with $serviceName", [
+            Log::error('Domain renewal failed with '.$serviceName, [
                 'domain' => $domain->name,
                 'domain_id' => $domain->id,
                 'years' => $years,
@@ -103,7 +103,7 @@ final readonly class RenewDomainAction
             ]);
 
             // Create a failed renewal record
-            DomainRenewal::create([
+            DomainRenewal::query()->create([
                 'domain_id' => $domain->id,
                 'order_id' => $order->id,
                 'years' => $years,
@@ -119,18 +119,18 @@ final readonly class RenewDomainAction
                 'message' => $errorMessage,
             ];
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Domain renewal exception', [
                 'domain' => $domain->name,
                 'domain_id' => $domain->id,
                 'years' => $years,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'An unexpected error occurred during domain renewal: '.$e->getMessage(),
+                'message' => 'An unexpected error occurred during domain renewal: '.$exception->getMessage(),
             ];
         }
     }

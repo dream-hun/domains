@@ -63,7 +63,7 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                 $years = $item['attributes']['years'] ?? $item['quantity'];
 
                 // Find the domain (bypass global scopes since we're in a job context)
-                $domain = Domain::withoutGlobalScopes()->find($domainId);
+                $domain = Domain::query()->withoutGlobalScopes()->find($domainId);
 
                 if (! $domain) {
                     Log::error('Domain not found for renewal', [
@@ -71,7 +71,7 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                         'order_id' => $this->order->id,
                     ]);
                     $allSuccessful = false;
-                    $failedDomains[] = $item['name'] ?? "Domain ID: {$domainId}";
+                    $failedDomains[] = $item['name'] ?? 'Domain ID: '.$domainId;
 
                     continue;
                 }
@@ -128,22 +128,22 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                 // TODO: Consider creating support tickets for failed renewals
             }
 
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Exception in ProcessDomainRenewalJob', [
                 'order_id' => $this->order->id,
                 'order_number' => $this->order->order_number,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             // Update order status to failed
             $this->order->update([
                 'status' => 'failed',
-                'notes' => 'Renewal processing failed: '.$e->getMessage(),
+                'notes' => 'Renewal processing failed: '.$exception->getMessage(),
             ]);
 
             // Re-throw to trigger job retry
-            throw $e;
+            throw $exception;
         }
     }
 

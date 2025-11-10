@@ -22,9 +22,12 @@ final class ClearUserCarts
 
         foreach ($sessions as $session) {
             try {
-                $payload = unserialize(base64_decode($session->payload, true));
+                $payload = unserialize(base64_decode((string) $session->payload, true));
+                if (! is_array($payload)) {
+                    continue;
+                }
 
-                if (! is_array($payload) || ! isset($payload['cart'])) {
+                if (! isset($payload['cart'])) {
                     continue;
                 }
 
@@ -43,7 +46,7 @@ final class ClearUserCarts
             }
         }
 
-        Log::info("Cleared carts from $clearedCount user sessions after exchange rate update", [
+        Log::info(sprintf('Cleared carts from %d user sessions after exchange rate update', $clearedCount), [
             'currencies_updated' => $event->updatedCount,
         ]);
 

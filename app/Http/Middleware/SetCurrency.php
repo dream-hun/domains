@@ -21,7 +21,7 @@ final class SetCurrency
         // Check if currency is being changed via request
         if ($request->has('currency')) {
             $currencyCode = $request->get('currency');
-            $currency = Currency::where('code', $currencyCode)->where('is_active', true)->first();
+            $currency = Currency::query()->where('code', $currencyCode)->where('is_active', true)->first();
 
             if ($currency) {
                 session(['selected_currency' => $currency->code]);

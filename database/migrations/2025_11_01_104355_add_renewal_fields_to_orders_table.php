@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('orders', function (Blueprint $table): void {
             $table->foreignId('payment_id')->nullable()->after('user_id')->constrained()->onDelete('set null');
             $table->string('type')->after('order_number')->default('registration'); // registration, renewal, transfer
             $table->decimal('subtotal', 10, 2)->after('total_amount');
@@ -27,7 +27,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
+        Schema::table('orders', function (Blueprint $table): void {
             $table->dropForeign(['payment_id']);
             $table->dropColumn(['payment_id', 'type', 'subtotal', 'tax', 'items']);
         });

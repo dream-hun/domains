@@ -6,6 +6,11 @@ namespace App\Services;
 
 use App\Models\FailedDomainRegistration;
 use App\Models\Order;
+use App\Notifications\CriticalOrderFailureNotification;
+use App\Notifications\DomainRegistrationAbandonedNotification;
+use App\Notifications\DomainRegistrationFailedNotification;
+use App\Notifications\DomainRegistrationFailedUserNotification;
+use App\Notifications\PartialRegistrationFailureNotification;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -28,7 +33,7 @@ final class NotificationService
 
         if ($adminEmail) {
             Notification::route('mail', $adminEmail)
-                ->notify(new \App\Notifications\DomainRegistrationFailedNotification($order, $results));
+                ->notify(new DomainRegistrationFailedNotification($order, $results));
         }
     }
 
@@ -49,7 +54,7 @@ final class NotificationService
 
         if ($adminEmail) {
             Notification::route('mail', $adminEmail)
-                ->notify(new \App\Notifications\PartialRegistrationFailureNotification($order, $results));
+                ->notify(new PartialRegistrationFailureNotification($order, $results));
         }
     }
 
@@ -70,7 +75,7 @@ final class NotificationService
 
         if ($adminEmail) {
             Notification::route('mail', $adminEmail)
-                ->notify(new \App\Notifications\CriticalOrderFailureNotification($order, $exception));
+                ->notify(new CriticalOrderFailureNotification($order, $exception));
         }
     }
 
@@ -86,7 +91,7 @@ final class NotificationService
             'failed_count' => count($results['failed']),
         ]);
 
-        $order->user->notify(new \App\Notifications\DomainRegistrationFailedUserNotification($order, $results));
+        $order->user->notify(new DomainRegistrationFailedUserNotification($order, $results));
     }
 
     /**
@@ -107,7 +112,7 @@ final class NotificationService
 
         if ($adminEmail) {
             Notification::route('mail', $adminEmail)
-                ->notify(new \App\Notifications\DomainRegistrationAbandonedNotification($order, $failedRegistration, true));
+                ->notify(new DomainRegistrationAbandonedNotification($order, $failedRegistration, true));
         }
     }
 
@@ -124,6 +129,6 @@ final class NotificationService
             'domain' => $failedRegistration->domain_name,
         ]);
 
-        $order->user->notify(new \App\Notifications\DomainRegistrationAbandonedNotification($order, $failedRegistration, false));
+        $order->user->notify(new DomainRegistrationAbandonedNotification($order, $failedRegistration, false));
     }
 }

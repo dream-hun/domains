@@ -117,7 +117,7 @@ it('throws exception for unsupported currency codes', function (): void {
     $helper = app(CurrencyExchangeHelper::class);
 
     $helper->getExchangeRate('USD', 'EUR');
-})->throws(CurrencyExchangeException::class, 'Currency code \'EUR\' is not supported');
+})->throws(CurrencyExchangeException::class, "Currency code 'EUR' is not supported");
 
 it('throws exception for negative amounts', function (): void {
     $helper = app(CurrencyExchangeHelper::class);
