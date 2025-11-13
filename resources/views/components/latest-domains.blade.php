@@ -17,7 +17,7 @@
             @if($domains->count() > 0)
                 @foreach($domains as $domain)
                     <tr>
-                        <td>1.</td>
+                        <td>{{ $loop->iteration }}.</td>
                         <td>{{$domain->name}}</td>
                         <td>
                             {{ $domain->registeredAt() }}
