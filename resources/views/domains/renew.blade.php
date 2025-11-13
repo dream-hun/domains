@@ -40,7 +40,7 @@
                             @endif
                         </div>
 
-                        <form action="{{ route('domains.renew.add-to-cart', $domain) }}" method="POST" x-data="{ years: 1, pricePerYear: {{ $renewalPrice }}, currency: '{{ $currency }}' }">
+                        <form action="{{ route('domains.renew.add-to-cart', $domain) }}" method="POST" x-data="{ years: 1, pricePerYear: @js($renewalPrice), currency: @js($currency) }">
                             @csrf
 
                             <div class="mb-3">

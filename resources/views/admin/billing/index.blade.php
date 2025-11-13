@@ -33,6 +33,7 @@
                                     <thead>
                                         <tr>
                                             <th>Order Number</th>
+                                            <th>Payment Reference</th>
                                             <th>Date</th>
                                             @if (Auth::user()->isAdmin())
                                                 <th>Customer</th>
@@ -52,13 +53,14 @@
                                                         {{ $order->order_number }}
                                                     </a>
                                                 </td>
+                                                <td>{{ $order->stripe_payment_intent_id }}</td>
                                                 <td>{{ $order->created_at->format('M d, Y') }}</td>
                                                 @if (Auth::user()->isAdmin())
                                                     <td>{{ $order->user->name ?? 'N/A' }}</td>
                                                 @endif
                                                 <td>
                                                     <strong>{{ $order->currency }}
-                                                        {{ number_format($order->total_amount, 2) }}</strong>
+                                                        {{ number_format($order->total_amount) }}</strong>
                                                 </td>
                                                 <td>
                                                     @if ($order->isPaid())

@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\DomainType;
+use App\Helpers\CurrencyHelper;
 use App\Models\Domain;
+use App\Models\DomainPrice;
 use App\Models\DomainRenewal;
 use App\Models\Order;
 use App\Models\User;
@@ -141,25 +144,40 @@ final readonly class RenewalService
      *
      * @param  Domain  $domain  The domain to renew
      * @param  int  $years  Number of years to renew
-     * @return array{price: float, currency: string}
+     * @return array{
+     *     unit_price: float,
+     *     price: float,
+     *     total_price: float,
+     *     currency: string
+     * }
      */
     public function getRenewalPrice(Domain $domain, int $years = 1): array
     {
-        $domainPrice = $domain->domainPrice;
+        $domainPrice = $this->resolveDomainPrice($domain);
 
         if (! $domainPrice) {
             throw new Exception('Pricing information not available for domain: '.$domain->name);
         }
 
-        // Get renewal price (stored in cents)
-        $pricePerYear = $domainPrice->renewal_price / 100;
-        $totalPrice = $pricePerYear * $years;
+        $domain->setRelation('domainPrice', $domainPrice);
 
-        // Determine currency based on domain type
-        $currency = $domainPrice->type->value === 'local' ? 'RWF' : 'USD';
+        $currency = $domainPrice->type === DomainType::Local ? 'RWF' : 'USD';
+
+        $unitPrice = $domainPrice->getPriceInCurrency('renewal_price', $currency);
+
+        if ($currency === 'RWF') {
+            $unitPrice = round($unitPrice);
+        } else {
+            $unitPrice = round($unitPrice, 2);
+        }
+
+        $totalPrice = $unitPrice * $years;
+        $totalPrice = $currency === 'RWF' ? round($totalPrice) : round($totalPrice, 2);
 
         return [
-            'price' => $totalPrice,
+            'unit_price' => $unitPrice,
+            'price' => $unitPrice,
+            'total_price' => $totalPrice,
             'currency' => $currency,
         ];
     }
@@ -203,6 +221,73 @@ final readonly class RenewalService
         return ['can_renew' => true];
     }
 
+    public function resolveDomainPrice(Domain $domain): ?DomainPrice
+    {
+        if ($domain->relationLoaded('domainPrice') || $domain->domainPrice) {
+            return $domain->domainPrice;
+        }
+
+        $tld = $this->extractTld($domain->name);
+
+        if (! $tld) {
+            return null;
+        }
+
+        return DomainPrice::query()->where('tld', '.'.$tld)->first();
+    }
+
+    /**
+     * Validate that a renewal meets Stripe's minimum charge requirement.
+     *
+     * @return array{valid: bool, message?: string, min_years?: int, currency?: string, required_total?: float}
+     */
+    public function validateStripeMinimumAmountForRenewal(Domain $domain, DomainPrice $domainPrice, int $years): array
+    {
+        $pricePerYearUsd = $domainPrice->getPriceInCurrency('renewal_price', 'USD');
+
+        if ($pricePerYearUsd <= 0) {
+            return [
+                'valid' => false,
+                'message' => 'Renewal pricing is not configured correctly for this domain. Please contact support.',
+            ];
+        }
+
+        $totalUsd = $pricePerYearUsd * $years;
+        $minUsd = 0.50;
+
+        if ($totalUsd >= $minUsd) {
+            return ['valid' => true];
+        }
+
+        $minYears = (int) max(1, ceil($minUsd / max($pricePerYearUsd, 0.0001)));
+
+        $displayCurrency = $domainPrice->type === DomainType::Local ? 'RWF' : 'USD';
+
+        try {
+            $requiredTotal = $displayCurrency === 'USD'
+                ? $pricePerYearUsd * $minYears
+                : CurrencyHelper::convert($pricePerYearUsd * $minYears, 'USD', $displayCurrency);
+        } catch (Exception) {
+            $requiredTotal = $pricePerYearUsd * $minYears;
+        }
+
+        $decimals = $displayCurrency === 'USD' ? 2 : 0;
+        $requiredTotal = round($requiredTotal, $decimals);
+
+        return [
+            'valid' => false,
+            'message' => sprintf(
+                'Stripe requires a minimum charge of $0.50 USD. Please renew for at least %d year(s) (approximately %s %s).',
+                $minYears,
+                number_format($requiredTotal, $decimals),
+                $displayCurrency
+            ),
+            'min_years' => $minYears,
+            'currency' => $displayCurrency,
+            'required_total' => $requiredTotal,
+        ];
+    }
+
     /**
      * Get the appropriate domain service based on the domain's registrar
      */
@@ -214,5 +299,16 @@ final readonly class RenewalService
             'epp', 'local' => app(EppDomainService::class),
             default => app(EppDomainService::class), // Default to EPP
         };
+    }
+
+    private function extractTld(string $domain): ?string
+    {
+        $parts = explode('.', $domain);
+
+        if (count($parts) < 2) {
+            return null;
+        }
+
+        return end($parts) ?: null;
     }
 }

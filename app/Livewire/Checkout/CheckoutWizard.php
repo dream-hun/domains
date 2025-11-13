@@ -358,6 +358,9 @@ final class CheckoutWizard extends Component
                 $billingContactId = $primaryContact?->id;
             }
 
+            // Convert cart items to user's currency before creating order
+            $convertedCartItems = $this->convertCartItemsCurrency($this->cartItems, $this->userCurrencyCode);
+
             $order = $checkoutService->processCheckout([
                 'user_id' => auth()->id(),
                 'contact_ids' => [
@@ -368,7 +371,7 @@ final class CheckoutWizard extends Component
                 ],
                 'payment_method' => $this->selectedPaymentMethod,
                 'currency' => $this->userCurrencyCode,
-                'cart_items' => $this->cartItems,
+                'cart_items' => $convertedCartItems,
                 'coupon' => $this->appliedCoupon,
                 'discount_amount' => $this->discountAmount,
             ]);
@@ -528,5 +531,42 @@ final class CheckoutWizard extends Component
         $discount = $subtotal - $discountedTotal;
 
         $this->discountAmount = max(0, min($discount, $subtotal));
+    }
+
+    /**
+     * Convert cart items' prices to the target currency
+     */
+    private function convertCartItemsCurrency($cartItems, string $targetCurrency)
+    {
+        return $cartItems->map(function ($item) use ($targetCurrency) {
+            $itemCurrency = $item->attributes->currency ?? 'USD';
+            $itemPrice = $item->price;
+
+            if ($itemCurrency !== $targetCurrency) {
+                try {
+                    $itemPrice = CurrencyHelper::convert(
+                        $item->price,
+                        $itemCurrency,
+                        $targetCurrency
+                    );
+                } catch (Exception $exception) {
+                    logger()->warning('Failed to convert cart item currency in checkout', [
+                        'from' => $itemCurrency,
+                        'to' => $targetCurrency,
+                        'amount' => $item->price,
+                        'error' => $exception->getMessage(),
+                    ]);
+
+                    // Keep original price if conversion fails
+                }
+            }
+
+            // Clone the item with converted price and currency
+            $convertedItem = clone $item;
+            $convertedItem->price = $itemPrice;
+            $convertedItem->attributes->currency = $targetCurrency;
+
+            return $convertedItem;
+        });
     }
 }

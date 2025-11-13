@@ -6,10 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AddDomainRenewalToCartRequest;
 use App\Models\Domain;
-use App\Models\DomainPrice;
+use App\Services\RenewalService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 final class DomainRenewalController extends Controller
@@ -19,20 +20,23 @@ final class DomainRenewalController extends Controller
      */
     public function show(Domain $domain): View
     {
-        // Ensure the user owns this domain
+        $renewalService = app(RenewalService::class);
+
         abort_if($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin(), 403, 'You do not have permission to renew this domain.');
 
-        // Get the TLD and pricing information
-        $tld = $this->extractTld($domain->name);
-        $domainPrice = DomainPrice::query()->where('tld', '.'.$tld)->first();
+        $domainPrice = $renewalService->resolveDomainPrice($domain);
 
         abort_unless($domainPrice, 404, 'Pricing information not available for this domain.');
+
+        $domain->setRelation('domainPrice', $domainPrice);
+
+        $priceData = $renewalService->getRenewalPrice($domain, 1);
 
         return view('domains.renew', [
             'domain' => $domain,
             'domainPrice' => $domainPrice,
-            'renewalPrice' => $domainPrice->renewal_price / 100, // Convert cents to dollars
-            'currency' => $domainPrice->type->value === 'Local' ? 'RWF' : 'USD',
+            'renewalPrice' => $priceData['unit_price'],
+            'currency' => $priceData['currency'],
         ]);
     }
 
@@ -41,30 +45,33 @@ final class DomainRenewalController extends Controller
      */
     public function addToCart(AddDomainRenewalToCartRequest $request, Domain $domain): RedirectResponse|JsonResponse
     {
-        // Ensure the user owns this domain
+        $renewalService = app(RenewalService::class);
+
         abort_if($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin(), 403, 'You do not have permission to renew this domain.');
 
-        $years = $request->validated()['years'];
+        $years = (int) $request->validated()['years'];
 
-        // Get the TLD and pricing information
-        $tld = $this->extractTld($domain->name);
-        $domainPrice = DomainPrice::query()->where('tld', '.'.$tld)->first();
+        $domainPrice = $renewalService->resolveDomainPrice($domain);
 
         if (! $domainPrice) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Pricing information not available for this domain.',
-                ], 404);
-            }
-
-            return back()
-                ->with('error', 'Pricing information not available for this domain.');
+            return $this->respondRenewalError($request, 'Pricing information not available for this domain.', 404);
         }
 
-        // Calculate price (price is stored in cents)
-        $renewalPricePerYear = $domainPrice->renewal_price / 100;
-        $currency = $domainPrice->type->value === 'Local' ? 'RWF' : 'USD';
+        $domain->setRelation('domainPrice', $domainPrice);
+
+        $stripeValidation = $renewalService->validateStripeMinimumAmountForRenewal($domain, $domainPrice, $years);
+
+        if (! $stripeValidation['valid']) {
+            return $this->respondRenewalError($request, $stripeValidation['message'], 422, $stripeValidation);
+        }
+
+        $priceData = $renewalService->getRenewalPrice($domain, $years);
+        $renewalPricePerYear = $priceData['unit_price'];
+        $totalPrice = $priceData['total_price'];
+        $currency = $priceData['currency'];
+
+        $tld = $domainPrice->tld ? Str::ltrim($domainPrice->tld, '.') : $this->extractTldFallback($domain->name);
+        $tld = $tld ? '.'.$tld : null;
 
         // Clear existing cart items to ensure single item checkout
         // You can modify this to allow multiple renewals in one cart
@@ -82,6 +89,8 @@ final class DomainRenewalController extends Controller
                 'current_expiry' => $domain->expires_at->toDateString(),
                 'tld' => $tld,
                 'currency' => $currency,
+                'unit_price' => $renewalPricePerYear,
+                'total_price' => $totalPrice,
             ],
         ]);
 
@@ -96,13 +105,29 @@ final class DomainRenewalController extends Controller
             ->with('success', sprintf('Domain %s added to cart for %s year(s) renewal.', $domain->name, $years));
     }
 
-    /**
-     * Extract TLD from domain name
-     */
-    private function extractTld(string $domain): string
+    private function respondRenewalError(AddDomainRenewalToCartRequest $request, string $message, int $status, array $payload = []): JsonResponse|RedirectResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'details' => array_diff_key($payload, array_flip(['valid'])),
+            ], $status);
+        }
+
+        return back()
+            ->withInput()
+            ->with('error', $message);
+    }
+
+    private function extractTldFallback(string $domain): ?string
     {
         $parts = explode('.', $domain);
 
-        return end($parts) ?: '';
+        if (count($parts) < 2) {
+            return null;
+        }
+
+        return end($parts) ?: null;
     }
 }

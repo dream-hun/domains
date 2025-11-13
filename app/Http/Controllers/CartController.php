@@ -33,7 +33,7 @@ final class CartController extends Controller
     public function addRenewalToCart(Request $request, Domain $domain): JsonResponse
     {
         try {
-            $years = $request->input('years', 1);
+            $years = (int) $request->input('years', 1);
             $user = auth()->user();
 
             if (! $user) {
@@ -53,6 +53,27 @@ final class CartController extends Controller
 
             // Validate domain can be renewed
             $renewalService = app(RenewalService::class);
+            $domainPrice = $renewalService->resolveDomainPrice($domain);
+
+            if (! $domainPrice) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pricing information not available for this domain',
+                ], 404);
+            }
+
+            $minimumValidation = $renewalService->validateStripeMinimumAmountForRenewal($domain, $domainPrice, $years);
+
+            if (! $minimumValidation['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $minimumValidation['message'],
+                    'min_years' => $minimumValidation['min_years'] ?? null,
+                ], 422);
+            }
+
+            $domain->setRelation('domainPrice', $domainPrice);
+
             $canRenew = $renewalService->canRenewDomain($domain, $user);
 
             if (! $canRenew['can_renew']) {
@@ -64,7 +85,8 @@ final class CartController extends Controller
 
             // Get renewal price
             $priceData = $renewalService->getRenewalPrice($domain, $years);
-            $price = $priceData['price'];
+            $price = $priceData['unit_price'];
+            $totalPrice = $priceData['total_price'];
             $currency = $priceData['currency'];
 
             // Create unique cart ID for renewal
@@ -91,6 +113,8 @@ final class CartController extends Controller
                     'current_expiry' => $domain->expires_at?->format('Y-m-d'),
                     'tld' => $domain->domainPrice->tld,
                     'currency' => $currency,
+                    'unit_price' => $price,
+                    'total_price' => $totalPrice,
                     'added_at' => now()->timestamp,
                 ],
             ]);

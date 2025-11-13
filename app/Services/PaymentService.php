@@ -36,6 +36,13 @@ final readonly class PaymentService
         $paymentAttempt = null;
 
         try {
+            $validationResult = $this->validateStripeMinimumAmount($order);
+            if (! $validationResult['valid']) {
+                return [
+                    'success' => false,
+                    'error' => $validationResult['message'],
+                ];
+            }
 
             if (! $this->isStripeConfigured()) {
                 return [
@@ -46,7 +53,7 @@ final readonly class PaymentService
 
             $paymentAttempt = $this->createPaymentAttempt($order, 'stripe');
 
-            $checkoutSession = $this->createStripeCheckoutSession($order, $paymentAttempt);
+            $checkoutSession = $this->createStripeCheckoutSession($order, $paymentAttempt, $validationResult);
 
             $paymentAttempt->update([
                 'stripe_session_id' => $checkoutSession->id,
@@ -84,15 +91,9 @@ final readonly class PaymentService
     /**
      * @throws ApiErrorException
      */
-    private function createStripeCheckoutSession(Order $order, Payment $payment): Session
+    private function createStripeCheckoutSession(Order $order, Payment $payment, array $validationResult): Session
     {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
-
-        // Validate minimum amount for Stripe (50 cents USD equivalent)
-        $validationResult = $this->validateStripeMinimumAmount($order);
-        if (! $validationResult['valid']) {
-            throw new Exception($validationResult['message']);
-        }
 
         // Use the potentially converted currency and amount
         $processingCurrency = $validationResult['currency'];
@@ -223,13 +224,14 @@ final readonly class PaymentService
                 ];
             }
 
-            // Amount is below minimum - convert to USD
-            // This ensures the payment can go through while maintaining the correct value
+            // Amount is below minimum - inform caller to adjust
             return [
-                'valid' => true,
-                'currency' => 'USD',
-                'amount' => round($amountInUsd, 2),
-                'converted' => true,
+                'valid' => false,
+                'message' => sprintf(
+                    'Stripe requires a minimum charge of $0.50 USD (or equivalent). Your total of %s %s is below this threshold. Please increase the renewal period or contact support for assistance.',
+                    number_format($amount, 2),
+                    $currency
+                ),
             ];
 
         } catch (Exception $exception) {

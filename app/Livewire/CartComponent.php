@@ -8,6 +8,7 @@ use App\Helpers\CurrencyHelper;
 use App\Models\Coupon;
 use App\Models\Domain;
 use App\Services\Coupon\CouponService;
+use App\Services\CurrencyService;
 use App\Services\RenewalService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -95,35 +96,35 @@ final class CartComponent extends Component
         // Calculate totals with currency conversion
         $subtotal = 0;
 
-        foreach ($this->items as $item) {
-            $itemCurrency = $item->attributes->currency ?? 'USD';
-            $itemPrice = $item->price;
-
-            // Convert item price to display currency if different
-            if ($itemCurrency !== $this->currency) {
-                try {
-                    $itemPrice = CurrencyHelper::convert(
-                        $item->price,
-                        $itemCurrency,
-                        $this->currency
-                    );
-                } catch (Exception) {
-                    // Fallback to original price if conversion fails
-                    $itemPrice = $item->price;
-                }
+        try {
+            foreach ($this->items as $item) {
+                $itemCurrency = $item->attributes->currency ?? 'USD';
+                $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+                $itemTotal = $convertedPrice * $item->quantity;
+                $subtotal += $itemTotal;
             }
 
-            $itemTotal = $itemPrice * $item->quantity;
-            $subtotal += $itemTotal;
+            $this->subtotalAmount = $subtotal;
+
+            // Apply discount to total
+            $total = $subtotal - $this->discountAmount;
+
+            // Ensure total never goes below zero
+            $this->totalAmount = max(0, $total);
+        } catch (Exception $exception) {
+            Log::error('Failed to update cart totals due to currency conversion error', [
+                'currency' => $this->currency,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $this->subtotalAmount = 0;
+            $this->totalAmount = 0;
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Unable to convert cart totals to the selected currency. Please try again or switch currencies.',
+            ]);
         }
-
-        $this->subtotalAmount = $subtotal;
-
-        // Apply discount to total
-        $total = $subtotal - $this->discountAmount;
-
-        // Ensure total never goes below zero
-        $this->totalAmount = max(0, $total);
     }
 
     /**
@@ -167,21 +168,23 @@ final class CartComponent extends Component
         $itemCurrency = $item->attributes->currency ?? 'USD';
         $itemPrice = $item->price;
 
-        // Convert item price to display currency if different
-        if ($itemCurrency !== $this->currency) {
+        try {
+            $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+
+            return CurrencyHelper::formatMoney($convertedPrice, $this->currency);
+        } catch (Exception $exception) {
+            Log::warning('Falling back to original currency for cart item price display', [
+                'display_currency' => $this->currency,
+                'item_currency' => $itemCurrency,
+                'error' => $exception->getMessage(),
+            ]);
+
             try {
-                $itemPrice = CurrencyHelper::convert(
-                    $item->price,
-                    $itemCurrency,
-                    $this->currency
-                );
+                return CurrencyHelper::formatMoney($item->price, $itemCurrency);
             } catch (Exception) {
-                // Fallback to original price if conversion fails
-                $itemPrice = $item->price;
+                return $itemCurrency.' '.number_format($item->price, 2);
             }
         }
-
-        return CurrencyHelper::formatMoney($itemPrice, $this->currency);
     }
 
     /**
@@ -192,23 +195,26 @@ final class CartComponent extends Component
         $itemCurrency = $item->attributes->currency ?? 'USD';
         $itemPrice = $item->price;
 
-        // Convert item price to display currency if different
-        if ($itemCurrency !== $this->currency) {
+        try {
+            $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+            $total = $convertedPrice * $item->quantity;
+
+            return CurrencyHelper::formatMoney($total, $this->currency);
+        } catch (Exception $exception) {
+            Log::warning('Falling back to original currency for cart item total display', [
+                'display_currency' => $this->currency,
+                'item_currency' => $itemCurrency,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $fallbackTotal = $item->price * $item->quantity;
+
             try {
-                $itemPrice = CurrencyHelper::convert(
-                    $item->price,
-                    $itemCurrency,
-                    $this->currency
-                );
+                return CurrencyHelper::formatMoney($fallbackTotal, $itemCurrency);
             } catch (Exception) {
-                // Fallback to original price if conversion fails
-                $itemPrice = $item->price;
+                return $itemCurrency.' '.number_format($fallbackTotal, 2);
             }
         }
-
-        $total = $itemPrice * $item->quantity;
-
-        return CurrencyHelper::formatMoney($total, $this->currency);
     }
 
     public function updateQuantity($id, $quantity): void
@@ -348,8 +354,32 @@ final class CartComponent extends Component
                 return;
             }
 
-            // Validate domain can be renewed
             $renewalService = app(RenewalService::class);
+
+            $domainPrice = $renewalService->resolveDomainPrice($domain);
+
+            if (! $domainPrice) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Pricing information not available for this domain',
+                ]);
+
+                return;
+            }
+
+            $minimumValidation = $renewalService->validateStripeMinimumAmountForRenewal($domain, $domainPrice, $years);
+
+            if (! $minimumValidation['valid']) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => $minimumValidation['message'],
+                ]);
+
+                return;
+            }
+
+            $domain->setRelation('domainPrice', $domainPrice);
+
             $canRenew = $renewalService->canRenewDomain($domain, $user);
 
             if (! $canRenew['can_renew']) {
@@ -363,7 +393,8 @@ final class CartComponent extends Component
 
             // Get renewal price
             $priceData = $renewalService->getRenewalPrice($domain, $years);
-            $price = $priceData['price'];
+            $price = $priceData['unit_price'];
+            $totalPrice = $priceData['total_price'];
             $currency = $priceData['currency'];
 
             // Create unique cart ID for renewal
@@ -392,6 +423,8 @@ final class CartComponent extends Component
                     'current_expiry' => $domain->expires_at?->format('Y-m-d'),
                     'tld' => $domain->domainPrice->tld,
                     'currency' => $currency,
+                    'unit_price' => $price,
+                    'total_price' => $totalPrice,
                     'added_at' => now()->timestamp,
                 ],
             ]);
@@ -563,19 +596,7 @@ final class CartComponent extends Component
 
         foreach ($this->items as $item) {
             $itemCurrency = $item->attributes->currency ?? 'USD';
-            $itemPrice = $item->price;
-
-            if ($itemCurrency !== $this->currency) {
-                try {
-                    $itemPrice = CurrencyHelper::convert(
-                        $item->price,
-                        $itemCurrency,
-                        $this->currency
-                    );
-                } catch (Exception) {
-                    $itemPrice = $item->price;
-                }
-            }
+            $itemPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
 
             $cartItems[] = [
                 'domain_name' => $item->name,
@@ -618,28 +639,81 @@ final class CartComponent extends Component
             return;
         }
 
-        // Prepare cart data with currency conversion
-        $paymentData = $this->prepareCartForPayment();
+        try {
+            // Prepare cart data with currency conversion
+            $paymentData = $this->prepareCartForPayment();
 
-        // Store prepared cart data in session
-        session([
-            'cart' => $paymentData['items'],
-            'cart_subtotal' => $paymentData['subtotal'],
-            'cart_total' => $paymentData['total'],
-            'selected_currency' => $paymentData['currency'],
-        ]);
+            // Store prepared cart data in session
+            session([
+                'cart' => $paymentData['items'],
+                'cart_subtotal' => $paymentData['subtotal'],
+                'cart_total' => $paymentData['total'],
+                'selected_currency' => $paymentData['currency'],
+            ]);
 
-        // Store coupon data if present
-        if (isset($paymentData['coupon'])) {
-            session(['coupon' => $paymentData['coupon']]);
+            // Store coupon data if present
+            if (isset($paymentData['coupon'])) {
+                session(['coupon' => $paymentData['coupon']]);
+            }
+
+            $this->redirect(route('payment.index'));
+        } catch (Exception $exception) {
+            Log::error('Failed to prepare cart for payment', [
+                'currency' => $this->currency,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Unable to prepare the cart for payment. Please try again or switch currencies.',
+            ]);
         }
-
-        $this->redirect(route('payment.index'));
     }
 
     public function render(): View
     {
         return view('livewire.cart-component');
+    }
+
+    /**
+     * Convert an amount from its original currency into the current display currency.
+     *
+     * @throws Exception
+     */
+    private function convertToDisplayCurrency(float $amount, string $fromCurrency): float
+    {
+        $fromCurrency = mb_strtoupper(mb_trim($fromCurrency));
+        $toCurrency = mb_strtoupper(mb_trim($this->currency));
+
+        if ($fromCurrency === $toCurrency) {
+            return $amount;
+        }
+
+        try {
+            return CurrencyHelper::convert($amount, $fromCurrency, $toCurrency);
+        } catch (Exception $exception) {
+            Log::warning('Primary currency conversion failed in cart component', [
+                'from' => $fromCurrency,
+                'to' => $toCurrency,
+                'amount' => $amount,
+                'error' => $exception->getMessage(),
+            ]);
+
+            try {
+                $currencyService = app(CurrencyService::class);
+
+                return $currencyService->convert($amount, $fromCurrency, $toCurrency);
+            } catch (Exception $fallbackException) {
+                Log::error('Currency conversion failed after fallback in cart component', [
+                    'from' => $fromCurrency,
+                    'to' => $toCurrency,
+                    'amount' => $amount,
+                    'error' => $fallbackException->getMessage(),
+                ]);
+
+                throw new Exception('Unable to convert currency.');
+            }
+        }
     }
 
     private function calculateDiscount(): void

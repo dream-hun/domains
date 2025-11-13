@@ -44,7 +44,7 @@ final class DomainRegisteredNotification extends Notification
             ->line(sprintf('Registration Period: %d year(s)', $this->registrationYears))
             ->line('Registered: '.$this->domain->registeredAt())
             ->line('Expires: '.$this->domain->expiresAt())
-            ->line('Status: '.ucfirst($this->domain->status))
+            ->line('Status: '.$this->domain->status->label())
             ->action('Manage Domain', route('admin.domains.index'))
             ->line('Your domain is now active and ready to use!')
             ->line('Thank you for choosing our domain registration service!');
@@ -64,7 +64,7 @@ final class DomainRegisteredNotification extends Notification
             'registered_at' => $this->domain->registered_at?->toISOString(),
             'expires_at' => $this->domain->expires_at?->toISOString(),
             'registration_years' => $this->registrationYears,
-            'status' => $this->domain->status,
+            'status' => $this->domain->status->value,
             'registration_type' => 'new_registration',
         ];
     }

@@ -37,8 +37,8 @@
                                     <td style="width: 25%;">{{ $domain->name }}</td>
                                     <td>
                                         <button
-                                            class="btn btn-sm btn-{{ $domain->status === 'active' ? 'success' : 'warning' }}">
-                                            <i classcheck-circle"></i> {{ ucfirst($domain->status) }}
+                                            class="btn btn-sm {{ str_replace('bg-', 'btn-', $domain->status->color()) }}">
+                                            <i class="{{ $domain->status->icon() }}"></i> {{ $domain->status->label() }}
                                         </button>
                                     </td>
                                     <td style="width: 25%;">

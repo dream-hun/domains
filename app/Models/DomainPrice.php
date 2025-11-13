@@ -88,19 +88,29 @@ final class DomainPrice extends Model
      */
     public function getPriceInBaseCurrency(string $priceType = 'register_price'): float
     {
-        $priceInCents = $this->{$priceType};
+        $rawPrice = $this->{$priceType};
+
+        if ($rawPrice === null) {
+            return 0.0;
+        }
+
+        $baseCurrency = $this->getBaseCurrency();
+
+        if ($this->usesZeroDecimalCurrency($baseCurrency)) {
+            return (float) $rawPrice;
+        }
 
         // Convert from cents to the main currency unit
-        return $priceInCents / 100;
+        return (float) $rawPrice / 100;
     }
 
     /**
-     * Get the base currency for prices stored in database
-     * All prices in the database are stored in USD
+     * Get the base currency for prices stored in database.
+     * Local domains are stored in RWF (zero-decimal), international in USD (cents).
      */
     public function getBaseCurrency(): string
     {
-        return 'USD';
+        return $this->type === DomainType::Local ? 'RWF' : 'USD';
     }
 
     public function getRouteKeyName(): string
@@ -124,5 +134,16 @@ final class DomainPrice extends Model
     protected function setDomainIdAttribute(int|string|null $value): void
     {
         $this->pendingDomainId = $value !== null ? (int) $value : null;
+    }
+
+    private function usesZeroDecimalCurrency(string $currency): bool
+    {
+        $currency = mb_strtoupper($currency);
+
+        if ($currency === 'FRW') {
+            $currency = 'RWF';
+        }
+
+        return in_array($currency, ['RWF'], true);
     }
 }

@@ -6,6 +6,7 @@ namespace App\Livewire;
 
 use App\Helpers\CurrencyHelper;
 use App\Services\Coupon\CouponService;
+use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\Factory;
@@ -76,34 +77,30 @@ final class CheckoutProcess extends Component
         $cartContent = Cart::getContent();
         $subtotal = 0;
 
-        // Calculate subtotal with currency conversion
-        foreach ($cartContent as $item) {
-            $itemCurrency = $item->attributes->currency ?? 'USD';
-            $itemPrice = $item->price;
-
-            // Convert item price to display currency if different
-            if ($itemCurrency !== $this->currency) {
-                try {
-                    $itemPrice = CurrencyHelper::convert(
-                        $item->price,
-                        $itemCurrency,
-                        $this->currency
-                    );
-                } catch (Exception) {
-                    // Fallback to original price if conversion fails
-                    $itemPrice = $item->price;
-                }
+        try {
+            foreach ($cartContent as $item) {
+                $itemCurrency = $item->attributes->currency ?? 'USD';
+                $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+                $itemTotal = $convertedPrice * $item->quantity;
+                $subtotal += $itemTotal;
             }
 
-            $itemTotal = $itemPrice * $item->quantity;
-            $subtotal += $itemTotal;
+            $this->subtotal = $subtotal;
+            $this->total = max(0, $this->subtotal - $this->discount);
+
+            if ($this->errorMessage === 'We were unable to convert your cart totals. Please try again or switch currencies.') {
+                $this->errorMessage = '';
+            }
+        } catch (Exception $exception) {
+            Log::error('Failed to calculate checkout totals', [
+                'currency' => $this->currency,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $this->subtotal = 0;
+            $this->total = 0;
+            $this->errorMessage = 'We were unable to convert your cart totals. Please try again or switch currencies.';
         }
-
-        $this->subtotal = $subtotal;
-
-        // Discount is already set from session (applied in cart)
-        // Just calculate total
-        $this->total = max(0, $this->subtotal - $this->discount);
     }
 
     public function loadUserContacts(): void
@@ -260,25 +257,22 @@ final class CheckoutProcess extends Component
     public function getFormattedItemPrice(array $item): string
     {
         $itemCurrency = $item['attributes']['currency'] ?? 'USD';
-        $itemPrice = $item['price'];
-
-        // Convert item price to display currency if different
-        if ($itemCurrency !== $this->currency) {
-            try {
-                $itemPrice = CurrencyHelper::convert(
-                    $item['price'],
-                    $itemCurrency,
-                    $this->currency
-                );
-            } catch (Exception) {
-                $itemPrice = $item['price'];
-            }
-        }
-
         try {
-            return CurrencyHelper::formatMoney($itemPrice, $this->currency);
-        } catch (Exception) {
-            return $this->currency.' '.number_format($itemPrice, 2);
+            $convertedPrice = $this->convertToDisplayCurrency($item['price'], $itemCurrency);
+
+            return CurrencyHelper::formatMoney($convertedPrice, $this->currency);
+        } catch (Exception $exception) {
+            Log::warning('Falling back to original currency for item price display', [
+                'currency' => $this->currency,
+                'item_currency' => $itemCurrency,
+                'error' => $exception->getMessage(),
+            ]);
+
+            try {
+                return CurrencyHelper::formatMoney($item['price'], $itemCurrency);
+            } catch (Exception) {
+                return $itemCurrency.' '.number_format($item['price'], 2);
+            }
         }
     }
 
@@ -288,27 +282,25 @@ final class CheckoutProcess extends Component
     public function getFormattedItemTotal(array $item): string
     {
         $itemCurrency = $item['attributes']['currency'] ?? 'USD';
-        $itemPrice = $item['price'];
-
-        // Convert item price to display currency if different
-        if ($itemCurrency !== $this->currency) {
-            try {
-                $itemPrice = CurrencyHelper::convert(
-                    $item['price'],
-                    $itemCurrency,
-                    $this->currency
-                );
-            } catch (Exception) {
-                $itemPrice = $item['price'];
-            }
-        }
-
-        $total = $itemPrice * $item['quantity'];
-
         try {
+            $convertedPrice = $this->convertToDisplayCurrency($item['price'], $itemCurrency);
+            $total = $convertedPrice * $item['quantity'];
+
             return CurrencyHelper::formatMoney($total, $this->currency);
-        } catch (Exception) {
-            return $this->currency.' '.number_format($total, 2);
+        } catch (Exception $exception) {
+            Log::warning('Falling back to original currency for item total display', [
+                'currency' => $this->currency,
+                'item_currency' => $itemCurrency,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $total = $item['price'] * $item['quantity'];
+
+            try {
+                return CurrencyHelper::formatMoney($total, $itemCurrency);
+            } catch (Exception) {
+                return $itemCurrency.' '.number_format($total, 2);
+            }
         }
     }
 
@@ -322,19 +314,7 @@ final class CheckoutProcess extends Component
 
         foreach ($cartContent as $item) {
             $itemCurrency = $item->attributes->currency ?? 'USD';
-            $itemPrice = $item->price;
-
-            if ($itemCurrency !== $this->currency) {
-                try {
-                    $itemPrice = CurrencyHelper::convert(
-                        $item->price,
-                        $itemCurrency,
-                        $this->currency
-                    );
-                } catch (Exception) {
-                    $itemPrice = $item->price;
-                }
-            }
+            $itemPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
 
             $cartItems[] = [
                 'domain_name' => $item->name,
@@ -364,6 +344,47 @@ final class CheckoutProcess extends Component
         }
 
         return $paymentData;
+    }
+
+    /**
+     * Convert an amount from its original currency into the current display currency.
+     *
+     * @throws Exception
+     */
+    private function convertToDisplayCurrency(float $amount, string $fromCurrency): float
+    {
+        $fromCurrency = mb_strtoupper($fromCurrency);
+        $toCurrency = mb_strtoupper($this->currency);
+
+        if ($fromCurrency === $toCurrency) {
+            return $amount;
+        }
+
+        try {
+            return CurrencyHelper::convert($amount, $fromCurrency, $toCurrency);
+        } catch (Exception $exception) {
+            Log::warning('Primary currency conversion failed', [
+                'from' => $fromCurrency,
+                'to' => $toCurrency,
+                'amount' => $amount,
+                'error' => $exception->getMessage(),
+            ]);
+
+            try {
+                $currencyService = app(CurrencyService::class);
+
+                return $currencyService->convert($amount, $fromCurrency, $toCurrency);
+            } catch (Exception $fallbackException) {
+                Log::error('Currency conversion failed after fallback', [
+                    'from' => $fromCurrency,
+                    'to' => $toCurrency,
+                    'amount' => $amount,
+                    'error' => $fallbackException->getMessage(),
+                ]);
+
+                throw new Exception('Unable to convert currency.');
+            }
+        }
     }
 
     /**

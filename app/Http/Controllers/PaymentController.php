@@ -73,6 +73,14 @@ final class PaymentController extends Controller
             DB::beginTransaction();
 
             // Create order using BillingService
+            Log::error('Processing Stripe payment with session totals', [
+                'user_id' => $user?->id,
+                'cart_total' => session('cart_total'),
+                'cart_subtotal' => session('cart_subtotal'),
+                'selected_currency' => session('selected_currency'),
+                'checkout' => session('checkout'),
+            ]);
+
             $order = $this->billingService->createOrderFromCart(
                 $user,
                 $request->only(['billing_name', 'billing_email', 'billing_address', 'billing_city', 'billing_country', 'billing_postal_code']),
