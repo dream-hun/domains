@@ -66,6 +66,9 @@ final class PermissionSeeder extends Seeder
             ['id' => 52, 'title' => 'currency_update_rates'],
             ['id' => 53, 'title' => 'failed_registration_access'],
             ['id' => 54, 'title' => 'failed_registration_retry'],
+            ['id' => 55, 'title' => 'failed_renewal_access'],
+            ['id' => 56, 'title' => 'failed_renewal_retry'],
+            ['id' => 57, 'title' => 'ownership_assignment_access'],
         ];
 
         Permission::query()->upsert(

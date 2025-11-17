@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Actions\RenewDomainAction;
 use App\Models\Domain;
 use App\Models\Order;
+use App\Notifications\DomainRenewalNotification;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -39,6 +40,8 @@ final class ProcessDomainRenewalJob implements ShouldQueue
     public function handle(RenewDomainAction $renewAction): void
     {
         try {
+            $this->notifyUserRenewalProcessing();
+
             Log::info('Processing domain renewals for order', [
                 'order_id' => $this->order->id,
                 'order_number' => $this->order->order_number,
@@ -166,5 +169,51 @@ final class ProcessDomainRenewalJob implements ShouldQueue
 
         // TODO: Send notification to admin about failed job
         // TODO: Consider creating a support ticket
+    }
+
+    /**
+     * @return array<int, array{name: string, years: int}>
+     */
+    private function renewalItems(): array
+    {
+        return collect($this->order->items ?? [])
+            ->filter(fn (array $item): bool => ($item['attributes']['type'] ?? null) === 'renewal')
+            ->map(function (array $item): array {
+                $years = (int) ($item['attributes']['years'] ?? $item['quantity'] ?? 1);
+
+                return [
+                    'name' => $item['name'] ?? 'Domain ID: '.($item['id'] ?? 'unknown'),
+                    'years' => max($years, 1),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function notifyUserRenewalProcessing(): void
+    {
+        $this->order->loadMissing('user');
+
+        $user = $this->order->user;
+
+        if (! $user) {
+            Log::warning('Skipping domain renewal notification because order has no associated user', [
+                'order_id' => $this->order->id,
+            ]);
+
+            return;
+        }
+
+        $renewalItems = $this->renewalItems();
+
+        if ($renewalItems === []) {
+            Log::info('Skipping domain renewal notification because no renewal items were found', [
+                'order_id' => $this->order->id,
+            ]);
+
+            return;
+        }
+
+        $user->notify(new DomainRenewalNotification($this->order, $renewalItems));
     }
 }

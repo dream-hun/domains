@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class RetryDomainRegistrationJob implements ShouldQueue
 {
@@ -143,7 +144,7 @@ final class RetryDomainRegistrationJob implements ShouldQueue
     /**
      * Handle a job failure after all retries exhausted
      */
-    public function failed(?Exception $exception): void
+    public function failed(?Throwable $exception): void
     {
         $this->failedRegistration->markAbandoned();
 
