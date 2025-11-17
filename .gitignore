@@ -12,6 +12,7 @@
 /.phpunit.cache
 /.vscode
 /.zed
+/.cursor/
 /auth.json
 /node_modules
 /public/build
@@ -20,7 +21,6 @@
 /storage/*.key
 /storage/pail
 /vendor
-/.cursor/
 /.kiro/
 Homestead.json
 Homestead.yaml
