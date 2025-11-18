@@ -10,10 +10,12 @@ use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Models\DomainRenewal;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\User;
-use App\Services\Domain\DomainRegistrationServiceInterface;
+use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -32,11 +34,14 @@ final readonly class RenewalService
             'failed' => [],
         ];
 
+        /** @var OrderItem $orderItem */
         foreach ($order->orderItems as $orderItem) {
             // Skip non-renewal items
             if ($orderItem->domain_type !== 'renewal') {
                 continue;
             }
+
+            $oldExpiryDate = null;
 
             try {
                 $domain = Domain::query()->find($orderItem->domain_id);
@@ -70,8 +75,8 @@ final readonly class RenewalService
                 );
 
                 if ($result['success']) {
-                    // Calculate new expiry date
-                    $newExpiryDate = $oldExpiryDate->addYears($orderItem->years);
+                    // Calculate new expiry date (clone to avoid mutating the original)
+                    $newExpiryDate = $oldExpiryDate ? (clone $oldExpiryDate)->addYears($orderItem->years) : now()->addYears($orderItem->years);
 
                     // Update domain expiry date
                     $domain->update([
@@ -94,7 +99,7 @@ final readonly class RenewalService
                     $results['successful'][] = [
                         'domain' => $domain->name,
                         'years' => $orderItem->years,
-                        'old_expiry' => $oldExpiryDate->format('Y-m-d'),
+                        'old_expiry' => $oldExpiryDate?->format('Y-m-d'),
                         'new_expiry' => $newExpiryDate->format('Y-m-d'),
                         'message' => 'Domain renewed successfully',
                     ];
@@ -155,7 +160,7 @@ final readonly class RenewalService
     {
         $domainPrice = $this->resolveDomainPrice($domain);
 
-        if (! $domainPrice) {
+        if (! $domainPrice instanceof DomainPrice) {
             throw new Exception('Pricing information not available for domain: '.$domain->name);
         }
 
@@ -165,11 +170,7 @@ final readonly class RenewalService
 
         $unitPrice = $domainPrice->getPriceInCurrency('renewal_price', $currency);
 
-        if ($currency === 'RWF') {
-            $unitPrice = round($unitPrice);
-        } else {
-            $unitPrice = round($unitPrice, 2);
-        }
+        $unitPrice = $currency === 'RWF' ? round($unitPrice) : round($unitPrice, 2);
 
         $totalPrice = $unitPrice * $years;
         $totalPrice = $currency === 'RWF' ? round($totalPrice) : round($totalPrice, 2);
@@ -200,7 +201,7 @@ final readonly class RenewalService
         }
 
         // Check if domain has expired for too long (grace period)
-        if ($domain->expires_at && $domain->expires_at->isPast()) {
+        if ($domain->expires_at instanceof Carbon && $domain->expires_at->isPast()) {
             $daysSinceExpiry = now()->diffInDays($domain->expires_at);
             if ($daysSinceExpiry > 30) { // 30 day grace period
                 return [
@@ -224,7 +225,9 @@ final readonly class RenewalService
     public function resolveDomainPrice(Domain $domain): ?DomainPrice
     {
         if ($domain->relationLoaded('domainPrice') || $domain->domainPrice) {
-            return $domain->domainPrice;
+            $domainPrice = $domain->domainPrice;
+
+            return $domainPrice instanceof DomainPrice ? $domainPrice : null;
         }
 
         $tld = $this->extractTld($domain->name);
@@ -291,7 +294,7 @@ final readonly class RenewalService
     /**
      * Get the appropriate domain service based on the domain's registrar
      */
-    private function getDomainService(Domain $domain): DomainRegistrationServiceInterface
+    private function getDomainService(Domain $domain): DomainServiceInterface
     {
         // Determine which service to use based on domain registrar
         return match (mb_strtolower($domain->registrar ?? 'epp')) {

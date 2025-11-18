@@ -166,7 +166,6 @@ final class CartComponent extends Component
     public function getFormattedItemPrice($item): string
     {
         $itemCurrency = $item->attributes->currency ?? 'USD';
-        $itemPrice = $item->price;
 
         try {
             $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
@@ -193,7 +192,6 @@ final class CartComponent extends Component
     public function getFormattedItemTotal($item): string
     {
         $itemCurrency = $item->attributes->currency ?? 'USD';
-        $itemPrice = $item->price;
 
         try {
             $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
@@ -711,7 +709,7 @@ final class CartComponent extends Component
                     'error' => $fallbackException->getMessage(),
                 ]);
 
-                throw new Exception('Unable to convert currency.');
+                throw new Exception('Unable to convert currency.', $exception->getCode(), $exception);
             }
         }
     }

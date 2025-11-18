@@ -3,9 +3,9 @@
         <ul class="pagination justify-content-center">
             {{-- Previous Page Link --}}
             @if ($paginator->onFirstPage())
-                <li class="page-item disabled"><span class="page-link"><i class="bi bi-arrow-left"></i> </span></li>
+                <li class="page-item disabled"><span class="page-link"><i class="bi bi-arrow-left"></i></span></li>
             @else
-                <li class="page-item"><a class="page-link" href="{{ $paginator->previousPageUrl() }}" rel="prev"><i class="bi bi-arrow-right"></i></a></li>
+                <li class="page-item"><a class="page-link" href="{{ $paginator->previousPageUrl() }}" rel="prev"><i class="bi bi-arrow-left"></i></a></li>
             @endif
 
             {{-- Pagination Elements --}}

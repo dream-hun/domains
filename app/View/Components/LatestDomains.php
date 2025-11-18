@@ -15,7 +15,7 @@ final class LatestDomains extends Component
 
         $domains = Domain::query()->latest('registered_at')
             ->limit(10)
-            ->orderBy('registered_at', 'desc')
+            ->latest('registered_at')
             ->get();
 
         return view('components.latest-domains', ['domains' => $domains]);

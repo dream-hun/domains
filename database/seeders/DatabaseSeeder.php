@@ -22,6 +22,10 @@ final class DatabaseSeeder extends Seeder
             DomainSeeder::class,
             CurrencySeeder::class,
             CouponSeeder::class,
+            HostingCategorySeeder::class,
+            HostingPlanSeeder::class,
+            HostingPlanPriceSeeder::class,
+            FeatureCategorySeeder::class,
         ]);
     }
 }

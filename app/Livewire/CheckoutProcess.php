@@ -354,7 +354,7 @@ final class CheckoutProcess extends Component
     private function convertToDisplayCurrency(float $amount, string $fromCurrency): float
     {
         $fromCurrency = mb_strtoupper($fromCurrency);
-        $toCurrency = mb_strtoupper($this->currency);
+        $toCurrency = mb_strtoupper((string) $this->currency);
 
         if ($fromCurrency === $toCurrency) {
             return $amount;
@@ -382,7 +382,7 @@ final class CheckoutProcess extends Component
                     'error' => $fallbackException->getMessage(),
                 ]);
 
-                throw new Exception('Unable to convert currency.');
+                throw new Exception('Unable to convert currency.', $exception->getCode(), $exception);
             }
         }
     }

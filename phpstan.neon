@@ -1,5 +1,5 @@
 includes:
-    - ./vendor/nunomaduro/larastan/extension.neon
+    - ./vendor/larastan/larastan/extension.neon
 
 parameters:
     paths:
@@ -9,7 +9,11 @@ parameters:
 
     level: 5
 
-    # Optional: tells Larastan to use Laravel’s container for better analysis
+    # Disable parallel processing to avoid memory issues with worker processes
+    parallel:
+        maximumNumberOfProcesses: 1
+
+    # Optional: tells Larastan to use Laravel's container for better analysis
     bootstrapFiles:
         - bootstrap/app.php
 

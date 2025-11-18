@@ -11,6 +11,6 @@ final class ListDomainPriceAction
 {
     public function handle(int $perPage = 10): LengthAwarePaginator
     {
-        return DomainPrice::query()->select(['uuid', 'tld', 'type', 'register_price', 'renewal_price', 'transfer_price', 'redemption_price'])->latest()->paginate($perPage);
+        return DomainPrice::query()->select(['uuid', 'tld', 'type', 'register_price', 'renewal_price', 'transfer_price', 'redemption_price'])->orderBy('id', 'desc')->latest()->paginate($perPage);
     }
 }
