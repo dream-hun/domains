@@ -23,12 +23,12 @@
     <!-- favicon -->
     <link rel="shortcut icon" type="image/x-icon" href="assets/images/fav.png">
 
-    <title>@yield('page-title') - {{config('app.name')}}</title>
+    <title>@yield('page-title') - {{ config('app.name') }}</title>
 
     <!-- Importing Google Fonts -->
     <link href="{{ asset('font/web/inter.css') }}" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{asset('font/bootstrap-icons.min.css')}}">
+    <link href="{{ asset('font/bootstrap-icons.min.css') }}" rel="stylesheet">
     <!-- all styles -->
     <link rel="preload stylesheet" href="{{ asset('assets/css/plugins.min.css') }}" as="style">
     <!-- fontawesome css -->
@@ -41,48 +41,56 @@
         [x-cloak] {
             display: none !important;
         }
+
         .cursor-pointer {
             cursor: pointer;
         }
-        body{
+
+        body {
             font-family: 'Inter', sans-serif !important;
         }
-        h1,h2,h3,h4,h5,h6{
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             font-family: 'Inter', sans-serif !important;
         }
     </style>
 </head>
 
 <body class="loaded domain-page">
-<x-menu-component/>
+    <x-menu-component />
 
-{{ $slot }}
-<x-footer-component/>
-<div id="anywhere-home" class="">
-</div>
-<x-sidebar-menu/>
-<div class="loader-wrapper">
-    <div class="loader">
+    {{ $slot }}
+    <x-footer-component />
+    <div id="anywhere-home" class="">
     </div>
-    <div class="loader-section section-left"></div>
-    <div class="loader-section section-right"></div>
-</div>
-<div class="progress-wrap" style="z-index: 1000;">
-    <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
-        <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98"
-              style="transition: stroke-dashoffset 10ms linear 0s; stroke-dasharray: 307.919, 307.919; stroke-dashoffset: 307.919; height: 20px; width: auto;">
-        </path>
-    </svg>
-</div>
-<!-- BACK TO TOP AREA EDN -->
+    <x-sidebar-menu />
+    <div class="loader-wrapper">
+        <div class="loader">
+        </div>
+        <div class="loader-section section-left"></div>
+        <div class="loader-section section-right"></div>
+    </div>
+    <div class="progress-wrap" style="z-index: 1000;">
+        <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
+            <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98"
+                style="transition: stroke-dashoffset 10ms linear 0s; stroke-dasharray: 307.919, 307.919; stroke-dashoffset: 307.919; height: 20px; width: auto;">
+            </path>
+        </svg>
+    </div>
+    <!-- BACK TO TOP AREA EDN -->
 
-<!-- All Plugin -->
-<script defer src="{{ asset('assets/js/plugins.min.js') }}"></script>
-<!-- main js -->
-<script defer src="{{ asset('assets/js/main.js') }}"></script>
+    <!-- All Plugin -->
+    <script defer src="{{ asset('assets/js/plugins.min.js') }}"></script>
+    <!-- main js -->
+    <script defer src="{{ asset('assets/js/main.js') }}"></script>
 
-@livewireScripts
-@yield('scripts')
+    @livewireScripts
+    @yield('scripts')
 </body>
 
 </html>

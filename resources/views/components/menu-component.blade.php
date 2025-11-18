@@ -61,36 +61,32 @@
                                         <div class="row g-0">
                                             <div class="col-lg-12">
                                                 <ul class="mega-menu-item">
-                                                    <li>
-                                                        <a href="{{-- {{ route('shared.index') }} --}}">
-                                                            <img src="{{ asset('assets/images/mega-menu/22.svg') }}"
-                                                                alt="icon">
-                                                            <div class="info">
-                                                                <p>Shared Hosting</p>
-                                                                <span>Manage Shared Hosting</span>
-                                                            </div>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#">
-                                                            <img src="{{ asset('assets/images/mega-menu/27.svg') }}"
-                                                                alt="icon">
-                                                            <div class="info">
-                                                                <p>VPS - High Storage</p>
-                                                                <span>Get your highest storage VPS</span>
-                                                            </div>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#">
-                                                            <img src="{{ asset('assets/images/mega-menu/24.svg') }}"
-                                                                alt="icon">
-                                                            <div class="info">
-                                                                <p>VPS High Performance</p>
-                                                                <span>Dedicated resources</span>
-                                                            </div>
-                                                        </a>
-                                                    </li>
+                                                    @foreach ($hostingCategories as $category)
+                                                        <li>
+                                                            <a href="{{ route('hosting.categories.show', $category->slug) }}">
+                                                                @if($category->slug == 'shared-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/22.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'wordpress-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/27.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'vps-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/24.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'reseller-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/25.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'dedicated-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/26.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'cloud-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/28.svg') }}" alt="icon">
+                                                                @else
+                                                                    <img src="{{ asset('assets/images/mega-menu/22.svg') }}" alt="icon">
+                                                                @endif
+                                                               
+                                                                <div class="info">
+                                                                    <p>{{ $category->name }}</p>
+                                                                    <span>{{ $category->description }}</span>
+                                                                </div>
+                                                            </a>
+                                                        </li>
+                                                    @endforeach
                                                 </ul>
                                             </div>
 

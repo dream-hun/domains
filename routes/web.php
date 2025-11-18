@@ -10,12 +10,18 @@ use App\Http\Controllers\Admin\DomainController;
 use App\Http\Controllers\Admin\DomainOperationsController;
 use App\Http\Controllers\Admin\DomainPriceController;
 use App\Http\Controllers\Admin\FailedDomainRegistrationController;
+use App\Http\Controllers\Admin\FeatureCategoryController;
+use App\Http\Controllers\Admin\HostingCategoryController;
+use App\Http\Controllers\Admin\HostingFeatureController;
+use App\Http\Controllers\Admin\HostingPlanController;
+use App\Http\Controllers\Admin\HostingPlanPriceController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CategoryShowController;
 use App\Http\Controllers\CheckoutController as RenewalCheckoutController;
 use App\Http\Controllers\DomainRenewalController;
 use App\Http\Controllers\LandingController;
@@ -28,6 +34,7 @@ use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
+Route::get('/hosting/{slug}', CategoryShowController::class)->name('hosting.categories.show');
 
 Route::get('/shopping-cart', CartController::class)->name('cart.index');
 Route::get('/domains', [SearchDomainController::class, 'index'])->name('domains');
@@ -52,6 +59,11 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::get('domains/{domain:uuid}/nameservers', [DomainController::class, 'edit'])->name('domains.edit');
     Route::put('domains/{domain:uuid}/nameservers', [DomainController::class, 'updateNameservers'])->name('domains.nameservers.update');
 
+    Route::resource('hosting-categories', HostingCategoryController::class)->except(['show']);
+    Route::resource('hosting-plans', HostingPlanController::class)->except(['show']);
+    Route::resource('hosting-plan-prices', HostingPlanPriceController::class)->except(['show']);
+    Route::resource('feature-categories', FeatureCategoryController::class)->except(['show']);
+    Route::resource('hosting-features', HostingFeatureController::class)->except(['show']);
     Route::resource('permissions', PermissionsController::class);
     Route::resource('roles', RolesController::class);
     Route::resource('users', UsersController::class);

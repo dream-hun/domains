@@ -99,6 +99,61 @@
                         </a>
                     </li>
                 @endcan
+                @can('hosting_category_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.hosting-categories.index') }}"
+                            class="nav-link {{ request()->is('admin/hosting-categories*') ? 'active' : '' }}">
+                            <i class="bi bi-hdd"></i>
+                            <p>
+                                Hosting Categories
+                            </p>
+                        </a>
+                    </li>
+                @endcan
+                @can('hosting_plan_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.hosting-plans.index') }}"
+                            class="nav-link {{ request()->is('admin/hosting-plans*') ? 'active' : '' }}">
+                            <i class="bi bi-hdd"></i>
+                            <p>
+                                Hosting Plans
+                            </p>
+                        </a>
+                    </li>
+                @endcan
+                @can('hosting_plan_price_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.hosting-plan-prices.index') }}"
+                            class="nav-link {{ request()->is('admin/hosting-plan-prices*') ? 'active' : '' }}">
+                            <i class="bi bi-cash-stack"></i>
+                            <p>
+                                Hosting Plan Prices
+                            </p>
+                        </a>
+                    </li>
+                @endcan
+                @can('feature_category_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.feature-categories.index') }}"
+                            class="nav-link {{ request()->is('admin/feature-categories*') ? 'active' : '' }}">
+                            <i class="bi bi-stars"></i>
+                            <p>
+                                Feature Categories
+                            </p>
+                        </a>
+                    </li>
+                @endcan
+                @can('hosting_feature_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.hosting-features.index') }}" class="nav-link {{ request()->is('admin/hosting-features*') ? 'active' : '' }}">
+                            <i class="bi bi-cpu"></i>
+                            <p>
+                                Hosting Features
+                            </p>
+                        </a>
+                    </li>
+                @endcan
+                
                 @can('setting_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.settings.index') }}"

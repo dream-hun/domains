@@ -144,6 +144,6 @@ final class DomainPrice extends Model
             $currency = 'RWF';
         }
 
-        return in_array($currency, ['RWF'], true);
+        return $currency === 'RWF';
     }
 }

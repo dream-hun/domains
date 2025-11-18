@@ -538,7 +538,7 @@ final class CheckoutWizard extends Component
      */
     private function convertCartItemsCurrency($cartItems, string $targetCurrency)
     {
-        return $cartItems->map(function ($item) use ($targetCurrency) {
+        return $cartItems->map(function ($item) use ($targetCurrency): object {
             $itemCurrency = $item->attributes->currency ?? 'USD';
             $itemPrice = $item->price;
 

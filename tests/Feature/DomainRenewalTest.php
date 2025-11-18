@@ -115,6 +115,7 @@ it('requires renewal totals to meet stripe minimum', function (): void {
         ]);
 
     $response->assertSessionHas('error');
+
     expect(Cart::getContent())->toBeEmpty();
 });
 
