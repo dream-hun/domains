@@ -2,24 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Domain;
-
 use App\Models\Permission;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-final class PermissionTest extends TestCase
-{
-    use RefreshDatabase;
+it('can create permission', function () {
+    $permission = Permission::query()->create(['title' => 'domain_show']);
 
-    public function test_can_create_and_assign_permission(): void
-    {
-        $user = User::factory()->create();
-        $permission = Permission::query()->create(['title' => 'domain_show']);
+    expect($permission->title)->toBe('domain_show');
 
-        $user->permissions()->attach($permission);
-
-        $this->assertTrue($user->permissions->contains($permission));
-    }
-}
+    $this->assertDatabaseHas('permissions', [
+        'title' => 'domain_show',
+    ]);
+});

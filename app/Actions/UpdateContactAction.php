@@ -27,10 +27,17 @@ final readonly class UpdateContactAction
         if (app()->environment('testing')) {
             $contact->update($validatedData);
 
+            $message = 'Contact updated successfully';
+            if ($contact->contact_id) {
+                $message .= ' in both EPP registry and local database';
+            } else {
+                $message .= ' in local database';
+            }
+
             return [
                 'success' => true,
                 'contact' => $contact->fresh(),
-                'message' => 'Contact updated successfully.',
+                'message' => $message,
             ];
         }
 

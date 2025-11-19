@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Livewire\CheckoutProcess;
 use App\Models\Contact;
 use App\Models\Currency;
 use App\Models\DomainPrice;
@@ -9,6 +10,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Services\BillingService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
+use Livewire\Livewire;
 
 beforeEach(function (): void {
     // Seed roles first
@@ -126,21 +128,18 @@ it('stores checkout session data when proceeding to payment', function (): void 
         ],
     ]);
 
-    $response = $this->actingAs($this->user)->postJson(route('checkout.proceed'), [
-        'payment_method' => 'stripe',
-        'total' => 12.99,
-    ]);
-
-    $response->assertOk();
-    $response->assertJson([
-        'success' => true,
-        'redirect_url' => route('payment.index'),
-    ]);
+    Livewire::actingAs($this->user)
+        ->test(CheckoutProcess::class)
+        ->set('paymentMethod', 'stripe')
+        ->set('selectedContactId', $this->contact->id)
+        ->call('proceedToPayment')
+        ->assertRedirect(route('payment.index'));
 
     expect(session('checkout'))->not->toBeNull();
     $checkoutData = session('checkout');
     expect($checkoutData['payment_method'])->toBe('stripe');
-    expect($checkoutData['total'])->toBe(12.99);
+    // Check float equality with some tolerance or direct value if exact
+    expect((float) $checkoutData['total'])->toBe(12.99);
 });
 
 it('uses selected contact for domain registration', function (): void {

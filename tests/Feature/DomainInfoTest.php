@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 uses(RefreshDatabase::class);
 
 test('can view domain info with contacts', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email_verified_at' => now()]);
 
     // Create and assign necessary permissions
     $permission = Permission::query()->create(['title' => 'domain_show']);
@@ -27,11 +27,14 @@ test('can view domain info with contacts', function (): void {
     ]);
     $contact = Contact::factory()->create(['user_id' => $user->id]);
 
-    $domain->contacts()->attach($contact->id);
+    $domain->contacts()->attach($contact->id, [
+        'type' => 'registrant',
+        'user_id' => $user->id,
+    ]);
 
     $this->actingAs($user)
-        ->get(route('admin.domains.info', $domain->uuid))
+        ->get(route('admin.domain.info', $domain->uuid))
         ->assertOk()
-        ->assertViewIs('admin.domains.domainInfo')
-        ->assertViewHas('domainInfo');
+        ->assertViewIs('admin.domainOps.info')
+        ->assertViewHas('domain');
 });

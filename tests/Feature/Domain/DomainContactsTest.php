@@ -6,6 +6,7 @@ use App\Models\Contact;
 use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Models\Permission;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\Domain\DomainServiceInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,15 +15,20 @@ use Illuminate\Support\Str;
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    // Create permissions
-    Permission::query()->create(['name' => 'domain_show']);
-    Permission::query()->create(['name' => 'domain_edit']);
+    // Ensure roles exist
+    $adminRole = Role::query()->firstOrCreate(['id' => 1], ['title' => 'Admin']);
+    Role::query()->firstOrCreate(['id' => 2], ['title' => 'User']);
+
+    // Create permissions and attach to admin role
+    $permissionIds = [
+        Permission::query()->firstOrCreate(['title' => 'domain_show'])->id,
+        Permission::query()->firstOrCreate(['title' => 'domain_edit'])->id,
+    ];
+
+    $adminRole->permissions()->sync($permissionIds);
 
     $this->user = User::factory()->create(['email' => 'test.user@example.com']);
-    $this->user->permissions()->sync([
-        Permission::query()->where('name', 'domain_show')->first()->id,
-        Permission::query()->where('name', 'domain_edit')->first()->id,
-    ]);
+    $this->user->roles()->sync([$adminRole->id]);
 
     // Create a domain price first
     $this->domainPrice = DomainPrice::factory()->create([
@@ -49,7 +55,6 @@ test('user can refresh domain info', function (): void {
             'domain' => $this->domain->name,
             'expiry_date' => '2024-12-31',
             'locked' => true,
-            'whoisguard_enabled' => true,
             'auto_renew' => false,
         ]);
 
@@ -62,9 +67,9 @@ test('user can refresh domain info', function (): void {
         ->assertSessionHas('success');
 
     $this->domain->refresh();
-    expect($this->domain->locked)->toBeTrue();
-    expect($this->domain->whoisguard_enabled)->toBeTrue();
+    expect($this->domain->is_locked)->toBeTrue();
     expect($this->domain->auto_renew)->toBeFalse();
+    expect($this->domain->expires_at->format('Y-m-d'))->toBe('2024-12-31');
 });
 
 test('user can update domain contacts', function (): void {
@@ -86,7 +91,7 @@ test('user can update domain contacts', function (): void {
     $this->app->instance(DomainServiceInterface::class, $mockDomainService);
 
     $response = $this->actingAs($this->user)
-        ->post(route('admin.domains.update-contacts', ['domain' => $this->domain]), $contactData);
+        ->put(route('admin.domains.contacts.update', $this->domain->uuid), $contactData);
 
     $response->assertRedirect()
         ->assertSessionHas('success');
@@ -114,7 +119,7 @@ test('unauthorized user cannot update domain contacts', function (): void {
     $unauthorizedUser = User::factory()->create(['email' => 'unauthorized2@example.com']);
 
     $response = $this->actingAs($unauthorizedUser)
-        ->post(route('admin.domains.update-contacts', ['domain' => $this->domain]), []);
+        ->put(route('admin.domains.contacts.update', $this->domain->uuid), []);
 
     $response->assertForbidden();
 });

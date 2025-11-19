@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Domain;
 
-use App\Services\Domain\LocalDomainService;
+use AfriCC\EPP\Client as EPPClient;
+use App\Services\Domain\EppDomainService;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use ReflectionClass;
 use Tests\TestCase;
 
 final class LocalDomainServiceTest extends TestCase
@@ -19,11 +21,25 @@ final class LocalDomainServiceTest extends TestCase
         // Mock the Log facade
         Log::shouldReceive('warning')->zeroOrMoreTimes();
         Log::shouldReceive('error')->zeroOrMoreTimes();
+        Log::shouldReceive('debug')->zeroOrMoreTimes();
+        Log::shouldReceive('info')->zeroOrMoreTimes();
 
-        // Create a mock of the LocalDomainService
-        $service = $this->getMockBuilder(LocalDomainService::class)
+        // Create a mock of the EppDomainService
+        $service = $this->getMockBuilder(EppDomainService::class)
             ->onlyMethods(['connectWithRetry'])
+            ->disableOriginalConstructor()
             ->getMock();
+
+        // Initialize required properties via Reflection
+        $reflection = new ReflectionClass(EppDomainService::class);
+
+        $clientProperty = $reflection->getProperty('client');
+        $clientProperty->setAccessible(true);
+        $clientProperty->setValue($service, $this->createMock(EPPClient::class));
+
+        $configProperty = $reflection->getProperty('config');
+        $configProperty->setAccessible(true);
+        $configProperty->setValue($service, ['host' => 'test.host']);
 
         // Set up the mock to simulate a successful connection after retries
         $service->expects($this->once())
@@ -32,7 +48,8 @@ final class LocalDomainServiceTest extends TestCase
 
         // Call the method that uses the connectWithRetry method
         try {
-            $result = $service->checkAvailability('example.com');
+            // EppDomainService::checkAvailability expects an array
+            $service->checkAvailability(['example.com']);
 
             // If we get here, the test passes
             $this->assertTrue(true);
@@ -47,10 +64,22 @@ final class LocalDomainServiceTest extends TestCase
      */
     public function test_all_methods_use_connect_with_retry(): void
     {
-        // Create a mock of the LocalDomainService
-        $service = $this->getMockBuilder(LocalDomainService::class)
+        // Create a mock of the EppDomainService
+        $service = $this->getMockBuilder(EppDomainService::class)
             ->onlyMethods(['connectWithRetry'])
+            ->disableOriginalConstructor()
             ->getMock();
+
+        // Initialize required properties via Reflection
+        $reflection = new ReflectionClass(EppDomainService::class);
+
+        $clientProperty = $reflection->getProperty('client');
+        $clientProperty->setAccessible(true);
+        $clientProperty->setValue($service, $this->createMock(EPPClient::class));
+
+        $configProperty = $reflection->getProperty('config');
+        $configProperty->setAccessible(true);
+        $configProperty->setValue($service, ['host' => 'test.host']);
 
         // Set up the mock to expect multiple calls to connectWithRetry
         $service->expects($this->atLeastOnce())
@@ -62,7 +91,7 @@ final class LocalDomainServiceTest extends TestCase
         try {
             // These calls will fail because we're not setting up the full mock chain
             // But we only care that connectWithRetry is called
-            $service->checkAvailability('example.com');
+            $service->checkAvailability(['example.com']);
         } catch (Exception) {
             // Expected
         }

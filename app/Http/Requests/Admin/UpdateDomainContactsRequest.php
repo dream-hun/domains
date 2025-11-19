@@ -4,13 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Domain;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 final class UpdateDomainContactsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        /** @var Domain|null $domain */
+        $domain = $this->route('domain');
+
+        if ($domain instanceof Domain) {
+            return Gate::allows('domain_edit') || $domain->owner_id === $this->user()?->id;
+        }
+
+        return Gate::allows('domain_edit');
     }
 
     public function rules(): array
@@ -37,10 +46,10 @@ final class UpdateDomainContactsRequest extends FormRequest
         }
 
         return [
-            'registrant.contact_id' => ['nullable', 'exists:contacts,id'],
-            'admin.contact_id' => ['nullable', 'exists:contacts,id'],
-            'technical.contact_id' => ['nullable', 'exists:contacts,id'],
-            'billing.contact_id' => ['nullable', 'exists:contacts,id'],
+            'registrant.contact_id' => ['sometimes', 'nullable', 'integer', 'exists:contacts,id'],
+            'admin.contact_id' => ['sometimes', 'nullable', 'integer', 'exists:contacts,id'],
+            'technical.contact_id' => ['sometimes', 'nullable', 'integer', 'exists:contacts,id'],
+            'billing.contact_id' => ['sometimes', 'nullable', 'integer', 'exists:contacts,id'],
         ];
 
     }

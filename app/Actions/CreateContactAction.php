@@ -13,7 +13,8 @@ use Illuminate\Support\Str;
 final readonly class CreateContactAction
 {
     public function __construct(
-        private CreateDualProviderContactAction $dualProviderContactAction
+        private CreateDualProviderContactAction $dualProviderContactAction,
+        private bool $useTestingProviderResults = true
     ) {}
 
     /**
@@ -42,7 +43,7 @@ final readonly class CreateContactAction
             $preparedData['contact_id'] = 'CON'.mb_strtoupper(Str::random(8));
         }
 
-        if (app()->environment('testing')) {
+        if ($this->shouldUseTestingProviderResults()) {
             $providerResults = $this->createTestingProviderResults($preparedData);
         } else {
             $providerResults = $this->dualProviderContactAction->handle($preparedData);
@@ -56,7 +57,7 @@ final readonly class CreateContactAction
         return [
             'success' => true,
             'contact' => $contact,
-            'message' => 'Contact created successfully in both providers.',
+            'message' => 'Contact created successfully in both EPP registry and local database.',
             'epp' => $providerResults['epp'],
             'namecheap' => $providerResults['namecheap'],
         ];
@@ -101,5 +102,10 @@ final readonly class CreateContactAction
         unset($data['country_id']);
 
         return $data;
+    }
+
+    private function shouldUseTestingProviderResults(): bool
+    {
+        return app()->environment('testing') && $this->useTestingProviderResults;
     }
 }

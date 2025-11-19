@@ -3,12 +3,15 @@
 declare(strict_types=1);
 
 use App\Enums\Coupons\CouponType;
+use App\Livewire\CartComponent;
+use App\Livewire\CheckoutProcess;
 use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Role;
 use App\Models\User;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Support\Str;
+use Livewire\Livewire;
 
 beforeEach(function (): void {
     // Create necessary roles for user creation
@@ -31,8 +34,9 @@ it('displays checkout page with empty cart', function (): void {
 
     $response = $this->actingAs($user)->get(route('checkout.index'));
 
-    $response->assertStatus(200);
-    $response->assertSee('Your cart is empty');
+    $response->assertStatus(302);
+    $response->assertRedirect(route('dashboard'));
+    $response->assertSessionHas('error', 'Your cart is empty.');
 });
 
 it('displays checkout page with cart items', function (): void {
@@ -53,9 +57,7 @@ it('displays checkout page with cart items', function (): void {
     $response = $this->actingAs($user)->get(route('checkout.index'));
 
     $response->assertStatus(200);
-    $response->assertSee('Order Review');
-    $response->assertSee('test-domain.com');
-    $response->assertSee('$10.99');
+    $response->assertSeeLivewire('checkout-process');
 });
 
 it('applies coupon successfully', function (): void {
@@ -85,14 +87,17 @@ it('applies coupon successfully', function (): void {
         'uses' => 0,
     ]);
 
-    $response = $this->actingAs($user)->post(route('checkout.apply-coupon', 'TEST10'));
+    Livewire::actingAs($user)
+        ->test(CartComponent::class)
+        ->set('couponCode', 'TEST10')
+        ->call('applyCoupon')
+        ->assertDispatched('notify', function ($eventName, $payload) {
+            return $payload[0]['type'] === 'success' && str_contains($payload[0]['message'], 'applied');
+        });
 
-    $response->assertStatus(200);
-    $response->assertJson([
-        'success' => true,
-        'coupon' => 'TEST10',
-        'discount' => 10.0, // 10% of $100
-    ]);
+    $couponData = session('coupon');
+    expect($couponData['code'])->toBe('TEST10');
+    expect((float) $couponData['discount_amount'])->toBe(10.0); // 10% of $100
 });
 
 it('rejects invalid coupon', function (): void {
@@ -110,12 +115,15 @@ it('rejects invalid coupon', function (): void {
         ],
     ]);
 
-    $response = $this->actingAs($user)->post(route('checkout.apply-coupon', 'INVALID'));
+    Livewire::actingAs($user)
+        ->test(CartComponent::class)
+        ->set('couponCode', 'INVALID')
+        ->call('applyCoupon')
+        ->assertDispatched('notify', function ($eventName, $payload) {
+            return $payload[0]['type'] === 'error';
+        });
 
-    $response->assertStatus(400);
-    $response->assertJson([
-        'success' => false,
-    ]);
+    expect(session()->has('coupon'))->toBeFalse();
 });
 
 it('proceeds to payment with valid data', function (): void {
@@ -133,17 +141,18 @@ it('proceeds to payment with valid data', function (): void {
         ],
     ]);
 
-    $response = $this->actingAs($user)->post(route('checkout.proceed'), [
-        'payment_method' => 'stripe',
-        'coupon_code' => null,
-        'discount' => 0,
-        'total' => 100.00,
+    // Create a contact for the user to select
+    $contact = App\Models\Contact::factory()->create([
+        'user_id' => $user->id,
+        'is_primary' => true,
     ]);
 
-    $response->assertStatus(200);
-    $response->assertJson([
-        'success' => true,
-    ]);
+    Livewire::actingAs($user)
+        ->test(CheckoutProcess::class)
+        ->set('paymentMethod', 'stripe')
+        ->set('selectedContactId', $contact->id)
+        ->call('proceedToPayment')
+        ->assertRedirect(route('payment.index'));
 
     // Verify checkout data is stored in session
     expect(session('checkout'))->not->toBeNull();
@@ -152,16 +161,17 @@ it('proceeds to payment with valid data', function (): void {
 it('fails to proceed with empty cart', function (): void {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->post(route('checkout.proceed'), [
-        'payment_method' => 'stripe',
-        'coupon_code' => null,
-        'discount' => 0,
-        'total' => 0,
-    ]);
+    // Cart is empty by default
 
-    $response->assertStatus(400);
-    $response->assertJson([
-        'success' => false,
-        'message' => 'Your cart is empty',
-    ]);
+    Livewire::actingAs($user)
+        ->test(CheckoutProcess::class)
+        ->call('proceedToPayment');
+    // CheckoutProcess::proceedToPayment returns null if empty, and sets errorMessage
+    // It does NOT return 400 status because it's Livewire.
+
+    // We can check if errorMessage is set
+    Livewire::actingAs($user)
+        ->test(CheckoutProcess::class)
+        ->call('proceedToPayment')
+        ->assertSet('errorMessage', 'Your cart is empty.');
 });

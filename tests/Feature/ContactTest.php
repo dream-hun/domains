@@ -186,7 +186,7 @@ test('can update contact', function (): void {
     $response = $this->put(route('admin.contacts.update', $contact), $updateData);
 
     $response->assertRedirect(route('admin.contacts.show', $contact))
-        ->assertSessionHas('success', 'Contact updated successfully.');
+        ->assertSessionHas('success', 'Contact updated successfully in both EPP registry and local database');
 
     $contact->refresh();
     expect($contact->first_name)->toBe('Jane');

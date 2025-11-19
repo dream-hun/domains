@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AssignDomainOwnerRequest;
 use App\Http\Requests\Admin\DomainTransferRequest;
 use App\Http\Requests\Admin\ReactivateDomainRequest;
+use App\Http\Requests\Admin\ToggleDomainLockRequest;
 use App\Http\Requests\Admin\UpdateDomainContactsRequest;
 use App\Http\Requests\Admin\UpdateNameserversRequest;
 use App\Models\Contact;
@@ -62,6 +63,20 @@ final class DomainController extends Controller
                 'error' => $exception->getMessage(),
             ]);
         }
+    }
+
+    public function refreshInfo(Domain $domain, GetDomainInfoAction $action): RedirectResponse
+    {
+        $canView = Gate::allows('domain_show') || $domain->owner_id === auth()->id();
+        abort_unless($canView, 403);
+
+        $result = $action->handle($domain);
+
+        if ($result['success']) {
+            return back()->with('success', $result['message'] ?? 'Domain info refreshed successfully');
+        }
+
+        return back()->withErrors(['error' => $result['message'] ?? 'Failed to refresh domain info']);
     }
 
     public function showTransferForm(Domain $domain): View
@@ -180,12 +195,12 @@ final class DomainController extends Controller
             ->withInput();
     }
 
-    public function toggleLock(Domain $domain, ToggleDomainLockAction $action): RedirectResponse
+    public function toggleLock(Domain $domain, ToggleDomainLockRequest $request, ToggleDomainLockAction $action): RedirectResponse
     {
         $canEdit = Gate::allows('domain_edit') || $domain->owner_id === auth()->id();
         abort_unless($canEdit, 403);
-        $lock = ! $domain->is_locked;
-        $result = $action->execute($domain, $lock);
+        $desiredLock = $request->has('lock') ? $request->boolean('lock') : null;
+        $result = $action->execute($domain, $desiredLock);
 
         if ($result['success']) {
             return back()->with('success', $result['message']);

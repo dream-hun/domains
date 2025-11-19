@@ -35,11 +35,19 @@ final class ContactController extends Controller
     {
         abort_if(Gate::denies('contact_access') && ! Auth::check(), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $contacts = $action->handle();
+        $search = request()->filled('search') ? (string) request()->query('search') : null;
+        $contactTypeParam = request()->filled('contact_type') ? (string) request()->query('contact_type') : null;
+        $contactType = $contactTypeParam !== null ? ContactType::tryFrom($contactTypeParam) : null;
+
+        $contacts = $action->handle($search, $contactType);
 
         return view('admin.contacts.index', [
             'contacts' => $contacts,
             'contactTypes' => ContactType::cases(),
+            'activeFilters' => [
+                'search' => $search,
+                'contact_type' => $contactType?->value,
+            ],
         ]);
     }
 

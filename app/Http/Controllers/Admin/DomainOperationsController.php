@@ -26,7 +26,9 @@ final class DomainOperationsController extends Controller
      */
     public function domainInfo(Domain $domain): View|Factory
     {
-        $domain = Domain::query()->findOrFail($domain->uuid);
+        $domain->load(['contacts' => function ($query): void {
+            $query->withPivot('type', 'user_id')->withoutGlobalScopes();
+        }]);
 
         return view('admin.domainOps.info', ['domain' => $domain]);
     }

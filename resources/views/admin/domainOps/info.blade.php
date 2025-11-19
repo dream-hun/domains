@@ -23,6 +23,11 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
+                        @php
+                            $statusValue = $domain->status instanceof \BackedEnum
+                                ? $domain->status->value
+                                : (string) $domain->status;
+                        @endphp
                         <table class="table table-bordered-0 table-sm">
                             <thead>
                             <tr>
@@ -38,8 +43,8 @@
                                 <td style="width: 25%;">{{ $domain->name }}</td>
                                 <td>
                                     <button
-                                        class="btn btn-sm btn-{{ $domain->status === 'active' ? 'success' : 'warning' }}">
-                                        <i class="bi bi-check-circle"></i> {{ ucfirst($domain->status) }}
+                                        class="btn btn-sm btn-{{ $statusValue === 'active' ? 'success' : 'warning' }}">
+                                        <i class="bi bi-check-circle"></i> {{ ucfirst($statusValue) }}
                                     </button>
                                 </td>
                                 <td style="width: 25%;">

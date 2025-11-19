@@ -596,7 +596,7 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
     public function deleteContact(string $contactId): array
     {
         try {
-            $this->connect();
+            $this->connectWithRetry();
 
             $frame = new DeleteContact;
             $frame->setId($contactId);
@@ -636,7 +636,7 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
      *
      * @throws Exception
      */
-    public function connect(): ?string
+    public function connectWithRetry(): ?string
     {
         if ($this->connected) {
             return null;
@@ -667,6 +667,16 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
     }
 
     /**
+     * Connect to the EPP server (alias for connectWithRetry)
+     *
+     * @throws Exception
+     */
+    public function connect(): ?string
+    {
+        return $this->connectWithRetry();
+    }
+
+    /**
      * Get contact information from EPP registry
      *
      * @throws Exception
@@ -674,7 +684,7 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
     public function infoContact(string $contactId): ?array
     {
         try {
-            $this->connect();
+            $this->connectWithRetry();
 
             $frame = new InfoContact;
             $frame->setId($contactId);
@@ -2049,7 +2059,7 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
 
         try {
             if (! $this->connected) {
-                $greeting = $this->connect();
+                $greeting = $this->connectWithRetry();
                 Log::info('EPP connection established', [
                     'greeting' => $greeting,
                     'host' => $this->config['host'],

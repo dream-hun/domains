@@ -27,8 +27,7 @@ beforeEach(function (): void {
     $this->user->roles()->attach($role->id);
 
     // Create a domain price first
-    $this->domainPrice = DomainPrice::factory()->create([
-        'tld' => '.com',
+    $this->domainPrice = DomainPrice::factory()->international()->create([
         'register_price' => 1000,
         'renewal_price' => 1000,
     ]);

@@ -125,11 +125,14 @@ final class ContactActionsTest extends TestCase
         // Mock Namecheap service response
         $namecheapService->shouldReceive('createContact')
             ->once()
-            ->andReturn((object) ['contact_id' => 'NC87654321']);
+            ->andReturn(Contact::factory()->make([
+                'contact_id' => 'NC87654321',
+            ]));
 
         // Create the action with mocked services
         $action = new CreateContactAction(
-            new CreateDualProviderContactAction($eppService, $namecheapService)
+            new CreateDualProviderContactAction($eppService, $namecheapService),
+            false
         );
 
         $contactData = [
@@ -177,7 +180,9 @@ final class ContactActionsTest extends TestCase
         // Mock Namecheap service response
         $namecheapService->shouldReceive('createContact')
             ->once()
-            ->andReturn((object) ['contact_id' => 'NC87654321']);
+            ->andReturn(Contact::factory()->make([
+                'contact_id' => 'NC87654321',
+            ]));
 
         // Create the action with mocked services
         $action = new CreateDomainContactAction($eppService, $namecheapService);
@@ -229,7 +234,8 @@ final class ContactActionsTest extends TestCase
 
         // Create the action with mocked services
         $action = new CreateContactAction(
-            new CreateDualProviderContactAction($eppService, $namecheapService)
+            new CreateDualProviderContactAction($eppService, $namecheapService),
+            false
         );
 
         $contactData = [

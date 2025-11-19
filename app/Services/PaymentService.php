@@ -224,14 +224,12 @@ final readonly class PaymentService
                 ];
             }
 
-            // Amount is below minimum - inform caller to adjust
+            // Amount is below minimum - automatically convert to USD
             return [
-                'valid' => false,
-                'message' => sprintf(
-                    'Stripe requires a minimum charge of $0.50 USD (or equivalent). Your total of %s %s is below this threshold. Please increase the renewal period or contact support for assistance.',
-                    number_format($amount, 2),
-                    $currency
-                ),
+                'valid' => true,
+                'currency' => 'USD',
+                'amount' => $amountInUsd,
+                'converted' => true,
             ];
 
         } catch (Exception $exception) {

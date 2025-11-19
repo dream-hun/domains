@@ -81,6 +81,7 @@ final class Domain extends Model
             'registered_at' => 'datetime',
             'expires_at' => 'datetime',
             'last_renewed_at' => 'datetime',
+            'auto_renew' => 'boolean',
             'is_locked' => 'boolean',
             'status' => DomainStatus::class,
         ];

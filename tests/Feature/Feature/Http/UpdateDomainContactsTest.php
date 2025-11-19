@@ -64,10 +64,7 @@ it('validates required contact fields', function (): void {
         ->put(route('admin.domains.contacts.update', $this->domain->uuid), []);
 
     $response->assertSessionHasErrors([
-        'registrant.contact_id',
-        'admin.contact_id',
-        'technical.contact_id',
-        'billing.contact_id',
+        'contacts' => 'Please provide at least one contact to update.',
     ]);
 });
 
