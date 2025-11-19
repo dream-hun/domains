@@ -163,13 +163,15 @@ final readonly class DomainSearchHelper
                 $result = $primaryResult[$primaryDomain];
                 $priceInfo = $this->findDomainPriceInfo($primaryTld);
                 $targetCurrency = $this->getUserCurrency()->code;
+                $available = $result['available'];
+                $reason = $result['reason'] ?? null;
 
                 $details = [
                     'domain' => $primaryDomain,
-                    'available' => $this->normalizeAvailabilityStatus($result['available'] ?? false),
+                    'available' => $this->normalizeAvailabilityStatus($available),
                     'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency) ?? $result['price'],
                     'service_error' => false,
-                    'error_message' => $result['reason'] ?? null,
+                    'error_message' => $reason !== '' ? $reason : null,
                     'type' => DomainType::Local->value,
                     'currency' => $targetCurrency,
                     'base_currency' => $priceInfo?->getBaseCurrency() ?? 'RWF',
@@ -189,13 +191,15 @@ final readonly class DomainSearchHelper
                 $tld = explode('.', (string) $domainName)[1] ?? null;
                 $priceInfo = $this->findDomainPriceInfo($tld);
                 $targetCurrency = $this->getUserCurrency()->code;
+                $available = $result['available'];
+                $reason = $result['reason'] ?? null;
 
                 $suggestions[$domainName] = [
                     'domain' => $domainName,
-                    'available' => $this->normalizeAvailabilityStatus($result['available'] ?? false),
+                    'available' => $this->normalizeAvailabilityStatus($available),
                     'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency) ?? $result['price'],
                     'service_error' => false,
-                    'error_message' => $result['reason'] ?? null,
+                    'error_message' => $reason !== '' ? $reason : null,
                     'type' => DomainType::Local->value,
                     'currency' => $targetCurrency,
                     'base_currency' => $priceInfo?->getBaseCurrency() ?? 'RWF',
@@ -223,18 +227,18 @@ final readonly class DomainSearchHelper
                     Log::debug('International domain check result', [
                         'domain' => $primaryDomain,
                         'result' => (array) $result,
-                        'available_property' => $result->available ?? 'not_set',
-                        'error_property' => $result->error ?? 'no_error',
+                        'available_property' => $result['available'],
+                        'error_property' => $result['reason'],
                     ]);
 
                     $targetCurrency = $this->getUserCurrency()->code;
 
                     $details = [
                         'domain' => $primaryDomain,
-                        'available' => $this->normalizeAvailabilityStatus($result->available ?? false),
+                        'available' => $this->normalizeAvailabilityStatus($result['available']),
                         'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency),
-                        'service_error' => ! empty($result->error),
-                        'error_message' => $result->error ?? null,
+                        'service_error' => $result['available'] === false && $result['reason'] !== '',
+                        'error_message' => $result['reason'] !== '' ? $result['reason'] : null,
                         'type' => DomainType::International->value,
                         'currency' => $targetCurrency,
                         'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
@@ -263,18 +267,18 @@ final readonly class DomainSearchHelper
 
                     Log::debug('International suggestion result', [
                         'domain' => $domainName,
-                        'available' => $result->available ?? 'not_set',
-                        'error' => $result->error ?? 'no_error',
+                        'available' => $result['available'],
+                        'error' => $result['reason'],
                     ]);
 
                     $targetCurrency = $this->getUserCurrency()->code;
 
                     $suggestions[$domainName] = [
                         'domain' => $domainName,
-                        'available' => $this->normalizeAvailabilityStatus($result->available ?? false),
+                        'available' => $this->normalizeAvailabilityStatus($result['available']),
                         'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency),
-                        'service_error' => ! empty($result->error),
-                        'error_message' => $result->error ?? null,
+                        'service_error' => $result['available'] === false && $result['reason'] !== '',
+                        'error_message' => $result['reason'] !== '' ? $result['reason'] : null,
                         'type' => DomainType::International->value,
                         'currency' => $targetCurrency,
                         'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
@@ -283,7 +287,7 @@ final readonly class DomainSearchHelper
             }
         } catch (Exception $exception) {
             Log::error('International domain search error', ['domain' => $primaryDomain, 'error' => $exception->getMessage()]);
-            if ($details !== null && $details !== []) {
+            if ($details !== null) {
                 $details['service_error'] = true;
                 $details['error_message'] = 'Could not fetch suggestions due to a service error.';
             }

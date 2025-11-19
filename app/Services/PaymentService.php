@@ -8,6 +8,7 @@ use App\Helpers\CurrencyHelper;
 use App\Helpers\StripeHelper;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -112,6 +113,7 @@ final readonly class PaymentService
             'last_attempted_at' => now(),
         ]);
 
+        /** @var User $user */
         $user = $order->user;
 
         if (! $user->stripe_id) {
@@ -119,7 +121,7 @@ final readonly class PaymentService
                 'name' => $user->name,
                 'email' => $user->email,
                 'metadata' => [
-                    'user_id' => $user->id,
+                    'user_id' => (string) $user->id,
                 ],
             ]);
 
@@ -127,7 +129,10 @@ final readonly class PaymentService
         }
 
         // Build description from order items
-        $itemDescriptions = $order->orderItems->map(fn ($item): string => sprintf('%s (%s year(s))', $item->domain_name, $item->years))->join(', ');
+        $itemDescriptions = $order->orderItems->map(
+            /** @var \App\Models\OrderItem $item */
+            fn ($item): string => sprintf('%s (%s year(s))', $item->domain_name, $item->years)
+        )->join(', ');
 
         // Convert to Stripe amount format
         $stripeAmount = StripeHelper::convertToStripeAmount(
@@ -164,12 +169,12 @@ final readonly class PaymentService
             ),
             'cancel_url' => $cancelUrl,
             'metadata' => [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'user_id' => $user->id,
-                'payment_id' => $payment->id,
-                'original_currency' => $order->currency,
-                'original_amount' => $order->total_amount,
+                'order_id' => (string) $order->id,
+                'order_number' => (string) $order->order_number,
+                'user_id' => (string) $user->id,
+                'payment_id' => (string) $payment->id,
+                'original_currency' => (string) $order->currency,
+                'original_amount' => (string) $order->total_amount,
             ],
         ]);
 
@@ -283,6 +288,7 @@ final readonly class PaymentService
     {
         $nextAttemptNumber = (int) ($order->payments()->max('attempt_number') ?? 0) + 1;
 
+        /** @var Payment */
         return $order->payments()->create([
             'user_id' => $order->user_id,
             'status' => 'pending',

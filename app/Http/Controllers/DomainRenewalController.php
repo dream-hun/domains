@@ -26,7 +26,7 @@ final class DomainRenewalController extends Controller
 
         $domainPrice = $renewalService->resolveDomainPrice($domain);
 
-        abort_unless($domainPrice, 404, 'Pricing information not available for this domain.');
+        abort_unless($domainPrice !== null, 404, 'Pricing information not available for this domain.');
 
         $domain->setRelation('domainPrice', $domainPrice);
 

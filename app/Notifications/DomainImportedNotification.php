@@ -47,7 +47,7 @@ final class DomainImportedNotification extends Notification
             ->line('Domain: '.$this->domain->name)
             ->line('Registered: '.$this->domain->registeredAt())
             ->line('Expires: '.$this->domain->expiresAt())
-            ->line('Status: '.ucfirst($this->domain->status))
+            ->line('Status: '.ucfirst($this->domain->status !== null ? $this->domain->status->value : 'unknown'))
             ->action('View Domains', route('admin.domains.index'))
             ->line('Thank you for using our domain management system!');
     }

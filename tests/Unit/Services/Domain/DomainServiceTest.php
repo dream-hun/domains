@@ -26,8 +26,10 @@ final class DomainServiceTest extends TestCase
         // Test the checkAvailability method
         $result = $service->checkAvailability(['example.co.ke']);
         $this->assertIsArray($result);
-        $this->assertArrayHasKey('available', $result);
-        $this->assertArrayHasKey('reason', $result);
+        $this->assertArrayHasKey('example.co.ke', $result);
+        $domainResult = $result['example.co.ke'];
+        $this->assertArrayHasKey('available', $domainResult);
+        $this->assertArrayHasKey('reason', $domainResult);
 
         // Test the getDomainInfo method
         $info = $service->getDomainInfo('example.co.ke');

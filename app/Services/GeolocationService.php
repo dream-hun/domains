@@ -31,7 +31,7 @@ final class GeolocationService
 
             // In local development, check for a fallback country in environment
             if (app()->environment('local', 'testing')) {
-                $fallbackCountry = env('LOCAL_DEFAULT_COUNTRY');
+                $fallbackCountry = config('app.local_default_country');
                 if ($fallbackCountry) {
                     Log::info('Using fallback country for local development', ['country' => $fallbackCountry]);
 

@@ -7,12 +7,20 @@ namespace App\Models;
 use App\Enums\ContactType;
 use App\Models\Scopes\ContactScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
+/**
+ * @property ContactType|null $contact_type
+ * @property-read Collection<int, Domain> $domains
+ * @property-read DomainContact $pivot
+ * @property-read string $full_name
+ * @property-read string $full_address
+ */
 #[ScopedBy(ContactScope::class)]
 final class Contact extends Model
 {
@@ -27,14 +35,22 @@ final class Contact extends Model
         'is_primary' => 'boolean',
     ];
 
+    /**
+     * @return BelongsTo<User, static>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsToMany<Domain, static, DomainContact, 'pivot'>
+     */
     public function domains(): BelongsToMany
     {
-        return $this->belongsToMany(Domain::class, 'domain_contacts', 'contact_id', 'domain_id')->withPivot('type', 'user_id');
+        return $this->belongsToMany(Domain::class, 'domain_contacts', 'contact_id', 'domain_id')
+            ->using(DomainContact::class)
+            ->withPivot('type', 'user_id');
     }
 
     /**

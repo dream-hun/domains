@@ -48,6 +48,8 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
 
     /**
      * Check domain availability
+     *
+     * @return array<string, array{available: bool, reason: string, is_premium?: bool, premium_price?: float|null, eap_fee?: float}>
      */
     public function checkAvailability(array $domain): array
     {
@@ -96,13 +98,15 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
             if (isset($xml['Status']) && mb_strtolower((string) $xml['Status']) === 'error') {
                 $errorMsg = 'API returned error status';
                 if (property_exists($xml, 'Errors') && $xml->Errors !== null) {
-                    $errorMsg = (string) $xml->Errors->Error ?? $errorMsg;
+                    // Use null coalescing with a fallback string if Error is missing or empty
+                    $errorMsg = (string) ($xml->Errors->Error ?? $errorMsg);
                 }
 
                 throw new Exception('Namecheap API error: '.$errorMsg);
             }
 
             $results = [];
+
             throw_if(! property_exists($xml->CommandResponse, 'DomainCheckResult') || $xml->CommandResponse->DomainCheckResult === null, Exception::class, 'Namecheap API error: Missing DomainCheckResult in response.');
 
             $domainCheckResults = $xml->CommandResponse->DomainCheckResult;
@@ -165,10 +169,9 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
                     'error_message' => $errorMessage,
                 ]);
 
-                $results[$domainName] = (object) [
+                $results[$domainName] = [
                     'available' => $available,
-                    'reason' => $errorMessage,
-                    'error' => $errorMessage,
+                    'reason' => $errorMessage ?? '',
                     'is_premium' => $isPremium,
                     'premium_price' => $premiumPrice,
                     'eap_fee' => $eapFee,
@@ -185,10 +188,9 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
             foreach ($domain as $d) {
                 $serviceError = 'Service error: '.$exception->getMessage();
 
-                $results[$d] = (object) [
+                $results[$d] = [
                     'available' => false,
                     'reason' => $serviceError,
-                    'error' => $exception->getMessage(),
                 ];
             }
 
@@ -230,9 +232,16 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
             $params = array_merge($params, $this->getTldSpecificParams($tld));
 
             $pricing = $this->getDomainPricing($domain);
-            if ($pricing['success'] && isset($pricing['is_premium']) && $pricing['is_premium']) {
+            // Check for premium pricing keys manually since they are optional
+            $isPremium = isset($pricing['is_premium']) && $pricing['is_premium'];
+
+            if ($pricing['success'] && $isPremium) {
                 $params['IsPremiumDomain'] = 'true';
-                $params['PremiumPrice'] = $pricing['price'];
+                // Ensure we have a valid price
+                if (isset($pricing['price'])) {
+                    $params['PremiumPrice'] = $pricing['price'];
+                }
+
                 if (isset($pricing['eap_fee']) && $pricing['eap_fee'] > 0) {
                     $params['EapFee'] = $pricing['eap_fee'];
                 }
@@ -785,6 +794,8 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
 
     /**
      * Get domain pricing
+     *
+     * @return array{success: bool, message?: string, price?: float, currency?: string, is_premium?: bool, eap_fee?: float}
      */
     public function getDomainPricing(string $domain): array
     {
@@ -806,7 +817,7 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
                 $domainInfo = (array) $availability[$domain];
 
                 // If it's a premium domain, return the premium price
-                if (($domainInfo['is_premium'] ?? false) === true) {
+                if (isset($domainInfo['is_premium']) && $domainInfo['is_premium']) {
                     return [
                         'success' => true,
                         'price' => (float) ($domainInfo['premium_price'] ?? ($domainPrice->register_price / 100)),
@@ -994,6 +1005,8 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
 
     /**
      * Get domain information
+     *
+     * @return array{success: bool, domain?: string, status?: array<string>, registrant?: string, created_date?: string, expiry_date?: string, message?: string, locked?: bool, whoisguard_enabled?: bool, auto_renew?: bool, nameservers?: array<string>}
      */
     public function getDomainInfo(string $domain): array
     {
@@ -1293,8 +1306,8 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
                 'eligible' => true,
                 'locked' => $locked,
                 'message' => $locked ? 'Domain is locked - must be unlocked before transfer' : 'Domain is eligible for transfer',
-                'created_date' => $domainInfo['created_date'],
-                'expiry_date' => $domainInfo['expiry_date'],
+                'created_date' => $domainInfo['created_date'] ?? null,
+                'expiry_date' => $domainInfo['expiry_date'] ?? null,
             ];
 
         } catch (Exception $exception) {
@@ -1464,7 +1477,8 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
         if (isset($xml['Status']) && mb_strtolower((string) $xml['Status']) === 'error') {
             $errorMsg = 'API returned error status';
             if (property_exists($xml, 'Errors') && $xml->Errors !== null) {
-                $errorMsg = (string) $xml->Errors->Error ?? $errorMsg;
+                // Safe string cast with fallback
+                $errorMsg = (string) ($xml->Errors->Error ?? $errorMsg);
             }
 
             throw new Exception($errorMsg);
@@ -1580,7 +1594,7 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
     {
         $parts = explode(' ', mb_trim($fullName));
 
-        return $parts[0] ?? '';
+        return $parts[0];
     }
 
     /**

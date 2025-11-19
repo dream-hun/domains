@@ -13,9 +13,7 @@ final class DeleteFeatureCategoryAction
     public function handle(FeatureCategory $featureCategory): void
     {
         // Check if category has associated features
-        if ($featureCategory->hostingFeatures()->count() > 0) {
-            throw new Exception('Cannot delete category with associated hosting features. Please remove or reassign features first.');
-        }
+        throw_if($featureCategory->hostingFeatures()->count() > 0, Exception::class, 'Cannot delete category with associated hosting features. Please remove or reassign features first.');
 
         $categoryId = $featureCategory->id;
         $categoryName = $featureCategory->name;

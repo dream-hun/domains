@@ -12,6 +12,6 @@ final class NameserverScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
-        $builder->where('status', 'active') && $builder->where('type', 'default');
+        $builder->where('status', 'active')->where('type', 'default');
     }
 }

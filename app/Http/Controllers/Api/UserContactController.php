@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ContactType;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\DomainContact;
@@ -62,7 +63,7 @@ final class UserContactController extends Controller
             ->first();
 
         if ($domainContact) {
-            $contact->contact_type = $domainContact->type;
+            $contact->contact_type = ContactType::tryFrom($domainContact->type);
         }
 
         return response()->json([

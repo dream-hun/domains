@@ -31,8 +31,10 @@ final class ContactFactory extends Factory
             'title' => $this->faker->optional()->jobTitle(),
             'organization' => $this->faker->optional()->company(),
             'address_one' => $this->faker->streetAddress(),
+            /** @phpstan-ignore-next-line */
             'address_two' => $this->faker->optional()->secondaryAddress(),
             'city' => $this->faker->city(),
+            /** @phpstan-ignore-next-line */
             'state_province' => $this->faker->state(),
             'postal_code' => $this->faker->postcode(),
             'country_code' => $this->faker->countryCode(),

@@ -56,7 +56,7 @@ final class ProcessExchangeRatesAction
                 }
 
                 $newRate = (float) $rate;
-                $oldRate = $currency->exchange_rate !== null ? (float) $currency->exchange_rate : null;
+                $oldRate = (float) $currency->exchange_rate;
 
                 // Skip if rate hasn't changed significantly
                 if (! $this->hasSignificantChange($oldRate, $newRate)) {
@@ -124,7 +124,7 @@ final class ProcessExchangeRatesAction
 
     private function hasSignificantChange(?float $oldRate, float $newRate): bool
     {
-        if ($oldRate === null) {
+        if ($oldRate === null || $oldRate === 0.0) {
             return true;
         }
 

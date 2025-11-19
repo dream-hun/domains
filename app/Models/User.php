@@ -7,12 +7,24 @@ namespace App\Models;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property-read Collection<int, Domain> $domains
+ * @property-read Collection<int, Contact> $contacts
+ * @property-read Collection<int, Order> $orders
+ * @property-read Collection<int, Role> $roles
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $unreadNotifications
+ * @property-read string $name
+ */
 final class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory;
@@ -59,16 +71,25 @@ final class User extends Authenticatable implements MustVerifyEmail
         return 'BLCL-'.mb_str_pad((string) $number, 6, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * @return HasMany<Domain, static>
+     */
     public function domains(): HasMany
     {
         return $this->hasMany(Domain::class);
     }
 
+    /**
+     * @return HasMany<Contact, static>
+     */
     public function contacts(): HasMany
     {
         return $this->hasMany(Contact::class);
     }
 
+    /**
+     * @return HasMany<Order, static>
+     */
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
@@ -83,6 +104,9 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->roles()->where('roles.id', 1)->exists();
     }
 
+    /**
+     * @return BelongsToMany<Role, static>
+     */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class);
@@ -113,8 +137,8 @@ final class User extends Authenticatable implements MustVerifyEmail
 
     protected function getGravatarAttribute(): string
     {
-        $emailStr = is_null($this->email) ? '' : (string) $this->email;
-        $email = md5(mb_strtolower(mb_trim($emailStr)));
+        $email = $this->attributes['email'] ?? '';
+        $email = md5(mb_strtolower(mb_trim((string) $email)));
 
         return 'https://www.gravatar.com/avatar/'.$email;
     }

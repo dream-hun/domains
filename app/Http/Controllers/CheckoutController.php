@@ -34,7 +34,7 @@ final class CheckoutController extends Controller
     /**
      * Show checkout page - immediately create session and redirect to Stripe
      */
-    public function index(): View|RedirectResponse
+    public function index(): RedirectResponse
     {
         $cartItems = Cart::getContent();
 
@@ -179,7 +179,7 @@ final class CheckoutController extends Controller
                     order: $order,
                     method: 'stripe',
                     transactionId: (string) $session->payment_intent,
-                    amount: (float) ($paymentAttempt?->amount ?? $order->total_amount),
+                    amount: (float) ($paymentAttempt->amount ?? $order->total_amount),
                     payment: $paymentAttempt
                 );
 
@@ -314,7 +314,7 @@ final class CheckoutController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'metadata' => [
-                    'user_id' => $user->id,
+                    'user_id' => (string) $user->id,
                 ],
             ]);
 
@@ -351,11 +351,11 @@ final class CheckoutController extends Controller
             'success_url' => route('checkout.success', ['order' => $order->order_number]).'?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('checkout.cancel').'?order='.$order->order_number,
             'metadata' => [
-                'order_id' => $order->id,
+                'order_id' => (string) $order->id,
                 'order_number' => $order->order_number,
-                'user_id' => $user->id,
+                'user_id' => (string) $user->id,
                 'order_type' => 'renewal',
-                'payment_id' => $paymentAttempt->id,
+                'payment_id' => (string) $paymentAttempt->id,
             ],
         ]);
 

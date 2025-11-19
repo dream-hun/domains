@@ -9,7 +9,6 @@ use App\Helpers\DomainSearchHelper;
 use App\Http\Requests\SearchDomainRequest;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -25,7 +24,7 @@ final class SearchDomainController extends Controller
         ]);
     }
 
-    public function search(SearchDomainRequest $request): View|RedirectResponse|JsonResponse
+    public function search(SearchDomainRequest $request): View|JsonResponse
     {
         $validated = $request->validated();
         $domain = mb_trim($validated['domain'] ?? '');
@@ -67,7 +66,7 @@ final class SearchDomainController extends Controller
 
             Log::info('Domain search completed', [
                 'domain' => $domain,
-                'domainType' => $result['domainType']?->value ?? 'unknown',
+                'domainType' => $result['domainType'] !== null ? $result['domainType']->value : 'unknown',
                 'hasResults' => ! empty($result['details']) || ! empty($result['suggestions']),
                 'hasErrors' => ! empty($result['error']),
                 'isAjax' => $request->ajax(),

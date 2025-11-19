@@ -34,8 +34,8 @@ final class NamecheapDomainAvailabilityTest extends TestCase
 
         $result = $this->service->checkAvailability(['mbabazi.net']);
 
-        $this->assertTrue($result['mbabazi.net']->available);
-        $this->assertNull($result['mbabazi.net']->reason);
+        $this->assertTrue($result['mbabazi.net']['available']);
+        $this->assertEmpty($result['mbabazi.net']['reason']);
     }
 
     public function test_it_handles_unavailable_domains(): void
@@ -53,8 +53,8 @@ final class NamecheapDomainAvailabilityTest extends TestCase
 
         $result = $this->service->checkAvailability(['mbabazi.net']);
 
-        $this->assertFalse($result['mbabazi.net']->available);
-        $this->assertEquals('Domain not available', $result['mbabazi.net']->reason);
+        $this->assertFalse($result['mbabazi.net']['available']);
+        $this->assertEquals('Domain not available', $result['mbabazi.net']['reason']);
     }
 
     /**
@@ -74,7 +74,7 @@ final class NamecheapDomainAvailabilityTest extends TestCase
 
         $result = $this->service->checkAvailability(['mbabazi.net']);
 
-        $this->assertFalse($result['mbabazi.net']->available);
-        $this->assertStringContainsString('Service error', $result['mbabazi.net']->reason);
+        $this->assertFalse($result['mbabazi.net']['available']);
+        $this->assertStringContainsString('Service error', $result['mbabazi.net']['reason']);
     }
 }

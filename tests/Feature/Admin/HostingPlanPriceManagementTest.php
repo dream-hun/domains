@@ -141,7 +141,7 @@ it('allows admin to view edit page', function (): void {
         'hosting_plan_id' => $this->plan->id,
     ]);
 
-    $response = $this->actingAs($this->admin)->get("/admin/hosting-plan-prices/{$price->uuid}/edit");
+    $response = $this->actingAs($this->admin)->get(sprintf('/admin/hosting-plan-prices/%s/edit', $price->uuid));
 
     $response->assertStatus(200);
     $response->assertSee('Edit Hosting Plan Price');
@@ -155,7 +155,7 @@ it('allows admin to update a hosting plan price', function (): void {
         'renewal_price' => 2999,
     ]);
 
-    $response = $this->actingAs($this->admin)->put("/admin/hosting-plan-prices/{$price->uuid}", [
+    $response = $this->actingAs($this->admin)->put('/admin/hosting-plan-prices/'.$price->uuid, [
         'hosting_plan_id' => $this->plan->id,
         'billing_cycle' => 'annually',
         'regular_price' => 29999,
@@ -179,7 +179,7 @@ it('allows admin to delete a hosting plan price', function (): void {
         'hosting_plan_id' => $this->plan->id,
     ]);
 
-    $response = $this->actingAs($this->admin)->delete("/admin/hosting-plan-prices/{$price->uuid}");
+    $response = $this->actingAs($this->admin)->delete('/admin/hosting-plan-prices/'.$price->uuid);
 
     $response->assertRedirect('/admin/hosting-plan-prices');
     $response->assertSessionHas('success', 'Hosting plan price deleted successfully.');

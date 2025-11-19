@@ -60,8 +60,8 @@ final readonly class OrderService
         $discountAmount = $data['discount_amount'] ?? 0;
         $convertedTotal = max(0, $total - $discountAmount);
 
-        $couponCode = $data['coupon']?->code ?? null;
-        $discountType = $data['coupon']?->type->value ?? null;
+        $couponCode = data_get($data, 'coupon.code');
+        $discountType = data_get($data, 'coupon.type.value');
 
         $order = Order::query()->create([
             'user_id' => $data['user_id'],
@@ -100,7 +100,7 @@ final readonly class OrderService
 
             // Get the exchange rate for the item's currency
             $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
-            $exchangeRate = $itemCurrencyModel?->exchange_rate ?? 1.0;
+            $exchangeRate = $itemCurrencyModel ? $itemCurrencyModel->exchange_rate : 1.0;
 
             OrderItem::query()->create([
                 'order_id' => $order->id,

@@ -78,7 +78,7 @@ final readonly class BillingService
             foreach ($items as $item) {
                 // Get the exchange rate for the item's currency
                 $itemCurrency = Currency::query()->where('code', $item['currency'])->first();
-                $exchangeRate = $itemCurrency?->exchange_rate ?? 1.0;
+                $exchangeRate = $itemCurrency->exchange_rate ?? 1.0;
 
                 OrderItem::query()->create([
                     'order_id' => $order->id,

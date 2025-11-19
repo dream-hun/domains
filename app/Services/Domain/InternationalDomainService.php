@@ -92,7 +92,7 @@ class InternationalDomainService
     /**
      * Suggest domains using Namecheap suggestions.
      *
-     * @param  array<string, array{available: bool, reason: string}>|array<string, mixed>  $results
+     * @return array<string, array{available: bool}>
      */
     public function suggestDomains(string $keyword): array
     {

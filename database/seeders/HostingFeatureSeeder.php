@@ -16,9 +16,9 @@ class HostingFeatureSeeder extends Seeder
      */
     public function run(): void
     {
-        $featuresCategory = FeatureCategory::where('slug', 'features')->first();
-        $techSpecsCategory = FeatureCategory::where('slug', 'tech-specs')->first();
-        $benefitsCategory = FeatureCategory::where('slug', 'benefits')->first();
+        $featuresCategory = FeatureCategory::query()->where('slug', 'features')->first();
+        $techSpecsCategory = FeatureCategory::query()->where('slug', 'tech-specs')->first();
+        $benefitsCategory = FeatureCategory::query()->where('slug', 'benefits')->first();
 
         $features = [
             // Features Category - General Features

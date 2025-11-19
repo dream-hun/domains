@@ -16,7 +16,11 @@ final class ToggleDomainLockRequest extends FormRequest
         $domain = $this->route('domain');
 
         if ($domain instanceof Domain) {
-            return Gate::allows('domain_edit') || $domain->owner_id === $this->user()?->id;
+            if (Gate::allows('domain_edit')) {
+                return true;
+            }
+
+            return $domain->owner_id === $this->user()?->id;
         }
 
         return Gate::allows('domain_edit');

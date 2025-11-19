@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('hosting_plan_prices', function (Blueprint $table) {
+        Schema::create('hosting_plan_prices', function (Blueprint $table): void {
             $table->id();
             $table->uuid()->unique();
             $table->foreignId('hosting_plan_id')->constrained('hosting_plans');

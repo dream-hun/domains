@@ -9,6 +9,7 @@ use App\Enums\ContactType;
 use App\Enums\DomainType;
 use App\Http\Requests\RegisterDomainRequest;
 use App\Models\Country;
+use App\Models\Currency;
 use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -26,8 +27,9 @@ final class RegisterDomainController extends Controller
     public function index(): View
     {
         $cartItems = Cart::getContent();
-        $domainName = $cartItems->first()?->name ?? '';
-        $tld = mb_strrpos($domainName, '.') ? mb_substr($domainName, mb_strrpos($domainName, '.') + 1) : '';
+        $firstItem = $cartItems->first();
+        $domainName = $firstItem !== null ? $firstItem->name : '';
+        $tld = mb_strrpos((string) $domainName, '.') ? mb_substr((string) $domainName, mb_strrpos((string) $domainName, '.') + 1) : '';
         $domainType = mb_strtolower($tld) === 'rw' ? DomainType::Local : DomainType::International;
 
         $contactTypes = ContactType::cases();
@@ -43,7 +45,7 @@ final class RegisterDomainController extends Controller
 
         // Determine display currency (user preferred or type-based default)
         $userCurrency = $this->currencyService->getUserCurrency();
-        $displayCurrency = mb_strtoupper($userCurrency?->code ?? $this->getDefaultCurrencyForDomainType($domainType));
+        $displayCurrency = mb_strtoupper($userCurrency instanceof Currency ? $userCurrency->code : $this->getDefaultCurrencyForDomainType($domainType));
 
         // Process cart items with currency conversion
         [$convertedItems, $cartTotalNumeric] = $this->processCartItemsWithCurrency($cartItems, $displayCurrency);

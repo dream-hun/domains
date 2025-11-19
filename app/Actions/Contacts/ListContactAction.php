@@ -43,7 +43,7 @@ final class ListContactAction
             });
         }
 
-        if ($contactType !== null) {
+        if ($contactType instanceof ContactType) {
             $query->where('contact_type', $contactType->value);
         }
 

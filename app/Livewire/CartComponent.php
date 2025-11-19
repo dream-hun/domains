@@ -419,7 +419,7 @@ final class CartComponent extends Component
                     'domain_id' => $domain->id,
                     'domain_name' => $domain->name,
                     'current_expiry' => $domain->expires_at?->format('Y-m-d'),
-                    'tld' => $domain->domainPrice->tld,
+                    'tld' => $domainPrice->tld,
                     'currency' => $currency,
                     'unit_price' => $price,
                     'total_price' => $totalPrice,

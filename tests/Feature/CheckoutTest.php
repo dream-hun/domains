@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Coupons\CouponType;
 use App\Livewire\CartComponent;
 use App\Livewire\CheckoutProcess;
+use App\Models\Contact;
 use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Role;
@@ -91,9 +92,7 @@ it('applies coupon successfully', function (): void {
         ->test(CartComponent::class)
         ->set('couponCode', 'TEST10')
         ->call('applyCoupon')
-        ->assertDispatched('notify', function ($eventName, $payload) {
-            return $payload[0]['type'] === 'success' && str_contains($payload[0]['message'], 'applied');
-        });
+        ->assertDispatched('notify', fn ($eventName, $payload): bool => $payload[0]['type'] === 'success' && str_contains((string) $payload[0]['message'], 'applied'));
 
     $couponData = session('coupon');
     expect($couponData['code'])->toBe('TEST10');
@@ -119,9 +118,7 @@ it('rejects invalid coupon', function (): void {
         ->test(CartComponent::class)
         ->set('couponCode', 'INVALID')
         ->call('applyCoupon')
-        ->assertDispatched('notify', function ($eventName, $payload) {
-            return $payload[0]['type'] === 'error';
-        });
+        ->assertDispatched('notify', fn ($eventName, $payload): bool => $payload[0]['type'] === 'error');
 
     expect(session()->has('coupon'))->toBeFalse();
 });
@@ -142,7 +139,7 @@ it('proceeds to payment with valid data', function (): void {
     ]);
 
     // Create a contact for the user to select
-    $contact = App\Models\Contact::factory()->create([
+    $contact = Contact::factory()->create([
         'user_id' => $user->id,
         'is_primary' => true,
     ]);

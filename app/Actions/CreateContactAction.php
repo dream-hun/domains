@@ -20,9 +20,9 @@ final readonly class CreateContactAction
     /**
      * Handle the creation of a contact
      *
-     * @param  User  $user  The user creating the contact
-     * @param  array<string, mixed>  $validatedData  The validated contact data
-     * @return array{success: bool, contact?: Contact, message?: string}
+     * @param  User|array<string, mixed>  $userOrData  The user creating the contact or the contact data array
+     * @param  array<string, mixed>|null  $validatedData  The validated contact data
+     * @return array{success: bool, contact?: Contact, message?: string, epp?: mixed, namecheap?: mixed}
      */
     public function handle(User|array $userOrData, ?array $validatedData = null): array
     {

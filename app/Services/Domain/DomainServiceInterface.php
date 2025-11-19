@@ -12,7 +12,7 @@ interface DomainServiceInterface
      * Check if a domain is available for registration
      *
      * @param  array  $domain  The domain name to check
-     * @return array{available: bool, reason: string}
+     * @return array<string, array{available: bool, reason: string, is_premium?: bool, premium_price?: float|null, eap_fee?: float}>
      */
     public function checkAvailability(array $domain): array;
 
@@ -25,7 +25,7 @@ interface DomainServiceInterface
      * Get information about a domain
      *
      * @param  string  $domain  The domain name to get information for
-     * @return array{success: bool, domain?: string, status?: array<string>, registrant?: string, created_date?: string, expiry_date?: string, message?: string}
+     * @return array{success: bool, domain?: string, status?: array<string>, registrant?: string, created_date?: string, expiry_date?: string, message?: string, locked?: bool, auto_renew?: bool}
      */
     public function getDomainInfo(string $domain): array;
 

@@ -131,10 +131,6 @@ final readonly class ToggleDomainLockAction
             return false;
         }
 
-        if ($this->eppDomainService instanceof MockInterface || $this->namecheapDomainService instanceof MockInterface) {
-            return false;
-        }
-
-        return true;
+        return ! $this->eppDomainService instanceof MockInterface && ! $this->namecheapDomainService instanceof MockInterface;
     }
 }

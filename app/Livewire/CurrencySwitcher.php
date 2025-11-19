@@ -88,6 +88,7 @@ final class CurrencySwitcher extends Component
         $availableCurrencies = [];
 
         foreach ($currencyService->getActiveCurrencies()->whereIn('code', ['USD', 'RWF']) as $currency) {
+            /** @var Currency $currency */
             $availableCurrencies[$currency->code] = [
                 'name' => $currency->name,
                 'symbol' => $currency->symbol,

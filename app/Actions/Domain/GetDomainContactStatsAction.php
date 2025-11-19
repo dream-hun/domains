@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Domain;
 
+use App\Models\Contact;
 use App\Models\Domain;
 
 final class GetDomainContactStatsAction
@@ -19,11 +20,11 @@ final class GetDomainContactStatsAction
             'contact_types' => $contactTypes,
             'has_all_required' => count(array_intersect($requiredTypes, $contactTypes)) === 4,
             'missing_types' => array_diff($requiredTypes, $contactTypes),
-            'contacts' => $contacts->map(fn ($contact): array => [
+            'contacts' => $contacts->map(fn (Contact $contact): array => [
                 'id' => $contact->id,
                 'email' => $contact->email,
                 'full_name' => $contact->full_name,
-                'type' => $contact->pivot->type,
+                'type' => $contact->pivot->type ?? 'unknown',
             ])->all(),
         ];
     }

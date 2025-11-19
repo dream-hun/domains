@@ -47,6 +47,8 @@ final readonly class UpdateDomainContactsAction
             ];
 
             foreach ($domainContacts as $contact) {
+                /** @var Contact $contact */
+                /** @var object{type: string} $pivotData */
                 $pivotData = $contact->pivot;
                 $type = $pivotData->type;
 

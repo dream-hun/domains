@@ -126,7 +126,7 @@ it('validates slug uniqueness when creating', function (): void {
 it('allows admin to view edit form', function (): void {
     $category = FeatureCategory::factory()->create();
 
-    $response = $this->actingAs($this->admin)->get("/admin/feature-categories/{$category->slug}/edit");
+    $response = $this->actingAs($this->admin)->get(sprintf('/admin/feature-categories/%s/edit', $category->slug));
 
     $response->assertSuccessful();
     $response->assertSee($category->name);
@@ -135,7 +135,7 @@ it('allows admin to view edit form', function (): void {
 it('allows admin to update a feature category', function (): void {
     $category = FeatureCategory::factory()->create(['name' => 'Old Name', 'slug' => 'old-slug']);
 
-    $this->actingAs($this->admin)->put("/admin/feature-categories/{$category->slug}", [
+    $this->actingAs($this->admin)->put('/admin/feature-categories/'.$category->slug, [
         'name' => 'Updated Name',
         'slug' => 'updated-slug',
         'description' => 'Updated description',
@@ -186,7 +186,7 @@ it('validates slug uniqueness when updating', function (): void {
     FeatureCategory::factory()->create(['slug' => 'existing-slug']);
     $category = FeatureCategory::factory()->create(['slug' => 'my-slug']);
 
-    $response = $this->actingAs($this->admin)->put("/admin/feature-categories/{$category->slug}", [
+    $response = $this->actingAs($this->admin)->put('/admin/feature-categories/'.$category->slug, [
         'name' => 'Updated Name',
         'slug' => 'existing-slug',
         'status' => 'active',
@@ -198,7 +198,7 @@ it('validates slug uniqueness when updating', function (): void {
 it('allows deletion of feature category without associated features', function (): void {
     $category = FeatureCategory::factory()->create();
 
-    $this->actingAs($this->admin)->delete("/admin/feature-categories/{$category->slug}")
+    $this->actingAs($this->admin)->delete('/admin/feature-categories/'.$category->slug)
         ->assertRedirect('/admin/feature-categories');
 
     $this->assertDatabaseMissing('feature_categories', ['id' => $category->id]);
@@ -208,7 +208,7 @@ it('prevents deletion of feature category with associated hosting features', fun
     $category = FeatureCategory::factory()->create();
     HostingFeature::factory()->create(['feature_category_id' => $category->id]);
 
-    $response = $this->actingAs($this->admin)->delete("/admin/feature-categories/{$category->slug}");
+    $response = $this->actingAs($this->admin)->delete('/admin/feature-categories/'.$category->slug);
 
     $response->assertSessionHas('error');
     $this->assertDatabaseHas('feature_categories', ['id' => $category->id]);
@@ -254,14 +254,14 @@ it('requires permission to edit feature category', function (): void {
     $category = FeatureCategory::factory()->create();
     $user = User::factory()->create();
 
-    $this->actingAs($user)->get("/admin/feature-categories/{$category->slug}/edit")->assertForbidden();
+    $this->actingAs($user)->get(sprintf('/admin/feature-categories/%s/edit', $category->slug))->assertForbidden();
 });
 
 it('requires permission to delete feature category', function (): void {
     $category = FeatureCategory::factory()->create();
     $user = User::factory()->create();
 
-    $this->actingAs($user)->delete("/admin/feature-categories/{$category->slug}")->assertForbidden();
+    $this->actingAs($user)->delete('/admin/feature-categories/'.$category->slug)->assertForbidden();
 });
 
 it('displays success message after creating category', function (): void {
@@ -277,7 +277,7 @@ it('displays success message after creating category', function (): void {
 it('displays success message after updating category', function (): void {
     $category = FeatureCategory::factory()->create();
 
-    $response = $this->actingAs($this->admin)->put("/admin/feature-categories/{$category->slug}", [
+    $response = $this->actingAs($this->admin)->put('/admin/feature-categories/'.$category->slug, [
         'name' => 'Updated Name',
         'status' => 'active',
     ]);
@@ -289,7 +289,7 @@ it('displays success message after updating category', function (): void {
 it('displays success message after deleting category', function (): void {
     $category = FeatureCategory::factory()->create();
 
-    $response = $this->actingAs($this->admin)->delete("/admin/feature-categories/{$category->slug}");
+    $response = $this->actingAs($this->admin)->delete('/admin/feature-categories/'.$category->slug);
 
     $response->assertRedirect('/admin/feature-categories');
     $response->assertSessionHas('success', 'Feature category deleted successfully.');

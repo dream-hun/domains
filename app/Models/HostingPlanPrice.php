@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Hosting\HostingPlanPriceStatus;
+use Database\Factories\HostingPlanPriceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HostingPlanPrice extends Model
 {
-    /** @use HasFactory<\Database\Factories\HostingPlanPriceFactory> */
+    /** @use HasFactory<HostingPlanPriceFactory> */
     use HasFactory;
 
     protected $guarded = [];

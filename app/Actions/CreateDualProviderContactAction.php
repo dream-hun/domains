@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Models\Contact;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\InternationalDomainService;
 use Exception;
@@ -37,7 +36,7 @@ final readonly class CreateDualProviderContactAction
             throw new Exception('Failed to create contact in EPP: '.$exception->getMessage(), 0, $exception);
         }
 
-        if (! isset($eppResult['contact_id']) || ($eppResult['contact_id'] === null || $eppResult['contact_id'] === '')) {
+        if (! isset($eppResult['contact_id']) || $eppResult['contact_id'] === '') {
             $message = $eppResult['message'] ?? 'Unknown error';
 
             throw new Exception('Failed to create contact in EPP: '.$message);
@@ -49,9 +48,7 @@ final readonly class CreateDualProviderContactAction
             $contactType
         ));
 
-        $internationalContactId = $internationalContact instanceof Contact
-            ? (string) $internationalContact->contact_id
-            : (string) ($internationalContact->contact_id ?? '');
+        $internationalContactId = (string) $internationalContact->contact_id;
 
         return [
             'epp' => $this->formatProviderResult(

@@ -11,6 +11,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property-read User $user
+ * @property-read Order $order
+ * @property string $status
+ * @property string $currency
+ * @property string $amount
+ *
+ * @method static Builder successful()
+ * @method static Builder failed()
+ */
 final class Payment extends Model
 {
     use HasFactory;
@@ -22,11 +32,17 @@ final class Payment extends Model
         return sprintf('pending-%s-%d-%s', $order->id, $attemptNumber, Str::uuid());
     }
 
+    /**
+     * @return BelongsTo<User, static>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Order, static>
+     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

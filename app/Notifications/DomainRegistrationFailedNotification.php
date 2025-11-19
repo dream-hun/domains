@@ -34,7 +34,6 @@ final class DomainRegistrationFailedNotification extends Notification
             ->implode(', ');
 
         $successfulCount = count($this->results['successful']);
-        count($this->results['failed']);
 
         $message = (new MailMessage)
             ->error()

@@ -34,11 +34,9 @@ final class LocalDomainServiceTest extends TestCase
         $reflection = new ReflectionClass(EppDomainService::class);
 
         $clientProperty = $reflection->getProperty('client');
-        $clientProperty->setAccessible(true);
         $clientProperty->setValue($service, $this->createMock(EPPClient::class));
 
         $configProperty = $reflection->getProperty('config');
-        $configProperty->setAccessible(true);
         $configProperty->setValue($service, ['host' => 'test.host']);
 
         // Set up the mock to simulate a successful connection after retries
@@ -74,11 +72,9 @@ final class LocalDomainServiceTest extends TestCase
         $reflection = new ReflectionClass(EppDomainService::class);
 
         $clientProperty = $reflection->getProperty('client');
-        $clientProperty->setAccessible(true);
         $clientProperty->setValue($service, $this->createMock(EPPClient::class));
 
         $configProperty = $reflection->getProperty('config');
-        $configProperty->setAccessible(true);
         $configProperty->setValue($service, ['host' => 'test.host']);
 
         // Set up the mock to expect multiple calls to connectWithRetry

@@ -369,10 +369,6 @@ final readonly class UpdateDomainContactsAction
             return false;
         }
 
-        if ($this->domainService instanceof MockInterface) {
-            return false;
-        }
-
-        return true;
+        return ! $this->domainService instanceof MockInterface;
     }
 }

@@ -100,7 +100,7 @@ final class CurrencyHelper
                 $exchangeHelper = app(CurrencyExchangeHelper::class);
                 $money = $exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
 
-                return $money->getAmount() / 100; // Convert from minor units
+                return (int) $money->getAmount() / 100; // Convert from minor units
             } catch (CurrencyExchangeException $e) {
                 Log::warning('CurrencyExchangeHelper failed, falling back to old method', [
                     'from' => $fromCurrency,
@@ -184,8 +184,13 @@ final class CurrencyHelper
         try {
             $formatter = new NumberFormatter('en', NumberFormatter::CURRENCY);
             $formatted = $formatter->formatCurrency(0, $currencyCode);
+            $symbol = preg_replace('/[\d.,\s]/', '', $formatted);
 
-            return ! in_array(preg_replace('/[\d.,\s]/', '', $formatted), ['', '0'], true) && preg_replace('/[\d.,\s]/', '', $formatted) !== [] ? preg_replace('/[\d.,\s]/', '', $formatted) : $currencyCode;
+            if (in_array($symbol, ['', '0'], true)) {
+                return $currencyCode;
+            }
+
+            return $symbol;
         } catch (Exception) {
             return $currencyCode;
         }

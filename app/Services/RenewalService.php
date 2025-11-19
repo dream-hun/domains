@@ -15,7 +15,6 @@ use App\Models\User;
 use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -201,8 +200,10 @@ final readonly class RenewalService
         }
 
         // Check if domain has expired for too long (grace period)
-        if ($domain->expires_at instanceof Carbon && $domain->expires_at->isPast()) {
-            $daysSinceExpiry = now()->diffInDays($domain->expires_at);
+        $expiresAt = $domain->expires_at;
+
+        if ($expiresAt && $expiresAt->isPast()) {
+            $daysSinceExpiry = now()->diffInDays($expiresAt);
             if ($daysSinceExpiry > 30) { // 30 day grace period
                 return [
                     'can_renew' => false,

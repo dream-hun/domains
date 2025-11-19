@@ -209,7 +209,7 @@ final class PaymentController extends Controller
                         order: $order,
                         method: 'stripe',
                         transactionId: (string) $session->payment_intent,
-                        amount: (float) ($paymentAttempt?->amount ?? $order->total_amount),
+                        amount: (float) ($paymentAttempt->amount ?? $order->total_amount),
                         payment: $paymentAttempt
                     );
 

@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('hosting_features', function (Blueprint $table) {
+        Schema::create('hosting_features', function (Blueprint $table): void {
             $table->id();
             $table->uuid();
             $table->string('name')->comment('e.g., "Websites", "SSD Storage", "Bandwidth"');

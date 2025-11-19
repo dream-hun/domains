@@ -33,7 +33,7 @@ final class ProfileController extends Controller
     {
         $data = $request->validated();
 
-        if (isset($data['name']) && $data['name'] !== null) {
+        if (isset($data['name'])) {
             $name = mb_trim((string) $data['name']);
             unset($data['name']);
 
@@ -47,11 +47,11 @@ final class ProfileController extends Controller
             }
         }
 
-        if (! isset($data['first_name']) || $data['first_name'] === null) {
+        if (! isset($data['first_name'])) {
             $data['first_name'] = $request->user()->first_name;
         }
 
-        if (! isset($data['last_name']) || $data['last_name'] === null) {
+        if (! isset($data['last_name'])) {
             $data['last_name'] = $request->user()->last_name;
         }
 

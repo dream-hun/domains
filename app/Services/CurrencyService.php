@@ -9,6 +9,7 @@ use App\Events\ExchangeRatesUpdated;
 use App\Exceptions\CurrencyExchangeException;
 use App\Helpers\CurrencyExchangeHelper;
 use App\Models\Currency;
+use Carbon\Carbon;
 use Cknow\Money\Money;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
@@ -91,7 +92,7 @@ final readonly class CurrencyService
             try {
                 $money = $this->exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
 
-                return $money->getAmount() / 100;
+                return (int) $money->getAmount() / 100;
             } catch (CurrencyExchangeException) {
             }
         }
@@ -173,31 +174,38 @@ final readonly class CurrencyService
 
     /**
      * Get current exchange rates with metadata
+     *
+     * @return SupportCollection<int, array{code: string, name: string, symbol: string, is_base: bool, exchange_rate: float, rate_updated_at: Carbon|null, hours_since_update: float|null, is_stale: bool}>
      */
     public function getCurrentRates(): SupportCollection
     {
         $stalenessHours = config('services.exchange_rate.staleness_hours', 24);
 
-        return Cache::remember('current_rates', self::CACHE_TTL / 4, fn () => Currency::query()->where('is_active', true)
-            ->orderBy('is_base', 'desc')
-            ->orderBy('code')
-            ->get()
-            ->map(function (Currency $currency) use ($stalenessHours): array {
-                $hoursSinceUpdate = $currency->rate_updated_at
-                    ? now()->diffInHours($currency->rate_updated_at)
-                    : null;
+        /** @var SupportCollection<int, array{code: string, name: string, symbol: string, is_base: bool, exchange_rate: float, rate_updated_at: Carbon|null, hours_since_update: float|null, is_stale: bool}> $result */
+        $result = Cache::remember('current_rates', self::CACHE_TTL / 4, fn () =>
+            /** @phpstan-ignore-next-line */
+            Currency::query()->where('is_active', true)
+                ->orderBy('is_base', 'desc')
+                ->orderBy('code')
+                ->get()
+                ->map(function (Currency $currency) use ($stalenessHours): array {
+                    $hoursSinceUpdate = $currency->rate_updated_at
+                        ? now()->diffInHours($currency->rate_updated_at)
+                        : null;
 
-                return [
-                    'code' => $currency->code,
-                    'name' => $currency->name,
-                    'symbol' => $currency->symbol,
-                    'is_base' => $currency->is_base,
-                    'exchange_rate' => $currency->exchange_rate,
-                    'rate_updated_at' => $currency->rate_updated_at,
-                    'hours_since_update' => $hoursSinceUpdate,
-                    'is_stale' => $hoursSinceUpdate === null || $hoursSinceUpdate > $stalenessHours,
-                ];
-            }));
+                    return [
+                        'code' => $currency->code,
+                        'name' => $currency->name,
+                        'symbol' => $currency->symbol,
+                        'is_base' => $currency->is_base,
+                        'exchange_rate' => $currency->exchange_rate,
+                        'rate_updated_at' => $currency->rate_updated_at,
+                        'hours_since_update' => $hoursSinceUpdate,
+                        'is_stale' => $hoursSinceUpdate === null || $hoursSinceUpdate > $stalenessHours,
+                    ];
+                }));
+
+        return $result;
     }
 
     /**

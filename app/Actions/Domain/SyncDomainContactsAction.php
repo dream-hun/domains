@@ -102,7 +102,7 @@ final readonly class SyncDomainContactsAction
             }
 
             // Map to correct enum value
-            $enumContactType = $contactTypeMapping[$type] ?? $type;
+            $enumContactType = $contactTypeMapping[$type];
 
             $contactModel = $this->createOrUpdateContact($contactData, $enumContactType);
 

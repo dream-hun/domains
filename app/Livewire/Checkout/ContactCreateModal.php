@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Checkout;
 
+use App\Models\Contact;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\On;
@@ -68,6 +69,7 @@ final class ContactCreateModal extends Component
             'is_primary' => 'boolean',
         ]);
 
+        /** @var Contact $contact */
         $contact = auth()->user()->contacts()->create($validated);
 
         $this->dispatch('contact-created', contactId: $contact->id);

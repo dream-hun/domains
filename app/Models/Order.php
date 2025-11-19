@@ -4,11 +4,21 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property-read User $user
+ * @property-read Collection<int, OrderItem> $orderItems
+ * @property-read Collection<int, DomainRenewal> $domainRenewals
+ * @property-read Collection<int, FailedDomainRegistration> $failedDomainRegistrations
+ * @property-read Collection<int, Payment> $payments
+ * @property string $payment_status
+ * @property string $status
+ */
 final class Order extends Model
 {
     use HasFactory;
@@ -20,26 +30,41 @@ final class Order extends Model
         return 'ORD-'.mb_strtoupper(mb_substr(uniqid(), -10));
     }
 
+    /**
+     * @return BelongsTo<User, static>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return HasMany<DomainRenewal, static>
+     */
     public function domainRenewals(): HasMany
     {
         return $this->hasMany(DomainRenewal::class);
     }
 
+    /**
+     * @return HasMany<OrderItem, static>
+     */
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
+    /**
+     * @return HasMany<FailedDomainRegistration, static>
+     */
     public function failedDomainRegistrations(): HasMany
     {
         return $this->hasMany(FailedDomainRegistration::class);
     }
 
+    /**
+     * @return HasMany<Payment, static>
+     */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
@@ -47,28 +72,37 @@ final class Order extends Model
 
     public function latestPaymentAttempt(): ?Payment
     {
-        return $this->payments()
+        /** @var Payment|null $payment */
+        $payment = $this->payments()
             ->orderByDesc('attempt_number')
             ->orderByDesc('id')
             ->first();
+
+        return $payment;
     }
 
     public function latestSuccessfulPayment(): ?Payment
     {
-        return $this->payments()
+        /** @var Payment|null $payment */
+        $payment = $this->payments()
             ->successful()
             ->orderByDesc('paid_at')
             ->orderByDesc('id')
             ->first();
+
+        return $payment;
     }
 
     public function latestFailedPayment(): ?Payment
     {
-        return $this->payments()
+        /** @var Payment|null $payment */
+        $payment = $this->payments()
             ->failed()
             ->orderByDesc('last_attempted_at')
             ->orderByDesc('id')
             ->first();
+
+        return $payment;
     }
 
     // Payment Status Methods

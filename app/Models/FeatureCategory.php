@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Hosting\CategoryStatus;
+use Database\Factories\FeatureCategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FeatureCategory extends Model
 {
-    /** @use HasFactory<\Database\Factories\FeatureCategoryFactory> */
+    /** @use HasFactory<FeatureCategoryFactory> */
     use HasFactory;
 
     protected $guarded = [];

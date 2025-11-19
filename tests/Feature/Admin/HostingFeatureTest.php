@@ -150,7 +150,7 @@ it('allows admin to view edit form', function (): void {
     $feature = HostingFeature::factory()->create();
     FeatureCategory::factory()->create();
 
-    $response = $this->actingAs($this->admin)->get("/admin/hosting-features/{$feature->uuid}/edit");
+    $response = $this->actingAs($this->admin)->get(sprintf('/admin/hosting-features/%s/edit', $feature->uuid));
 
     $response->assertSuccessful();
     $response->assertSee($feature->name);
@@ -160,7 +160,7 @@ it('allows admin to update a hosting feature', function (): void {
     $category = FeatureCategory::factory()->create();
     $feature = HostingFeature::factory()->create(['name' => 'Old Name', 'slug' => 'old-slug']);
 
-    $this->actingAs($this->admin)->put("/admin/hosting-features/{$feature->uuid}", [
+    $this->actingAs($this->admin)->put('/admin/hosting-features/'.$feature->uuid, [
         'name' => 'Updated Name',
         'slug' => 'updated-slug',
         'description' => 'Updated description',
@@ -216,7 +216,7 @@ it('validates slug uniqueness when updating', function (): void {
     HostingFeature::factory()->create(['slug' => 'existing-slug']);
     $feature = HostingFeature::factory()->create(['slug' => 'my-slug']);
 
-    $response = $this->actingAs($this->admin)->put("/admin/hosting-features/{$feature->uuid}", [
+    $response = $this->actingAs($this->admin)->put('/admin/hosting-features/'.$feature->uuid, [
         'name' => 'Updated Name',
         'slug' => 'existing-slug',
     ]);
@@ -227,7 +227,7 @@ it('validates slug uniqueness when updating', function (): void {
 it('allows deletion of hosting feature', function (): void {
     $feature = HostingFeature::factory()->create();
 
-    $this->actingAs($this->admin)->delete("/admin/hosting-features/{$feature->uuid}")
+    $this->actingAs($this->admin)->delete('/admin/hosting-features/'.$feature->uuid)
         ->assertRedirect('/admin/hosting-features');
 
     $this->assertDatabaseMissing('hosting_features', ['id' => $feature->id]);
@@ -274,14 +274,14 @@ it('requires permission to edit hosting feature', function (): void {
     $feature = HostingFeature::factory()->create();
     $user = User::factory()->create();
 
-    $this->actingAs($user)->get("/admin/hosting-features/{$feature->uuid}/edit")->assertForbidden();
+    $this->actingAs($user)->get(sprintf('/admin/hosting-features/%s/edit', $feature->uuid))->assertForbidden();
 });
 
 it('requires permission to delete hosting feature', function (): void {
     $feature = HostingFeature::factory()->create();
     $user = User::factory()->create();
 
-    $this->actingAs($user)->delete("/admin/hosting-features/{$feature->uuid}")->assertForbidden();
+    $this->actingAs($user)->delete('/admin/hosting-features/'.$feature->uuid)->assertForbidden();
 });
 
 it('displays success message after creating feature', function (): void {
@@ -298,7 +298,7 @@ it('displays success message after creating feature', function (): void {
 it('displays success message after updating feature', function (): void {
     $feature = HostingFeature::factory()->create();
 
-    $response = $this->actingAs($this->admin)->put("/admin/hosting-features/{$feature->uuid}", [
+    $response = $this->actingAs($this->admin)->put('/admin/hosting-features/'.$feature->uuid, [
         'name' => 'Updated Name',
     ]);
 
@@ -309,7 +309,7 @@ it('displays success message after updating feature', function (): void {
 it('displays success message after deleting feature', function (): void {
     $feature = HostingFeature::factory()->create();
 
-    $response = $this->actingAs($this->admin)->delete("/admin/hosting-features/{$feature->uuid}");
+    $response = $this->actingAs($this->admin)->delete('/admin/hosting-features/'.$feature->uuid);
 
     $response->assertRedirect('/admin/hosting-features');
     $response->assertSessionHas('success', 'Hosting feature deleted successfully.');
@@ -382,13 +382,13 @@ it('allows all value types when creating feature', function (): void {
 
     foreach ($valueTypes as $valueType) {
         $this->actingAs($this->admin)->post('/admin/hosting-features', [
-            'name' => "Test Feature {$valueType}",
+            'name' => 'Test Feature '.$valueType,
             'category' => 'general',
             'value_type' => $valueType,
         ])->assertRedirect('/admin/hosting-features');
 
         $this->assertDatabaseHas('hosting_features', [
-            'name' => "Test Feature {$valueType}",
+            'name' => 'Test Feature '.$valueType,
             'value_type' => $valueType,
         ]);
     }

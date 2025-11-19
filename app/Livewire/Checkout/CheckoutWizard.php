@@ -10,15 +10,28 @@ use App\Models\Coupon;
 use App\Services\CheckoutService;
 use App\Services\Coupon\CouponService;
 use App\Services\CurrencyService;
+use Darryldecode\Cart\CartCollection;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
+/**
+ * @property-read CartCollection $cartItems
+ * @property-read bool $hasOnlyRenewals
+ * @property-read Collection $userContacts
+ * @property-read ?Contact $selectedRegistrant
+ * @property-read ?Contact $selectedAdmin
+ * @property-read ?Contact $selectedTech
+ * @property-read ?Contact $selectedBilling
+ * @property-read float $orderTotal
+ * @property-read float $orderSubtotal
+ */
 final class CheckoutWizard extends Component
 {
     public const STEP_REVIEW = 1;
@@ -75,6 +88,7 @@ final class CheckoutWizard extends Component
         $currency = $currencyService->getUserCurrency();
         $this->userCurrencyCode = $currency->code;
 
+        /** @var Contact|null $defaultContact */
         $defaultContact = auth()->user()->contacts()
             ->where('is_primary', true)
             ->first();
@@ -354,6 +368,7 @@ final class CheckoutWizard extends Component
             // For renewals, use user's primary contact as billing contact if not selected
             $billingContactId = $this->selectedBillingId;
             if ($this->hasOnlyRenewals && ! $billingContactId) {
+                /** @var Contact|null $primaryContact */
                 $primaryContact = auth()->user()->contacts()->where('is_primary', true)->first();
                 $billingContactId = $primaryContact?->id;
             }

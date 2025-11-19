@@ -137,7 +137,7 @@ final readonly class CurrencyExchangeHelper
     public function formatMoney(Money $money): string
     {
         $currency = $this->normalizeCurrency($money->getCurrency()->getCode());
-        $amount = $money->getAmount() / 100;
+        $amount = (int) $money->getAmount() / 100;
 
         $config = config('currency_exchange.supported_currencies', []);
 

@@ -20,7 +20,8 @@ final class DeleteContactAction
     {
         try {
             $contactId = $contact->id;
-            $provider = $contact->provider;
+            // $provider is not a property of Contact model, removing it or using appropriate attribute if it exists
+            // Assuming this was intended to be logged but property doesn't exist on model
             $userId = $contact->user_id;
 
             // Delete the contact
@@ -28,7 +29,6 @@ final class DeleteContactAction
 
             Log::info('Contact deleted successfully', [
                 'contact_id' => $contactId,
-                'provider' => $provider,
                 'user_id' => $userId,
             ]);
 
