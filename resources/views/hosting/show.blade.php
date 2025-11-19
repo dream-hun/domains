@@ -11,8 +11,21 @@
                 <div class="col-lg-12">
                     <div class="banner-area">
                         <div class="rts-hosting-banner rts-hosting-banner__content">
-                            <span class="starting__price sal-animate" data-sal="slide-down" data-sal-delay="100"
-                                data-sal-duration="800">Starting at $2.59/mo</span>
+                            @php
+                                $cheapestMonthlyPrice = $plans
+                                    ->flatMap(fn($plan) => $plan->planPrices->where('billing_cycle', 'monthly'))
+                                    ->filter(fn($price) => $price->regular_price > 0)
+                                    ->sortBy('regular_price')
+                                    ->first();
+                            @endphp
+                            @if ($cheapestMonthlyPrice)
+                                <span class="starting__price sal-animate" data-sal="slide-down" data-sal-delay="100"
+                                    data-sal-duration="800">Starting at
+                                    {{ $cheapestMonthlyPrice->getFormattedPrice('regular_price') }}/mo</span>
+                            @else
+                                <span class="starting__price sal-animate" data-sal="slide-down" data-sal-delay="100"
+                                    data-sal-duration="800">Starting at $2.59/mo</span>
+                            @endif
                             <h1 class="banner-title sal-animate" data-sal="slide-down" data-sal-delay="300"
                                 data-sal-duration="800">
                                 {{ $category->name }}
@@ -31,7 +44,7 @@
                                 </div>
                                 <div class="hosting-feature__single">
                                     <div class="icon-image">
-                                        <img src="assets/images/banner/shared/wordpress.png" alt="">
+                                        <img src="{{ asset('assets/images/banner/shared/wordpress.png') }}" alt="">
                                     </div>
                                     <p class="feature-text">
                                         Look like a Pri- Fast,
@@ -39,13 +52,13 @@
                                     </p>
                                 </div>
                             </div>
-                        </div>
+                        </div>d
                         <div class="rts-hosting-banner__image">
-                            <img src="assets/images/banner/shared/shared__hosting.svg" alt="">
+                            <img src="{{ asset('assets/images/banner/shared/shared__hosting.svg') }}" alt="">
                             <img class="shape-image one right-left"
-                                src="assets/images/banner/shared/shared__hosting-sm1.svg" alt="">
+                                src="{{ asset('assets/images/banner/shared/shared__hosting-sm1.svg') }}" alt="">
                             <img class="shape-image two pulsing"
-                                src="assets/images/banner/shared/shared__hosting-sm2.svg" alt="">
+                                src="{{ asset('assets/images/banner/shared/shared__hosting-sm2.svg') }}" alt="">
                         </div>
                     </div>
                 </div>
@@ -98,7 +111,7 @@
                                         @endif
                                         <div class="card-plan__package">
                                             <div class="icon">
-                                                <img src="assets/images/pricing/business.svg" height="30"
+                                                <img src="{{ asset('assets/images/pricing/business.svg') }}" height="30"
                                                     width="30" alt="">
                                             </div>
                                             <h4 class="package__name">{{ $plan->name }}</h4>
@@ -106,19 +119,21 @@
                                         <p class="card-plan__desc">{{ $plan->description }}</p>
                                         @if ($monthlyPrice->discount_percentage)
                                             <div class="card-plan__offer">
-                                                <span class="past-price">{{ $monthlyPrice->regular_price }}</span>
+                                                <span
+                                                    class="past-price">{{ $monthlyPrice->getFormattedPrice('regular_price') }}</span>
                                                 <span class="offer-given">Save
                                                     {{ $monthlyPrice->discount_percentage }}%</span>
                                             </div>
                                         @endif
                                         <h5 class="card-plan__price">
-                                            <sup>$</sup> {{ $monthlyPrice->regular_price }} <sub>/ month</sub>
+                                            {{ $monthlyPrice->getFormattedPrice('regular_price') }} <sub>/ month</sub>
                                         </h5>
                                         <div class="card-plan__cartbtn">
                                             <a href="#">add to cart</a>
                                         </div>
                                         <p class="card-plan__renew-price">
-                                            $ {{ $monthlyPrice->renewal_price }} /Month when you renew
+                                            {{ $monthlyPrice->getFormattedPrice('renewal_price') }} /Month when you
+                                            renew
                                         </p>
                                         <div class="card-plan__feature">
                                             @php
@@ -225,7 +240,7 @@
                                     @endif
                                     <div class="card-plan__package">
                                         <div class="icon">
-                                            <img src="assets/images/pricing/business.svg" height="30"
+                                            <img src="{{ asset('assets/images/pricing/business.svg') }}" height="30"
                                                 width="30" alt="">
                                         </div>
                                         <h4 class="package__name">{{ $plan->name }}</h4>
@@ -233,19 +248,20 @@
                                     <p class="card-plan__desc">{{ $plan->description }}</p>
                                     @if ($yearlyPrice->discount_percentage)
                                         <div class="card-plan__offer">
-                                            <span class="past-price">{{ $yearlyPrice->regular_price }}</span>
+                                            <span
+                                                class="past-price">{{ $yearlyPrice->getFormattedPrice('regular_price') }}</span>
                                             <span class="offer-given">Save
                                                 {{ $yearlyPrice->discount_percentage }}%</span>
                                         </div>
                                     @endif
                                     <h5 class="card-plan__price">
-                                        <sup>$</sup> {{ $yearlyPrice->regular_price }} <sub>/ Year</sub>
+                                        {{ $yearlyPrice->getFormattedPrice('regular_price') }} <sub>/ Year</sub>
                                     </h5>
                                     <div class="card-plan__cartbtn">
                                         <a href="#">add to cart</a>
                                     </div>
                                     <p class="card-plan__renew-price">
-                                        $ {{ $yearlyPrice->renewal_price }} /Year when you renew
+                                        {{ $yearlyPrice->getFormattedPrice('renewal_price') }} /Year when you renew
                                     </p>
                                     <div class="card-plan__feature">
                                         @php
