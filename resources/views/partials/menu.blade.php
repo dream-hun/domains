@@ -153,6 +153,16 @@
                         </a>
                     </li>
                 @endcan
+                @can('hosting_plan_feature_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.hosting-plan-features.index') }}" class="nav-link {{ request()->is('admin/hosting-plan-features*') ? 'active' : '' }}">
+                            <i class="bi bi-cpu"></i>
+                            <p>
+                                Hosting Plan Features
+                            </p>
+                        </a>
+                    </li>
+                @endcan
                 
                 @can('setting_access')
                     <li class="nav-item">

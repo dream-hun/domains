@@ -1397,17 +1397,17 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
             $frame->setDomain($domain);
 
             foreach ($nameservers as $ns) {
-                
+
                 $checkFrame = new CheckHost;
                 $checkFrame->addHost($ns);
                 $checkResponse = $this->client->request($checkFrame);
 
                 if ($checkResponse->code() === 1000) {
-                    
+
                     $responseXml = (string) $checkResponse;
                     if (mb_strpos($responseXml, '<host:name avail="1">') !== false && mb_strpos($ns, $domain) !== false) {
                         Log::info('Creating subordinate host: '.$ns);
-                       
+
                         $createFrame = new CreateHost;
                         $createFrame->setHost($ns);
                         $createFrame->addAddr('127.0.0.1');
@@ -1439,7 +1439,7 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
 
             $authInfo = Str::random(12);
             $frame->changeAuthInfo($authInfo);
-            
+
             Log::debug('EPP update domain nameservers frame created', [
                 'domain' => $domain,
                 'new_nameservers' => $nameservers,

@@ -36,6 +36,11 @@ class HostingPlan extends Model
         return $this->hasMany(HostingPlanPrice::class, 'hosting_plan_id');
     }
 
+    public function planFeatures(): HasMany
+    {
+        return $this->hasMany(HostingPlanFeature::class, 'hosting_plan_id')->orderBy('sort_order');
+    }
+
     public function getRouteKeyName(): string
     {
         return 'uuid';

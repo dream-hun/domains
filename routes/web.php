@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\FeatureCategoryController;
 use App\Http\Controllers\Admin\HostingCategoryController;
 use App\Http\Controllers\Admin\HostingFeatureController;
 use App\Http\Controllers\Admin\HostingPlanController;
+use App\Http\Controllers\Admin\HostingPlanFeatureController;
 use App\Http\Controllers\Admin\HostingPlanPriceController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PermissionsController;
@@ -63,6 +64,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('hosting-categories', HostingCategoryController::class)->except(['show']);
     Route::resource('hosting-plans', HostingPlanController::class)->except(['show']);
     Route::resource('hosting-plan-prices', HostingPlanPriceController::class)->except(['show']);
+    Route::resource('hosting-plan-features', HostingPlanFeatureController::class)->except(['show']);
     Route::resource('feature-categories', FeatureCategoryController::class)->except(['show']);
     Route::resource('hosting-features', HostingFeatureController::class)->except(['show']);
     Route::resource('permissions', PermissionsController::class);

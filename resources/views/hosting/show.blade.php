@@ -105,8 +105,8 @@
                                         </div>
                                         <p class="card-plan__desc">{{ $plan->description }}</p>
                                         @if ($monthlyPrice->discount_percentage)
-                                        <div class="card-plan__offer">
-                                            <span class="past-price">{{ $monthlyPrice->regular_price }}</span>
+                                            <div class="card-plan__offer">
+                                                <span class="past-price">{{ $monthlyPrice->regular_price }}</span>
                                                 <span class="offer-given">Save
                                                     {{ $monthlyPrice->discount_percentage }}%</span>
                                             </div>
@@ -121,130 +121,86 @@
                                             $ {{ $monthlyPrice->renewal_price }} /Month when you renew
                                         </p>
                                         <div class="card-plan__feature">
+                                            @php
+                                                $allIncludedFeatures = $plan->planFeatures->where('is_included', true);
+                                                $allExcludedFeatures = $plan->planFeatures->where('is_included', false);
+                                                $mainFeatures = $allIncludedFeatures->take(8);
+                                                $moreIncludedFeatures = $allIncludedFeatures->skip(8);
+                                                $hasMoreFeatures =
+                                                    $moreIncludedFeatures->isNotEmpty() ||
+                                                    $allExcludedFeatures->isNotEmpty();
+                                            @endphp
                                             <ul class="card-plan__feature--list">
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> 1
-                                                        Website</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Explore, discover, and learn on our innovative and informative website."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> Standard
-                                                        Performance</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Unlock superior online experiences with our standard performance solutions, ensuring reliability, speed, and seamless functionality for your website needs."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> 24/7/365
-                                                        Support</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Hostie provides reliable 24/7 support for your hosting needs, ensuring assistance whenever you require help."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-xmark"></i> Free
-                                                        Email</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Hostie offers complimentary email services, empowering your online communication with reliable and secure free email solutions."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-xmark"></i> Unlimited
-                                                        Bandwidth</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Hostie provides unlimited bandwidth, ensuring seamless data transfer for your website's optimal performance and user experience."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> 100 GB
-                                                        SSD
-                                                        Storage</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Elevate your online presence with Hostie, offering unlimited bandwidth for your domain, ensuring optimal performance and seamless data flow."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-
-
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> Unlimited
-                                                        Free SSL</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Secure your website with Hostie's unlimited free SSL certificates, ensuring encrypted and safe online transactions for your users."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> 99.9%
-                                                        Uptime
-                                                        Guarantee</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Hostie guarantees 99% uptime, ensuring your website is consistently available and reliable for visitors around the clock."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> Web
-                                                        Application Firewall</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Enhance your website's security with Hostie's Web Application Firewall, protecting against online threats and ensuring a safe online environment."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-trigered">
-                                                    <span class="text">More Features <i
-                                                            class="fa-sharp fa-regular fa-chevron-down"></i>
-                                                    </span>
-                                                </li>
+                                                @foreach ($mainFeatures as $planFeature)
+                                                    @php
+                                                        $feature = $planFeature->hostingFeature;
+                                                    @endphp
+                                                    @if ($feature)
+                                                        <li class="card-plan__feature--list-item">
+                                                            <span class="text"><i class="fa-regular fa-check"></i>
+                                                                {{ $planFeature->getDisplayText() }}</span>
+                                                            @if ($feature->description)
+                                                                <span class="tolltip" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="bottom"
+                                                                    data-bs-original-title="{{ $feature->description }}"><i
+                                                                        class="fa-light fa-circle-question"></i></span>
+                                                            @endif
+                                                        </li>
+                                                    @endif
+                                                @endforeach
+                                                @if ($hasMoreFeatures)
+                                                    <li class="card-plan__feature--list-trigered">
+                                                        <span class="text">More Features <i
+                                                                class="fa-sharp fa-regular fa-chevron-down"></i>
+                                                        </span>
+                                                    </li>
+                                                @endif
                                             </ul>
-                                            <ul class="card-plan__feature--list more__feature">
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> 100 GB
-                                                        SSD
-                                                        Storage</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Hostie offers generous hosting with 100GB SSD storage, providing ample space for your data and ensuring high-performance storage solutions."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> Unlimited
-                                                        Free SSL</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Secure your website with Hostie's unlimited free SSL certificates, ensuring encrypted and safe online transactions for your users."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-check"></i> 99.9%
-                                                        Uptime
-                                                        Guarantee</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Hostie guarantees 99% uptime, ensuring your website is consistently available and reliable for visitors around the clock."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-item">
-                                                    <span class="text"><i class="fa-regular fa-xmark"></i> Web
-                                                        Application Firewall</span>
-                                                    <span class="tolltip" data-bs-toggle="tooltip"
-                                                        data-bs-placement="bottom"
-                                                        data-bs-original-title="Enhance your website's security with Hostie's Web Application Firewall, protecting against online threats and ensuring a safe online environment."><i
-                                                            class="fa-light fa-circle-question"></i></span>
-                                                </li>
-                                                <li class="card-plan__feature--list-trigered">
-                                                    <span class="text">See less Features <i
-                                                            class="fa-sharp fa-regular fa-chevron-up"></i>
-                                                    </span>
-                                                </li>
-                                            </ul>
+                                            @if ($hasMoreFeatures)
+                                                <ul class="card-plan__feature--list more__feature">
+                                                    @foreach ($moreIncludedFeatures as $planFeature)
+                                                        @php
+                                                            $feature = $planFeature->hostingFeature;
+                                                        @endphp
+                                                        @if ($feature)
+                                                            <li class="card-plan__feature--list-item">
+                                                                <span class="text"><i
+                                                                        class="fa-regular fa-check"></i>
+                                                                    {{ $planFeature->getDisplayText() }}</span>
+                                                                @if ($feature->description)
+                                                                    <span class="tolltip" data-bs-toggle="tooltip"
+                                                                        data-bs-placement="bottom"
+                                                                        data-bs-original-title="{{ $feature->description }}"><i
+                                                                            class="fa-light fa-circle-question"></i></span>
+                                                                @endif
+                                                            </li>
+                                                        @endif
+                                                    @endforeach
+                                                    @foreach ($allExcludedFeatures as $planFeature)
+                                                        @php
+                                                            $feature = $planFeature->hostingFeature;
+                                                        @endphp
+                                                        @if ($feature)
+                                                            <li class="card-plan__feature--list-item">
+                                                                <span class="text"><i
+                                                                        class="fa-regular fa-xmark"></i>
+                                                                    {{ $planFeature->getDisplayText() }}</span>
+                                                                @if ($feature->description)
+                                                                    <span class="tolltip" data-bs-toggle="tooltip"
+                                                                        data-bs-placement="bottom"
+                                                                        data-bs-original-title="{{ $feature->description }}"><i
+                                                                            class="fa-light fa-circle-question"></i></span>
+                                                                @endif
+                                                            </li>
+                                                        @endif
+                                                    @endforeach
+                                                    <li class="card-plan__feature--list-trigered">
+                                                        <span class="text">See less Features <i
+                                                                class="fa-sharp fa-regular fa-chevron-up"></i>
+                                                        </span>
+                                                    </li>
+                                                </ul>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -276,8 +232,8 @@
                                     </div>
                                     <p class="card-plan__desc">{{ $plan->description }}</p>
                                     @if ($yearlyPrice->discount_percentage)
-                                    <div class="card-plan__offer">
-                                        <span class="past-price">{{ $yearlyPrice->regular_price }}</span>
+                                        <div class="card-plan__offer">
+                                            <span class="past-price">{{ $yearlyPrice->regular_price }}</span>
                                             <span class="offer-given">Save
                                                 {{ $yearlyPrice->discount_percentage }}%</span>
                                         </div>
@@ -292,130 +248,84 @@
                                         $ {{ $yearlyPrice->renewal_price }} /Year when you renew
                                     </p>
                                     <div class="card-plan__feature">
+                                        @php
+                                            $allIncludedFeatures = $plan->planFeatures->where('is_included', true);
+                                            $allExcludedFeatures = $plan->planFeatures->where('is_included', false);
+                                            $mainFeatures = $allIncludedFeatures->take(8);
+                                            $moreIncludedFeatures = $allIncludedFeatures->skip(8);
+                                            $hasMoreFeatures =
+                                                $moreIncludedFeatures->isNotEmpty() ||
+                                                $allExcludedFeatures->isNotEmpty();
+                                        @endphp
                                         <ul class="card-plan__feature--list">
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> 1
-                                                    Website</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Explore, discover, and learn on our innovative and informative website."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> Standard
-                                                    Performance</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Unlock superior online experiences with our standard performance solutions, ensuring reliability, speed, and seamless functionality for your website needs."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> 24/7/365
-                                                    Support</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Hostie provides reliable 24/7 support for your hosting needs, ensuring assistance whenever you require help."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-xmark"></i> Free
-                                                    Email</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Hostie offers complimentary email services, empowering your online communication with reliable and secure free email solutions."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-xmark"></i> Unlimited
-                                                    Bandwidth</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Hostie provides unlimited bandwidth, ensuring seamless data transfer for your website's optimal performance and user experience."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> 100 GB SSD
-                                                    Storage</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Elevate your online presence with Hostie, offering unlimited bandwidth for your domain, ensuring optimal performance and seamless data flow."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-
-
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> Unlimited
-                                                    Free
-                                                    SSL</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Secure your website with Hostie's unlimited free SSL certificates, ensuring encrypted and safe online transactions for your users."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> 99.9% Uptime
-                                                    Guarantee</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Hostie guarantees 99% uptime, ensuring your website is consistently available and reliable for visitors around the clock."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> Web
-                                                    Application
-                                                    Firewall</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Enhance your website's security with Hostie's Web Application Firewall, protecting against online threats and ensuring a safe online environment."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-trigered">
-                                                <span class="text">More Features <i
-                                                        class="fa-sharp fa-regular fa-chevron-down"></i>
-                                                </span>
-                                            </li>
+                                            @foreach ($mainFeatures as $planFeature)
+                                                @php
+                                                    $feature = $planFeature->hostingFeature;
+                                                @endphp
+                                                @if ($feature)
+                                                    <li class="card-plan__feature--list-item">
+                                                        <span class="text"><i class="fa-regular fa-check"></i>
+                                                            {{ $planFeature->getDisplayText() }}</span>
+                                                        @if ($feature->description)
+                                                            <span class="tolltip" data-bs-toggle="tooltip"
+                                                                data-bs-placement="bottom"
+                                                                data-bs-original-title="{{ $feature->description }}"><i
+                                                                    class="fa-light fa-circle-question"></i></span>
+                                                        @endif
+                                                    </li>
+                                                @endif
+                                            @endforeach
+                                            @if ($hasMoreFeatures)
+                                                <li class="card-plan__feature--list-trigered">
+                                                    <span class="text">More Features <i
+                                                            class="fa-sharp fa-regular fa-chevron-down"></i>
+                                                    </span>
+                                                </li>
+                                            @endif
                                         </ul>
-                                        <ul class="card-plan__feature--list more__feature">
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> 100 GB SSD
-                                                    Storage</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Hostie offers generous hosting with 100GB SSD storage, providing ample space for your data and ensuring high-performance storage solutions."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> Unlimited
-                                                    Free
-                                                    SSL</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Secure your website with Hostie's unlimited free SSL certificates, ensuring encrypted and safe online transactions for your users."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-check"></i> 99.9% Uptime
-                                                    Guarantee</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Hostie guarantees 99% uptime, ensuring your website is consistently available and reliable for visitors around the clock."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-item">
-                                                <span class="text"><i class="fa-regular fa-xmark"></i> Web
-                                                    Application
-                                                    Firewall</span>
-                                                <span class="tolltip" data-bs-toggle="tooltip"
-                                                    data-bs-placement="bottom"
-                                                    data-bs-original-title="Enhance your website's security with Hostie's Web Application Firewall, protecting against online threats and ensuring a safe online environment."><i
-                                                        class="fa-light fa-circle-question"></i></span>
-                                            </li>
-                                            <li class="card-plan__feature--list-trigered">
-                                                <span class="text">See less Features <i
-                                                        class="fa-sharp fa-regular fa-chevron-up"></i>
-                                                </span>
-                                            </li>
-                                        </ul>
+                                        @if ($hasMoreFeatures)
+                                            <ul class="card-plan__feature--list more__feature">
+                                                @foreach ($moreIncludedFeatures as $planFeature)
+                                                    @php
+                                                        $feature = $planFeature->hostingFeature;
+                                                    @endphp
+                                                    @if ($feature)
+                                                        <li class="card-plan__feature--list-item">
+                                                            <span class="text"><i class="fa-regular fa-check"></i>
+                                                                {{ $planFeature->getDisplayText() }}</span>
+                                                            @if ($feature->description)
+                                                                <span class="tolltip" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="bottom"
+                                                                    data-bs-original-title="{{ $feature->description }}"><i
+                                                                        class="fa-light fa-circle-question"></i></span>
+                                                            @endif
+                                                        </li>
+                                                    @endif
+                                                @endforeach
+                                                @foreach ($allExcludedFeatures as $planFeature)
+                                                    @php
+                                                        $feature = $planFeature->hostingFeature;
+                                                    @endphp
+                                                    @if ($feature)
+                                                        <li class="card-plan__feature--list-item">
+                                                            <span class="text"><i class="fa-regular fa-xmark"></i>
+                                                                {{ $planFeature->getDisplayText() }}</span>
+                                                            @if ($feature->description)
+                                                                <span class="tolltip" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="bottom"
+                                                                    data-bs-original-title="{{ $feature->description }}"><i
+                                                                        class="fa-light fa-circle-question"></i></span>
+                                                            @endif
+                                                        </li>
+                                                    @endif
+                                                @endforeach
+                                                <li class="card-plan__feature--list-trigered">
+                                                    <span class="text">See less Features <i
+                                                            class="fa-sharp fa-regular fa-chevron-up"></i>
+                                                    </span>
+                                                </li>
+                                            </ul>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -425,7 +335,7 @@
             </div>
         </div>
         <div class="view-plan-btn">
-            <a href="pricing.html" class="btn long-btn">view all plan</a>
+            <a href="#" class="btn long-btn">view all plan</a>
         </div>
     </div>
     </div>

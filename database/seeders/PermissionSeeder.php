@@ -94,6 +94,11 @@ final class PermissionSeeder extends Seeder
             ['id' => 80, 'title' => 'hosting_feature_show'],
             ['id' => 81, 'title' => 'hosting_feature_delete'],
             ['id' => 82, 'title' => 'hosting_feature_access'],
+            ['id' => 83, 'title' => 'hosting_plan_feature_create'],
+            ['id' => 84, 'title' => 'hosting_plan_feature_edit'],
+            ['id' => 85, 'title' => 'hosting_plan_feature_show'],
+            ['id' => 86, 'title' => 'hosting_plan_feature_delete'],
+            ['id' => 87, 'title' => 'hosting_plan_feature_access'],
         ];
 
         Permission::query()->upsert(

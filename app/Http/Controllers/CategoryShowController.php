@@ -24,7 +24,7 @@ class CategoryShowController extends Controller
                 $query->where('status', HostingPlanStatus::Active);
             }, 'plans.planPrices' => function ($query): void {
                 $query->where('status', HostingPlanPriceStatus::Active);
-            }])
+            }, 'plans.planFeatures.hostingFeature'])
             ->first();
         if (! $category) {
             return to_route('home')->with('error', 'Category not found');
