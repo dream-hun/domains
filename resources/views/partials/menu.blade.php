@@ -167,6 +167,17 @@
                         </ul>
                     </li>
                 @endcan
+                @can('subscription_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.subscriptions.index') }}"
+                            class="nav-link {{ request()->is('admin/subscriptions*') ? 'active' : '' }}">
+                            <i class="bi bi-repeat"></i>
+                            <p>
+                                {{ trans('cruds.subscription.title') }}
+                            </p>
+                        </a>
+                    </li>
+                @endcan
                 @can('setting_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.settings.index') }}"
