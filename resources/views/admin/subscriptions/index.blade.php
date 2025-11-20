@@ -29,7 +29,7 @@
                             <p>Total Subscriptions</p>
                         </div>
                         <div class="icon">
-                            <i class="ion ion-clipboard"></i>
+                            <i class="bi bi-clipboard"></i>
                         </div>
                         <a href="{{ route('admin.subscriptions.index') }}" class="small-box-footer">
                             View all <i class="bi bi-arrow-right"></i>
@@ -43,7 +43,7 @@
                             <p>Active</p>
                         </div>
                         <div class="icon">
-                            <i class="ion ion-checkmark-circled"></i>
+                            <i class="bi bi-check-circle"></i>
                         </div>
                         <a href="{{ route('admin.subscriptions.index', ['status' => 'active']) }}"
                             class="small-box-footer">
@@ -58,7 +58,7 @@
                             <p>Expiring (Next 30 days)</p>
                         </div>
                         <div class="icon">
-                            <i class="ion ion-clock"></i>
+                            <i class="bi bi-clock"></i>
                         </div>
                         <a href="{{ route('admin.subscriptions.index', ['status' => 'active']) }}"
                             class="small-box-footer">
@@ -73,7 +73,7 @@
                             <p>Cancelled</p>
                         </div>
                         <div class="icon">
-                            <i class="ion ion-close-circled"></i>
+                            <i class="bi bi-x-circle"></i>
                         </div>
                         <a href="{{ route('admin.subscriptions.index', ['status' => 'cancelled']) }}"
                             class="small-box-footer">
