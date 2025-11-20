@@ -110,6 +110,7 @@ final class PermissionSeeder extends Seeder
             ['id' => 96, 'title' => 'hosting_promotion_show'],
             ['id' => 97, 'title' => 'hosting_promotion_delete'],
             ['id' => 98, 'title' => 'hosting_promotion_access'],
+            ['id' => 99, 'title' => 'audit_log_access'],
         ];
 
         Permission::query()->upsert(

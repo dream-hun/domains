@@ -233,6 +233,17 @@
                         </ul>
                     </li>
                 @endcan
+                @can('audit_log_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.audit-logs.index') }}"
+                            class="nav-link {{ request()->is('admin/audit-logs*') ? 'active' : '' }}">
+                            <i class="bi bi-clipboard-data"></i>
+                            <p>
+                                Audit Activity
+                            </p>
+                        </a>
+                    </li>
+                @endcan
                 <li class="nav-item">
                     <a href="{{ route('billing.index') }}"
                         class="nav-link {{ request()->is('billing.index') ? 'active' : '' }}">
