@@ -162,8 +162,11 @@
                         </div>
                     </div>
                     @if ($activities->hasPages())
-                        <div class="card-footer">
-                            {{ $activities->links() }}
+                        <div class="card-footer d-flex justify-content-between flex-column flex-md-row align-items-center">
+                            <small class="text-muted mb-3 mb-md-0">
+                                Page {{ $activities->currentPage() }} of {{ $activities->lastPage() }}
+                            </small>
+                            {{ $activities->onEachSide(1)->links('pagination::bootstrap-4') }}
                         </div>
                     @endif
                 </div>
