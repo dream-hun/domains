@@ -27,6 +27,23 @@
                     @csrf
                     <div class="card-body">
                         <div class="form-group">
+                            <label for="hosting_category_id">Hosting Category <span class="text-danger">*</span></label>
+                            <select name="hosting_category_id"
+                                    id="hosting_category_id"
+                                    class="form-control @error('hosting_category_id') is-invalid @enderror"
+                                    required>
+                                <option value="">Select a category</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ old('hosting_category_id') == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('hosting_category_id')
+                            <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="form-group">
                             <label for="hosting_plan_id">Hosting Plan <span class="text-danger">*</span></label>
                             <select name="hosting_plan_id"
                                     id="hosting_plan_id"
@@ -34,7 +51,9 @@
                                     required>
                                 <option value="">Select a plan</option>
                                 @foreach($plans as $plan)
-                                    <option value="{{ $plan->id }}" {{ old('hosting_plan_id') == $plan->id ? 'selected' : '' }}>
+                                    <option value="{{ $plan->id }}"
+                                            data-category="{{ $plan->category_id }}"
+                                            {{ old('hosting_plan_id') == $plan->id ? 'selected' : '' }}>
                                         {{ $plan->name }}
                                     </option>
                                 @endforeach
@@ -77,19 +96,6 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="promotional_price">Promotional Price (cents)</label>
-                                    <input type="number"
-                                           name="promotional_price"
-                                           id="promotional_price"
-                                           class="form-control @error('promotional_price') is-invalid @enderror"
-                                           value="{{ old('promotional_price') }}">
-                                    @error('promotional_price')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
                                     <label for="renewal_price">Renewal Price (cents) <span class="text-danger">*</span></label>
                                     <input type="number"
                                            name="renewal_price"
@@ -98,49 +104,6 @@
                                            value="{{ old('renewal_price') }}"
                                            required>
                                     @error('renewal_price')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="discount_percentage">Discount Percentage</label>
-                                    <input type="number"
-                                           name="discount_percentage"
-                                           id="discount_percentage"
-                                           class="form-control @error('discount_percentage') is-invalid @enderror"
-                                           value="{{ old('discount_percentage') }}"
-                                           min="0"
-                                           max="100">
-                                    @error('discount_percentage')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="promotional_start_date">Promotional Start Date</label>
-                                    <input type="date"
-                                           name="promotional_start_date"
-                                           id="promotional_start_date"
-                                           class="form-control @error('promotional_start_date') is-invalid @enderror"
-                                           value="{{ old('promotional_start_date') }}">
-                                    @error('promotional_start_date')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="promotional_end_date">Promotional End Date</label>
-                                    <input type="date"
-                                           name="promotional_end_date"
-                                           id="promotional_end_date"
-                                           class="form-control @error('promotional_end_date') is-invalid @enderror"
-                                           value="{{ old('promotional_end_date') }}">
-                                    @error('promotional_end_date')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -175,6 +138,10 @@
             </div>
         </div>
     </section>
+
+    @section('scripts')
+        @include('admin.hosting-plan-prices.partials.dependent-plan-script')
+    @endsection
 
 </x-admin-layout>
 

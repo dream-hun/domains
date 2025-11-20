@@ -59,6 +59,7 @@ it('allows admin to view create page', function (): void {
 
 it('allows admin to create a new hosting plan price', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-prices', [
+        'hosting_category_id' => $this->category->id,
         'hosting_plan_id' => $this->plan->id,
         'billing_cycle' => 'monthly',
         'regular_price' => 2999,
@@ -82,6 +83,7 @@ it('validates required fields when creating hosting plan price', function (): vo
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-prices', []);
 
     $response->assertSessionHasErrors([
+        'hosting_category_id',
         'hosting_plan_id',
         'billing_cycle',
         'regular_price',
@@ -91,6 +93,7 @@ it('validates required fields when creating hosting plan price', function (): vo
 
 it('validates billing cycle is valid', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-prices', [
+        'hosting_category_id' => $this->category->id,
         'hosting_plan_id' => $this->plan->id,
         'billing_cycle' => 'invalid-cycle',
         'regular_price' => 2999,
@@ -102,6 +105,7 @@ it('validates billing cycle is valid', function (): void {
 
 it('validates prices are non-negative integers', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-prices', [
+        'hosting_category_id' => $this->category->id,
         'hosting_plan_id' => $this->plan->id,
         'billing_cycle' => 'monthly',
         'regular_price' => -100,
@@ -111,29 +115,19 @@ it('validates prices are non-negative integers', function (): void {
     $response->assertSessionHasErrors('regular_price');
 });
 
-it('validates discount percentage is between 0 and 100', function (): void {
+it('validates hosting plan belongs to the selected category', function (): void {
+    $otherCategory = HostingCategory::factory()->create();
+    $otherPlan = HostingPlan::factory()->create(['category_id' => $otherCategory->id]);
+
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-prices', [
-        'hosting_plan_id' => $this->plan->id,
+        'hosting_category_id' => $this->category->id,
+        'hosting_plan_id' => $otherPlan->id,
         'billing_cycle' => 'monthly',
         'regular_price' => 2999,
         'renewal_price' => 2999,
-        'discount_percentage' => 150,
     ]);
 
-    $response->assertSessionHasErrors('discount_percentage');
-});
-
-it('validates promotional end date is after start date', function (): void {
-    $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-prices', [
-        'hosting_plan_id' => $this->plan->id,
-        'billing_cycle' => 'monthly',
-        'regular_price' => 2999,
-        'renewal_price' => 2999,
-        'promotional_start_date' => '2024-12-31',
-        'promotional_end_date' => '2024-01-01',
-    ]);
-
-    $response->assertSessionHasErrors('promotional_end_date');
+    $response->assertSessionHasErrors('hosting_plan_id');
 });
 
 it('allows admin to view edit page', function (): void {
@@ -156,6 +150,7 @@ it('allows admin to update a hosting plan price', function (): void {
     ]);
 
     $response = $this->actingAs($this->admin)->put('/admin/hosting-plan-prices/'.$price->uuid, [
+        'hosting_category_id' => $this->category->id,
         'hosting_plan_id' => $this->plan->id,
         'billing_cycle' => 'annually',
         'regular_price' => 29999,
@@ -191,6 +186,7 @@ it('allows admin to delete a hosting plan price', function (): void {
 
 it('creates price with default status when not provided', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-prices', [
+        'hosting_category_id' => $this->category->id,
         'hosting_plan_id' => $this->plan->id,
         'billing_cycle' => 'monthly',
         'regular_price' => 2999,
@@ -202,27 +198,6 @@ it('creates price with default status when not provided', function (): void {
     $this->assertDatabaseHas('hosting_plan_prices', [
         'hosting_plan_id' => $this->plan->id,
         'status' => HostingPlanPriceStatus::Active->value,
-    ]);
-});
-
-it('creates price with promotional fields when provided', function (): void {
-    $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-prices', [
-        'hosting_plan_id' => $this->plan->id,
-        'billing_cycle' => 'monthly',
-        'regular_price' => 2999,
-        'renewal_price' => 2999,
-        'promotional_price' => 1999,
-        'discount_percentage' => 33,
-        'promotional_start_date' => '2024-01-01',
-        'promotional_end_date' => '2024-12-31',
-    ]);
-
-    $response->assertRedirect('/admin/hosting-plan-prices');
-
-    $this->assertDatabaseHas('hosting_plan_prices', [
-        'hosting_plan_id' => $this->plan->id,
-        'promotional_price' => 1999,
-        'discount_percentage' => 33,
     ]);
 });
 

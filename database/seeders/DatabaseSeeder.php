@@ -25,6 +25,7 @@ final class DatabaseSeeder extends Seeder
             HostingCategorySeeder::class,
             HostingPlanSeeder::class,
             HostingPlanPriceSeeder::class,
+            HostingPromotionSeeder::class,
             FeatureCategorySeeder::class,
         ]);
     }

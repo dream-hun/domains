@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\Hosting\HostingPlanPriceStatus;
 use App\Models\HostingPlan;
-use App\Models\HostingPlanPrice;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends Factory<HostingPlanPrice>
+ * @extends Factory<\App\Models\HostingPromotion>
  */
-class HostingPlanPriceFactory extends Factory
+class HostingPromotionFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -22,13 +20,15 @@ class HostingPlanPriceFactory extends Factory
      */
     public function definition(): array
     {
+        $startsAt = now()->addDays($this->faker->numberBetween(0, 10));
+
         return [
             'uuid' => (string) Str::uuid(),
             'hosting_plan_id' => HostingPlan::factory(),
             'billing_cycle' => $this->faker->randomElement(['monthly', 'quarterly', 'semi-annually', 'annually', 'biennially', 'triennially']),
-            'regular_price' => $this->faker->numberBetween(1000, 50000),
-            'renewal_price' => $this->faker->numberBetween(1000, 50000),
-            'status' => HostingPlanPriceStatus::Active->value,
+            'discount_percentage' => $this->faker->randomFloat(2, 5, 80),
+            'starts_at' => $startsAt,
+            'ends_at' => (clone $startsAt)->addDays($this->faker->numberBetween(5, 60)),
         ];
     }
 }

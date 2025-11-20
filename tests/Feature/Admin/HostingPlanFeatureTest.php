@@ -6,6 +6,7 @@ use App\Actions\HostingPlanFeature\DeleteHostingPlanFeatureAction;
 use App\Actions\HostingPlanFeature\ListHostingPlanFeatureAction;
 use App\Actions\HostingPlanFeature\StoreHostingPlanFeatureAction;
 use App\Actions\HostingPlanFeature\UpdateHostingPlanFeatureAction;
+use App\Models\HostingCategory;
 use App\Models\HostingFeature;
 use App\Models\HostingPlan;
 use App\Models\HostingPlanFeature;
@@ -34,6 +35,8 @@ beforeEach(function (): void {
 
     // Create a hosting plan and feature for testing
     $this->hostingPlan = HostingPlan::factory()->create(['name' => 'Basic Plan']);
+    $this->hostingPlan->load('category');
+    $this->hostingCategory = $this->hostingPlan->category;
     $this->hostingFeature = HostingFeature::factory()->create(['name' => 'Storage Space']);
 });
 
@@ -61,6 +64,7 @@ it('allows admin to view create form', function (): void {
 
 it('allows admin to create a new hosting plan feature', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
         'feature_value' => '50 GB',
@@ -87,11 +91,12 @@ it('allows admin to create a new hosting plan feature', function (): void {
 it('validates required fields when creating hosting plan feature', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', []);
 
-    $response->assertSessionHasErrors(['hosting_plan_id', 'hosting_feature_id']);
+    $response->assertSessionHasErrors(['hosting_category_id', 'hosting_plan_id', 'hosting_feature_id']);
 });
 
 it('validates hosting_plan_id exists', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => 99999,
         'hosting_feature_id' => $this->hostingFeature->id,
     ]);
@@ -101,6 +106,7 @@ it('validates hosting_plan_id exists', function (): void {
 
 it('validates hosting_feature_id exists', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => 99999,
     ]);
@@ -115,6 +121,7 @@ it('prevents duplicate hosting_plan_id and hosting_feature_id combination', func
     ]);
 
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
     ]);
@@ -124,6 +131,7 @@ it('prevents duplicate hosting_plan_id and hosting_feature_id combination', func
 
 it('validates sort_order is a non-negative integer', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
         'sort_order' => -1,
@@ -154,8 +162,10 @@ it('allows admin to update a hosting plan feature', function (): void {
     ]);
 
     $anotherPlan = HostingPlan::factory()->create(['name' => 'Pro Plan']);
+    $anotherPlan->load('category');
 
     $response = $this->actingAs($this->admin)->put('/admin/hosting-plan-features/'.$planFeature->id, [
+        'hosting_category_id' => $anotherPlan->category_id,
         'hosting_plan_id' => $anotherPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
         'feature_value' => '200 GB',
@@ -193,6 +203,7 @@ it('prevents duplicate hosting_plan_id and hosting_feature_id combination when u
     ]);
 
     $response = $this->actingAs($this->admin)->put('/admin/hosting-plan-features/'.$planFeature->id, [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
     ]);
@@ -249,6 +260,7 @@ it('includes hosting plan and hosting feature relationships when listing', funct
     $foundPlanFeature = $planFeatures->firstWhere('id', $planFeature->id);
     expect($foundPlanFeature->hostingPlan)->not->toBeNull();
     expect($foundPlanFeature->hostingPlan->name)->toBe('Basic Plan');
+    expect($foundPlanFeature->hostingPlan->category)->not->toBeNull();
     expect($foundPlanFeature->hostingFeature)->not->toBeNull();
     expect($foundPlanFeature->hostingFeature->name)->toBe('Storage Space');
 });
@@ -300,6 +312,7 @@ it('handles delete action', function (): void {
 
 it('creates plan feature with default values when not provided', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
     ]);
@@ -317,6 +330,7 @@ it('creates plan feature with default values when not provided', function (): vo
 
 it('handles boolean fields correctly when creating', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
         'is_unlimited' => '1',
@@ -342,6 +356,7 @@ it('handles boolean fields correctly when updating', function (): void {
     ]);
 
     $response = $this->actingAs($this->admin)->put('/admin/hosting-plan-features/'.$planFeature->id, [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
         'is_unlimited' => '1',
@@ -387,6 +402,7 @@ it('requires permission to delete hosting plan feature', function (): void {
 
 it('displays success message after creating plan feature', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
     ]);
@@ -402,6 +418,7 @@ it('displays success message after updating plan feature', function (): void {
     ]);
 
     $response = $this->actingAs($this->admin)->put('/admin/hosting-plan-features/'.$planFeature->id, [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
         'feature_value' => 'Updated value',
@@ -425,6 +442,7 @@ it('displays success message after deleting plan feature', function (): void {
 
 it('allows nullable fields when creating', function (): void {
     $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
         'hosting_plan_id' => $this->hostingPlan->id,
         'hosting_feature_id' => $this->hostingFeature->id,
         'feature_value' => null,
@@ -439,4 +457,50 @@ it('allows nullable fields when creating', function (): void {
         'feature_value' => null,
         'custom_text' => null,
     ]);
+});
+
+it('filters hosting plan features by category and plan', function (): void {
+    $anotherCategory = HostingCategory::factory()->create(['name' => 'Pro']);
+    $anotherPlan = HostingPlan::factory()->create([
+        'name' => 'Pro Plan',
+        'category_id' => $anotherCategory->id,
+    ]);
+    $anotherFeature = HostingFeature::factory()->create(['name' => 'Bandwidth']);
+
+    HostingPlanFeature::factory()->create([
+        'hosting_plan_id' => $this->hostingPlan->id,
+        'hosting_feature_id' => $this->hostingFeature->id,
+        'feature_value' => '100 GB',
+    ]);
+
+    HostingPlanFeature::factory()->create([
+        'hosting_plan_id' => $anotherPlan->id,
+        'hosting_feature_id' => $anotherFeature->id,
+        'feature_value' => '200 GB',
+    ]);
+
+    $this->actingAs($this->admin)
+        ->get('/admin/hosting-plan-features?hosting_category_id='.$this->hostingCategory->id)
+        ->assertSee('Storage Space')
+        ->assertDontSee('Bandwidth');
+
+    $this->actingAs($this->admin)
+        ->get('/admin/hosting-plan-features?hosting_plan_id='.$anotherPlan->id)
+        ->assertSee('Bandwidth')
+        ->assertDontSee('Storage Space');
+});
+
+it('validates hosting plan belongs to selected category', function (): void {
+    $differentCategory = HostingCategory::factory()->create();
+    $planFromDifferentCategory = HostingPlan::factory()->create([
+        'category_id' => $differentCategory->id,
+    ]);
+
+    $response = $this->actingAs($this->admin)->post('/admin/hosting-plan-features', [
+        'hosting_category_id' => $this->hostingCategory->id,
+        'hosting_plan_id' => $planFromDifferentCategory->id,
+        'hosting_feature_id' => $this->hostingFeature->id,
+    ]);
+
+    $response->assertSessionHasErrors('hosting_plan_id');
 });

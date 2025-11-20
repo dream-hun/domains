@@ -19,11 +19,7 @@ return new class extends Migration
             $table->foreignId('hosting_plan_id')->constrained('hosting_plans');
             $table->string('billing_cycle');
             $table->integer('regular_price');
-            $table->integer('promotional_price')->nullable();
             $table->integer('renewal_price');
-            $table->integer('discount_percentage')->nullable();
-            $table->date('promotional_start_date')->nullable();
-            $table->date('promotional_end_date')->nullable();
             $table->string('status')->default('active');
             $table->timestamps();
 

@@ -11,24 +11,40 @@ use App\Actions\HostingPlanFeature\UpdateHostingPlanFeatureAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreHostingPlanFeatureRequest;
 use App\Http\Requests\Admin\UpdateHostingPlanFeatureRequest;
+use App\Models\HostingCategory;
 use App\Models\HostingFeature;
 use App\Models\HostingPlan;
 use App\Models\HostingPlanFeature;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
 final class HostingPlanFeatureController extends Controller
 {
-    public function index(ListHostingPlanFeatureAction $action): View|Factory
+    public function index(Request $request, ListHostingPlanFeatureAction $action): View|Factory
     {
         abort_if(Gate::denies('hosting_plan_feature_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $hostingPlanFeatures = $action->handle();
+        $selectedCategoryId = $request->filled('hosting_category_id') ? (int) $request->input('hosting_category_id') : null;
+        $selectedPlanId = $request->filled('hosting_plan_id') ? (int) $request->input('hosting_plan_id') : null;
 
-        return view('admin.hosting-plan-features.index', ['hostingPlanFeatures' => $hostingPlanFeatures]);
+        $hostingPlanFeatures = $action->handle($selectedCategoryId, $selectedPlanId);
+        $hostingCategories = HostingCategory::query()->orderBy('name')->get();
+        $hostingPlans = HostingPlan::query()->orderBy('name')->get();
+
+        return view('admin.hosting-plan-features.index', [
+            'hostingPlanFeatures' => $hostingPlanFeatures,
+            'hostingCategories' => $hostingCategories,
+            'hostingPlans' => $hostingPlans,
+            'filters' => [
+                'hosting_category_id' => $selectedCategoryId,
+                'hosting_plan_id' => $selectedPlanId,
+            ],
+        ]);
     }
 
     public function create(): View|Factory
@@ -37,16 +53,20 @@ final class HostingPlanFeatureController extends Controller
 
         $hostingPlans = HostingPlan::query()->orderBy('name')->get();
         $hostingFeatures = HostingFeature::query()->orderBy('name')->get();
+        $hostingCategories = HostingCategory::query()->orderBy('name')->get();
 
         return view('admin.hosting-plan-features.create', [
             'hostingPlans' => $hostingPlans,
             'hostingFeatures' => $hostingFeatures,
+            'hostingCategories' => $hostingCategories,
         ]);
     }
 
     public function store(StoreHostingPlanFeatureRequest $request, StoreHostingPlanFeatureAction $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        $payload = Arr::except($request->validated(), ['hosting_category_id']);
+
+        $action->handle($payload);
 
         return to_route('admin.hosting-plan-features.index')->with('success', 'Hosting plan feature created successfully.');
     }
@@ -55,20 +75,24 @@ final class HostingPlanFeatureController extends Controller
     {
         abort_if(Gate::denies('hosting_plan_feature_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $hostingPlanFeature->load(['hostingPlan', 'hostingFeature']);
+        $hostingPlanFeature->load(['hostingPlan.category', 'hostingFeature']);
         $hostingPlans = HostingPlan::query()->orderBy('name')->get();
         $hostingFeatures = HostingFeature::query()->orderBy('name')->get();
+        $hostingCategories = HostingCategory::query()->orderBy('name')->get();
 
         return view('admin.hosting-plan-features.edit', [
             'hostingPlanFeature' => $hostingPlanFeature,
             'hostingPlans' => $hostingPlans,
             'hostingFeatures' => $hostingFeatures,
+            'hostingCategories' => $hostingCategories,
         ]);
     }
 
     public function update(UpdateHostingPlanFeatureRequest $request, HostingPlanFeature $hostingPlanFeature, UpdateHostingPlanFeatureAction $action): RedirectResponse
     {
-        $action->handle($hostingPlanFeature, $request->validated());
+        $payload = Arr::except($request->validated(), ['hosting_category_id']);
+
+        $action->handle($hostingPlanFeature, $payload);
 
         return to_route('admin.hosting-plan-features.index')->with('success', 'Hosting plan feature updated successfully.');
     }

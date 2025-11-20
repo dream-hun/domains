@@ -21,11 +21,7 @@ class HostingPlanPrice extends Model
 
     protected $casts = [
         'regular_price' => 'integer',
-        'promotional_price' => 'integer',
         'renewal_price' => 'integer',
-        'discount_percentage' => 'integer',
-        'promotional_start_date' => 'date',
-        'promotional_end_date' => 'date',
         'status' => HostingPlanPriceStatus::class,
     ];
 

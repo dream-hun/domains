@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Actions\Hosting\PlanPrices;
+namespace App\Actions\Hosting\Promotions;
 
-use App\Models\HostingPlanPrice;
+use App\Models\HostingPromotion;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-final class ListPlanPriceAction
+final class ListHostingPromotionAction
 {
     public function handle(int $perPage = 10): LengthAwarePaginator
     {
-        return HostingPlanPrice::query()
+        return HostingPromotion::query()
             ->with(['plan.category'])
-            ->orderByDesc('id')
+            ->orderByDesc('starts_at')
             ->paginate($perPage);
     }
 }

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\Hosting\BillingCycle;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 final class UpdatePlanPriceRequest extends FormRequest
 {
@@ -17,14 +19,17 @@ final class UpdatePlanPriceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'hosting_plan_id' => ['required', 'exists:hosting_plans,id'],
-            'billing_cycle' => ['required', 'string', 'in:monthly,quarterly,semi-annually,annually,biennially,triennially'],
+            'hosting_category_id' => ['required', 'integer', 'exists:hosting_categories,id'],
+            'hosting_plan_id' => [
+                'required',
+                'integer',
+                Rule::exists('hosting_plans', 'id')->where(function ($query): void {
+                    $query->where('category_id', $this->integer('hosting_category_id'));
+                }),
+            ],
+            'billing_cycle' => ['required', 'string', Rule::in(BillingCycle::values())],
             'regular_price' => ['required', 'integer', 'min:0'],
-            'promotional_price' => ['nullable', 'integer', 'min:0'],
             'renewal_price' => ['required', 'integer', 'min:0'],
-            'discount_percentage' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'promotional_start_date' => ['nullable', 'date'],
-            'promotional_end_date' => ['nullable', 'date', 'after:promotional_start_date'],
             'status' => ['nullable', 'string', 'in:active,inactive'],
         ];
     }

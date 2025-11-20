@@ -117,14 +117,6 @@
                                             <h4 class="package__name">{{ $plan->name }}</h4>
                                         </div>
                                         <p class="card-plan__desc">{{ $plan->description }}</p>
-                                        @if ($monthlyPrice->discount_percentage)
-                                            <div class="card-plan__offer">
-                                                <span
-                                                    class="past-price">{{ $monthlyPrice->getFormattedPrice('regular_price') }}</span>
-                                                <span class="offer-given">Save
-                                                    {{ $monthlyPrice->discount_percentage }}%</span>
-                                            </div>
-                                        @endif
                                         <h5 class="card-plan__price">
                                             {{ $monthlyPrice->getFormattedPrice('regular_price') }} <sub>/ month</sub>
                                         </h5>

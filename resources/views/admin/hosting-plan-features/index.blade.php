@@ -49,6 +49,46 @@
                     </div>
                 @endif
 
+                <form action="{{ route('admin.hosting-plan-features.index') }}" method="GET" class="mb-4" id="hosting-plan-feature-filters">
+                    <div class="form-row">
+                        <div class="col-md-4 mb-3">
+                            <label for="filter_hosting_category_id" class="form-label">Hosting Category</label>
+                            <select name="hosting_category_id" id="filter_hosting_category_id" class="form-control">
+                                <option value="">All categories</option>
+                                @foreach ($hostingCategories as $category)
+                                    <option value="{{ $category->id }}"
+                                        {{ (string) ($filters['hosting_category_id'] ?? '') === (string) $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="filter_hosting_plan_id" class="form-label">Hosting Plan</label>
+                            <select name="hosting_plan_id" id="filter_hosting_plan_id" class="form-control">
+                                <option value="">All plans</option>
+                                @foreach ($hostingPlans as $plan)
+                                    <option value="{{ $plan->id }}"
+                                        data-category-id="{{ $plan->category_id }}"
+                                        {{ (string) ($filters['hosting_plan_id'] ?? '') === (string) $plan->id ? 'selected' : '' }}>
+                                        {{ $plan->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary mr-2">
+                                <i class="bi bi-funnel"></i> Apply Filters
+                            </button>
+                            @if (($filters['hosting_category_id'] ?? null) || ($filters['hosting_plan_id'] ?? null))
+                                <a href="{{ route('admin.hosting-plan-features.index') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </form>
+
                 @if ($hostingPlanFeatures->isEmpty())
                     <div class="alert alert-info">
                         <h5><i class="icon fas fa-info"></i> Info!</h5>
@@ -59,19 +99,21 @@
                         <table class="table table-bordered table-striped table-hover datatable-HostingPlanFeature w-100">
                             <thead>
                                 <tr>
-                                    <th style="width: 20%">Hosting Plan</th>
-                                    <th style="width: 20%">Hosting Feature</th>
-                                    <th style="width: 12%">Feature Value</th>
+                                    <th style="width: 15%">Hosting Category</th>
+                                    <th style="width: 18%">Hosting Plan</th>
+                                    <th style="width: 18%">Hosting Feature</th>
+                                    <th style="width: 10%">Feature Value</th>
                                     <th style="width: 8%">Unlimited</th>
                                     <th style="width: 12%">Custom Text</th>
                                     <th style="width: 8%">Included</th>
-                                    <th style="width: 8%">Sort Order</th>
-                                    <th style="width: 12%">Actions</th>
+                                    <th style="width: 6%">Sort Order</th>
+                                    <th style="width: 15%">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($hostingPlanFeatures as $planFeature)
                                     <tr>
+                                        <td>{{ $planFeature->hostingPlan?->category?->name ?? '-' }}</td>
                                         <td><strong>{{ $planFeature->hostingPlan?->name ?? '-' }}</strong></td>
                                         <td>{{ $planFeature->hostingFeature?->name ?? '-' }}</td>
                                         <td>{{ $planFeature->feature_value ?? '-' }}</td>
@@ -147,13 +189,51 @@
                     lengthChange: true,
                     dom: 'Bfrtip',
                     autoWidth: false,
-                    order: [[6, 'asc']],
+                    order: [[7, 'asc']],
                     pageLength: 25,
                     language: {
                         search: "Search:",
                         searchPlaceholder: "Search plan features..."
                     }
                 })
+            })
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const filterForm = document.getElementById('hosting-plan-feature-filters')
+                const categorySelect = document.getElementById('filter_hosting_category_id')
+                const planSelect = document.getElementById('filter_hosting_plan_id')
+
+                const filterPlanOptions = () => {
+                    if (!planSelect) {
+                        return
+                    }
+
+                    const selectedCategory = categorySelect?.value ?? ''
+
+                    planSelect.querySelectorAll('option[data-category-id]').forEach((option) => {
+                        const matchesCategory = !selectedCategory || option.dataset.categoryId === selectedCategory
+                        option.hidden = !matchesCategory
+                        option.disabled = !matchesCategory
+                    })
+
+                    if (selectedCategory) {
+                        const selectedOption = planSelect.options[planSelect.selectedIndex]
+                        if (selectedOption && (selectedOption.hidden || selectedOption.disabled)) {
+                            planSelect.value = ''
+                        }
+                    }
+                }
+
+                if (categorySelect && planSelect) {
+                    filterPlanOptions()
+
+                    categorySelect.addEventListener('change', () => {
+                        filterPlanOptions()
+                        filterForm?.submit()
+                    })
+
+                    planSelect.addEventListener('change', () => filterForm?.submit())
+                }
             })
         </script>
     @endsection

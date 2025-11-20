@@ -34,12 +34,30 @@
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
+                                    <label for="hosting_category_id" class="form-label required">Hosting Category <span class="text-danger">*</span></label>
+                                    <select name="hosting_category_id" id="hosting_category_id"
+                                        class="form-control @error('hosting_category_id') is-invalid @enderror" required>
+                                        <option value="">Select Hosting Category</option>
+                                        @foreach ($hostingCategories as $category)
+                                            <option value="{{ $category->id }}"
+                                                {{ old('hosting_category_id', $hostingPlanFeature->hostingPlan?->category_id) == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('hosting_category_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6 mb-3">
                                     <label for="hosting_plan_id" class="form-label required">Hosting Plan <span class="text-danger">*</span></label>
                                     <select name="hosting_plan_id" id="hosting_plan_id"
                                         class="form-control @error('hosting_plan_id') is-invalid @enderror" required>
                                         <option value="">Select Hosting Plan</option>
                                         @foreach ($hostingPlans as $plan)
                                             <option value="{{ $plan->id }}"
+                                                data-category-id="{{ $plan->category_id }}"
                                                 {{ old('hosting_plan_id', $hostingPlanFeature->hosting_plan_id) == $plan->id ? 'selected' : '' }}>
                                                 {{ $plan->name }}
                                             </option>
@@ -151,5 +169,41 @@
             </div>
         </div>
     </div>
+
+    @section('scripts')
+        @parent
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const categorySelect = document.getElementById('hosting_category_id')
+                const planSelect = document.getElementById('hosting_plan_id')
+
+                const filterPlanOptions = () => {
+                    if (!planSelect) {
+                        return
+                    }
+
+                    const selectedCategory = categorySelect?.value ?? ''
+
+                    planSelect.querySelectorAll('option[data-category-id]').forEach((option) => {
+                        const matches = !selectedCategory || option.dataset.categoryId === selectedCategory
+                        option.hidden = !matches
+                        option.disabled = !matches
+                    })
+
+                    if (selectedCategory) {
+                        const selectedOption = planSelect.options[planSelect.selectedIndex]
+                        if (selectedOption && (selectedOption.hidden || selectedOption.disabled)) {
+                            planSelect.value = ''
+                        }
+                    }
+                }
+
+                if (categorySelect && planSelect) {
+                    filterPlanOptions()
+                    categorySelect.addEventListener('change', filterPlanOptions)
+                }
+            })
+        </script>
+    @endsection
 </x-admin-layout>
 
