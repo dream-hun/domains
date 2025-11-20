@@ -21,66 +21,56 @@
 
     <section class="content">
         <div class="container-fluid">
+            @php
+                $cards = [
+                    [
+                        'value' => number_format($stats['total']),
+                        'label' => 'Total Subscriptions',
+                        'color' => 'bg-info',
+                        'icon' => 'ion ion-bag',
+                        'link' => route('admin.subscriptions.index'),
+                    ],
+                    [
+                        'value' => number_format($stats['active']),
+                        'label' => 'Active',
+                        'color' => 'bg-success',
+                        'icon' => 'ion ion-stats-bars',
+                        'link' => route('admin.subscriptions.index', ['status' => 'active']),
+                    ],
+                    [
+                        'value' => number_format($stats['expiring_soon']),
+                        'label' => 'Expiring (Next 30 days)',
+                        'color' => 'bg-warning',
+                        'icon' => 'ion ion-person-add',
+                        'link' => route('admin.subscriptions.index', ['status' => 'active']),
+                    ],
+                    [
+                        'value' => number_format($stats['cancelled']),
+                        'label' => 'Cancelled',
+                        'color' => 'bg-danger',
+                        'icon' => 'ion ion-pie-graph',
+                        'link' => route('admin.subscriptions.index', ['status' => 'cancelled']),
+                    ],
+                ];
+            @endphp
+
             <div class="row">
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-primary">
-                        <div class="inner">
-                            <h3>{{ number_format($stats['total']) }}</h3>
-                            <p>Total Subscriptions</p>
+                @foreach ($cards as $card)
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box {{ $card['color'] }}">
+                            <div class="inner">
+                                <h3>{{ $card['value'] }}</h3>
+                                <p>{{ $card['label'] }}</p>
+                            </div>
+                            <div class="icon">
+                                <i class="{{ $card['icon'] }}"></i>
+                            </div>
+                            <a href="{{ $card['link'] }}" class="small-box-footer">
+                                More info <i class="bi bi-arrow-right"></i>
+                            </a>
                         </div>
-                        <div class="icon">
-                            <i class="ion ion-clipboard"></i>
-                        </div>
-                        <a href="{{ route('admin.subscriptions.index') }}" class="small-box-footer">
-                            View all <i class="bi bi-arrow-right"></i>
-                        </a>
                     </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-success">
-                        <div class="inner">
-                            <h3>{{ number_format($stats['active']) }}</h3>
-                            <p>Active</p>
-                        </div>
-                        <div class="icon">
-                            <i class="ion ion-checkmark-circled"></i>
-                        </div>
-                        <a href="{{ route('admin.subscriptions.index', ['status' => 'active']) }}"
-                            class="small-box-footer">
-                            View active <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-warning">
-                        <div class="inner">
-                            <h3>{{ number_format($stats['expiring_soon']) }}</h3>
-                            <p>Expiring (Next 30 days)</p>
-                        </div>
-                        <div class="icon">
-                            <i class="ion ion-clock"></i>
-                        </div>
-                        <a href="{{ route('admin.subscriptions.index', ['status' => 'active']) }}"
-                            class="small-box-footer">
-                            Review renewals <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-danger">
-                        <div class="inner">
-                            <h3>{{ number_format($stats['cancelled']) }}</h3>
-                            <p>Cancelled</p>
-                        </div>
-                        <div class="icon">
-                            <i class="ion ion-close-circled"></i>
-                        </div>
-                        <a href="{{ route('admin.subscriptions.index', ['status' => 'cancelled']) }}"
-                            class="small-box-footer">
-                            View cancelled <i class="bi bi-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
+                @endforeach
             </div>
 
             <div class="card">
