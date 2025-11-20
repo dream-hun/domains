@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\CurrencyController;
@@ -92,6 +93,8 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
     Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::delete('notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+
+    Route::get('audit-logs', AuditLogController::class)->name('audit-logs.index');
 
 });
 

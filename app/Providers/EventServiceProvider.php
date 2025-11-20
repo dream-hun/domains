@@ -6,7 +6,15 @@ namespace App\Providers;
 
 use App\Events\ExchangeRatesUpdated;
 use App\Listeners\ClearUserCarts;
+use App\Services\Audit\ActivityLogger;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Event;
 
 final class EventServiceProvider extends ServiceProvider
 {
@@ -28,6 +36,45 @@ final class EventServiceProvider extends ServiceProvider
     public function boot(): void
     {
         parent::boot();
+
+        foreach (config('activitylog.log_events', []) as $eloquentEvent) {
+            Event::listen("eloquent.{$eloquentEvent}: *", function (string $event, array $payload) use ($eloquentEvent): void {
+                $model = $payload[0] ?? null;
+
+                if (! $model instanceof Model) {
+                    return;
+                }
+
+                app(ActivityLogger::class)->logModelEvent($eloquentEvent, $model);
+            });
+        }
+
+        Event::listen(Login::class, function (Login $event): void {
+            app(ActivityLogger::class)->logAuthEvent('login', $event->user, [
+                'guard' => $event->guard,
+            ]);
+        });
+
+        Event::listen(Logout::class, function (Logout $event): void {
+            app(ActivityLogger::class)->logAuthEvent('logout', $event->user, [
+                'guard' => $event->guard,
+            ]);
+        });
+
+        Event::listen(Registered::class, function (Registered $event): void {
+            app(ActivityLogger::class)->logAuthEvent('registered', $event->user);
+        });
+
+        Event::listen(PasswordReset::class, function (PasswordReset $event): void {
+            app(ActivityLogger::class)->logAuthEvent('password_reset', $event->user);
+        });
+
+        Event::listen(Failed::class, function (Failed $event): void {
+            app(ActivityLogger::class)->logAuthEvent('login_failed', $event->user, [
+                'guard' => $event->guard,
+                'email' => $event->credentials['email'] ?? null,
+            ]);
+        });
     }
 
     /**

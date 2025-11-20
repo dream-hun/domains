@@ -35,8 +35,12 @@
         @include('partials.menu')
         <div class="content-wrapper" style="min-height: 818px;">
             <section class="content">
-                
-                {{ $slot }}
+                @isset($slot)
+                    
+                    {{ $slot }}
+                @else
+                    @yield('content')
+                @endisset
             </section>
 
         </div>
