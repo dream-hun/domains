@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\SubscriptionController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryShowController;
@@ -76,6 +77,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('currencies', CurrencyController::class);
     Route::post('currencies/update-rates', [CurrencyController::class, 'updateRates'])->name('currencies.update-rates');
     Route::resource('settings', SettingController::class);
+    Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
 
     // Failed domain registration routes
     Route::get('failed-registrations', [FailedDomainRegistrationController::class, 'index'])->name('failed-registrations.index');
