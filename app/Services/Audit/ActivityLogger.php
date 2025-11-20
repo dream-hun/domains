@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Audit;
 
+use BackedEnum;
+use DateTimeInterface;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -11,6 +13,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Stringable;
+use UnitEnum;
 
 use function activity;
 use function class_basename;
@@ -118,7 +122,7 @@ final class ActivityLogger
     {
         return collect($attributes)
             ->reject(fn ($value, string $key): bool => in_array($key, self::SENSITIVE_FIELDS, true))
-            ->map(fn ($value) => is_scalar($value) || $value === null ? $value : (string) $value)
+            ->map(fn ($value) => $this->normalizeValue($value))
             ->all();
     }
 
@@ -145,5 +149,38 @@ final class ActivityLogger
     private function resolveCauser(): ?Authenticatable
     {
         return Auth::user() ?? (App::bound('request') ? request()->user() : null);
+    }
+
+    private function normalizeValue(mixed $value): mixed
+    {
+        if ($value === null || is_scalar($value)) {
+            return $value;
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return $value->format(DATE_ATOM);
+        }
+
+        if ($value instanceof BackedEnum) {
+            return $value->value;
+        }
+
+        if ($value instanceof UnitEnum) {
+            return $value->name;
+        }
+
+        if ($value instanceof Stringable) {
+            return (string) $value;
+        }
+
+        if ($value instanceof Model) {
+            return $value->getKey();
+        }
+
+        if (is_array($value)) {
+            return collect($value)->map(fn ($inner) => $this->normalizeValue($inner))->all();
+        }
+
+        return (string) $value;
     }
 }
