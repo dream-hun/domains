@@ -22,12 +22,47 @@
         <div class="container-fluid col-md-12">
             <div class="row">
                 <div class="col-12">
-                    <div class="py-lg-2">
-                        @can('hosting_plan_price_create')
-                            <a href="{{ route('admin.hosting-plan-prices.create') }}" class="btn btn-success">
-                                <i class="bi bi-plus-lg"></i> Add New Price
-                            </a>
-                        @endcan
+                    <div class="py-lg-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            @can('hosting_plan_price_create')
+                                <a href="{{ route('admin.hosting-plan-prices.create') }}" class="btn btn-success">
+                                    <i class="bi bi-plus-lg"></i> Add New Price
+                                </a>
+                            @endcan
+                        </div>
+                        <form method="GET" action="{{ route('admin.hosting-plan-prices.index') }}"
+                            class="d-flex align-items-center">
+                            <div class="form-group mb-0 mr-2">
+                                <label for="category_id" class="sr-only">Filter by Category</label>
+                                <select name="category_id" id="category_id" class="form-control">
+                                    <option value="">All Categories</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->uuid }}"
+                                            {{ $selectedCategoryUuid == $category->uuid ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group mb-0 mr-2">
+                                <label for="plan_id" class="sr-only">Filter by Plan</label>
+                                <select name="plan_id" id="plan_id" class="form-control">
+                                    <option value="">All Plans</option>
+                                    @foreach ($plans as $plan)
+                                        <option value="{{ $plan->uuid }}"
+                                            {{ $selectedPlanUuid == $plan->uuid ? 'selected' : '' }}>
+                                            {{ $plan->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @if ($selectedCategoryUuid || $selectedPlanUuid)
+                                <a href="{{ route('admin.hosting-plan-prices.index') }}"
+                                    class="btn btn-secondary btn-sm">
+                                    <i class="bi bi-x-lg"></i> Clear Filter
+                                </a>
+                            @endif
+                        </form>
                     </div>
                     <div class="card">
                         <div class="card-header">
@@ -119,7 +154,7 @@
 
                     </div>
                     <div class="d-flex justify-content-center mt-3 float-right">
-                        {{ $prices->links('vendor.pagination.adminlte') }}
+                        {{ $prices->appends(request()->query())->links('vendor.pagination.adminlte') }}
                     </div>
                 </div>
 
@@ -140,6 +175,19 @@
         @parent
         <script>
             $(function() {
+                const filterForm = $('#category_id').closest('form');
+
+                // Clear plan filter when category changes, then submit
+                $('#category_id').on('change', function() {
+                    $('#plan_id').val('');
+                    filterForm.submit();
+                });
+
+                // Submit form when plan changes
+                $('#plan_id').on('change', function() {
+                    filterForm.submit();
+                });
+
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
                 let table = $('.datatable-HostingPlanPrice:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,
