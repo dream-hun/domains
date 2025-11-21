@@ -22,9 +22,29 @@ final class HostingPlanPriceController extends Controller
 {
     public function index(ListPlanPriceAction $action): View|Factory
     {
-        $prices = $action->handle();
+        $categoryUuid = request()->input('category_id');
+        $categoryUuid = $categoryUuid && $categoryUuid !== '' ? (string) $categoryUuid : null;
+        $planUuid = request()->input('plan_id');
+        $planUuid = $planUuid && $planUuid !== '' ? (string) $planUuid : null;
 
-        return view('admin.hosting-plan-prices.index', ['prices' => $prices]);
+        $prices = $action->handle(10, $categoryUuid, $planUuid);
+        $categories = HostingCategory::query()->select(['uuid', 'name'])->orderBy('name')->get();
+
+        $plansQuery = HostingPlan::query()->select(['uuid', 'name', 'category_id'])->orderBy('name');
+        if ($categoryUuid !== null) {
+            $plansQuery->whereHas('category', function ($q) use ($categoryUuid): void {
+                $q->where('uuid', $categoryUuid);
+            });
+        }
+        $plans = $plansQuery->get();
+
+        return view('admin.hosting-plan-prices.index', [
+            'prices' => $prices,
+            'categories' => $categories,
+            'plans' => $plans,
+            'selectedCategoryUuid' => $categoryUuid,
+            'selectedPlanUuid' => $planUuid,
+        ]);
     }
 
     public function create(): View|Factory

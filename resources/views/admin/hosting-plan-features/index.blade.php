@@ -19,11 +19,48 @@
         </div>
         <div class="row mb-2 push-right">
             <div class="col-lg-12">
-                @can('hosting_plan_feature_create')
-                    <a class="btn btn-success push-right" href="{{ route('admin.hosting-plan-features.create') }}">
-                        <i class="bi bi-plus-circle"></i> Create Plan Feature
-                    </a>
-                @endcan
+                <div class="row">
+                    <div class="col-lg-6">
+                    @can('hosting_plan_feature_create')
+                        <a class="btn btn-success push-right" href="{{ route('admin.hosting-plan-features.create') }}">
+                            <i class="bi bi-plus-circle"></i> Create Plan Feature
+                        </a>
+                    @endcan
+                    </div>
+                    <div class="col-lg-6">
+                        <form method="GET" action="{{ route('admin.hosting-plan-features.index') }}" class="form-inline">
+                        <div class="form-group mr-2">
+                            <label for="filter_category" class="mr-2">Filter by Category:</label>
+                            <select name="hosting_category_id" id="filter_category" class="form-control">
+                                <option value="">All Categories</option>
+                                @foreach ($hostingCategories as $category)
+                                    <option value="{{ $category->id }}"
+                                        {{ isset($filters['hosting_category_id']) && $filters['hosting_category_id'] == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mr-2">
+                            <label for="filter_plan" class="mr-2">Filter by Plan:</label>
+                            <select name="hosting_plan_id" id="filter_plan" class="form-control">
+                                <option value="">All Plans</option>
+                                @foreach ($hostingPlans as $plan)
+                                    <option value="{{ $plan->id }}"
+                                        {{ isset($filters['hosting_plan_id']) && $filters['hosting_plan_id'] == $plan->id ? 'selected' : '' }}>
+                                        {{ $plan->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @if (isset($filters['hosting_category_id']) || isset($filters['hosting_plan_id']))
+                            <a href="{{ route('admin.hosting-plan-features.index') }}" class="btn btn-secondary btn-sm">
+                                <i class="bi bi-x-lg"></i> Clear Filters
+                            </a>
+                        @endif
+                    </form>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -142,6 +179,19 @@
         @parent
         <script>
             $(function() {
+                const filterForm = $('#filter_category').closest('form');
+
+                // Clear plan filter when category changes, then submit
+                $('#filter_category').on('change', function() {
+                    $('#filter_plan').val('');
+                    filterForm.submit();
+                });
+
+                // Submit form when plan changes
+                $('#filter_plan').on('change', function() {
+                    filterForm.submit();
+                });
+
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
                 let table = $('.datatable-HostingPlanFeature:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,
