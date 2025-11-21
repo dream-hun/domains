@@ -182,6 +182,10 @@
                             orderable: true
                         },
                         {
+                            targets: 1,
+                            orderable: true
+                        },
+                        {
                             targets: -1,
                             orderable: false,
                             searchable: false
