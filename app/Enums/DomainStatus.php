@@ -31,12 +31,12 @@ enum DomainStatus: string
     {
         return match ($this) {
             self::Active => 'bg-success',
-            self::Pending => 'bg-warning',
+            self::Pending => 'bg-secondary',
             self::Expired => 'bg-danger',
             self::TransferPending => 'bg-warning',
             self::TransferInProgress => 'bg-primary',
             self::Transferred => 'bg-info',
-            self::Locked => 'bg-secondary',
+            self::Locked => 'bg-danger',
         };
     }
 

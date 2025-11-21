@@ -143,6 +143,16 @@
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
                 let table = $('.datatable-HostingPlanPrice:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,
+                    columnDefs: [{
+                            targets: 0,
+                            orderable: true
+                        },
+                        {
+                            targets: -1,
+                            orderable: false,
+                            searchable: false
+                        }
+                    ],
                     paging: false, // Disable DataTable pagination to use Laravel pagination
                     searching: true, // Enable search
                     ordering: true, // Enable sorting

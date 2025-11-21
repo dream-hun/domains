@@ -21,7 +21,7 @@ enum HostingPlanPriceStatus: string
     {
         return match ($this) {
             self::Active => 'bg-success',
-            self::Inactive => 'bg-danger',
+            self::Inactive => 'bg-secondary',
         };
     }
 

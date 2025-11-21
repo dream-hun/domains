@@ -23,7 +23,7 @@ enum HostingPlanStatus: string
     {
         return match ($this) {
             self::Active => 'bg-success',
-            self::Inactive => 'bg-danger',
+            self::Inactive => 'bg-secondary',
             self::Draft => 'bg-warning',
         };
     }
@@ -41,7 +41,7 @@ enum HostingPlanStatus: string
     {
         return match ($this) {
             self::Active => 'badge bg-success',
-            self::Inactive => 'badge bg-danger',
+            self::Inactive => 'badge bg-secondary',
             self::Draft => 'badge bg-warning',
         };
     }

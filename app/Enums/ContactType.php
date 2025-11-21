@@ -16,8 +16,8 @@ enum ContactType: string
         return match ($this) {
             self::Registrant => 'bg-primary',
             self::Billing => 'bg-success',
-            self::Technical => 'bg-warning',
-            self::Administrative => 'bg-danger',
+            self::Technical => 'bg-info',
+            self::Administrative => 'bg-secondary',
         };
 
     }

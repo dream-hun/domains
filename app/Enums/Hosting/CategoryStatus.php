@@ -21,7 +21,7 @@ enum CategoryStatus: string
     {
         return match ($this) {
             self::Active => 'bg-primary',
-            self::Inactive => 'bg-success',
+            self::Inactive => 'bg-secondary',
         };
     }
 
@@ -30,9 +30,7 @@ enum CategoryStatus: string
         return match ($this) {
             self::Active => 'bi bi-check-circle',
             self::Inactive => 'bi bi-x-circle',
-            self::Pending => 'bi bi-clock',
-            self::Suspended => 'bi bi-pause-circle',
-            self::Cancelled => 'bi bi-x-octagon',
+
         };
     }
 }
