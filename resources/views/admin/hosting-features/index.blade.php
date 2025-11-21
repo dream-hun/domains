@@ -20,7 +20,7 @@
         <div class="row mb-2 push-right">
             <div class="col-lg-12">
                 @can('hosting_feature_create')
-                <a class="btn btn-success push-right" href="{{ route('admin.hosting-features.create') }}">
+                    <a class="btn btn-success push-right" href="{{ route('admin.hosting-features.create') }}">
                         <i class="bi bi-plus-circle"></i> Create Feature
                     </a>
                 @endcan
@@ -59,9 +59,7 @@
                         <table class="table table-bordered table-striped table-hover datatable-HostingFeature w-100">
                             <thead>
                                 <tr>
-                                   
                                     <th style="width: 20%">Name</th>
-                                    
                                     <th style="width: 10%">Category</th>
                                     <th style="width: 10%">Value Type</th>
                                     <th style="width: 8%">Unit</th>
@@ -74,9 +72,7 @@
                             <tbody>
                                 @foreach ($hostingFeatures as $feature)
                                     <tr>
-                                       
                                         <td><strong>{{ $feature->name }}</strong></td>
-                                        
                                         <td>
                                             @if ($feature->featureCategory)
                                                 <span class="badge badge-info">{{ $feature->featureCategory->name }}</span>
@@ -104,22 +100,22 @@
                                         <td>
                                             <div class="btn-group">
                                                 @can('hosting_feature_edit')
-                                                <a class="btn btn-sm btn-warning"
-                                                    href="{{ route('admin.hosting-features.edit', $feature) }}"
-                                                    title="Edit">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </a>
+                                                    <a class="btn btn-sm btn-warning"
+                                                        href="{{ route('admin.hosting-features.edit', $feature) }}"
+                                                        title="Edit">
+                                                        <i class="bi bi-pencil"></i> Edit
+                                                    </a>
                                                 @endcan
                                                 @can('hosting_feature_delete')
-                                                <form action="{{ route('admin.hosting-features.destroy', $feature) }}" method="POST"
-                                                    class="d-inline"
-                                                    onsubmit="return confirm('Are you sure you want to delete this feature? This action cannot be undone.');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
-                                                        <i class="bi bi-trash"></i> Delete
-                                                    </button>
-                                                </form>
+                                                    <form action="{{ route('admin.hosting-features.destroy', $feature) }}"
+                                                        method="POST" class="d-inline"
+                                                        onsubmit="return confirm('Are you sure you want to delete this feature? This action cannot be undone.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                                            <i class="bi bi-trash"></i> Delete
+                                                        </button>
+                                                    </form>
                                                 @endcan
                                             </div>
                                         </td>
@@ -147,9 +143,10 @@
         @parent
         <script>
             $(function() {
-                let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
+                let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons);
                 let table = $('.datatable-HostingFeature:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,
+
                     paging: true,
                     searching: true,
                     ordering: true,
@@ -157,7 +154,15 @@
                     lengthChange: true,
                     dom: 'Bfrtip',
                     autoWidth: false,
-                    order: [[6, 'asc']],
+                    order: [
+                        [0, 'asc']
+                    ],
+                    // There are 8 columns (0-7), with Actions as the last (index 7) - only Actions should not be sortable
+                    columnDefs: [{
+                        orderable: false,
+                        targets: [7],
+                        searchable: false
+                    }],
                     pageLength: 25,
                     language: {
                         search: "Search:",
@@ -168,4 +173,3 @@
         </script>
     @endsection
 </x-admin-layout>
-

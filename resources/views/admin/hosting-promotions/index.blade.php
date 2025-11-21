@@ -62,7 +62,7 @@
                                                 <th style="width: 10%">Discount</th>
                                                 <th style="width: 20%">Schedule</th>
                                                 <th style="width: 10%">Status</th>
-                                                <th style="width: 10%">Actions</th>
+                                                <th style="width: 10%" class="no-sort">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -146,6 +146,11 @@
                 width: 100% !important;
                 table-layout: fixed;
             }
+            /* Make cursor icon indicate disabled sorting on last column header */
+            th.no-sort {
+                pointer-events: none;
+                cursor: default;
+            }
         </style>
     @endsection
 
@@ -163,6 +168,9 @@
                     lengthChange: false,
                     dom: 'Bfrtip',
                     autoWidth: false,
+                    columnDefs: [
+                        { orderable: false, targets: -1 } // Make last column (Actions) not orderable
+                    ],
                     language: {
                         search: "Search:",
                         searchPlaceholder: "Search promotions..."
