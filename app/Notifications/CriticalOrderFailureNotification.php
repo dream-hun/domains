@@ -19,12 +19,12 @@ final class CriticalOrderFailureNotification extends Notification
         private readonly Exception $exception
     ) {}
 
-    public function via(object $notifiable): array
+    public function via(): array
     {
         return ['mail'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(): MailMessage
     {
         $domains = $this->order->orderItems->pluck('domain_name')->implode(', ');
 

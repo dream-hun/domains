@@ -20,8 +20,8 @@ enum ContactProvider: string
     public function color(): string
     {
         return match ($this) {
-            self::NAMECHEAP => 'bg-blue-500',
-            self::RICTA_EPP => 'bg-green-500',
+            self::NAMECHEAP => 'bg-info',
+            self::RICTA_EPP => 'bg-warning',
         };
     }
 }
