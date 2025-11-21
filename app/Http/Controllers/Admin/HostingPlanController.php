@@ -34,11 +34,17 @@ final class HostingPlanController extends Controller
     {
         abort_if(Gate::denies('hosting_plan_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $plans = $this->listPlanAction->handle();
+        $selectedCategoryId = request()->filled('category_id') ? (int) request()->input('category_id') : null;
+        $plans = $this->listPlanAction->handle(10, $selectedCategoryId);
+        $categories = $this->categories();
 
         return view('admin.hosting.plans.index', [
             'plans' => $plans,
             'statuses' => HostingPlanStatus::cases(),
+            'categories' => $categories,
+            'filters' => [
+                'category_id' => $selectedCategoryId,
+            ],
         ]);
     }
 

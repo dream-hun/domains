@@ -23,12 +23,36 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-12">
-                    <div class="py-lg-2">
-                        @can('hosting_plan_create')
-                            <a href="{{ route('admin.hosting-plans.create') }}" class="btn btn-success">
-                                <i class="bi bi-plus-lg"></i> Add Hosting Plan
-                            </a>
-                        @endcan
+                    <div class="row mb-3">
+                        <div class="col-lg-6">
+                            @can('hosting_plan_create')
+                                <a href="{{ route('admin.hosting-plans.create') }}" class="btn btn-success">
+                                    <i class="bi bi-plus-lg"></i> Add Hosting Plan
+                                </a>
+                            @endcan
+                        </div>
+                        <div class="col-lg-6">
+                            <form method="GET" action="{{ route('admin.hosting-plans.index') }}"
+                                class="form-inline float-right">
+                                <div class="form-group mr-2">
+                                    <label for="filter_category" class="mr-2">Filter by Category:</label>
+                                    <select name="category_id" id="filter_category" class="form-control">
+                                        <option value="">All Categories</option>
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->id }}"
+                                                {{ isset($filters['category_id']) && $filters['category_id'] == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @if (isset($filters['category_id']))
+                                    <a href="{{ route('admin.hosting-plans.index') }}" class="btn btn-secondary btn-sm">
+                                        <i class="bi bi-x-lg"></i> Clear Filter
+                                    </a>
+                                @endif
+                            </form>
+                        </div>
                     </div>
                     <div class="card">
                         <div class="card-header">
@@ -174,6 +198,11 @@
         @parent
         <script>
             $(function() {
+                // Auto-submit form when category filter changes
+                $('#filter_category').on('change', function() {
+                    $(this).closest('form').submit();
+                });
+
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
                 let table = $('.datatable-HostingPlan:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,

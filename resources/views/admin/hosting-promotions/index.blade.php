@@ -22,12 +22,51 @@
         <div class="container-fluid col-md-12">
             <div class="row">
                 <div class="col-12">
-                    <div class="py-lg-2">
-                        @can('hosting_promotion_create')
-                            <a href="{{ route('admin.hosting-promotions.create') }}" class="btn btn-success">
-                                <i class="bi bi-plus-lg"></i> New Promotion
-                            </a>
-                        @endcan
+                    <div class="row mb-3">
+                        <div class="col-lg-6">
+                            @can('hosting_promotion_create')
+                                <a href="{{ route('admin.hosting-promotions.create') }}" class="btn btn-success">
+                                    <i class="bi bi-plus-lg"></i> New Promotion
+                                </a>
+                            @endcan
+                        </div>
+                        <div class="col-lg-6">
+                            <form method="GET" action="{{ route('admin.hosting-promotions.index') }}"
+                                class="form-inline float-right">
+                                <div class="form-group mr-2">
+                                    <label for="filter_category" class="mr-2">Category:</label>
+                                    <select name="category_id" id="filter_category" class="form-control"
+                                        onchange="this.form.submit()">
+                                        <option value="">All Categories</option>
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->id }}"
+                                                {{ isset($filters['category_id']) && $filters['category_id'] == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group mr-2">
+                                    <label for="filter_plan" class="mr-2">Plan:</label>
+                                    <select name="plan_id" id="filter_plan" class="form-control"
+                                        onchange="this.form.submit()">
+                                        <option value="">All Plans</option>
+                                        @foreach ($plans as $plan)
+                                            <option value="{{ $plan['id'] }}"
+                                                {{ isset($filters['plan_id']) && $filters['plan_id'] == $plan['id'] ? 'selected' : '' }}>
+                                                {{ $plan['name'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @if (isset($filters['category_id']) || isset($filters['plan_id']))
+                                    <a href="{{ route('admin.hosting-promotions.index') }}"
+                                        class="btn btn-secondary btn-sm">
+                                        <i class="bi bi-x-lg"></i> Clear Filters
+                                    </a>
+                                @endif
+                            </form>
+                        </div>
                     </div>
                     <div class="card">
                         <div class="card-header">
@@ -146,6 +185,7 @@
                 width: 100% !important;
                 table-layout: fixed;
             }
+
             /* Make cursor icon indicate disabled sorting on last column header */
             th.no-sort {
                 pointer-events: none;
@@ -168,8 +208,10 @@
                     lengthChange: false,
                     dom: 'Bfrtip',
                     autoWidth: false,
-                    columnDefs: [
-                        { orderable: false, targets: -1 } // Make last column (Actions) not orderable
+                    columnDefs: [{
+                            orderable: false,
+                            targets: -1
+                        } // Make last column (Actions) not orderable
                     ],
                     language: {
                         search: "Search:",
