@@ -12,6 +12,7 @@ use App\Enums\Hosting\BillingCycle;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreHostingPromotionRequest;
 use App\Http\Requests\Admin\UpdateHostingPromotionRequest;
+use App\Models\HostingCategory;
 use App\Models\HostingPlan;
 use App\Models\HostingPromotion;
 use Illuminate\Contracts\View\Factory;
@@ -27,10 +28,20 @@ final class HostingPromotionController extends Controller
     {
         abort_if(Gate::denies('hosting_promotion_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $promotions = $action->handle();
+        $selectedCategoryId = request()->filled('category_id') ? (int) request()->input('category_id') : null;
+        $selectedPlanId = request()->filled('plan_id') ? (int) request()->input('plan_id') : null;
+        $promotions = $action->handle(10, $selectedCategoryId, $selectedPlanId);
+        $categories = $this->categories();
+        $plans = $this->plans();
 
         return view('admin.hosting-promotions.index', [
             'promotions' => $promotions,
+            'categories' => $categories,
+            'plans' => $plans,
+            'filters' => [
+                'category_id' => $selectedCategoryId,
+                'plan_id' => $selectedPlanId,
+            ],
         ]);
     }
 
@@ -96,5 +107,13 @@ final class HostingPromotionController extends Controller
                 'name' => $plan->name,
                 'category' => $plan->category?->name,
             ]);
+    }
+
+    private function categories(): Collection
+    {
+        return HostingCategory::query()
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get();
     }
 }

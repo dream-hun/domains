@@ -9,7 +9,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class ListPlanAction
 {
-    public function handle(int $perPage = 10): LengthAwarePaginator
+    public function handle(int $perPage = 10, ?int $categoryId = null): LengthAwarePaginator
     {
         return HostingPlan::query()
             ->select([
@@ -26,6 +26,7 @@ final class ListPlanAction
                 'created_at',
             ])
             ->with(['category:id,uuid,name,slug'])
+            ->when($categoryId !== null, fn ($query) => $query->where('category_id', $categoryId))
             ->orderBy('sort_order')
             ->orderByDesc('created_at')
             ->paginate($perPage);
