@@ -192,7 +192,7 @@ final class HostingUpsell extends Component
                     'hosting_plan_price_id' => $planPrice->id,
                     'billing_cycle' => $planPrice->billing_cycle,
                     'linked_domain' => $this->selectedDomain,
-                    'domain_name' => $plan->name,
+                    'domain_name' => $this->selectedDomain,
                     'metadata' => [
                         'hosting_plan_id' => $plan->id,
                         'hosting_plan_price_id' => $planPrice->id,

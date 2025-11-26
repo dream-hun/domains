@@ -143,14 +143,14 @@ final class CheckoutProcess extends Component
             return null;
         }
 
-        // Check if cart has any new domain registrations (not renewals)
-        $hasNewRegistrations = collect($this->cartItems)->contains(
-            fn (array $item): bool => ($item['attributes']['type'] ?? 'registration') === 'registration'
+        // Check if cart has any domain registrations or transfers (both require contact info)
+        $requiresContact = collect($this->cartItems)->contains(
+            fn (array $item): bool => in_array($item['attributes']['type'] ?? 'registration', ['registration', 'transfer'], true)
         );
 
-        // Validate contact selection only if cart has new registrations
-        if ($hasNewRegistrations && ! $this->selectedContactId) {
-            $this->errorMessage = 'Please select a contact for domain registration.';
+        // Validate contact selection for registrations and transfers
+        if ($requiresContact && ! $this->selectedContactId) {
+            $this->errorMessage = 'Please select a contact for domain registration or transfer.';
             $this->showContactSelection = true;
 
             return null;
