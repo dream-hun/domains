@@ -143,8 +143,12 @@ final readonly class OrderService
                     $order->update(['status' => 'partially_completed']);
                     $this->notificationService->notifyAdminOfPartialFailure($order, $results);
                 }
+            } elseif ($order->type === 'hosting') {
+                // Hosting-only orders don't require domain registration
+                Log::info('Processing hosting-only order', ['order_id' => $order->id]);
+                $order->update(['status' => 'completed']);
             } else {
-                // Process registrations
+                // Process registrations/transfers - requires contact information
                 throw_unless(isset($contactIds['registrant'], $contactIds['admin'], $contactIds['tech'], $contactIds['billing']), Exception::class, 'All contact IDs (registrant, admin, tech, billing) are required for domain registration.');
                 $contacts = [
                     'registrant' => $contactIds['registrant'],
@@ -189,6 +193,7 @@ final readonly class OrderService
         $hasRegistration = false;
         $hasRenewal = false;
         $hasTransfer = false;
+        $hasHosting = false;
 
         foreach ($cartItems as $item) {
             $itemType = $item->attributes->type ?? 'registration';
@@ -201,6 +206,7 @@ final readonly class OrderService
                     $hasTransfer = true;
                     break;
                 case 'hosting':
+                    $hasHosting = true;
                     break;
                 default:
                     $hasRegistration = true;
@@ -215,6 +221,11 @@ final readonly class OrderService
         // If all items are transfers, mark as transfer order
         if ($hasTransfer && ! $hasRegistration && ! $hasRenewal) {
             return 'transfer';
+        }
+
+        // If all items are hosting only (no domain operations), mark as hosting order
+        if ($hasHosting && ! $hasRegistration && ! $hasRenewal && ! $hasTransfer) {
+            return 'hosting';
         }
 
         // Default to registration (or mixed)

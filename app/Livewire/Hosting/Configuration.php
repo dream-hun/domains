@@ -426,6 +426,24 @@ class Configuration extends Component
             return;
         }
 
+        // Check if hosting is already in cart for this domain
+        $cartContent = Cart::getContent();
+        $alreadyInCart = $cartContent->first(function ($item) use ($domainName): bool {
+            $isHosting = $item->attributes->get('type') === 'hosting';
+
+            if (! $isHosting) {
+                return false;
+            }
+
+            return mb_strtolower((string) $item->attributes->get('linked_domain')) === mb_strtolower($domainName);
+        });
+
+        if ($alreadyInCart) {
+            $this->addError('base', 'A hosting plan is already in your cart for this domain.');
+
+            return;
+        }
+
         try {
             /** @var HostingPlanPrice|null $priceModel */
             $priceModel = $this->selectedPrice;
