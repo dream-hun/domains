@@ -181,6 +181,7 @@ final readonly class BillingService
         $hasRegistration = false;
         $hasRenewal = false;
         $hasTransfer = false;
+        $hasHosting = false;
 
         foreach ($items as $item) {
             $itemType = $item['domain_type'] ?? 'registration';
@@ -193,6 +194,7 @@ final readonly class BillingService
                     $hasTransfer = true;
                     break;
                 case 'hosting':
+                    $hasHosting = true;
                     break;
                 default:
                     $hasRegistration = true;
@@ -205,6 +207,10 @@ final readonly class BillingService
 
         if ($hasTransfer && ! $hasRegistration && ! $hasRenewal) {
             return 'transfer';
+        }
+
+        if ($hasHosting && ! $hasRegistration && ! $hasRenewal && ! $hasTransfer) {
+            return 'hosting';
         }
 
         return 'registration';
