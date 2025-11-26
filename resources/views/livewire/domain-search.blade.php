@@ -385,5 +385,7 @@
             </div>
         </div>
     </section>
-   {{-- <livewire:cart-summary/>--}}
+    <div class="container">
+        <livewire:hosting-upsell />
+    </div>
 </div>

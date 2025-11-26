@@ -91,6 +91,7 @@ final readonly class BillingService
                     'years' => $item['years'],
                     'total_amount' => $item['price'] * $item['quantity'],
                     'domain_id' => $item['domain_id'] ?? null,
+                    'metadata' => $item['metadata'] ?? null,
                 ]);
             }
 
@@ -184,11 +185,18 @@ final readonly class BillingService
         foreach ($items as $item) {
             $itemType = $item['domain_type'] ?? 'registration';
 
-            match ($itemType) {
-                'renewal' => $hasRenewal = true,
-                'transfer' => $hasTransfer = true,
-                default => $hasRegistration = true,
-            };
+            switch ($itemType) {
+                case 'renewal':
+                    $hasRenewal = true;
+                    break;
+                case 'transfer':
+                    $hasTransfer = true;
+                    break;
+                case 'hosting':
+                    break;
+                default:
+                    $hasRegistration = true;
+            }
         }
 
         if ($hasRenewal && ! $hasRegistration && ! $hasTransfer) {

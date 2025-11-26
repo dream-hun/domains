@@ -144,7 +144,9 @@ final class CheckoutProcess extends Component
         }
 
         // Check if cart has any new domain registrations (not renewals)
-        $hasNewRegistrations = collect($this->cartItems)->contains(fn (array $item): bool => ($item['attributes']['type'] ?? 'registration') !== 'renewal');
+        $hasNewRegistrations = collect($this->cartItems)->contains(
+            fn (array $item): bool => ($item['attributes']['type'] ?? 'registration') === 'registration'
+        );
 
         // Validate contact selection only if cart has new registrations
         if ($hasNewRegistrations && ! $this->selectedContactId) {
@@ -317,13 +319,17 @@ final class CheckoutProcess extends Component
             $itemPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
 
             $cartItems[] = [
-                'domain_name' => $item->name,
+                'domain_name' => $item->attributes->get('domain_name') ?? $item->name,
                 'domain_type' => $item->attributes->get('type', 'registration'),
                 'price' => $itemPrice,
                 'currency' => $this->currency,
                 'quantity' => $item->quantity,
                 'years' => $item->quantity,
                 'domain_id' => $item->attributes->get('domain_id'),
+                'metadata' => $item->attributes->get('metadata', []),
+                'hosting_plan_id' => $item->attributes->get('hosting_plan_id'),
+                'hosting_plan_price_id' => $item->attributes->get('hosting_plan_price_id'),
+                'linked_domain' => $item->attributes->get('linked_domain'),
             ];
         }
 

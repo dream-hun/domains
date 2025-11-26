@@ -36,6 +36,11 @@ final readonly class DomainRegistrationService
 
         // Process each order item (domain)
         foreach ($order->orderItems as $orderItem) {
+            // Skip hosting and renewal items
+            if (in_array($orderItem->domain_type, ['hosting', 'renewal'], true)) {
+                continue;
+            }
+
             $result = $this->registerDomain($order, $orderItem, $contactIds);
 
             if ($result['success']) {

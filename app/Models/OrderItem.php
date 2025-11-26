@@ -23,12 +23,14 @@ final class OrderItem extends Model
         'quantity',
         'years',
         'total_amount',
+        'metadata',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'exchange_rate' => 'decimal:6',
+        'metadata' => 'array',
     ];
 
     public function order(): BelongsTo

@@ -18,7 +18,8 @@ final readonly class OrderService
     public function __construct(
         private DomainRegistrationService $domainRegistrationService,
         private NotificationService $notificationService,
-        private RenewalService $renewalService
+        private RenewalService $renewalService,
+        private HostingSubscriptionService $hostingSubscriptionService,
     ) {}
 
     public function createOrder(array $data): Order
@@ -97,6 +98,7 @@ final readonly class OrderService
             $itemCurrency = $item->attributes->currency ?? 'USD';
             $itemType = $item->attributes->type ?? 'registration';
             $domainId = $item->attributes->domain_id ?? null;
+            $metadata = $item->attributes->get('metadata');
 
             // Get the exchange rate for the item's currency
             $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
@@ -113,6 +115,7 @@ final readonly class OrderService
                 'quantity' => $item->quantity,
                 'years' => $item->quantity,
                 'total_amount' => $itemTotal,
+                'metadata' => $metadata,
             ]);
         }
 
@@ -154,6 +157,9 @@ final readonly class OrderService
                 $this->domainRegistrationService->processDomainRegistrations($order, $contacts);
             }
 
+            // Provision hosting subscriptions for any hosting order items
+            $this->hostingSubscriptionService->createSubscriptionsFromOrder($order);
+
         } catch (Exception $exception) {
             Log::error('Order processing failed', [
                 'order_id' => $order->id,
@@ -187,11 +193,18 @@ final readonly class OrderService
         foreach ($cartItems as $item) {
             $itemType = $item->attributes->type ?? 'registration';
 
-            match ($itemType) {
-                'renewal' => $hasRenewal = true,
-                'transfer' => $hasTransfer = true,
-                default => $hasRegistration = true,
-            };
+            switch ($itemType) {
+                case 'renewal':
+                    $hasRenewal = true;
+                    break;
+                case 'transfer':
+                    $hasTransfer = true;
+                    break;
+                case 'hosting':
+                    break;
+                default:
+                    $hasRegistration = true;
+            }
         }
 
         // If all items are renewals, mark as renewal order

@@ -172,6 +172,10 @@
         </div>
     </section>
 
+    <div class="container my-5">
+        <livewire:hosting-upsell />
+    </div>
+
     @if (isset($details) || (isset($suggestions) && count($suggestions) > 0))
         <section class="mt-5 mb-5" id="search-results">
             <div class="container">
@@ -215,5 +219,8 @@
         </section>
 
     @endif
+
+    
+
     <livewire:cart-summary />
 </x-user-layout>
