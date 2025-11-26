@@ -34,6 +34,14 @@ class HostingCategory extends Model
         return $this->hasMany(HostingPlan::class, 'category_id');
     }
 
+    public function allowsExternalDomain(): bool
+    {
+        return in_array($this->slug, [
+            'shared-hosting',
+            'reseller-hosting',
+        ], true);
+    }
+
     protected static function boot(): void
     {
         parent::boot();

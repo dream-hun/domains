@@ -11,6 +11,10 @@
             <div class="card border shadow-0">
                 <div class="m-4">
                     @forelse ($items as $item)
+                        @php
+                            $itemType = $item->attributes->type ?? 'registration';
+                            $linkedDomain = $item->attributes->linked_domain ?? null;
+                        @endphp
                         <div class="row gy-3 mb-4 align-items-center" data-item-id="{{ $item->id }}">
                             <div class="col-lg-3">
                                 <div class="me-lg-3">
@@ -18,43 +22,59 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <p class="nav-link h5 mb-0" style="font-size: 16px !important;">
                                                 {{ $item->attributes->domain_name ?? $item->name }}</p>
-                                            @if (($item->attributes->type ?? 'registration') === 'renewal')
+                                            @if ($itemType === 'renewal')
                                                 <span class="badge bg-success" style="font-size: 11px;">Renewal</span>
-                                            @elseif (($item->attributes->type ?? 'registration') === 'transfer')
+                                            @elseif ($itemType === 'transfer')
                                                 <span class="badge bg-info" style="font-size: 11px;">Transfer</span>
+                                            @elseif ($itemType === 'hosting')
+                                                <span class="badge bg-warning text-dark" style="font-size: 11px;">Hosting</span>
                                             @else
                                                 <span class="badge bg-primary" style="font-size: 11px;">Registration</span>
                                             @endif
                                         </div>
-                                        @if (($item->attributes->type ?? 'registration') === 'renewal' && isset($item->attributes->current_expiry))
+                                        @if ($itemType === 'renewal' && isset($item->attributes->current_expiry))
                                             <small class="text-muted" style="font-size: 12px;">Current expiry: {{ $item->attributes->current_expiry }}</small>
+                                        @elseif ($itemType === 'hosting')
+                                            <small class="text-muted" style="font-size: 12px;">
+                                                Attached to: {{ $linkedDomain ?? 'Not set' }}
+                                            </small>
+                                            <small class="text-muted" style="font-size: 12px;">
+                                                Billing: {{ ucfirst($item->attributes->billing_cycle ?? 'monthly') }}
+                                            </small>
                                         @endif
                                     </div>
                                 </div>
                             </div>
                             <div class="col-lg-6 d-flex flex-row align-items-center">
                                 <div class="d-flex align-items-center gap-4">
-                                    <div class="quantity-controls d-flex align-items-center">
-                                        <button type="button" class="btn btn-outline-primary rounded-circle p-2"
-                                            style="width: 35px; height: 35px; font-size:16px !important;"
-                                            wire:click="updateQuantity('{{ $item->id }}', {{ $item->quantity - 1 }})"
-                                            wire:loading.class="opacity-75"
-                                            wire:target="updateQuantity('{{ $item->id }}', {{ $item->quantity - 1 }})"
-                                            {{ $item->quantity <= 1 ? 'disabled' : '' }}>
-                                            <i class="bi bi-dash"></i>
-                                        </button>
-                                        <span class="mx-4 fs-5"
-                                            style="font-size: 16px !important;">{{ $item->quantity }}
-                                            {{ Str::plural('Year', $item->quantity) }}</span>
-                                        <button type="button" class="btn btn-outline-primary rounded-circle p-2"
-                                            style="width: 35px; height: 35px;"
-                                            wire:click="updateQuantity('{{ $item->id }}', {{ $item->quantity + 1 }})"
-                                            wire:loading.class="opacity-75"
-                                            wire:target="updateQuantity('{{ $item->id }}', {{ $item->quantity + 1 }})"
-                                            {{ $item->quantity >= 10 ? 'disabled' : '' }}>
-                                            <i class="bi bi-plus"></i>
-                                        </button>
-                                    </div>
+                                    @if ($itemType === 'hosting')
+                                        <div class="text-muted">
+                                            <span class="d-block fw-semibold">Subscription</span>
+                                            <span>{{ ucfirst($item->attributes->billing_cycle ?? 'monthly') }} billing · 1 plan</span>
+                                        </div>
+                                    @else
+                                        <div class="quantity-controls d-flex align-items-center">
+                                            <button type="button" class="btn btn-outline-primary rounded-circle p-2"
+                                                style="width: 35px; height: 35px; font-size:16px !important;"
+                                                wire:click="updateQuantity('{{ $item->id }}', {{ $item->quantity - 1 }})"
+                                                wire:loading.class="opacity-75"
+                                                wire:target="updateQuantity('{{ $item->id }}', {{ $item->quantity - 1 }})"
+                                                {{ $item->quantity <= 1 ? 'disabled' : '' }}>
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <span class="mx-4 fs-5"
+                                                style="font-size: 16px !important;">{{ $item->quantity }}
+                                                {{ Str::plural('Year', $item->quantity) }}</span>
+                                            <button type="button" class="btn btn-outline-primary rounded-circle p-2"
+                                                style="width: 35px; height: 35px;"
+                                                wire:click="updateQuantity('{{ $item->id }}', {{ $item->quantity + 1 }})"
+                                                wire:loading.class="opacity-75"
+                                                wire:target="updateQuantity('{{ $item->id }}', {{ $item->quantity + 1 }})"
+                                                {{ $item->quantity >= 10 ? 'disabled' : '' }}>
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                    @endif
                                     <div class="price-display">
                                         <div class="h5 mb-0 d-flex align-items-center gap-2">
                                             <span class="text-primary"

@@ -121,7 +121,7 @@
                                             {{ $monthlyPrice->getFormattedPrice('regular_price') }} <sub>/ month</sub>
                                         </h5>
                                         <div class="card-plan__cartbtn">
-                                            <a href="#">add to cart</a>
+                                            <a href="{{ route('hosting.configure', ['plan' => $plan->uuid, 'billing_cycle' => 'monthly']) }}">add to cart</a>
                                         </div>
                                         <p class="card-plan__renew-price">
                                             {{ $monthlyPrice->getFormattedPrice('renewal_price') }} /Month when you
@@ -250,7 +250,7 @@
                                         {{ $yearlyPrice->getFormattedPrice('regular_price') }} <sub>/ Year</sub>
                                     </h5>
                                     <div class="card-plan__cartbtn">
-                                        <a href="#">add to cart</a>
+                                        <a href="{{ route('hosting.configure', ['plan' => $plan->uuid, 'billing_cycle' => 'annually']) }}">add to cart</a>
                                     </div>
                                     <p class="card-plan__renew-price">
                                         {{ $yearlyPrice->getFormattedPrice('renewal_price') }} /Year when you renew

@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
 Route::get('/hosting/{slug}', CategoryShowController::class)->name('hosting.categories.show');
+Route::get('/hosting/configure/{plan}', App\Livewire\Hosting\Configuration::class)->name('hosting.configure');
 
 Route::get('/shopping-cart', CartController::class)->name('cart.index');
 Route::get('/domains', [SearchDomainController::class, 'index'])->name('domains');

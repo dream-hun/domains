@@ -18,7 +18,8 @@ final readonly class OrderService
     public function __construct(
         private DomainRegistrationService $domainRegistrationService,
         private NotificationService $notificationService,
-        private RenewalService $renewalService
+        private RenewalService $renewalService,
+        private HostingSubscriptionService $hostingSubscriptionService,
     ) {}
 
     public function createOrder(array $data): Order
@@ -97,6 +98,7 @@ final readonly class OrderService
             $itemCurrency = $item->attributes->currency ?? 'USD';
             $itemType = $item->attributes->type ?? 'registration';
             $domainId = $item->attributes->domain_id ?? null;
+            $metadata = $item->attributes->get('metadata');
 
             // Get the exchange rate for the item's currency
             $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
@@ -113,6 +115,7 @@ final readonly class OrderService
                 'quantity' => $item->quantity,
                 'years' => $item->quantity,
                 'total_amount' => $itemTotal,
+                'metadata' => $metadata,
             ]);
         }
 
@@ -140,8 +143,12 @@ final readonly class OrderService
                     $order->update(['status' => 'partially_completed']);
                     $this->notificationService->notifyAdminOfPartialFailure($order, $results);
                 }
+            } elseif ($order->type === 'hosting') {
+                // Hosting-only orders don't require domain registration
+                Log::info('Processing hosting-only order', ['order_id' => $order->id]);
+                $order->update(['status' => 'completed']);
             } else {
-                // Process registrations
+                // Process registrations/transfers - requires contact information
                 throw_unless(isset($contactIds['registrant'], $contactIds['admin'], $contactIds['tech'], $contactIds['billing']), Exception::class, 'All contact IDs (registrant, admin, tech, billing) are required for domain registration.');
                 $contacts = [
                     'registrant' => $contactIds['registrant'],
@@ -153,6 +160,9 @@ final readonly class OrderService
                 // Use DomainRegistrationService which handles status updates and notifications
                 $this->domainRegistrationService->processDomainRegistrations($order, $contacts);
             }
+
+            // Provision hosting subscriptions for any hosting order items
+            $this->hostingSubscriptionService->createSubscriptionsFromOrder($order);
 
         } catch (Exception $exception) {
             Log::error('Order processing failed', [
@@ -183,15 +193,24 @@ final readonly class OrderService
         $hasRegistration = false;
         $hasRenewal = false;
         $hasTransfer = false;
+        $hasHosting = false;
 
         foreach ($cartItems as $item) {
             $itemType = $item->attributes->type ?? 'registration';
 
-            match ($itemType) {
-                'renewal' => $hasRenewal = true,
-                'transfer' => $hasTransfer = true,
-                default => $hasRegistration = true,
-            };
+            switch ($itemType) {
+                case 'renewal':
+                    $hasRenewal = true;
+                    break;
+                case 'transfer':
+                    $hasTransfer = true;
+                    break;
+                case 'hosting':
+                    $hasHosting = true;
+                    break;
+                default:
+                    $hasRegistration = true;
+            }
         }
 
         // If all items are renewals, mark as renewal order
@@ -202,6 +221,11 @@ final readonly class OrderService
         // If all items are transfers, mark as transfer order
         if ($hasTransfer && ! $hasRegistration && ! $hasRenewal) {
             return 'transfer';
+        }
+
+        // If all items are hosting only (no domain operations), mark as hosting order
+        if ($hasHosting && ! $hasRegistration && ! $hasRenewal && ! $hasTransfer) {
+            return 'hosting';
         }
 
         // Default to registration (or mixed)

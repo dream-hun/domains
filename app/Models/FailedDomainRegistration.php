@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 final class FailedDomainRegistration extends Model
 {
     use HasFactory;
-    use HasFactory;
 
     protected $fillable = [
         'order_id',

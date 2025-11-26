@@ -65,6 +65,7 @@ final class DomainCartButton extends Component
                 'quantity' => 1,
                 'attributes' => [
                     'type' => 'domain',
+                    'domain_name' => $this->domain,
                     'currency' => $this->currency,
                     'added_at' => now()->timestamp,
                 ],

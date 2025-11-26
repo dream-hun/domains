@@ -34,7 +34,7 @@ final class FailedDomainRegistrationController extends Controller
         abort_if(Gate::denies('failed_registration_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $query = FailedDomainRegistration::query()
-            ->with(['order', 'orderItem'])->latest();
+            ->with(['order.user', 'orderItem'])->latest();
 
         // Filter by status if provided
         if ($request->has('status') && $request->status !== '') {

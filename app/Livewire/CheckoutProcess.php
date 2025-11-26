@@ -143,12 +143,14 @@ final class CheckoutProcess extends Component
             return null;
         }
 
-        // Check if cart has any new domain registrations (not renewals)
-        $hasNewRegistrations = collect($this->cartItems)->contains(fn (array $item): bool => ($item['attributes']['type'] ?? 'registration') !== 'renewal');
+        // Check if cart has any domain registrations or transfers (both require contact info)
+        $requiresContact = collect($this->cartItems)->contains(
+            fn (array $item): bool => in_array($item['attributes']['type'] ?? 'registration', ['registration', 'transfer'], true)
+        );
 
-        // Validate contact selection only if cart has new registrations
-        if ($hasNewRegistrations && ! $this->selectedContactId) {
-            $this->errorMessage = 'Please select a contact for domain registration.';
+        // Validate contact selection for registrations and transfers
+        if ($requiresContact && ! $this->selectedContactId) {
+            $this->errorMessage = 'Please select a contact for domain registration or transfer.';
             $this->showContactSelection = true;
 
             return null;
@@ -317,13 +319,17 @@ final class CheckoutProcess extends Component
             $itemPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
 
             $cartItems[] = [
-                'domain_name' => $item->name,
+                'domain_name' => $item->attributes->get('domain_name') ?? $item->name,
                 'domain_type' => $item->attributes->get('type', 'registration'),
                 'price' => $itemPrice,
                 'currency' => $this->currency,
                 'quantity' => $item->quantity,
                 'years' => $item->quantity,
                 'domain_id' => $item->attributes->get('domain_id'),
+                'metadata' => $item->attributes->get('metadata', []),
+                'hosting_plan_id' => $item->attributes->get('hosting_plan_id'),
+                'hosting_plan_price_id' => $item->attributes->get('hosting_plan_price_id'),
+                'linked_domain' => $item->attributes->get('linked_domain'),
             ];
         }
 

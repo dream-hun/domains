@@ -165,7 +165,10 @@ final class DomainSearch extends Component
                 'price' => $price,
                 'quantity' => 1,
                 'attributes' => [
+                    'type' => 'domain',
                     'domain' => $domain,
+                    'domain_name' => $domain,
+                    'currency' => $this->currentCurrency,
                     'user_id' => auth()->id(),
                     'added_at' => now()->timestamp,
                 ],
@@ -199,6 +202,8 @@ final class DomainSearch extends Component
     public function removeFromCart(string $domain): void
     {
         try {
+            $this->removeLinkedHosting($domain);
+
             // Remove from cart
             Cart::remove($domain);
 
@@ -324,6 +329,22 @@ final class DomainSearch extends Component
                 'error' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),
             ]);
+        }
+    }
+
+    private function removeLinkedHosting(string $domain): void
+    {
+        $cartContent = Cart::getContent();
+
+        $target = mb_strtolower($domain);
+
+        foreach ($cartContent as $item) {
+            $isHosting = $item->attributes->get('type') === 'hosting';
+            $linkedDomain = $item->attributes->get('linked_domain');
+
+            if ($isHosting && $linkedDomain && mb_strtolower((string) $linkedDomain) === $target) {
+                Cart::remove($item->id);
+            }
         }
     }
 }

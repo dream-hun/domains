@@ -218,10 +218,22 @@ final class CartComponent extends Component
     public function updateQuantity($id, $quantity): void
     {
         try {
-            if ($quantity > 0 && $quantity <= 10) {
-                // Get current item to preserve its attributes
-                $currentItem = Cart::get($id);
+            $currentItem = Cart::get($id);
 
+            if (! $currentItem) {
+                return;
+            }
+
+            if ($currentItem->attributes->get('type', 'registration') === 'hosting') {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Hosting plans are billed as subscriptions and cannot change quantity.',
+                ]);
+
+                return;
+            }
+
+            if ($quantity > 0 && $quantity <= 10) {
                 // Update quantity while preserving attributes
                 Cart::update($id, [
                     'quantity' => [
@@ -287,6 +299,7 @@ final class CartComponent extends Component
                 'quantity' => 1,
                 'attributes' => [
                     'type' => 'domain',
+                    'domain_name' => $domain,
                     'currency' => $itemCurrency,
                     'added_at' => now()->timestamp,
                 ],
@@ -467,7 +480,19 @@ final class CartComponent extends Component
     public function removeItem($id): void
     {
         try {
+            $currentItem = Cart::get($id);
+
             Cart::remove($id);
+
+            if ($currentItem && $currentItem->attributes->get('type', 'registration') === 'domain') {
+                $domainName = $currentItem->attributes->get('domain_name')
+                    ?? $currentItem->attributes->get('domain')
+                    ?? $currentItem->name;
+
+                if ($domainName) {
+                    $this->removeHostingForDomain((string) $domainName);
+                }
+            }
             $this->updateCartTotal();
 
             // Recalculate discount if coupon is applied
@@ -596,14 +621,30 @@ final class CartComponent extends Component
             $itemCurrency = $item->attributes->currency ?? 'USD';
             $itemPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
 
+            // Build metadata array, including hosting-specific fields if present
+            $metadata = $item->attributes->get('metadata', []);
+
+            // For hosting items, ensure plan metadata is included
+            if ($item->attributes->get('type') === 'hosting') {
+                $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
+                $metadata['hosting_plan_price_id'] = $item->attributes->get('hosting_plan_price_id');
+                $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
+                $metadata['linked_domain'] = $item->attributes->get('linked_domain');
+                $metadata['is_existing_domain'] = $item->attributes->get('is_existing_domain');
+            }
+
             $cartItems[] = [
-                'domain_name' => $item->name,
+                'domain_name' => $item->attributes->get('domain_name') ?? $item->name,
                 'domain_type' => $item->attributes->get('type', 'registration'),
                 'price' => $itemPrice,
                 'currency' => $this->currency,
                 'quantity' => $item->quantity,
                 'years' => $item->quantity,
                 'domain_id' => $item->attributes->get('domain_id'),
+                'metadata' => $metadata,
+                'hosting_plan_id' => $item->attributes->get('hosting_plan_id'),
+                'hosting_plan_price_id' => $item->attributes->get('hosting_plan_price_id'),
+                'linked_domain' => $item->attributes->get('linked_domain'),
             ];
         }
 
@@ -732,5 +773,19 @@ final class CartComponent extends Component
         $this->discountAmount = max(0, min($discount, $subtotal));
 
         $this->totalAmount = max(0, $subtotal - $this->discountAmount);
+    }
+
+    private function removeHostingForDomain(string $domain): void
+    {
+        $cartContent = Cart::getContent();
+        $target = mb_strtolower($domain);
+
+        foreach ($cartContent as $item) {
+            $linkedDomain = $item->attributes->get('linked_domain');
+
+            if ($item->attributes->get('type') === 'hosting' && $linkedDomain && mb_strtolower((string) $linkedDomain) === $target) {
+                Cart::remove($item->id);
+            }
+        }
     }
 }
