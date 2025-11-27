@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - Hosting
   pull_request:
 
 jobs:
@@ -42,5 +43,34 @@ jobs:
         run: php artisan migrate --force --database=sqlite
 
       - name: Run tests
+        # Tests use fake domain services (FakeEppDomainService, FakeNamecheapDomainService)
+        # when EPP_HOST is not configured. This allows CI to run without real API credentials.
         run: php artisan test
+
+  code-style:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: ${{ runner.os }}-php-8.4-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.4-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --no-interaction --prefer-dist
+
+      - name: Check code style
+        run: vendor/bin/pint --test
 

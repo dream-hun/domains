@@ -46,6 +46,7 @@ it('records failed domain registration and dispatches retry job when registratio
     $orderItem = OrderItem::factory()->create([
         'order_id' => $order->id,
         'domain_name' => 'test.rw',
+        'domain_type' => 'registration',
         'years' => 1,
     ]);
 
@@ -104,6 +105,7 @@ it('updates order status to completed when retry succeeds', function (): void {
     $orderItem = OrderItem::factory()->create([
         'order_id' => $order->id,
         'domain_name' => 'test.rw',
+        'domain_type' => 'registration',
         'years' => 1,
     ]);
 
@@ -161,6 +163,7 @@ it('marks registration as abandoned after max retries', function (): void {
     $orderItem = OrderItem::factory()->create([
         'order_id' => $order->id,
         'domain_name' => 'test.rw',
+        'domain_type' => 'registration',
         'years' => 1,
     ]);
 
@@ -211,12 +214,14 @@ it('handles payment success with multiple domains where some fail', function ():
     OrderItem::factory()->create([
         'order_id' => $order->id,
         'domain_name' => 'success.rw',
+        'domain_type' => 'registration',
         'years' => 1,
     ]);
 
     OrderItem::factory()->create([
         'order_id' => $order->id,
         'domain_name' => 'failed.rw',
+        'domain_type' => 'registration',
         'years' => 1,
     ]);
 
@@ -271,6 +276,7 @@ it('maintains payment integrity even when all registrations fail', function (): 
     $orderItem = OrderItem::factory()->create([
         'order_id' => $order->id,
         'domain_name' => 'test.rw',
+        'domain_type' => 'registration',
         'years' => 1,
     ]);
 
