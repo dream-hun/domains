@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Domain;
 
+use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\InternationalDomainService;
+use App\Services\Domain\Testing\FakeEppDomainService;
 use Exception;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -14,14 +16,14 @@ use Tests\TestCase;
 final class DomainServiceTest extends TestCase
 {
     /**
-     * Test the LocalDomainService implementation
+     * Test the LocalDomainService implementation via container resolution
      *
      * @throws Exception
      */
     public function test_local_domain_service_implementation(): void
     {
-        // Create an instance of the service
-        $service = new EppDomainService();
+        // Get the service from the container (will be fake in testing mode if EPP is not configured)
+        $service = $this->app->make(DomainRegistrationServiceInterface::class);
 
         // Test the checkAvailability method
         $result = $service->checkAvailability(['example.co.ke']);
@@ -77,7 +79,13 @@ final class DomainServiceTest extends TestCase
     {
         $service = $this->app->make(EppDomainService::class);
 
-        $this->assertInstanceOf(EppDomainService::class, $service);
+        // In testing mode without EPP configured, this resolves to FakeEppDomainService
+        // Both implement DomainRegistrationServiceInterface
+        $this->assertTrue(
+            $service instanceof EppDomainService || $service instanceof FakeEppDomainService,
+            'Service should be either EppDomainService or FakeEppDomainService'
+        );
+        $this->assertInstanceOf(DomainRegistrationServiceInterface::class, $service);
     }
 
     /**
