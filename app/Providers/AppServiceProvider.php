@@ -11,6 +11,8 @@ use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
+use App\Services\Domain\Testing\FakeEppDomainService;
+use App\Services\Domain\Testing\FakeNamecheapDomainService;
 use App\Services\ExchangeRateClient;
 use Cknow\Money\Money;
 use Exception;
@@ -30,6 +32,90 @@ final class AppServiceProvider extends ServiceProvider
             extendedTimeout: config('services.exchange_rate.extended_timeout')
         ));
 
+        // Register domain services based on environment
+        $this->registerDomainServices();
+    }
+
+    public function boot(): void
+    {
+        try {
+            View::share('settings', Setting::query()->first());
+        } catch (Exception) {
+            View::share('settings');
+        }
+
+        $this->registerBladeDirectives();
+    }
+
+    /**
+     * Register domain services based on the current environment.
+     * Uses fake services in testing environment when EPP/Namecheap are not configured.
+     */
+    private function registerDomainServices(): void
+    {
+        $useFakeServices = $this->shouldUseFakeDomainServices();
+
+        if ($useFakeServices) {
+            $this->registerFakeDomainServices();
+        } else {
+            $this->registerRealDomainServices();
+        }
+    }
+
+    /**
+     * Determine if fake domain services should be used.
+     */
+    private function shouldUseFakeDomainServices(): bool
+    {
+        // Use fake services when in testing environment AND EPP is not configured
+        if ($this->app->environment('testing') && empty(config('services.epp.host'))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Register fake domain services for testing.
+     */
+    private function registerFakeDomainServices(): void
+    {
+        // Singleton fake services so state persists across test assertions
+        $this->app->singleton(FakeEppDomainService::class);
+        $this->app->singleton(FakeNamecheapDomainService::class);
+
+        // Bind domain search helper with fake services
+        $this->app->singleton(fn ($app): DomainSearchHelper => new DomainSearchHelper(
+            $app->make(FakeNamecheapDomainService::class),
+            $app->make(FakeEppDomainService::class)
+        ));
+
+        // Bind domain registration services
+        $this->app->bind(DomainRegistrationServiceInterface::class.'.epp', fn ($app): FakeEppDomainService => $app->make(FakeEppDomainService::class));
+
+        $this->app->bind(DomainRegistrationServiceInterface::class.'.namecheap', fn ($app): FakeNamecheapDomainService => $app->make(FakeNamecheapDomainService::class));
+
+        // Named bindings for RegisterDomainAction constructor parameters
+        $this->app->bind('epp_domain_service', fn ($app): FakeEppDomainService => $app->make(FakeEppDomainService::class));
+
+        $this->app->bind('namecheap_domain_service', fn ($app): FakeNamecheapDomainService => $app->make(FakeNamecheapDomainService::class));
+
+        // Bind the DomainServiceInterface to FakeNamecheapDomainService by default
+        $this->app->bind(DomainServiceInterface::class, FakeNamecheapDomainService::class);
+
+        // Bind DomainRegistrationServiceInterface to FakeEppDomainService by default
+        $this->app->bind(DomainRegistrationServiceInterface::class, FakeEppDomainService::class);
+
+        // Also bind the concrete classes to fakes for dependency injection
+        $this->app->bind(EppDomainService::class, fn ($app): FakeEppDomainService => $app->make(FakeEppDomainService::class));
+        $this->app->bind(NamecheapDomainService::class, fn ($app): FakeNamecheapDomainService => $app->make(FakeNamecheapDomainService::class));
+    }
+
+    /**
+     * Register real domain services for production/staging.
+     */
+    private function registerRealDomainServices(): void
+    {
         $this->app->singleton(fn ($app): DomainSearchHelper => new DomainSearchHelper(
             $app->make(NamecheapDomainService::class),
             $app->make(EppDomainService::class)
@@ -51,17 +137,6 @@ final class AppServiceProvider extends ServiceProvider
         // Bind DomainRegistrationServiceInterface to EppDomainService by default
         // This is used by RenewalService and other services that need domain operations
         $this->app->bind(DomainRegistrationServiceInterface::class, EppDomainService::class);
-    }
-
-    public function boot(): void
-    {
-        try {
-            View::share('settings', Setting::query()->first());
-        } catch (Exception) {
-            View::share('settings');
-        }
-
-        $this->registerBladeDirectives();
     }
 
     /**
