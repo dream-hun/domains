@@ -18,10 +18,10 @@
                             Developing smart solutions in-house and adopting the latest speed and security technologies
                             is our passion.</p>
                         <div class="rts-hero__content--group" data-sal="slide-down" data-sal-delay="500"
-                             data-sal-duration="800">
+                            data-sal-duration="800">
                             <a href="route('register') }}" class="primary__btn white__bg">Get Started <i
                                     class="fa-regular fa-long-arrow-right"></i></a>
-                            <a href="{{--{{ route('shared.index') }}--}}" class="btn__zero plan__btn">Plans & Pricing <i
+                            <a href="{{-- {{ route('shared.index') }} --}}" class="btn__zero plan__btn">Plans & Pricing <i
                                     class="fa-regular fa-long-arrow-right"></i></a>
                         </div>
 
@@ -66,10 +66,10 @@
                             <h5 data-sal="slide-down" data-sal-delay="300" data-sal-duration="800">Hosting solutions
                                 trusted by the owners of <span>2,800,000</span> domains.</h5>
                             <div class="rts-brand__wrapper--text-review" data-sal="slide-down" data-sal-delay="400"
-                                 data-sal-duration="800">
+                                data-sal-duration="800">
                                 <div class="review">
                                     <div class="star">Excellent <img src="assets/images/brand/review-star.svg"
-                                                                     alt="">
+                                            alt="">
                                     </div>
                                 </div>
                                 <div class="review__company">
@@ -82,55 +82,55 @@
                                 <div class="swiper-slide">
                                     <div class="rts-brand__slider--single">
                                         <a href="#" aria-label="brand-link"><img src="assets/images/brand/01.svg"
-                                                                                 alt=""></a>
+                                                alt=""></a>
                                     </div>
                                 </div>
                                 <div class="swiper-slide">
                                     <div class="rts-brand__slider--single">
                                         <a href="#" aria-label="brand-link"><img src="assets/images/brand/02.svg"
-                                                                                 alt=""></a>
+                                                alt=""></a>
                                     </div>
                                 </div>
                                 <div class="swiper-slide">
                                     <div class="rts-brand__slider--single">
                                         <a href="#" aria-label="brand-link"><img src="assets/images/brand/03.svg"
-                                                                                 alt=""></a>
+                                                alt=""></a>
                                     </div>
                                 </div>
                                 <div class="swiper-slide">
                                     <div class="rts-brand__slider--single">
                                         <a href="#" aria-label="brand-link"><img src="assets/images/brand/04.svg"
-                                                                                 alt=""></a>
+                                                alt=""></a>
                                     </div>
                                 </div>
                                 <div class="swiper-slide">
                                     <div class="rts-brand__slider--single">
                                         <a href="#" aria-label="brand-link"><img src="assets/images/brand/05.svg"
-                                                                                 alt=""></a>
+                                                alt=""></a>
                                     </div>
                                 </div>
                                 <div class="swiper-slide">
                                     <div class="rts-brand__slider--single">
-                                        <a href="#" aria-label="brand-link"><img src="assets/images/brand/06.svg"
-                                                                                 alt=""></a>
+                                        <a href="#" aria-label="brand-link"><img
+                                                src="assets/images/brand/06.svg" alt=""></a>
                                     </div>
                                 </div>
                                 <div class="swiper-slide">
                                     <div class="rts-brand__slider--single">
-                                        <a href="#" aria-label="brand-link"> <img src="assets/images/brand/07.svg"
-                                                                                  alt=""></a>
+                                        <a href="#" aria-label="brand-link"> <img
+                                                src="assets/images/brand/07.svg" alt=""></a>
                                     </div>
                                 </div>
                                 <div class="swiper-slide">
                                     <div class="rts-brand__slider--single">
-                                        <a href="#" aria-label="brand-link"><img src="assets/images/brand/08.svg"
-                                                                                 alt=""></a>
+                                        <a href="#" aria-label="brand-link"><img
+                                                src="assets/images/brand/08.svg" alt=""></a>
                                     </div>
                                 </div>
                                 <div class="swiper-slide">
                                     <div class="rts-brand__slider--single">
-                                        <a href="#" aria-label="brand-link"><img src="assets/images/brand/01.svg"
-                                                                                 alt=""></a>
+                                        <a href="#" aria-label="brand-link"><img
+                                                src="assets/images/brand/01.svg" alt=""></a>
                                     </div>
                                 </div>
                             </div>
@@ -166,62 +166,61 @@
                 <div class="col-lg-12">
                     <div class="rts-hosting-type__slider">
                         <div class="swiper-wrapper">
-                            <!-- single package -->
-                            <div class="swiper-slide">
-                                <div class="rts-hosting-type__single">
-                                    <div class="hosting-icon">
-                                        <img src="assets/images/hosting/03.svg" alt="">
+                            @foreach ($hostingCategories as $category)
+                                <div class="swiper-slide">
+                                    <div class="rts-hosting-type__single">
+                                        @if ($category->slug == 'shared-hosting')
+                                            <div class="hosting-icon">
+                                                <img src="assets/images/hosting/04.svg" alt="">
+                                            </div>
+                                        @elseif ($category->slug == 'managed-wordpress-hosting')
+                                            <div class="hosting-icon">
+                                                <img src="assets/images/hosting/05.svg" alt="">
+                                            </div>
+                                        @elseif ($category->slug == 'dedicated-hosting')
+                                            <div class="hosting-icon">
+                                                <img src="assets/images/service/dedicated__hosting.svg"
+                                                    alt="">
+                                            </div>
+                                        @elseif ($category->slug == 'vps-hosting')
+                                            <div class="hosting-icon">
+                                                <img src="assets/images/hosting/02.svg" alt="">
+                                            </div>
+                                        @elseif ($category->slug == 'reseller-hosting')
+                                            <div class="hosting-icon">
+                                                <img src="assets/images/service/resseller__hosting.svg"
+                                                    alt="">
+                                            </div>
+                                        @elseif ($category->slug == 'cloud-hosting')
+                                            <div class="hosting-icon">
+                                                <img src="assets/images/service/cloud__hosting.svg" alt="">
+                                            </div>
+                                        @else
+                                            <div class="hosting-icon">
+                                                <img src="assets/images/hosting/01.svg" alt="">
+                                            </div>
+                                        @endif
+                                        <a href="{{ url('/hosting/' . $category->slug) }}"
+                                            class="title">{{ $category->name }}</a>
+                                        <p class="excerpt">{{ Str::limit($category->description, 60) }}</p>
+                                        @php
+                                            $lowestPriceModel = $category->plans
+                                                ->flatMap(fn($p) => $p->planPrices)
+                                                ->sortBy('regular_price')
+                                                ->first();
+                                        @endphp
+                                        @if ($lowestPriceModel)
+                                            <h6 class="price__start">Starting from
+                                                {{ $lowestPriceModel->getFormattedPrice() }}/month</h6>
+                                        @else
+                                            <h6 class="price__start">Contact for pricing</h6>
+                                        @endif
+                                        <a href="{{ url('/hosting/' . $category->slug) }}"
+                                            class="primary__btn border__btn">See Plan <i
+                                                class="fa-regular fa-long-arrow-right"></i></a>
                                     </div>
-                                    <a href="wordpress-hosting.html" class="title">WordPress Hosting</a>
-                                    <p class="excerpt">Manage your WordPress sites easily and more freedom.</p>
-                                    <h6 class="price__start">Starting from $2.95/month</h6>
-                                    <a href="wordpress-hosting.html" class="primary__btn border__btn">See Plan <i
-                                            class="fa-regular fa-long-arrow-right"></i></a>
                                 </div>
-                            </div>
-                            <!-- single package end -->
-                            <!-- single package -->
-                            <div class="swiper-slide">
-                                <div class="rts-hosting-type__single">
-                                    <div class="hosting-icon">
-                                        <img src="assets/images/hosting/04.svg" alt="">
-                                    </div>
-                                    <a href="wordpress-hosting.html" class="title">Web Hosting</a>
-                                    <p class="excerpt">Manage your WordPress sites easily and more freedom.</p>
-                                    <h6 class="price__start">Starting from $2.95/month</h6>
-                                    <a href="wordpress-hosting.html" class="primary__btn border__btn">See Plan <i
-                                            class="fa-regular fa-long-arrow-right"></i></a>
-                                </div>
-                            </div>
-                            <!-- single package end -->
-                            <!-- single package -->
-                            <div class="swiper-slide">
-                                <div class="rts-hosting-type__single">
-                                    <div class="hosting-icon">
-                                        <img src="assets/images/hosting/02.svg" alt="">
-                                    </div>
-                                    <a href="vps-hosting.html" class="title">Vps Hosting</a>
-                                    <p class="excerpt">Manage your WordPress sites easily and more freedom.</p>
-                                    <h6 class="price__start">Starting from $2.95/month</h6>
-                                    <a href="vps-hosting.html" class="primary__btn border__btn">See Plan <i
-                                            class="fa-regular fa-long-arrow-right"></i></a>
-                                </div>
-                            </div>
-                            <!-- single package end -->
-                            <!-- single package -->
-                            <div class="swiper-slide">
-                                <div class="rts-hosting-type__single">
-                                    <div class="hosting-icon">
-                                        <img src="assets/images/hosting/01.svg" alt="">
-                                    </div>
-                                    <a href="shared-hosting.html" class="title">Shared Hosting</a>
-                                    <p class="excerpt">Manage your WordPress sites easily and more freedom.</p>
-                                    <h6 class="price__start">Starting from $2.95/month</h6>
-                                    <a href="shared-hosting.html" class="primary__btn border__btn">See Plan <i
-                                            class="fa-regular fa-long-arrow-right"></i></a>
-                                </div>
-                            </div>
-                            <!-- single package end -->
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -237,7 +236,8 @@
                 <div class="col-xl-6 col-lg-6">
                     <div class="rts-about__image">
                         <img src="assets/images/about/about-big.png" alt="">
-                        <img src="assets/images/about/about-shape-01.svg" alt="" class="shape one right-left">
+                        <img src="assets/images/about/about-shape-01.svg" alt=""
+                            class="shape one right-left">
                         <img src="assets/images/about/about-shape-02.svg" alt="" class="shape two">
                     </div>
                 </div>
@@ -251,7 +251,7 @@
                             business, sell products through an eCommerce.
                         </p>
                         <div class="rts-about__content--single" data-sal="slide-down" data-sal-delay="500"
-                             data-sal-duration="800">
+                            data-sal-duration="800">
                             <div class="image">
 
                                 <img src="assets/images/about/01.svg" alt="">
@@ -263,7 +263,7 @@
                             </div>
                         </div>
                         <div class="rts-about__content--single" data-sal="slide-down" data-sal-delay="600"
-                             data-sal-duration="800">
+                            data-sal-duration="800">
                             <div class="image bg-2">
                                 <img src="assets/images/about/02.svg" alt="">
                             </div>
@@ -291,10 +291,10 @@
                             on
                             a billboard.</h3>
                         <form action="{{ route('domains.search') }}" class="domain-checker" method="post"
-                              data-sal="slide-down" data-sal-delay="400" data-sal-duration="800">
+                            data-sal="slide-down" data-sal-delay="400" data-sal-duration="800">
                             @csrf
                             <input type="text" id="domain-name" name="domain"
-                                   placeholder="Register a domain name to start" required>
+                                placeholder="Register a domain name to start" required>
 
                             <button type="submit" aria-label="register domain" name="domain_type">search
                                 domain
@@ -332,10 +332,11 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="rts-section text-center w-530">
-                    <h3 class="rts-section__title" data-sal="slide-down" data-sal-delay="300" data-sal-duration="800">We
+                    <h3 class="rts-section__title" data-sal="slide-down" data-sal-delay="300"
+                        data-sal-duration="800">We
                         Provide Hosting Solution</h3>
                     <p class="rts-section__description" data-sal="slide-down" data-sal-delay="400"
-                       data-sal-duration="800">Select your solution and we will help you narrow down our best
+                        data-sal-duration="800">Select your solution and we will help you narrow down our best
                         high-speed options to fit your needs.
                     </p>
                 </div>
@@ -471,10 +472,11 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="rts-section w-790 text-center">
-                    <h3 class="rts-section__title" data-sal="slide-down" data-sal-delay="300" data-sal-duration="800">
+                    <h3 class="rts-section__title" data-sal="slide-down" data-sal-delay="300"
+                        data-sal-duration="800">
                         Data Centers All Around the World</h3>
                     <p class="rts-section__description" data-sal="slide-down" data-sal-delay="400"
-                       data-sal-duration="800">Our web hosting, WordPress hosting, and cloud hosting plans offer
+                        data-sal-duration="800">Our web hosting, WordPress hosting, and cloud hosting plans offer
                         server
                         locations in: USA, Germany Egypt , India, Chaina, Brazil, Canada, Russia, Australia and South
                         Africa.
@@ -489,54 +491,54 @@
                         <ul class="round-shape">
                             <li class="one">
                                 <span class="tooltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      aria-label="Canada" data-bs-custom-class="color-hostie"
-                                      title="Canada">Canada</span>
+                                    aria-label="Canada" data-bs-custom-class="color-hostie"
+                                    title="Canada">Canada</span>
 
                                 <img src="assets/images/flag-01.svg" alt="">
                             </li>
                             <li class="two">
                                 <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      data-bs-custom-class="color-hostie" title="Germany">Germany</span>
+                                    data-bs-custom-class="color-hostie" title="Germany">Germany</span>
                                 <img src="assets/images/flag-02.svg" alt="">
                             </li>
                             <li class="three">
                                 <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      data-bs-custom-class="color-hostie" title="Russia">Russia</span>
+                                    data-bs-custom-class="color-hostie" title="Russia">Russia</span>
                                 <img src="assets/images/flag-03.svg" alt="">
                             </li>
                             <li class="four">
                                 <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      data-bs-custom-class="color-hostie" title="USA">USA</span>
+                                    data-bs-custom-class="color-hostie" title="USA">USA</span>
                                 <img src="assets/images/flag-04.svg" alt="">
                             </li>
                             <li class="five">
                                 <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      data-bs-custom-class="color-hostie" title="Egypt">egypt</span>
+                                    data-bs-custom-class="color-hostie" title="Egypt">egypt</span>
                                 <img src="assets/images/flag-05.svg" alt="">
                             </li>
                             <li class="six">
                                 <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      data-bs-custom-class="color-hostie" title="India">india</span>
+                                    data-bs-custom-class="color-hostie" title="India">india</span>
                                 <img src="assets/images/flag-06.svg" alt="">
                             </li>
                             <li class="seven">
                                 <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      data-bs-custom-class="color-hostie" title="China">china</span>
+                                    data-bs-custom-class="color-hostie" title="China">china</span>
                                 <img src="assets/images/flag-07.svg" alt="">
                             </li>
                             <li class="eight">
                                 <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      data-bs-custom-class="color-hostie" title="Brazil">Brazil</span>
+                                    data-bs-custom-class="color-hostie" title="Brazil">Brazil</span>
                                 <img src="assets/images/flag-08.svg" alt="">
                             </li>
                             <li class="nine">
                                 <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      data-bs-custom-class="color-hostie" title="South Africa">arfa</span>
+                                    data-bs-custom-class="color-hostie" title="South Africa">arfa</span>
                                 <img src="assets/images/flag-09.svg" alt="">
                             </li>
                             <li class="ten">
                                 <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                      data-bs-custom-class="color-hostie" title="Australia">Australia</span>
+                                    data-bs-custom-class="color-hostie" title="Australia">Australia</span>
                                 <img src="assets/images/flag-10.svg" alt="">
                             </li>
                         </ul>
@@ -567,7 +569,7 @@
                                 with incredible savings.
                             </p>
                             <a data-sal="slide-down" data-sal-delay="500" data-sal-duration="800" href="#"
-                               class="primary__btn white__bg">See Details</a>
+                                class="primary__btn white__bg">See Details</a>
                         </div>
                     </div>
                     <div class="col-lg-8 p--0">
@@ -673,10 +675,11 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="rts-section text-center w-560">
-                    <h3 class="rts-section__title" data-sal="slide-down" data-sal-delay="300" data-sal-duration="800">
+                    <h3 class="rts-section__title" data-sal="slide-down" data-sal-delay="300"
+                        data-sal-duration="800">
                         Choose Your Web Hosting Plan</h3>
                     <p class="rts-section__description" data-sal="slide-down" data-sal-delay="400"
-                       data-sal-duration="800">Shared hosting is the easiest, most economical way to get your website
+                        data-sal-duration="800">Shared hosting is the easiest, most economical way to get your website
                         connected to the Internet so you can start building it.
                     </p>
                 </div>
@@ -685,112 +688,88 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="rts-plan__table">
+                        @php
+                            $displayPlans = $hostingPlans->take(4);
+                            $allFeatures = $displayPlans
+                                ->flatMap(fn($plan) => $plan->planFeatures)
+                                ->pluck('hostingFeature')
+                                ->filter()
+                                ->unique('id')
+                                ->values();
+                        @endphp
                         <table class="table-bordered">
                             <!-- thead -->
                             <thead>
-                            <tr>
-                                <th class="package__left">
-                                    <img src="assets/images/pricing/pricing-image.svg" alt="">
-                                </th>
-                                <!-- package one -->
-                                <th class="package__item">
-                                    <div class="package__item__info">
-                                        <span class="package__type">Basic</span>
-                                        <span class="start">Starting at $3.75/mo*</span>
-                                        <form action="#">
-                                            <select name="select" id="select" class="price__select">
-                                                <option value="1">$3.75/mo</option>
-                                                <option value="1">$10.75/mo</option>
-                                            </select>
-                                            <button type="submit" aria-label="buy package"
-                                                    class="primary__btn primary__bg buy__now">By
-                                                Now
-                                            </button>
-                                        </form>
-                                    </div>
-                                </th>
-                                <!-- top-right-corner -->
-                                <th class="package__item">
-                                    <!-- table-title-3 -->
-                                    <div class="package__item__info">
-                                        <span class="package__type">Deluxe</span>
-                                        <span class="start">Starting at $3.75/mo*</span>
-                                        <form action="#">
-                                            <select name="select" id="select1" class="price__select">
-                                                <option value="1">$3.75/mo</option>
-                                                <option value="1">$10.75/mo</option>
-                                            </select>
-                                            <button type="submit" aria-label="buy package"
-                                                    class="primary__btn primary__bg buy__now">By
-                                                Now
-                                            </button>
-                                        </form>
-                                    </div>
-                                </th>
-                                <!-- top-right-corner -->
-                                <th class="package__item">
-                                    <div class="package__item__info">
-                                        <span class="package__type">Ultra</span>
-                                        <span class="start">Starting at $3.75/mo*</span>
-                                        <form action="#">
-                                            <select name="select" id="select2" class="price__select">
-                                                <option value="1">$3.75/mo</option>
-                                                <option value="1">$10.75/mo</option>
-                                            </select>
-                                            <button type="submit" aria-label="buy package"
-                                                    class="primary__btn primary__bg buy__now">By
-                                                Now
-                                            </button>
-                                        </form>
-                                    </div>
-                                </th>
-                            </tr>
+                                <tr>
+                                    <th class="package__left">
+                                        <img src="assets/images/pricing/pricing-image.svg" alt="">
+                                    </th>
+                                    @foreach ($displayPlans as $index => $plan)
+                                        <th class="package__item">
+                                            <div class="package__item__info">
+                                                <span class="package__type">{{ $plan->name }}</span>
+                                                @php
+                                                    $lowestPlanPrice = $plan->planPrices
+                                                        ->sortBy('regular_price')
+                                                        ->first();
+                                                @endphp
+                                                @if ($lowestPlanPrice)
+                                                    <span class="start">Starting at
+                                                        {{ $lowestPlanPrice->getFormattedPrice() }}/mo*</span>
+                                                @else
+                                                    <span class="start">Contact for pricing</span>
+                                                @endif
+                                                <form action="#">
+                                                    <select name="select" id="select{{ $index }}"
+                                                        class="price__select">
+                                                        @foreach ($plan->planPrices as $price)
+                                                            <option value="{{ $price->id }}">
+                                                                {{ $price->getFormattedPrice() }}/mo
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <button type="submit" aria-label="buy package"
+                                                        class="primary__btn primary__bg buy__now">Buy Now</button>
+                                                </form>
+                                            </div>
+                                        </th>
+                                    @endforeach
+                                </tr>
                             </thead>
                             <!-- tbody -->
                             <tbody>
-                            <!-- hardware -->
-                            <tr data-filter="hardware" class="">
-                                <td class="package__left">Websites</td>
-                                <td class="package__item">1</td>
-                                <td class="package__item">Unlimited</td>
-                                <td class="package__item">Unlimited</td>
-                            </tr>
-                            <tr data-filter="hardware" class="">
-                                <td class="package__left">Disk storage</td>
-                                <td class="package__item">Unlimited</td>
-                                <td class="package__item">Unlimited</td>
-                                <td class="package__item">Unlimited</td>
-                            </tr>
-                            <tr data-filter="hardware" class="">
-                                <td class="package__left">Bandwidth</td>
-                                <td class="package__item">Scaleable</td>
-                                <td class="package__item">Scaleable</td>
-                                <td class="package__item">Scaleable</td>
-                            </tr>
-                            <tr data-filter="hardware" class="">
-                                <td class="package__left">FTP users</td>
-                                <td class="package__item">6</td>
-                                <td class="package__item">27</td>
-                                <td class="package__item">Unlimited</td>
-                            </tr>
-                            <tr data-filter="hardware" class="">
-                                <td class="package__left">MySQL databases</td>
-                                <td class="package__item">10</td>
-                                <td class="package__item">27</td>
-                                <td class="package__item">Unlimited</td>
-                            </tr>
-                            <tr data-filter="hardware" class="">
-                                <td class="package__left">Free SSl certificate</td>
-                                <td class="package__item"><i class="fa-regular fa-check"></i></td>
-                                <td class="package__item"><i class="fa-regular fa-check"></i></td>
-                                <td class="package__item"><i class="fa-regular fa-check"></i></td>
-                            </tr>
-                            <tr data-filter="hardware" class="">
-                                <td class="package__left">Free Domain for the first year</td>
-                                <td class="package__item"><i class="fa-regular fa-check"></i></td>
-                                <td class="package__item"><i class="fa-regular fa-check"></i></td>
-                                <td class="package__item"><i class="fa-regular fa-check"></i></td>
-                            </tr>
+                                @foreach ($allFeatures as $feature)
+                                    <tr data-filter="hardware" class="">
+                                        <td class="package__left">{{ $feature->name }}</td>
+                                        @foreach ($displayPlans as $plan)
+                                            @php
+                                                $planFeature = $plan->planFeatures->firstWhere(
+                                                    'hosting_feature_id',
+                                                    $feature->id,
+                                                );
+                                            @endphp
+                                            <td class="package__item">
+                                                @if ($planFeature)
+                                                    @if ($planFeature->is_unlimited)
+                                                        Unlimited
+                                                    @elseif($planFeature->is_included)
+                                                        <i class="fa-regular fa-check"></i>
+                                                    @elseif($planFeature->feature_value === 'true')
+                                                        <i class="fa-regular fa-check"></i>
+                                                    @elseif($planFeature->feature_value === 'false')
+                                                        <i class="fa-regular fa-xmark"></i>
+                                                    @elseif($planFeature->custom_text)
+                                                        {{ $planFeature->custom_text }}
+                                                    @else
+                                                        {{ $planFeature->feature_value ?? '-' }}
+                                                    @endif
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
                             </tbody>
                         </table>
                     </div>
@@ -813,7 +792,7 @@
                             that
                             acts as your extended team to incredibly fast website performance</p>
                         <img data-sal="slide-down" data-sal-delay="500" data-sal-duration="800"
-                             src="assets/images/faq/faq.svg" alt="faq">
+                            src="assets/images/faq/faq.svg" alt="faq">
                         <div class="rts-faq__first--shape">
                             <div class="img"><img src="assets/images/faq/faq__animated.svg" alt="">
                             </div>
@@ -826,15 +805,15 @@
                     <div class="rts-faq__accordion">
                         <div class="accordion accordion-flush" id="rts-accordion">
                             <div class="accordion-item active" data-sal="slide-left" data-sal-delay="300"
-                                 data-sal-duration="800">
+                                data-sal-duration="800">
                                 <div class="accordion-header" id="first">
                                     <h4 class="accordion-button collapse show" data-bs-toggle="collapse"
                                         data-bs-target="#item__one" aria-expanded="false" aria-controls="item__one">
                                         Why buy a domain name from hostie?
                                     </h4>
                                 </div>
-                                <div id="item__one" class="accordion-collapse collapse show"
-                                     aria-labelledby="first" data-bs-parent="#rts-accordion">
+                                <div id="item__one" class="accordion-collapse collapse show" aria-labelledby="first"
+                                    data-bs-parent="#rts-accordion">
                                     <div class="accordion-body">
                                         Above all else, we strive to deliver outstanding customer experiences. When you
                                         buy a domain name from hostie, we guarantee it will be handed over.
@@ -842,7 +821,7 @@
                                 </div>
                             </div>
                             <div class="accordion-item" data-sal="slide-left" data-sal-delay="400"
-                                 data-sal-duration="800">
+                                data-sal-duration="800">
                                 <div class="accordion-header" id="two">
                                     <h4 class="accordion-button collapsed" data-bs-toggle="collapse"
                                         data-bs-target="#item__two" aria-expanded="false" aria-controls="item__two">
@@ -850,7 +829,7 @@
                                     </h4>
                                 </div>
                                 <div id="item__two" class="accordion-collapse collapse" aria-labelledby="two"
-                                     data-bs-parent="#rts-accordion">
+                                    data-bs-parent="#rts-accordion">
                                     <div class="accordion-body">
                                         Above all else, we strive to deliver outstanding customer experiences. When you
                                         buy a domain name from hostie, we guarantee it will be handed over.
@@ -858,15 +837,16 @@
                                 </div>
                             </div>
                             <div class="accordion-item" data-sal="slide-left" data-sal-delay="500"
-                                 data-sal-duration="800">
+                                data-sal-duration="800">
                                 <div class="accordion-header" id="three">
                                     <h4 class="accordion-button collapsed" data-bs-toggle="collapse"
-                                        data-bs-target="#item__three" aria-expanded="false" aria-controls="item__three">
+                                        data-bs-target="#item__three" aria-expanded="false"
+                                        aria-controls="item__three">
                                         Why is domain name registration required?
                                     </h4>
                                 </div>
                                 <div id="item__three" class="accordion-collapse collapse" aria-labelledby="three"
-                                     data-bs-parent="#rts-accordion">
+                                    data-bs-parent="#rts-accordion">
                                     <div class="accordion-body">
                                         Above all else, we strive to deliver outstanding customer experiences. When you
                                         buy a domain name from hostie, we guarantee it will be handed over.
@@ -875,15 +855,16 @@
                             </div>
 
                             <div class="accordion-item" data-sal="slide-left" data-sal-delay="600"
-                                 data-sal-duration="800">
+                                data-sal-duration="800">
                                 <div class="accordion-header" id="four">
                                     <h4 class="accordion-button collapsed" data-bs-toggle="collapse"
-                                        data-bs-target="#item__four" aria-expanded="false" aria-controls="item__four">
+                                        data-bs-target="#item__four" aria-expanded="false"
+                                        aria-controls="item__four">
                                         Why is domain name registration required?
                                     </h4>
                                 </div>
                                 <div id="item__four" class="accordion-collapse collapse" aria-labelledby="four"
-                                     data-bs-parent="#rts-accordion">
+                                    data-bs-parent="#rts-accordion">
                                     <div class="accordion-body">
                                         Above all else, we strive to deliver outstanding customer experiences. When you
                                         buy a domain name from hostie, we guarantee it will be handed over.
@@ -910,7 +891,8 @@
                             strive
                             deliver outstanding customer experiences When you buy a domain name from.</p>
                         <a data-sal="slide-down" data-sal-delay="500" data-sal-duration="800" href="#"
-                           class="primary__btn secondary__bg">get started <i class="fa-regular fa-arrow-right"></i></a>
+                            class="primary__btn secondary__bg">get started <i
+                                class="fa-regular fa-arrow-right"></i></a>
                     </div>
                     <div class="rts-cta__right">
                         <div class="cta-image">
