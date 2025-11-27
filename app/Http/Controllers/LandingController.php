@@ -20,7 +20,7 @@ final class LandingController extends Controller
         $hostingCategories = HostingCategory::query()
             ->select(['id', 'name', 'slug', 'icon', 'description'])
             ->where('status', 'active')
-            ->with(['plans' => fn ($q) => $q->where('status', 'active')->with('planPrices')])
+            ->with(['plans' => fn ($q) => $q->where('status', 'active')->with(['planPrices' => fn ($p) => $p->where('status', 'active')])])
             ->get();
 
         $hostingPlans = HostingPlan::query()
