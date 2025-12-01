@@ -17,13 +17,8 @@ final class LandingController extends Controller
      */
     public function __invoke(Request $request): View|Factory
     {
-        $hostingCategories = HostingCategory::query()
-            ->select(['id', 'name', 'slug', 'icon', 'description'])
-            ->where('status', 'active')
-            ->with(['plans' => fn ($q) => $q->where('status', 'active')->with(['planPrices' => fn ($p) => $p->where('status', 'active')])])
-            ->get();
-
-        $hostingPlans = HostingPlan::query()
+        // Load all active plans with their prices and features once to avoid duplicate queries
+        $allPlans = HostingPlan::query()
             ->where('status', 'active')
             ->with([
                 'category:id,name,slug',
@@ -33,9 +28,26 @@ final class LandingController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        // Load categories with their plans (prices already loaded above)
+        $hostingCategories = HostingCategory::query()
+            ->select(['id', 'name', 'slug', 'icon', 'description'])
+            ->where('status', 'active')
+            ->with(['plans' => fn ($q) => $q->where('status', 'active')])
+            ->get();
+
+        // Manually attach already-loaded planPrices to plans in categories to avoid duplicate queries
+        foreach ($hostingCategories as $category) {
+            foreach ($category->plans as $plan) {
+                $loadedPlan = $allPlans->firstWhere('id', $plan->id);
+                if ($loadedPlan && $loadedPlan->relationLoaded('planPrices')) {
+                    $plan->setRelation('planPrices', $loadedPlan->planPrices);
+                }
+            }
+        }
+
         return view('welcome', [
             'hostingCategories' => $hostingCategories,
-            'hostingPlans' => $hostingPlans,
+            'hostingPlans' => $allPlans,
         ]);
     }
 }

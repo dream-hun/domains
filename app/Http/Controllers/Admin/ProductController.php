@@ -23,7 +23,11 @@ class ProductController extends Controller
     public function hosting()
     {
         abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        $subscriptions = Subscription::with(['user', 'plan', 'planPrice'])->get();
+        $subscriptions = Subscription::with(['user', 'plan', 'planPrice'])
+        ->where('user_id', auth()->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(25)
+            ->withQueryString();
 
         return view('admin.products.hosting', ['subscriptions' => $subscriptions]);
     }

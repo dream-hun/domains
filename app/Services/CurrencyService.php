@@ -89,7 +89,16 @@ final readonly class CurrencyService
      */
     public function getActiveCurrencies(): Collection
     {
-        return Cache::remember('active_currencies', self::CACHE_TTL, Currency::getActiveCurrencies(...));
+        // Check request-level cache first to avoid duplicate queries
+        static $cachedCurrencies = null;
+        if ($cachedCurrencies !== null) {
+            return $cachedCurrencies;
+        }
+
+        // Fetch from persistent cache and store in request-level cache
+        $cachedCurrencies = Cache::remember('active_currencies', self::CACHE_TTL, Currency::getActiveCurrencies(...));
+
+        return $cachedCurrencies;
     }
 
     /**

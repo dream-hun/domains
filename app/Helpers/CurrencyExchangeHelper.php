@@ -11,6 +11,32 @@ use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Request-level cache for exchange rates to prevent duplicate queries
+ */
+final class ExchangeRateRequestCache
+{
+    /**
+     * @var array<string, float|null>
+     */
+    private static array $rateCache = [];
+
+    public static function getRate(string $cacheKey): ?float
+    {
+        return self::$rateCache[$cacheKey] ?? null;
+    }
+
+    public static function setRate(string $cacheKey, ?float $rate): void
+    {
+        self::$rateCache[$cacheKey] = $rate;
+    }
+
+    public static function hasRate(string $cacheKey): bool
+    {
+        return isset(self::$rateCache[$cacheKey]);
+    }
+}
+
 final readonly class CurrencyExchangeHelper
 {
     private const SUPPORTED_CURRENCIES = ['USD', 'RWF'];
@@ -37,10 +63,22 @@ final readonly class CurrencyExchangeHelper
 
         $cacheKey = $this->getCacheKey($from, $to);
 
+        // Check request-level cache first to avoid duplicate queries
+        if (ExchangeRateRequestCache::hasRate($cacheKey)) {
+            $rate = ExchangeRateRequestCache::getRate($cacheKey);
+            if ($rate !== null) {
+                return $rate;
+            }
+        }
+
         if (config('currency_exchange.cache.enabled', true)) {
             $rate = Cache::get($cacheKey);
             if ($rate !== null) {
-                return (float) $rate;
+                $rate = (float) $rate;
+                // Store in request-level cache
+                ExchangeRateRequestCache::setRate($cacheKey, $rate);
+
+                return $rate;
             }
         }
 
@@ -63,6 +101,9 @@ final readonly class CurrencyExchangeHelper
 
             // Cache the rate and metadata
             $this->cacheRate($from, $to, $rate, $response);
+
+            // Store in request-level cache
+            ExchangeRateRequestCache::setRate($cacheKey, $rate);
 
             return $rate;
 
@@ -291,10 +332,16 @@ final readonly class CurrencyExchangeHelper
             throw CurrencyExchangeException::unexpectedResponse(sprintf('No fallback rate configured for %s to %s', $from, $to));
         }
 
-        // Cache the fallback rate
-        $this->cacheRate($from, $to, (float) $rate, [], true);
+        $fallbackRate = (float) $rate;
 
-        return (float) $rate;
+        // Cache the fallback rate
+        $this->cacheRate($from, $to, $fallbackRate, [], true);
+
+        // Store in request-level cache
+        $cacheKey = $this->getCacheKey($from, $to);
+        ExchangeRateRequestCache::setRate($cacheKey, $fallbackRate);
+
+        return $fallbackRate;
     }
 
     /**
