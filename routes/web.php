@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\HostingPlanPriceController;
 use App\Http\Controllers\Admin\HostingPromotionController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PermissionsController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SubscriptionController;
@@ -49,7 +50,6 @@ Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verif
 
 Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' => 'admin.'], function (): void {
     Route::resource('contacts', ContactController::class);
-
     Route::resource('domains', DomainController::class)->except(['show']);
     Route::get('domains/{domain:uuid}/info', [DomainOperationsController::class, 'domainInfo'])->name('domain.info');
     Route::post('domains/{domain:uuid}/refresh-info', [DomainController::class, 'refreshInfo'])->name('domains.refresh-info');
@@ -96,6 +96,8 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::delete('notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
 
     Route::get('audit-logs', AuditLogController::class)->name('audit-logs.index');
+    Route::get('products/domains', [ProductController::class, 'domains'])->name('products.domains');
+    Route::get('products/hosting', [ProductController::class, 'hosting'])->name('products.hosting');
 
 });
 
