@@ -35,7 +35,7 @@ class Configuration extends Component
     // Step 2: Domain connection
     public string $domainOption = 'new'; // 'new' or 'existing'
 
-    public string $newDomainSource = 'new_purchase'; // 'already_in_cart' or 'new_purchase'
+    public string $newDomainSource = 'new_purchase';
 
     public string $domainSearchQuery = '';
 
