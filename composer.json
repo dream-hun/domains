@@ -30,6 +30,7 @@
         "beyondcode/laravel-query-detector": "^2.1",
         "driftingly/rector-laravel": "^2.1.3",
         "fakerphp/faker": "^1.24.1",
+        "friendsofphp/php-cs-fixer": "^3.91",
         "larastan/larastan": "^3.8",
         "laravel/boost": "^1.8.1",
         "laravel/pail": "^1.2.3",
