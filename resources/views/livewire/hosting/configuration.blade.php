@@ -355,36 +355,45 @@
 
                                 {{-- Selected Domain Display (Confirmed) --}}
                                 @if($domainConfirmed && $selectedDomain)
-                                    <div class="alert alert-success d-flex align-items-center mb-3" style="background-color: #e8f5e9; border: none;">
-                                        <i class="bi bi-check-lg text-success me-2" style="font-size: 1.5rem;"></i>
-                                        <span class="fw-bold text-success" style="font-size: 1.25rem;">{{ $selectedDomain }}</span>
-                                        <span class="ms-auto text-success">Connected! Click "Add to Cart" below.</span>
+                                    <div class="alert alert-success d-flex align-items-center" style="background-color: #e8f5e9; border: none; border-radius: 12px;">
+                                        <i class="bi bi-check-circle-fill text-success me-3" style="font-size: 1.5rem;"></i>
+                                        <div>
+                                            <div class="fw-bold text-success fs-5">{{ $selectedDomain }}</div>
+                                            <div class="text-success">Connected! Click "Add to Cart" below to proceed.</div>
+                                        </div>
                                     </div>
                                 @endif
 
                                 {{-- Search Results --}}
                                 @if(!empty($domainSearchResults))
-                                    <div class="card border" style="border-radius: 8px;">
-                                        <div class="card-header bg-white py-2">
-                                            <span class="fw-semibold text-muted small">Search Results</span>
-                                            <i class="bi bi-info-circle text-muted ms-1" style="font-size: 0.8rem;"></i>
+                                    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                                        <div class="card-header bg-white border-0 pt-4 px-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <i class="bi bi-search text-primary me-2" style="font-size: 1.2rem;"></i>
+                                                <h6 class="mb-0 fw-bold">Search Results</h6>
+                                            </div>
+                                            <p class="text-muted small mb-0">Click on a domain to select it</p>
                                         </div>
                                         <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
                                             @foreach($domainSearchResults as $domain => $result)
-                                                <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom cursor-pointer {{ $selectedDomain === $domain ? 'bg-light' : '' }} {{ !$result['available'] ? 'opacity-50' : '' }}"
-                                                     @if($result['available']) wire:click="selectDomain('{{ $domain }}', {{ $result['price'] }})" @endif>
+                                                <div class="d-flex justify-content-between align-items-center p-4 border-bottom cursor-pointer hover-bg-light {{ $selectedDomain === $domain ? 'bg-light border-primary' : '' }} {{ !$result['available'] ? 'opacity-50' : '' }}"
+                                                     @if($result['available']) wire:click="selectDomain('{{ $domain }}', {{ $result['price'] }})" @endif
+                                                     style="transition: all 0.2s ease; {{ $selectedDomain === $domain ? 'border-left: 4px solid #4db6ac !important;' : '' }}">
                                                     <div class="d-flex align-items-center">
                                                         <div class="domain-radio me-3" style="width: 20px; height: 20px; {{ $selectedDomain === $domain ? 'border-color: #4db6ac;' : '' }}">
                                                             <div class="domain-radio-inner" style="width: 10px; height: 10px; {{ $selectedDomain === $domain ? 'background-color: #4db6ac;' : '' }}"></div>
                                                         </div>
-                                                        <span class="fw-semibold">{{ $domain }}</span>
+                                                        <div>
+                                                            <div class="fw-semibold">{{ $domain }}</div>
+                                                            <div class="text-muted small">{{ $result['available'] ? 'Available for registration' : 'Not available' }}</div>
+                                                        </div>
                                                         @if(!$result['available'])
                                                             <span class="badge bg-secondary ms-2">TAKEN</span>
                                                         @endif
                                                     </div>
                                                     @if($result['available'])
                                                         <div class="text-end">
-                                                            <div class="fw-bold">{{ $result['formatted_price'] }} /yr</div>
+                                                            <div class="fw-bold text-success">{{ $result['formatted_price'] }} /yr</div>
                                                             <div class="small text-muted">Renews {{ $result['formatted_renewal'] }} /yr</div>
                                                         </div>
                                                     @endif
@@ -395,20 +404,44 @@
 
                                     {{-- Selected Domain Summary with Connect Button --}}
                                     @if($selectedDomain && isset($domainSearchResults[$selectedDomain]) && $domainSearchResults[$selectedDomain]['available'] && !$domainConfirmed)
-                                        <div class="d-flex justify-content-between align-items-center mt-4 p-3 bg-light" style="border-radius: 8px;">
-                                            <div>
-                                                <div class="fw-bold" style="font-size: 1.1rem;">{{ $selectedDomain }}</div>
-                                                <div class="text-muted small">
-                                                    {{ $domainSearchResults[$selectedDomain]['formatted_price'] }} /yr
-                                                    <span class="ms-2">Renews {{ $domainSearchResults[$selectedDomain]['formatted_renewal'] }} /yr</span>
+                                        {{-- Domain Configuration Card --}}
+                                        <div class="card border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                                            <div class="card-body p-4">
+                                                {{-- Domain Details --}}
+                                                <div class="mb-4">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div class="rounded bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                            <i class="bi bi-globe" style="font-size: 1.2rem;"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold fs-5">{{ $selectedDomain }}</div>
+                                                            <div class="text-muted small">New domain purchase</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="alert alert-info border-0" style="background: rgba(77, 182, 172, 0.1); color: #2d5f5f; border-radius: 8px;">
+                                                        <i class="bi bi-info-circle me-2"></i>
+                                                        This domain will be purchased and connected to your hosting plan.
+                                                        <div class="mt-2">
+                                                            <strong>{{ $domainSearchResults[$selectedDomain]['formatted_price'] }} /yr</strong>
+                                                            <span class="ms-2">Renews {{ $domainSearchResults[$selectedDomain]['formatted_renewal'] }} /yr</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Connect Button --}}
+                                                <div class="text-center">
+                                                    <button class="btn btn-primary btn-lg px-5 py-3 fw-semibold" wire:click="confirmDomainSelection" wire:loading.attr="disabled" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(77, 182, 172, 0.3);">
+                                                        <span wire:loading.remove wire:target="confirmDomainSelection">
+                                                            <i class="bi bi-link-45deg me-2"></i>
+                                                            Connect To Hosting
+                                                        </span>
+                                                        <span wire:loading wire:target="confirmDomainSelection">
+                                                            <span class="spinner-border spinner-border-sm me-2"></span>
+                                                            Connecting...
+                                                        </span>
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <button class="btn btn-primary px-4" wire:click="confirmDomainSelection" wire:loading.attr="disabled">
-                                                <span wire:loading.remove wire:target="confirmDomainSelection">Connect To Hosting</span>
-                                                <span wire:loading wire:target="confirmDomainSelection">
-                                                    <span class="spinner-border spinner-border-sm"></span>
-                                                </span>
-                                            </button>
                                         </div>
                                     @endif
                                 @endif
