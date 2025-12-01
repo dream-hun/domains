@@ -189,6 +189,32 @@
                         </a>
                     </li>
                 @endcan
+                @can('product_access')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.products.domains') }}"
+                            class="nav-link {{ request()->is('admin/products/domains*') ? 'active' : '' }}">
+                            <i class="bi bi-globe2"></i>
+                            <p>My Products</p>
+                            <i class="bi bi-chevron-down right"></i>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ route('admin.products.domains') }}"
+                                    class="nav-link {{ request()->is('admin/products/domains*') ? 'active' : '' }}">
+                                    <i class="bi bi-globe2"></i>
+                                    <p>Domains</p>
+                        </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.products.hosting') }}"
+                                    class="nav-link {{ request()->is('admin/products/hosting*') ? 'active' : '' }}">
+                                    <i class="bi bi-hdd"></i>
+                                    <p>Hosting</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                @endcan
                 @can('user_management_access')
                     <li
                         class="nav-item {{ request()->is('admin/permissions*') || request()->is('admin/roles*') || request()->is('admin/users*') ? 'menu-open' : '' }}">

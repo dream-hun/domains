@@ -16,6 +16,49 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Request-level cache for currency lookups to prevent duplicate queries
+ */
+final class CurrencyRequestCache
+{
+    /**
+     * @var array<string, Currency|null>
+     */
+    private static array $currencyCache = [];
+
+    private static ?Currency $baseCurrencyCache = null;
+
+    public static function getCurrency(string $code): ?Currency
+    {
+        return self::$currencyCache[$code] ?? null;
+    }
+
+    public static function setCurrency(string $code, ?Currency $currency): void
+    {
+        self::$currencyCache[$code] = $currency;
+    }
+
+    public static function hasCurrency(string $code): bool
+    {
+        return isset(self::$currencyCache[$code]);
+    }
+
+    public static function getBaseCurrency(): ?Currency
+    {
+        return self::$baseCurrencyCache;
+    }
+
+    public static function setBaseCurrency(Currency $currency): void
+    {
+        self::$baseCurrencyCache = $currency;
+    }
+
+    public static function hasBaseCurrency(): bool
+    {
+        return self::$baseCurrencyCache !== null;
+    }
+}
+
 final readonly class CurrencyService
 {
     private const CACHE_TTL = 3600; // 1 hour
@@ -46,7 +89,16 @@ final readonly class CurrencyService
      */
     public function getActiveCurrencies(): Collection
     {
-        return Cache::remember('active_currencies', self::CACHE_TTL, Currency::getActiveCurrencies(...));
+        // Check request-level cache first to avoid duplicate queries
+        static $cachedCurrencies = null;
+        if ($cachedCurrencies !== null) {
+            return $cachedCurrencies;
+        }
+
+        // Fetch from persistent cache and store in request-level cache
+        $cachedCurrencies = Cache::remember('active_currencies', self::CACHE_TTL, Currency::getActiveCurrencies(...));
+
+        return $cachedCurrencies;
     }
 
     /**
@@ -60,7 +112,16 @@ final readonly class CurrencyService
             return null;
         }
 
-        return Cache::remember('currency_'.$code, self::CACHE_TTL, fn (): ?Currency => Currency::query()->where('code', $code)->first());
+        // Check request-level cache first to avoid duplicate queries
+        if (CurrencyRequestCache::hasCurrency($code)) {
+            return CurrencyRequestCache::getCurrency($code);
+        }
+
+        // Fetch from persistent cache and store in request-level cache
+        $currency = Cache::remember('currency_'.$code, self::CACHE_TTL, fn (): ?Currency => Currency::query()->where('code', $code)->first());
+        CurrencyRequestCache::setCurrency($code, $currency);
+
+        return $currency;
     }
 
     /**
@@ -68,7 +129,16 @@ final readonly class CurrencyService
      */
     public function getBaseCurrency(): Currency
     {
-        return Cache::remember('base_currency', self::CACHE_TTL, Currency::getBaseCurrency(...));
+        // Check request-level cache first to avoid duplicate queries
+        if (CurrencyRequestCache::hasBaseCurrency()) {
+            return CurrencyRequestCache::getBaseCurrency();
+        }
+
+        // Fetch from persistent cache and store in request-level cache
+        $currency = Cache::remember('base_currency', self::CACHE_TTL, Currency::getBaseCurrency(...));
+        CurrencyRequestCache::setBaseCurrency($currency);
+
+        return $currency;
     }
 
     /**
