@@ -107,6 +107,12 @@
         .hover-bg-light:hover {
             background-color: #f8f9fa !important;
         }
+
+        /* Input group focus styling */
+        .input-group:focus-within {
+            border-color: #4db6ac !important;
+            box-shadow: 0 0 0 4px rgba(77, 182, 172, 0.1) !important;
+        }
     </style>
 
     <div class="rts-hosting-banner rts-hosting-banner-bg" style="min-height: 200px;">
@@ -565,41 +571,97 @@
                                     @endif
                                 @else
                                     {{-- External Domain Input --}}
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">Enter your domain name:</label>
-                                        <div class="search-input-group @error('externalDomainName') border-danger @enderror">
-                                            <svg class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="10"></circle>
-                                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                                            </svg>
-                                            <input type="text"
-                                                   wire:model.blur="externalDomainName"
-                                                   placeholder="example.com">
-                                        </div>
-                                        <div class="form-text mt-2">
-                                            <i class="bi bi-info-circle me-1"></i>
-                                            You will need to update your nameservers to point to our hosting after purchase.
-                                        </div>
-                                        @error('externalDomainName')
-                                            <div class="text-danger small mt-1">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    @if($externalDomainName && !$domainConfirmed)
-                                        <div class="d-flex justify-content-between align-items-center p-3 bg-light" style="border-radius: 8px;">
-                                            <div>
-                                                <div class="fw-bold">{{ $externalDomainName }}</div>
-                                                <div class="text-muted small">External domain - update nameservers after purchase</div>
+                                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                                        <div class="card-body p-4">
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold mb-3">Enter your external domain name:</label>
+                                                <div class="input-group @error('externalDomainName') border-danger @enderror" style="border-radius: 50px; border: 2px solid #e2e8f0; background-color: #fff; padding: 0.5rem 1rem; transition: all 0.2s ease;">
+                                                    <span class="input-group-text bg-transparent border-0 px-0 me-3">
+                                                        <svg class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <circle cx="11" cy="11" r="8"></circle>
+                                                            <path d="m21 21-4.35-4.35"></path>
+                                                        </svg>
+                                                    </span>
+                                                    <input type="text"
+                                                           class="form-control border-0 shadow-none px-0"
+                                                           wire:model.live="externalDomainName"
+                                                           wire:keydown.enter="validateExternalDomain"
+                                                           placeholder="example.com"
+                                                           @if($isValidatingExternalDomain) disabled @endif
+                                                           style="background: transparent; font-size: 16px;">
+                                                    @if($isValidatingExternalDomain)
+                                                        <div class="input-group-text bg-transparent border-0 px-0 d-flex align-items-center">
+                                                            <div class="spinner-border text-primary me-2" role="status" style="width: 18px; height: 18px;">
+                                                                <span class="visually-hidden">Validating...</span>
+                                                            </div>
+                                                            <small class="text-muted fw-semibold">Checking...</small>
+                                                        </div>
+                                                    @else
+                                                        <div class="input-group-text bg-transparent border-0 ps-2 pe-0">
+                                                            <button class="btn btn-primary btn-sm px-3" wire:click="validateExternalDomain" type="button" style="border-radius: 20px; font-size: 14px;">
+                                                                <i class="bi bi-check-circle me-1"></i>
+                                                                Check
+                                                            </button>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                <div class="form-text mt-2">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Enter your domain name and click "Check" to validate it before connecting to hosting.
+                                                </div>
+                                                @error('externalDomainName')
+                                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                                @enderror
                                             </div>
-                                            <button class="btn btn-primary px-4" wire:click="confirmDomainSelection" wire:loading.attr="disabled">
-                                                <span wire:loading.remove wire:target="confirmDomainSelection">Connect To Hosting</span>
-                                                <span wire:loading wire:target="confirmDomainSelection">
-                                                    <span class="spinner-border spinner-border-sm"></span>
-                                                </span>
-                                            </button>
+
+                                            {{-- Validation Status --}}
+                                            @if($externalDomainValidationMessage)
+                                                <div class="alert {{ $externalDomainValid ? 'alert-success' : 'alert-warning' }} border-0 mb-4" style="border-radius: 8px;">
+                                                    <i class="bi {{ $externalDomainValid ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill' }} me-2"></i>
+                                                    {{ $externalDomainValidationMessage }}
+                                                </div>
+                                            @endif
+
+                                            {{-- Connect Button --}}
+                                            @if($externalDomainName && $externalDomainValid && !$domainConfirmed)
+                                                {{-- Domain Configuration Card --}}
+                                                <div class="card border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                                                    <div class="card-body p-4">
+                                                        {{-- Domain Details --}}
+                                                        <div class="mb-4">
+                                                            <div class="d-flex align-items-center mb-3">
+                                                                <div class="rounded bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                                    <i class="bi bi-globe" style="font-size: 1.2rem;"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <div class="fw-bold fs-5">{{ $externalDomainName }}</div>
+                                                                    <div class="text-muted small">External domain</div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="alert alert-info border-0" style="background: rgba(77, 182, 172, 0.1); color: #2d5f5f; border-radius: 8px;">
+                                                                <i class="bi bi-info-circle me-2"></i>
+                                                                This domain will be connected to your hosting plan. You will need to update your nameservers to point to our hosting after purchase.
+                                                            </div>
+                                                        </div>
+
+                                                        {{-- Connect Button --}}
+                                                        <div class="text-center">
+                                                            <button class="btn btn-primary btn-lg px-5 py-3 fw-semibold" wire:click="confirmDomainSelection" wire:loading.attr="disabled" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(77, 182, 172, 0.3);">
+                                                                <span wire:loading.remove wire:target="confirmDomainSelection">
+                                                                    <i class="bi bi-link-45deg me-2"></i>
+                                                                    Connect To Hosting
+                                                                </span>
+                                                                <span wire:loading wire:target="confirmDomainSelection">
+                                                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                                                    Connecting...
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
-                                    @endif
+                                    </div>
                                 @endif
                             @else
                                 {{-- Not logged in --}}
@@ -609,27 +671,98 @@
                                 </div>
 
                                 @if($plan->category->allowsExternalDomain())
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">Or enter an external domain:</label>
-                                        <div class="search-input-group">
-                                            <svg class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="10"></circle>
-                                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                                            </svg>
-                                            <input type="text"
-                                                   wire:model.blur="externalDomainName"
-                                                   placeholder="example.com">
+                                    {{-- External Domain Input --}}
+                                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                                        <div class="card-body p-4">
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold mb-3">Enter your external domain name:</label>
+                                                <div class="input-group @error('externalDomainName') border-danger @enderror" style="border-radius: 50px; border: 2px solid #e2e8f0; background-color: #fff; padding: 0.5rem 1rem; transition: all 0.2s ease;">
+                                                    <span class="input-group-text bg-transparent border-0 px-0 me-3">
+                                                        <svg class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <circle cx="11" cy="11" r="8"></circle>
+                                                            <path d="m21 21-4.35-4.35"></path>
+                                                        </svg>
+                                                    </span>
+                                                    <input type="text"
+                                                           class="form-control border-0 shadow-none px-0"
+                                                           wire:model.live="externalDomainName"
+                                                           wire:keydown.enter="validateExternalDomain"
+                                                           placeholder="example.com"
+                                                           @if($isValidatingExternalDomain) disabled @endif
+                                                           style="background: transparent; font-size: 16px;">
+                                                    @if($isValidatingExternalDomain)
+                                                        <div class="input-group-text bg-transparent border-0 px-0 d-flex align-items-center">
+                                                            <div class="spinner-border text-primary me-2" role="status" style="width: 18px; height: 18px;">
+                                                                <span class="visually-hidden">Validating...</span>
+                                                            </div>
+                                                            <small class="text-muted fw-semibold">Checking...</small>
+                                                        </div>
+                                                    @else
+                                                        <div class="input-group-text bg-transparent border-0 ps-2 pe-0">
+                                                            <button class="btn btn-primary btn-sm px-3" wire:click="validateExternalDomain" type="button" style="border-radius: 20px; font-size: 14px;">
+                                                                <i class="bi bi-check-circle me-1"></i>
+                                                                Check
+                                                            </button>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                <div class="form-text mt-2">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Enter your domain name and click "Check" to validate it before connecting to hosting.
+                                                </div>
+                                                @error('externalDomainName')
+                                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+
+                                            {{-- Validation Status --}}
+                                            @if($externalDomainValidationMessage)
+                                                <div class="alert {{ $externalDomainValid ? 'alert-success' : 'alert-warning' }} border-0 mb-4" style="border-radius: 8px;">
+                                                    <i class="bi {{ $externalDomainValid ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill' }} me-2"></i>
+                                                    {{ $externalDomainValidationMessage }}
+                                                </div>
+                                            @endif
+
+                                            {{-- Connect Button --}}
+                                            @if($externalDomainName && $externalDomainValid && !$domainConfirmed)
+                                                {{-- Domain Configuration Card --}}
+                                                <div class="card border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                                                    <div class="card-body p-4">
+                                                        {{-- Domain Details --}}
+                                                        <div class="mb-4">
+                                                            <div class="d-flex align-items-center mb-3">
+                                                                <div class="rounded bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                                    <i class="bi bi-globe" style="font-size: 1.2rem;"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <div class="fw-bold fs-5">{{ $externalDomainName }}</div>
+                                                                    <div class="text-muted small">External domain</div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="alert alert-info border-0" style="background: rgba(77, 182, 172, 0.1); color: #2d5f5f; border-radius: 8px;">
+                                                                <i class="bi bi-info-circle me-2"></i>
+                                                                This domain will be connected to your hosting plan. You will need to update your nameservers to point to our hosting after purchase.
+                                                            </div>
+                                                        </div>
+
+                                                        {{-- Connect Button --}}
+                                                        <div class="text-center">
+                                                            <button class="btn btn-primary btn-lg px-5 py-3 fw-semibold" wire:click="confirmDomainSelection" wire:loading.attr="disabled" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(77, 182, 172, 0.3);">
+                                                                <span wire:loading.remove wire:target="confirmDomainSelection">
+                                                                    <i class="bi bi-link-45deg me-2"></i>
+                                                                    Connect To Hosting
+                                                                </span>
+                                                                <span wire:loading wire:target="confirmDomainSelection">
+                                                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                                                    Connecting...
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
-
-                                    @if($externalDomainName && !$domainConfirmed)
-                                        <div class="d-flex justify-content-end">
-                                            <button class="btn btn-primary px-4" wire:click="confirmDomainSelection">
-                                                Connect To Hosting
-                                            </button>
-                                        </div>
-                                    @endif
                                 @endif
                             @endauth
                         </div>

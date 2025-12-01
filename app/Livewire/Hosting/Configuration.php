@@ -54,6 +54,12 @@ class Configuration extends Component
 
     public string $externalDomainName = '';
 
+    public bool $isValidatingExternalDomain = false;
+
+    public ?bool $externalDomainValid = null;
+
+    public ?string $externalDomainValidationMessage = null;
+
     public ?int $selectedOwnedDomainId = null;
 
     private EppDomainService $eppService;
@@ -116,6 +122,74 @@ class Configuration extends Component
     public function updatedExternalDomainName(): void
     {
         $this->domainConfirmed = false;
+        $this->externalDomainValid = null;
+        $this->externalDomainValidationMessage = null;
+    }
+
+    public function validateExternalDomain(): void
+    {
+        $this->validate([
+            'externalDomainName' => ['required', 'regex:/^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$/i'],
+        ], [
+            'externalDomainName.required' => 'Please enter a domain name.',
+            'externalDomainName.regex' => 'Please enter a valid domain name.',
+        ]);
+
+        $this->isValidatingExternalDomain = true;
+        $this->externalDomainValid = null;
+        $this->externalDomainValidationMessage = null;
+
+        try {
+            $domainName = mb_strtolower(mb_trim($this->externalDomainName));
+
+            // For external domains, we want to check if the domain is registered (not available)
+            // This means checking if it's NOT available for registration
+            $tlds = Cache::remember('active_tlds', 3600, fn () => DomainPrice::query()->where('status', 'active')->get());
+
+            // Extract TLD from domain
+            $domainParts = explode('.', $domainName);
+            if (count($domainParts) < 2) {
+                throw new Exception('Invalid domain format');
+            }
+
+            $tld = '.'.end($domainParts);
+            $tldRecord = $tlds->firstWhere('tld', $tld);
+
+            if (! $tldRecord) {
+                // If TLD is not in our system, we'll assume it's valid for external use
+                $this->externalDomainValid = true;
+                $this->externalDomainValidationMessage = 'Domain valid for external use ✓';
+
+                return;
+            }
+
+            $isInternational = isset($tldRecord->type) && $tldRecord->type === DomainType::International;
+
+            if ($isInternational) {
+                $checkResult = $this->internationalService->checkAvailability([$domainName]);
+                $isAvailable = $checkResult['available'] ?? false;
+            } else {
+                $eppResults = $this->eppService->checkDomain([$domainName]);
+                $isAvailable = isset($eppResults[$domainName]) && $eppResults[$domainName]->available;
+            }
+
+            // For external domains, we want domains that are NOT available (already registered)
+            $this->externalDomainValid = ! $isAvailable;
+
+            if ($this->externalDomainValid) {
+                $this->externalDomainValidationMessage = 'Domain is registered ✓';
+            } else {
+                $this->externalDomainValidationMessage = 'Domain available for registration. Please register first.';
+            }
+
+        } catch (Exception $e) {
+            Log::warning('External domain validation failed', ['domain' => $this->externalDomainName, 'error' => $e->getMessage()]);
+            // If we can't check the domain, we'll assume it's valid for external use
+            $this->externalDomainValid = true;
+            $this->externalDomainValidationMessage = 'Validation incomplete, but domain can be used.';
+        } finally {
+            $this->isValidatingExternalDomain = false;
+        }
     }
 
     public function goToStep(int $step): void
@@ -243,13 +317,17 @@ class Configuration extends Component
             return $this->selectedDomain;
         }
 
-        // Existing domain
-        if ($this->existingDomainSource === 'owned') {
-            return $this->selectedDomain;
+        if ($this->domainOption === 'existing') {
+            if ($this->existingDomainSource === 'owned') {
+                return $this->selectedDomain;
+            }
+
+            if ($this->existingDomainSource === 'external') {
+                return $this->externalDomainName ?: null;
+            }
         }
 
-        // External domain
-        return $this->externalDomainName ?: null;
+        return null;
     }
 
     #[Computed]
@@ -375,10 +453,24 @@ class Configuration extends Component
     {
         $domainName = $this->finalDomainName;
 
+        // For external domains, also check externalDomainName directly in case finalDomainName isn't updated yet
+        if (! $domainName && $this->domainOption === 'existing' && $this->existingDomainSource === 'external') {
+            $domainName = $this->externalDomainName;
+        }
+
         if (! $domainName) {
             $this->addError('base', 'Please select or enter a domain name.');
 
             return;
+        }
+
+        // For external domains, ensure they have been validated
+        if ($this->domainOption === 'existing' && $this->existingDomainSource === 'external') {
+            if (! $this->externalDomainValid) {
+                $this->addError('base', 'Please validate your external domain by clicking the "Check" button first.');
+
+                return;
+            }
         }
 
         // Validate domain format
