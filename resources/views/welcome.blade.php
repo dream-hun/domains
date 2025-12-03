@@ -19,10 +19,10 @@
                             is our passion.</p>
                         <div class="rts-hero__content--group" data-sal="slide-down" data-sal-delay="500"
                             data-sal-duration="800">
-                            <a href="route('register') }}" class="primary__btn white__bg">Get Started <i
-                                    class="fa-regular fa-long-arrow-right"></i></a>
-                            <a href="{{-- {{ route('shared.index') }} --}}" class="btn__zero plan__btn">Plans & Pricing <i
-                                    class="fa-regular fa-long-arrow-right"></i></a>
+                            <a href="{{ route('register') }}" class="primary__btn white__bg">Get Started <i
+                                    class="bi bi-arrow-right fa-long-arrow-right"></i></a>
+                            {{-- <a href="{{ route('hosting.categories.index') }}" class="btn__zero plan__btn">Plans & Pricing <i
+                                    class="bi bi-arrow-right"></i></a> --}}
                         </div>
 
                     </div>
