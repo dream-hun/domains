@@ -120,16 +120,6 @@
                                 <input type="date" id="starts_to" name="starts_to" class="form-control realtime-filter"
                                     value="{{ $filters['starts_to'] }}">
                             </div>
-                            <div class="form-group col-md-1">
-                                <label for="per_page">Per Page</label>
-                                <select id="per_page" name="per_page" class="form-control realtime-filter">
-                                    @foreach ([10, 25, 50, 100] as $size)
-                                        <option value="{{ $size }}" @selected((int) $filters['per_page'] === $size)>
-                                            {{ $size }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
                         </div>
                         <div class="d-flex flex-wrap align-items-center" style="gap: 0.75rem;">
                             <a href="{{ route('admin.subscriptions.index') }}" class="btn btn-secondary">
