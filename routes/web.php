@@ -104,9 +104,9 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
 
-    Route::get('/checkout', [SmartCheckoutController::class, 'index'])->name('checkout.index');
+    Route::get('shopping-cart/checkout', [SmartCheckoutController::class, 'index'])->name('checkout.index');
 
-    Route::view('/checkout/register', 'checkout.wizard')->name('checkout.wizard');
+    Route::view('shopping-cart/checkout', 'checkout.wizard')->name('checkout.wizard');
 
     Route::get('/cart/checkout/payment/', [RenewalCheckoutController::class, 'index'])->name('checkout.renewal');
     Route::get('/checkout/success/{order}', [RenewalCheckoutController::class, 'success'])->name('checkout.success');
