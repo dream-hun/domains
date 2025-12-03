@@ -85,7 +85,7 @@
                             <div class="form-group col-md-3">
                                 <label for="search">Search</label>
                                 <input type="text" id="search" name="search" class="form-control"
-                                    placeholder="Domain, customer or provider reference"
+                                    placeholder="Customer or provider reference"
                                     value="{{ $filters['search'] }}">
                             </div>
                             <div class="form-group col-md-2">
@@ -162,7 +162,6 @@
                                 <thead>
                                     <tr>
                                         <th>Customer</th>
-                                        <th>Domain</th>
                                         <th>Plan</th>
                                         <th>Billing</th>
                                         <th>Status</th>
@@ -186,13 +185,6 @@
                                                 <div class="font-weight-semibold">
                                                     {{ $customerName !== '' ? $customerName : 'N/A' }}
                                                 </div>
-                                                <small
-                                                    class="text-muted">{{ $subscription->user?->email ?? '—' }}</small>
-                                            </td>
-                                            <td class="align-middle">
-                                                <div class="font-weight-semibold">{{ $subscription->domain ?? '—' }}
-                                                </div>
-                                                <small class="text-muted">UUID: {{ $subscription->uuid }}</small>
                                             </td>
                                             <td class="align-middle">
                                                 <div>{{ $subscription->plan?->name ?? 'N/A' }}</div>
