@@ -36,6 +36,7 @@ beforeEach(function (): void {
     // Create a hosting plan and feature for testing
     $this->hostingPlan = HostingPlan::factory()->create(['name' => 'Basic Plan']);
     $this->hostingPlan->load('category');
+
     $this->hostingCategory = $this->hostingPlan->category;
     $this->hostingFeature = HostingFeature::factory()->create(['name' => 'Storage Space']);
 });
@@ -244,8 +245,8 @@ it('lists hosting plan features ordered by sort_order and id', function (): void
 
     $ids = $planFeatures->pluck('id')->toArray();
     expect($ids)->toContain($planFeature2->id, $planFeature3->id, $planFeature1->id);
-    expect(array_search($planFeature1->id, $ids))->toBeGreaterThan(array_search($planFeature2->id, $ids));
-    expect(array_search($planFeature1->id, $ids))->toBeGreaterThan(array_search($planFeature3->id, $ids));
+    expect(array_search($planFeature1->id, $ids, true))->toBeGreaterThan(array_search($planFeature2->id, $ids, true));
+    expect(array_search($planFeature1->id, $ids, true))->toBeGreaterThan(array_search($planFeature3->id, $ids, true));
 });
 
 it('includes hosting plan and hosting feature relationships when listing', function (): void {

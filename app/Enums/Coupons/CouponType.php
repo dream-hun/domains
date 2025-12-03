@@ -7,6 +7,7 @@ namespace App\Enums\Coupons;
 enum CouponType: string
 {
     case Percentage = 'percentage';
+
     case Fixed = 'fixed';
 
     public function label(): string

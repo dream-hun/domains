@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Subscription extends Model
 {
+    use HasFactory;
+    use HasFactory;
+
     protected $guarded = [];
 
     protected $casts = [
@@ -37,13 +42,14 @@ class Subscription extends Model
         return $this->belongsTo(HostingPlanPrice::class, 'hosting_plan_price_id');
     }
 
-    public function scopeActive(Builder $query): Builder
-    {
-        return $query->where('status', 'active');
-    }
-
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    #[Scope]
+    protected function active(Builder $query): Builder
+    {
+        return $query->where('status', 'active');
     }
 }

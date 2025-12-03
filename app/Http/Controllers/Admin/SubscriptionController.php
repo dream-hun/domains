@@ -6,11 +6,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Subscription;
-use Carbon\Carbon;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Gate;
 use Throwable;
 
@@ -69,12 +69,12 @@ final class SubscriptionController extends Controller
         }
 
         $subscriptions = $subscriptionsQuery
-            ->orderByDesc('starts_at')
+            ->latest('starts_at')
             ->paginate($perPage)
             ->withQueryString();
 
         $statsQuery = Subscription::query();
-        $now = Carbon::now();
+        $now = Date::now();
 
         $stats = [
             'total' => (clone $statsQuery)->count(),
@@ -116,7 +116,7 @@ final class SubscriptionController extends Controller
     private function applyDateFilter(Builder $query, string $column, string $operator, string $value): void
     {
         try {
-            $date = Carbon::parse($value)->startOfDay();
+            $date = Date::parse($value)->startOfDay();
 
             $query->whereDate($column, $operator, $date);
         } catch (Throwable) {

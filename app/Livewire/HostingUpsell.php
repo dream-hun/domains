@@ -10,6 +10,8 @@ use App\Models\HostingPlan;
 use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -78,22 +80,18 @@ final class HostingUpsell extends Component
 
         $cartContent = Cart::getContent();
 
-        return $cartContent->contains(function ($item) use ($planId): bool {
-            return $item->attributes->get('type') === 'hosting'
-                && $item->attributes->get('hosting_plan_id') === $planId
-                && $item->attributes->get('linked_domain') === $this->selectedDomain;
-        });
+        return $cartContent->contains(fn ($item): bool => $item->attributes->get('type') === 'hosting'
+            && $item->attributes->get('hosting_plan_id') === $planId
+            && $item->attributes->get('linked_domain') === $this->selectedDomain);
     }
 
     public function removeHosting(int $planId): void
     {
         $cartContent = Cart::getContent();
 
-        $item = $cartContent->first(function ($item) use ($planId): bool {
-            return $item->attributes->get('type') === 'hosting'
-                && $item->attributes->get('hosting_plan_id') === $planId
-                && $item->attributes->get('linked_domain') === $this->selectedDomain;
-        });
+        $item = $cartContent->first(fn ($item): bool => $item->attributes->get('type') === 'hosting'
+            && $item->attributes->get('hosting_plan_id') === $planId
+            && $item->attributes->get('linked_domain') === $this->selectedDomain);
 
         if ($item) {
             Cart::remove($item->id);
@@ -182,7 +180,7 @@ final class HostingUpsell extends Component
 
             Cart::add([
                 'id' => sprintf('hosting-%d-%s', $planPrice->id, md5($this->selectedDomain)),
-                'name' => sprintf('%s Hosting (%s)', $plan->name, ucfirst($planPrice->billing_cycle)),
+                'name' => sprintf('%s Hosting (%s)', $plan->name, ucfirst((string) $planPrice->billing_cycle)),
                 'price' => $price,
                 'quantity' => 1,
                 'attributes' => [
@@ -229,7 +227,7 @@ final class HostingUpsell extends Component
         }
     }
 
-    public function render()
+    public function render(): Factory|View
     {
         return view('livewire.hosting-upsell', [
             'hasDomains' => $this->cartDomains !== [],
@@ -276,6 +274,6 @@ final class HostingUpsell extends Component
                 'monthly_price' => $monthly,
                 'prices' => $prices->toArray(),
             ];
-        })->toArray();
+        })->all();
     }
 }

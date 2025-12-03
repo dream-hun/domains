@@ -7,6 +7,7 @@ namespace App\Enums\Hosting;
 enum HostingPlanPriceStatus: string
 {
     case Active = 'active';
+
     case Inactive = 'inactive';
 
     public function label(): string

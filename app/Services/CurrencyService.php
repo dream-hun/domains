@@ -55,7 +55,7 @@ final class CurrencyRequestCache
 
     public static function hasBaseCurrency(): bool
     {
-        return self::$baseCurrencyCache !== null;
+        return self::$baseCurrencyCache instanceof Currency;
     }
 }
 

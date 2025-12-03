@@ -38,7 +38,7 @@ final class EventServiceProvider extends ServiceProvider
         parent::boot();
 
         foreach (config('activitylog.log_events', []) as $eloquentEvent) {
-            Event::listen("eloquent.{$eloquentEvent}: *", function (string $event, array $payload) use ($eloquentEvent): void {
+            Event::listen(sprintf('eloquent.%s: *', $eloquentEvent), function (string $event, array $payload) use ($eloquentEvent): void {
                 $model = $payload[0] ?? null;
 
                 if (! $model instanceof Model) {

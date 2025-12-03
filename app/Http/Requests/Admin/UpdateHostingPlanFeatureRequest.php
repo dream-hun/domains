@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin;
 
 use App\Models\HostingPlan;
+use App\Models\HostingPlanFeature;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 
@@ -48,7 +49,7 @@ final class UpdateHostingPlanFeatureRequest extends FormRequest
             $hostingPlanFeature = $this->route('hosting_plan_feature');
 
             if ($hostingPlanFeature && $this->filled('hosting_plan_id') && $this->filled('hosting_feature_id')) {
-                $exists = \App\Models\HostingPlanFeature::query()
+                $exists = HostingPlanFeature::query()
                     ->where('hosting_plan_id', $this->input('hosting_plan_id'))
                     ->where('hosting_feature_id', $this->input('hosting_feature_id'))
                     ->where('id', '!=', $hostingPlanFeature->id)

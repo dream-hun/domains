@@ -7,6 +7,7 @@ namespace App\Enums;
 enum ContactProvider: string
 {
     case NAMECHEAP = 'namecheap';
+
     case RICTA_EPP = 'epp';
 
     public function label(): string

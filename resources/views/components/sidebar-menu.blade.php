@@ -12,24 +12,18 @@
                 <li class="has-droupdown">
                     <a href="#" class="main">Hosting</a>
                     <ul class="submenu mm-collapse">
-                        <li><a class="mobile-menu-link" href="{{--{{route('shared.index')}}--}}">Shared Hosting</a></li>
-                        <li><a class="mobile-menu-link" href="{{--{{route('shared.index')}}--}}">WordPress Hosting</a>
-                        </li>
-                        <li><a class="mobile-menu-link" href="{{--{{route('shared.index')}}--}}">VPS Hosting</a></li>
-                        <li><a class="mobile-menu-link" href="{{--{{route('shared.index')}}--}}">Reseller Hosting</a>
-                        </li>
-                        <li><a class="mobile-menu-link" href="{{--{{route('shared.index')}}--}}">Dedicated Hosting</a>
-                        </li>
-                        <li><a class="mobile-menu-link" href="{{--{{route('shared.index')}}"--}}">Cloud Hosting</a></li>
+                        @foreach ($hostings as $hosting)
+                            <li><a class="mobile-menu-link" href="{{ route('hosting.categories.show', $hosting->slug) }}">{{ $hosting->name }}</a></li>
+                        @endforeach
                     </ul>
                 </li>
                 <li class=" has-droupdown">
                     <a href="#" class="main">Domain</a>
                     <ul class="submenu mm-collapse">
-                        <li><a class="mobile-menu-link" href="{{--{{ route('domains.index') }}--}}">Register
+                        <li><a class="mobile-menu-link" href="{{ route('domains')}}">Register
                                 Domain</a></li>
-                        <li><a class="mobile-menu-link"
-                               href="{{--{{route('admin.domains.transfer.check')}}--}}">Transfer Domain</a></li>
+                        {{-- <li><a class="mobile-menu-link"
+                               href="#">Transfer Domain</a></li> --}}
                     </ul>
                 </li>
                 <li class="has-droupdown">

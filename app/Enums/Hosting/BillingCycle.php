@@ -7,10 +7,15 @@ namespace App\Enums\Hosting;
 enum BillingCycle: string
 {
     case Monthly = 'monthly';
+
     case Quarterly = 'quarterly';
+
     case SemiAnnually = 'semi-annually';
+
     case Annually = 'annually';
+
     case Biennially = 'biennially';
+
     case Triennially = 'triennially';
 
     /** @return array<int, string> */
