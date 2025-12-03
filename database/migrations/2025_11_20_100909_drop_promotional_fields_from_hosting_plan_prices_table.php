@@ -20,9 +20,7 @@ return new class extends Migration
             'promotional_end_date',
         ];
 
-        $existingColumns = array_filter($columnsToDrop, static function (string $column): bool {
-            return Schema::hasColumn('hosting_plan_prices', $column);
-        });
+        $existingColumns = array_filter($columnsToDrop, static fn (string $column): bool => Schema::hasColumn('hosting_plan_prices', $column));
 
         if ($existingColumns === []) {
             return;

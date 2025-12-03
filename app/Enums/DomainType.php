@@ -7,6 +7,7 @@ namespace App\Enums;
 enum DomainType: string
 {
     case Local = 'local';
+
     case International = 'international';
 
     public function color(): string

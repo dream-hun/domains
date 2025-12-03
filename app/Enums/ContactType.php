@@ -7,8 +7,11 @@ namespace App\Enums;
 enum ContactType: string
 {
     case Registrant = 'registrant';
+
     case Billing = 'billing';
+
     case Technical = 'technical';
+
     case Administrative = 'admin';
 
     public function color(): string

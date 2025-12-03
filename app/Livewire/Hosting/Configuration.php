@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Hosting;
 
+use App\Enums\DomainStatus;
 use App\Enums\DomainType;
 use App\Helpers\CurrencyHelper;
 use App\Models\Domain;
@@ -148,9 +149,7 @@ class Configuration extends Component
 
             // Extract TLD from domain
             $domainParts = explode('.', $domainName);
-            if (count($domainParts) < 2) {
-                throw new Exception('Invalid domain format');
-            }
+            throw_if(count($domainParts) < 2, Exception::class, 'Invalid domain format');
 
             $tld = '.'.end($domainParts);
             $tldRecord = $tlds->firstWhere('tld', $tld);
@@ -182,8 +181,8 @@ class Configuration extends Component
                 $this->externalDomainValidationMessage = 'Domain available for registration. Please register first.';
             }
 
-        } catch (Exception $e) {
-            Log::warning('External domain validation failed', ['domain' => $this->externalDomainName, 'error' => $e->getMessage()]);
+        } catch (Exception $exception) {
+            Log::warning('External domain validation failed', ['domain' => $this->externalDomainName, 'error' => $exception->getMessage()]);
             // If we can't check the domain, we'll assume it's valid for external use
             $this->externalDomainValid = true;
             $this->externalDomainValidationMessage = 'Validation incomplete, but domain can be used.';
@@ -243,7 +242,7 @@ class Configuration extends Component
         return $this->plan->planFeatures
             ->where('is_included', true)
             ->take(4)
-            ->map(function ($planFeature) {
+            ->map(function ($planFeature): array {
                 $feature = $planFeature->hostingFeature;
 
                 return [
@@ -295,7 +294,7 @@ class Configuration extends Component
 
         return Domain::query()
             ->where('owner_id', Auth::id())
-            ->whereIn('status', [\App\Enums\DomainStatus::Active])
+            ->whereIn('status', [DomainStatus::Active])
             ->orderBy('name')
             ->get();
     }
@@ -305,9 +304,7 @@ class Configuration extends Component
     {
         $cartContent = Cart::getContent();
 
-        return $cartContent->filter(function ($item) {
-            return $item->attributes->get('type') === 'domain';
-        });
+        return $cartContent->filter(fn ($item): bool => $item->attributes->get('type') === 'domain');
     }
 
     #[Computed]
@@ -412,8 +409,8 @@ class Configuration extends Component
 
             $this->domainSearchResults = $results;
 
-        } catch (Exception $e) {
-            Log::error('Domain search error', ['error' => $e->getMessage()]);
+        } catch (Exception $exception) {
+            Log::error('Domain search error', ['error' => $exception->getMessage()]);
             $this->addError('domainSearchQuery', 'An error occurred while searching for domains.');
         } finally {
             $this->isSearching = false;
@@ -436,7 +433,7 @@ class Configuration extends Component
 
     public function selectOwnedDomain(int $domainId): void
     {
-        $domain = Domain::find($domainId);
+        $domain = Domain::query()->find($domainId);
 
         if ($domain && $domain->owner_id === Auth::id()) {
             $this->selectedOwnedDomainId = $domainId;
@@ -465,12 +462,10 @@ class Configuration extends Component
         }
 
         // For external domains, ensure they have been validated
-        if ($this->domainOption === 'existing' && $this->existingDomainSource === 'external') {
-            if (! $this->externalDomainValid) {
-                $this->addError('base', 'Please validate your external domain by clicking the "Check" button first.');
+        if ($this->domainOption === 'existing' && $this->existingDomainSource === 'external' && ! $this->externalDomainValid) {
+            $this->addError('base', 'Please validate your external domain by clicking the "Check" button first.');
 
-                return;
-            }
+            return;
         }
 
         // Validate domain format
@@ -481,12 +476,10 @@ class Configuration extends Component
         }
 
         // Check external domain restriction
-        if ($this->domainOption === 'existing' && $this->existingDomainSource === 'external') {
-            if (! $this->plan->category->allowsExternalDomain()) {
-                $this->addError('base', 'This plan requires a domain registered with us. External domains cannot be used.');
+        if ($this->domainOption === 'existing' && $this->existingDomainSource === 'external' && ! $this->plan->category->allowsExternalDomain()) {
+            $this->addError('base', 'This plan requires a domain registered with us. External domains cannot be used.');
 
-                return;
-            }
+            return;
         }
 
         $this->resetErrorBag();
@@ -494,7 +487,7 @@ class Configuration extends Component
 
         $this->dispatch('notify', [
             'type' => 'success',
-            'message' => "Domain '{$domainName}' connected. Click 'Add to Cart' to proceed.",
+            'message' => sprintf("Domain '%s' connected. Click 'Add to Cart' to proceed.", $domainName),
         ]);
     }
 
@@ -550,11 +543,11 @@ class Configuration extends Component
             $hostingPrice = $priceModel->getPriceInCurrency('regular_price', $userCurrency);
 
             // Add Hosting Plan to Cart
-            $cartId = "hosting-{$this->plan->id}-{$this->billingCycle}-{$domainName}";
+            $cartId = sprintf('hosting-%s-%s-%s', $this->plan->id, $this->billingCycle, $domainName);
 
             Cart::add([
                 'id' => $cartId,
-                'name' => "{$this->plan->name} ({$this->billingCycle})",
+                'name' => sprintf('%s (%s)', $this->plan->name, $this->billingCycle),
                 'price' => $hostingPrice,
                 'quantity' => 1,
                 'attributes' => [
@@ -613,9 +606,9 @@ class Configuration extends Component
 
             $this->redirect(route('cart.index'));
 
-        } catch (Exception $e) {
-            Log::error('Failed to add hosting to cart', ['error' => $e->getMessage()]);
-            $this->addError('base', 'Failed to add to cart: '.$e->getMessage());
+        } catch (Exception $exception) {
+            Log::error('Failed to add hosting to cart', ['error' => $exception->getMessage()]);
+            $this->addError('base', 'Failed to add to cart: '.$exception->getMessage());
         }
     }
 

@@ -24,6 +24,7 @@ final class HostingPlanPriceController extends Controller
     {
         $categoryUuid = request()->input('category_id');
         $categoryUuid = $categoryUuid && $categoryUuid !== '' ? (string) $categoryUuid : null;
+
         $planUuid = request()->input('plan_id');
         $planUuid = $planUuid && $planUuid !== '' ? (string) $planUuid : null;
 
@@ -36,6 +37,7 @@ final class HostingPlanPriceController extends Controller
                 $q->where('uuid', $categoryUuid);
             });
         }
+
         $plans = $plansQuery->get();
 
         return view('admin.hosting-plan-prices.index', [

@@ -36,10 +36,11 @@ use App\Http\Controllers\RegisterDomainController;
 use App\Http\Controllers\SearchDomainController;
 use App\Http\Controllers\SmartCheckoutController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Livewire\Hosting\Configuration;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
-Route::get('/hosting/configure/{plan}', App\Livewire\Hosting\Configuration::class)->name('hosting.configure');
+Route::get('/hosting/configure/{plan}', Configuration::class)->name('hosting.configure');
 Route::get('/hosting/{slug}', CategoryShowController::class)->name('hosting.categories.show');
 
 Route::get('/shopping-cart', CartController::class)->name('cart.index');

@@ -28,16 +28,16 @@ final class AuditLogController extends Controller
             ->when($subjectType, fn (Builder $query) => $query->where('subject_type', $subjectType))
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $builder) use ($search): void {
-                    $builder->where('description', 'like', "%{$search}%")
-                        ->orWhere('event', 'like', "%{$search}%")
-                        ->orWhere('subject_type', 'like', "%{$search}%")
-                        ->orWhere('subject_id', 'like', "%{$search}%")
-                        ->orWhere('properties->request->ip', 'like', "%{$search}%")
-                        ->orWhere('properties->request->url', 'like', "%{$search}%")
+                    $builder->where('description', 'like', sprintf('%%%s%%', $search))
+                        ->orWhere('event', 'like', sprintf('%%%s%%', $search))
+                        ->orWhere('subject_type', 'like', sprintf('%%%s%%', $search))
+                        ->orWhere('subject_id', 'like', sprintf('%%%s%%', $search))
+                        ->orWhere('properties->request->ip', 'like', sprintf('%%%s%%', $search))
+                        ->orWhere('properties->request->url', 'like', sprintf('%%%s%%', $search))
                         ->orWhereHasMorph('causer', [User::class], function (Builder $causer) use ($search): void {
-                            $causer->where('email', 'like', "%{$search}%")
-                                ->orWhere('first_name', 'like', "%{$search}%")
-                                ->orWhere('last_name', 'like', "%{$search}%");
+                            $causer->where('email', 'like', sprintf('%%%s%%', $search))
+                                ->orWhere('first_name', 'like', sprintf('%%%s%%', $search))
+                                ->orWhere('last_name', 'like', sprintf('%%%s%%', $search));
                         });
                 });
             })

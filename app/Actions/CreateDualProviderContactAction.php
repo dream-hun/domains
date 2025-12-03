@@ -8,6 +8,7 @@ use App\Services\Domain\EppDomainService;
 use App\Services\Domain\InternationalDomainService;
 use Exception;
 use Illuminate\Support\Str;
+use stdClass;
 
 final readonly class CreateDualProviderContactAction
 {
@@ -118,7 +119,7 @@ final readonly class CreateDualProviderContactAction
         ];
     }
 
-    private function formatProviderResult(string $contactId, string $provider, ?string $domain, ?string $contactType): object
+    private function formatProviderResult(string $contactId, string $provider, ?string $domain, ?string $contactType): stdClass
     {
         return (object) [
             'contact_id' => $contactId,

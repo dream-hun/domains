@@ -49,7 +49,7 @@ final class ActivityLogger
                 'type' => $model::class,
                 'label' => $this->subjectLabel($model),
             ],
-        ], fn ($value): bool => $value !== null && $value !== []);
+        ], fn (?array $value): bool => $value !== null && $value !== []);
 
         activity()
             ->event($event)
@@ -122,7 +122,7 @@ final class ActivityLogger
     {
         return collect($attributes)
             ->reject(fn ($value, string $key): bool => in_array($key, self::SENSITIVE_FIELDS, true))
-            ->map(fn ($value) => $this->normalizeValue($value))
+            ->map(fn ($value): mixed => $this->normalizeValue($value))
             ->all();
     }
 
@@ -178,7 +178,7 @@ final class ActivityLogger
         }
 
         if (is_array($value)) {
-            return collect($value)->map(fn ($inner) => $this->normalizeValue($inner))->all();
+            return collect($value)->map(fn ($inner): mixed => $this->normalizeValue($inner))->all();
         }
 
         return (string) $value;

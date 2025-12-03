@@ -493,6 +493,7 @@ final class CartComponent extends Component
                     $this->removeHostingForDomain((string) $domainName);
                 }
             }
+
             $this->updateCartTotal();
 
             // Recalculate discount if coupon is applied

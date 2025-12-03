@@ -6,11 +6,12 @@ namespace Database\Factories;
 
 use App\Models\HostingFeature;
 use App\Models\HostingPlan;
+use App\Models\HostingPlanFeature;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\HostingPlanFeature>
+ * @extends Factory<HostingPlanFeature>
  */
 class HostingPlanFeatureFactory extends Factory
 {

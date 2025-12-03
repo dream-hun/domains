@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin;
 
 use App\Models\HostingPlan;
+use App\Models\HostingPlanFeature;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 
@@ -46,7 +47,7 @@ final class StoreHostingPlanFeatureRequest extends FormRequest
     {
         $validator->after(function ($validator): void {
             if ($this->filled('hosting_plan_id') && $this->filled('hosting_feature_id')) {
-                $exists = \App\Models\HostingPlanFeature::query()
+                $exists = HostingPlanFeature::query()
                     ->where('hosting_plan_id', $this->input('hosting_plan_id'))
                     ->where('hosting_feature_id', $this->input('hosting_feature_id'))
                     ->exists();

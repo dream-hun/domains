@@ -7,7 +7,7 @@ use App\Models\HostingPromotion;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 
 beforeEach(function (): void {
     Role::query()->firstOrCreate(['id' => 1, 'title' => 'Admin']);
@@ -49,8 +49,8 @@ it('allows admin to view create promotion page', function (): void {
 });
 
 it('creates a new hosting promotion', function (): void {
-    $startsAt = Carbon::now()->addDay()->format('Y-m-d\TH:i');
-    $endsAt = Carbon::now()->addDays(10)->format('Y-m-d\TH:i');
+    $startsAt = Date::now()->addDay()->format('Y-m-d\TH:i');
+    $endsAt = Date::now()->addDays(10)->format('Y-m-d\TH:i');
 
     $response = $this->actingAs($this->admin)->post('/admin/hosting-promotions', [
         'hosting_plan_id' => $this->plan->id,
@@ -93,8 +93,8 @@ it('updates an existing hosting promotion', function (): void {
         'hosting_plan_id' => $this->plan->id,
         'billing_cycle' => 'annually',
         'discount_percentage' => 40,
-        'starts_at' => Carbon::now()->subDay()->format('Y-m-d\TH:i'),
-        'ends_at' => Carbon::now()->addDays(5)->format('Y-m-d\TH:i'),
+        'starts_at' => Date::now()->subDay()->format('Y-m-d\TH:i'),
+        'ends_at' => Date::now()->addDays(5)->format('Y-m-d\TH:i'),
     ]);
 
     $response->assertRedirect('/admin/hosting-promotions');

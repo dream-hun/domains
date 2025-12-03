@@ -7,8 +7,11 @@ namespace App\Enums;
 enum TransferStatus: string
 {
     case Pending = 'pending';
+
     case Accepted = 'accepted';
+
     case Rejected = 'rejected';
+
     case Expired = 'expired';
 
     public function label(): string

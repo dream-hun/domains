@@ -67,7 +67,7 @@ it('adds hosting with metadata linked to a domain item', function (): void {
         ->set('selectedDomain', 'example.com')
         ->call('addHosting', $plan->id, 'monthly');
 
-    $hostingItem = Cart::getContent()->first(fn ($item) => $item->attributes->get('type') === 'hosting');
+    $hostingItem = Cart::getContent()->first(fn ($item): bool => $item->attributes->get('type') === 'hosting');
 
     expect($hostingItem)->not->toBeNull()
         ->and($hostingItem->attributes->get('linked_domain'))->toBe('example.com')

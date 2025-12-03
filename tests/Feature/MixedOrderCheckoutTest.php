@@ -10,7 +10,7 @@ use App\Services\DomainRegistrationService;
 use App\Services\NotificationService;
 use Mockery\MockInterface;
 
-it('only attempts to register domain items, not hosting items', function () {
+it('only attempts to register domain items, not hosting items', function (): void {
     // Arrange
     $order = Order::factory()->create();
     $domain = Domain::factory()->create();
@@ -30,13 +30,11 @@ it('only attempts to register domain items, not hosting items', function () {
     ]);
 
     // Mock dependencies
-    $registerActionMock = $this->mock(RegisterDomainAction::class, function (MockInterface $mock) use ($domain) {
+    $registerActionMock = $this->mock(RegisterDomainAction::class, function (MockInterface $mock) use ($domain): void {
         // Expect to be called exactly ONCE for 'example.com'
         $mock->shouldReceive('handle')
             ->once()
-            ->withArgs(function ($domainName) {
-                return $domainName === 'example.com';
-            })
+            ->withArgs(fn ($domainName): bool => $domainName === 'example.com')
             ->andReturn([
                 'success' => true,
                 'domain_id' => $domain->id,
@@ -45,9 +43,7 @@ it('only attempts to register domain items, not hosting items', function () {
 
         // Should NOT be called for 'Basic Plan'
         $mock->shouldReceive('handle')
-            ->withArgs(function ($domainName) {
-                return $domainName === 'Basic Plan';
-            })
+            ->withArgs(fn ($domainName): bool => $domainName === 'Basic Plan')
             ->never();
     });
 

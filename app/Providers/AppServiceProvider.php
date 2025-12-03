@@ -15,6 +15,7 @@ use App\Services\Domain\Testing\FakeEppDomainService;
 use App\Services\Domain\Testing\FakeNamecheapDomainService;
 use App\Services\ExchangeRateClient;
 use Cknow\Money\Money;
+use App\Models\HostingCategory;
 use Exception;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
@@ -44,6 +45,13 @@ final class AppServiceProvider extends ServiceProvider
             View::share('settings');
         }
 
+        try {
+            $hostings = HostingCategory::query()->select(['name', 'slug', 'icon'])->where('status', 'active')->get();
+            View::share('hostings', $hostings);
+        } catch (Exception) {
+            View::share('hostings', []);
+        }
+
         $this->registerBladeDirectives();
     }
 
@@ -68,11 +76,7 @@ final class AppServiceProvider extends ServiceProvider
     private function shouldUseFakeDomainServices(): bool
     {
         // Use fake services when in testing environment AND EPP is not configured
-        if ($this->app->environment('testing') && empty(config('services.epp.host'))) {
-            return true;
-        }
-
-        return false;
+        return $this->app->environment('testing') && empty(config('services.epp.host'));
     }
 
     /**

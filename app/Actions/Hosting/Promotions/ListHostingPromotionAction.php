@@ -13,7 +13,7 @@ final class ListHostingPromotionAction
     {
         $query = HostingPromotion::query()
             ->with(['plan.category'])
-            ->orderByDesc('starts_at');
+            ->latest('starts_at');
 
         if ($categoryId !== null) {
             $query->whereHas('plan', function ($q) use ($categoryId): void {

@@ -7,11 +7,17 @@ namespace App\Enums;
 enum DomainStatus: string
 {
     case Active = 'active';
+
     case Pending = 'pending';
+
     case Expired = 'expired';
+
     case TransferPending = 'transfer_pending';
+
     case TransferInProgress = 'transfer_in_progress';
+
     case Transferred = 'transferred';
+
     case Locked = 'locked';
 
     public function label(): string
