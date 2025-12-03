@@ -344,216 +344,44 @@
             <!-- service list -->
             <div class="row">
                 <div class="rts-service__wrapper">
-                    <div class="rts-service__column">
-                        <!-- single service -->
-                        <div class="rts-service__single">
-                            <div class="rts-service__single--icon shared__hosting">
-                                <img src="assets/images/service/shared__hosting.svg" alt="">
-                            </div>
-                            <a href="shared-hosting.html" class="rts-service__single--title">Shared Hosting</a>
-                            <p class="rts-service__single--excerpt">
-                                The most popular hosting plan available and comes at one of the most.
-                            </p>
-                            <a href="shared-hosting.html" class="rts-service__single--btn">View Details <i
-                                    class="fa-regular fa-arrow-right"></i></a>
+                    @foreach ($hostingCategories->split(4) as $chunk)
+                        <div class="rts-service__column">
+                            @foreach ($chunk as $category)
+                                <div class="rts-service__single">
+                                    <div class="rts-service__single--icon shared__hosting">
+                                        @if ($category->slug == 'shared-hosting')
+                                            <img src="assets/images/service/shared__hosting.svg" alt="">
+                                        @elseif ($category->slug == 'managed-wordpress-hosting')
+                                            <img src="assets/images/service/managed__wordpress__hosting.svg" alt="">
+                                        @elseif ($category->slug == 'dedicated-hosting')
+                                            <img src="assets/images/service/dedicated__hosting.svg" alt="">
+                                        @elseif ($category->slug == 'vps-hosting')
+                                            <img src="assets/images/service/vps__hosting.svg" alt="">
+                                        @elseif ($category->slug == 'reseller-hosting')
+                                            <img src="assets/images/service/resseller__hosting.svg" alt="">
+                                        @elseif ($category->slug == 'cloud-hosting')
+                                            <img src="assets/images/service/cloud__hosting.svg" alt="">
+                                        @else
+                                            <img src="assets/images/hosting/01.svg" alt="">
+                                        @endif
+                                    </div>
+                                    <a href="{{ route('hosting.categories.show', $category->slug) }}"
+                                        class="rts-service__single--title">{{ $category->name }}</a>
+                                    <p class="rts-service__single--excerpt">
+                                        {{ Str::limit($category->description, 60) }}
+                                    </p>
+                                    <a href="{{ route('hosting.categories.show', $category->slug) }}"
+                                        class="rts-service__single--btn">View Details <i
+                                            class="bi bi-arrow-right"></i></a>
+                                </div>
+                            @endforeach
                         </div>
-                        <!-- single service end -->
-                        <!-- single service -->
-                        <div class="rts-service__single">
-                            <div class="rts-service__single--icon email__hosting">
-                                <img src="assets/images/service/email__hosting.svg" alt="">
-                            </div>
-                            <a href="business-mail.html" class="rts-service__single--title">Email Hosting</a>
-                            <p class="rts-service__single--excerpt">
-                                The most popular hosting plan available and comes at one of the most.
-                            </p>
-                            <a href="business-mail.html" class="rts-service__single--btn">View Details <i
-                                    class="fa-regular fa-arrow-right"></i></a>
-                        </div>
-                        <!-- single service end -->
-                    </div>
-
-                    <div class="rts-service__column">
-                        <!-- single service -->
-                        <div class="rts-service__single">
-                            <div class="rts-service__single--icon wordpress__hosting">
-                                <img src="assets/images/service/shared__hosting.svg" alt="">
-                            </div>
-                            <a href="wordpress-hosting.html" class="rts-service__single--title">WordPress Hosting</a>
-                            <p class="rts-service__single--excerpt">
-                                The most popular hosting plan available and comes at one of the most.
-                            </p>
-                            <a href="wordpress-hosting.html" class="rts-service__single--btn">View Details <i
-                                    class="fa-regular fa-arrow-right"></i></a>
-                        </div>
-                        <!-- single service end -->
-                        <!-- single service -->
-                        <div class="rts-service__single">
-                            <div class="rts-service__single--icon dedicated__hosting">
-                                <img src="assets/images/service/dedicated__hosting.svg" alt="">
-                            </div>
-                            <a href="dedicated-hosting.html" class="rts-service__single--title">dedicated Hosting</a>
-                            <p class="rts-service__single--excerpt">
-                                The most popular hosting plan available and comes at one of the most.
-                            </p>
-                            <a href="dedicated-hosting.html" class="rts-service__single--btn">View Details <i
-                                    class="fa-regular fa-arrow-right"></i></a>
-                        </div>
-                        <!-- single service end -->
-
-                    </div>
-
-                    <div class="rts-service__column">
-                        <!-- single service -->
-                        <div class="rts-service__single">
-                            <div class="rts-service__single--icon vps__hosting">
-                                <img src="assets/images/service/vps__hosting.svg" alt="">
-                            </div>
-                            <a href="vps-hosting.html" class="rts-service__single--title">VPS Hosting</a>
-                            <p class="rts-service__single--excerpt">
-                                The most popular hosting plan available and comes at one of the most.
-                            </p>
-                            <a href="vps-hosting.html" class="rts-service__single--btn">View Details <i
-                                    class="fa-regular fa-arrow-right"></i></a>
-                        </div>
-                        <!-- single service end -->
-                        <!-- single service -->
-                        <div class="rts-service__single">
-                            <div class="rts-service__single--icon eccomerce__hosting">
-                                <img src="assets/images/service/eccommerce__hosting.svg" alt="">
-                            </div>
-                            <a href="wordpress-hosting.html" class="rts-service__single--title">eccommerce Hosting</a>
-                            <p class="rts-service__single--excerpt">
-                                The most popular hosting plan available and comes at one of the most.
-                            </p>
-                            <a href="wordpress-hosting.html" class="rts-service__single--btn">View Details <i
-                                    class="fa-regular fa-arrow-right"></i></a>
-                        </div>
-                        <!-- single service end -->
-                    </div>
-
-                    <div class="rts-service__column">
-                        <!-- single service -->
-                        <div class="rts-service__single">
-                            <div class="rts-service__single--icon reseller__hosting">
-                                <img src="assets/images/service/resseller__hosting.svg" alt="">
-                            </div>
-                            <a href="reseller-hosting.html" class="rts-service__single--title">Reseller Hosting</a>
-                            <p class="rts-service__single--excerpt">
-                                The most popular hosting plan available and comes at one of the most.
-                            </p>
-                            <a href="reseller-hosting.html" class="rts-service__single--btn">View Details <i
-                                    class="fa-regular fa-arrow-right"></i></a>
-                        </div>
-                        <!-- single service end -->
-                        <!-- single service -->
-                        <div class="rts-service__single">
-                            <div class="rts-service__single--icon cloud__hosting">
-                                <img src="assets/images/service/cloud__hosting.svg" alt="">
-                            </div>
-                            <a href="cloud-hosting.html" class="rts-service__single--title">cloud Hosting</a>
-                            <p class="rts-service__single--excerpt">
-                                The most popular hosting plan available and comes at one of the most.
-                            </p>
-                            <a href="cloud-hosting.html" class="rts-service__single--btn">View Details <i
-                                    class="fa-regular fa-arrow-right"></i></a>
-                        </div>
-                        <!-- single service end -->
-                    </div>
-
+                    @endforeach
                 </div>
             </div>
         </div>
     </section>
     <!-- OUR SERVICES END -->
-
-    <!-- DATA CENTER AREA -->
-    <div class="rts-data-center fix section__padding">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="rts-section w-790 text-center">
-                    <h3 class="rts-section__title" data-sal="slide-down" data-sal-delay="300"
-                        data-sal-duration="800">
-                        Data Centers All Around the World</h3>
-                    <p class="rts-section__description" data-sal="slide-down" data-sal-delay="400"
-                        data-sal-duration="800">Our web hosting, WordPress hosting, and cloud hosting plans offer
-                        server
-                        locations in: USA, Germany Egypt , India, Chaina, Brazil, Canada, Russia, Australia and South
-                        Africa.
-                    </p>
-                </div>
-            </div>
-            <!-- data center content -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="rts-data-center__location">
-                        <img src="assets/images/data__center.png" alt="data__center">
-                        <ul class="round-shape">
-                            <li class="one">
-                                <span class="tooltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    aria-label="Canada" data-bs-custom-class="color-hostie"
-                                    title="Canada">Canada</span>
-
-                                <img src="assets/images/flag-01.svg" alt="">
-                            </li>
-                            <li class="two">
-                                <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-custom-class="color-hostie" title="Germany">Germany</span>
-                                <img src="assets/images/flag-02.svg" alt="">
-                            </li>
-                            <li class="three">
-                                <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-custom-class="color-hostie" title="Russia">Russia</span>
-                                <img src="assets/images/flag-03.svg" alt="">
-                            </li>
-                            <li class="four">
-                                <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-custom-class="color-hostie" title="USA">USA</span>
-                                <img src="assets/images/flag-04.svg" alt="">
-                            </li>
-                            <li class="five">
-                                <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-custom-class="color-hostie" title="Egypt">egypt</span>
-                                <img src="assets/images/flag-05.svg" alt="">
-                            </li>
-                            <li class="six">
-                                <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-custom-class="color-hostie" title="India">india</span>
-                                <img src="assets/images/flag-06.svg" alt="">
-                            </li>
-                            <li class="seven">
-                                <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-custom-class="color-hostie" title="China">china</span>
-                                <img src="assets/images/flag-07.svg" alt="">
-                            </li>
-                            <li class="eight">
-                                <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-custom-class="color-hostie" title="Brazil">Brazil</span>
-                                <img src="assets/images/flag-08.svg" alt="">
-                            </li>
-                            <li class="nine">
-                                <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-custom-class="color-hostie" title="South Africa">arfa</span>
-                                <img src="assets/images/flag-09.svg" alt="">
-                            </li>
-                            <li class="ten">
-                                <span class="tolltip1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-custom-class="color-hostie" title="Australia">Australia</span>
-                                <img src="assets/images/flag-10.svg" alt="">
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="rts-shape">
-            <div class="rts-shape__one"></div>
-            <div class="rts-shape__two"></div>
-            <div class="rts-shape__three"></div>
-            <div class="rts-shape__four"></div>
-        </div>
-    </div>
-    <!-- DATA CENTER AREA END -->
 
     <!-- FLASH SELL AREA -->
     <section class="rts-flash-sell">
@@ -617,7 +445,7 @@
                     <div class="rts-whychoose__content">
                         <h3 class="rts-whychoose__content--title" data-sal="slide-down" data-sal-delay="300"
                             data-sal-duration="800">
-                            Why Choose Hostie Hosting for Your Hosting Needs
+                            Why Choose {{ config('app.name') }} for Your Hosting Needs
                         </h3>
 
                         <!-- single content-->
@@ -627,8 +455,7 @@
                             </div>
                             <div class="single__content">
                                 <h6>Up To 20xFaster Turbo</h6>
-                                <p>That means better SEO rankings, lower bounce
-                                    rates & higher conversion rates!</p>
+                                <p>{{ config('app.name') }} is a high-performance hosting provider that offers up to 20x faster turbo speeds. This means better SEO rankings, lower bounce rates & higher conversion rates!</p>
                             </div>
                         </div>
                         <!-- single content-->
@@ -638,7 +465,7 @@
                             </div>
                             <div class="single__content">
                                 <h6>Guru Crew Support</h6>
-                                <p>Our knowledgeable and friendly support team
+                                <p>{{ config('app.name') }} has a knowledgeable and friendly support team
                                     is available 24/7/365 to help!</p>
                             </div>
                         </div>
@@ -649,7 +476,7 @@
                             </div>
                             <div class="single__content">
                                 <h6>Money-Back Guarantee</h6>
-                                <p>Give our high-speed hosting service a try
+                                <p>Give {{ config('app.name') }} high-speed hosting service a try
                                     completely risk-free!</p>
                             </div>
                         </div>
