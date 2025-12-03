@@ -35,7 +35,10 @@
                     <thead>
                         <tr>
                             <th>
-                                Domain Name
+                                Domain
+                            </th>
+                            <th>
+                                Owner
                             </th>
                             <th>
                                 Status
@@ -51,11 +54,11 @@
                     <tbody>
                         @foreach ($domains as $key => $domain)
                             <tr data-entry-id="{{ $domain->id }}">
-
-
-
                                 <td>
                                     {{ $domain->name ?? '' }}
+                                </td>
+                                <td>
+                                    {{ $domain->owner->name ?? '' }}
                                 </td>
                                 <td>
                                     <span class="btn btn-sm {{ $domain->status->color() }}">
@@ -77,7 +80,7 @@
 
                                         @can('domain_renew')
                                             @if ($domain->status !== 'expired')
-                                                <button onclick="addRenewalToCart('{{ $domain->uuid }}', '{{ $domain->name }}', {{ $domain->id }})"
+                                                <button onclick="addRenewalToCart(this, '{{ $domain->uuid }}', '{{ $domain->name }}', {{ $domain->id }})"
                                                     class="btn btn-sm btn-success">
                                                     <i class="bi bi-cart-plus"></i> Renew
                                                 </button>
@@ -97,12 +100,12 @@
                                             @endif
                                         @endcan
                                         @can('domain_edit')
-                                            
+
                                                 <a href="{{ route('admin.domains.assign', $domain->uuid) }}"
                                                 class="btn btn-sm btn-primary">
                                                 <i class="bi bi-person"></i> Assign Owner
                                             </a>
-                                            
+
                                         @endcan
                                     </div>
                                 </td>
@@ -125,29 +128,33 @@
                 table-layout: fixed;
             }
 
+            /* Domain Name */
             .datatable-Domain th:nth-child(1) {
-                width: 30%;
+                width: 25%;
             }
 
-            /* Domain Name */
+            /* Owner */
             .datatable-Domain th:nth-child(2) {
                 width: 15%;
             }
 
             /* Status */
             .datatable-Domain th:nth-child(3) {
-                width: 20%;
+                width: 15%;
             }
 
             /* Expiry Date */
             .datatable-Domain th:nth-child(4) {
-                width: 35%;
+                width: 25%;
             }
 
             /* Actions */
+            .datatable-Domain th:nth-child(5) {
+                width: 20%;
+            }
 
             .datatable-Domain td:nth-child(1) {
-                width: 30%;
+                width: 25%;
             }
 
             .datatable-Domain td:nth-child(2) {
@@ -155,11 +162,15 @@
             }
 
             .datatable-Domain td:nth-child(3) {
-                width: 20%;
+                width: 15%;
             }
 
             .datatable-Domain td:nth-child(4) {
-                width: 35%;
+                width: 25%;
+            }
+
+            .datatable-Domain td:nth-child(5) {
+                width: 20%;
             }
         </style>
     @endsection
@@ -193,10 +204,11 @@
             const renewalAddToCartUrlTemplate = @json(route('domains.renew.add-to-cart', ['domain' => '__DOMAIN_UUID__']));
 
             // Add domain renewal to cart
-            function addRenewalToCart(domainUuid, domainName, domainId) {
+            function addRenewalToCart(element, domainUuid, domainName, domainId) {
                 // Disable the button to prevent double-clicks
-                event.target.disabled = true;
-                event.target.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Adding...';
+                element.disabled = true;
+                const originalContent = element.innerHTML;
+                element.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Adding...';
 
                 // Send AJAX request to add to cart
                 const addToCartUrl = renewalAddToCartUrlTemplate.replace('__DOMAIN_UUID__', domainUuid);
@@ -228,8 +240,8 @@
                     } else {
                         alert(data.message || 'Failed to add domain to cart');
                         // Re-enable button
-                        event.target.disabled = false;
-                        event.target.innerHTML = '<i class="bi bi-cart-plus"></i> Renew';
+                        element.disabled = false;
+                        element.innerHTML = originalContent;
                     }
                 })
                 .catch(error => {
@@ -240,11 +252,10 @@
                     }
                     alert(errorMessage);
                     // Re-enable button
-                    event.target.disabled = false;
-                    event.target.innerHTML = '<i class="bi bi-cart-plus"></i> Renew';
+                    element.disabled = false;
+                    element.innerHTML = originalContent;
                 });
             }
         </script>
     @endsection
 </x-admin-layout>
-
