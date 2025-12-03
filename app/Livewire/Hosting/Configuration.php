@@ -315,11 +315,11 @@ class Configuration extends Component
         }
 
         if ($this->domainOption === 'existing') {
-            if ($this->existingDomainSource === 'owned') {
+            if ($this->existingDomainSource === 'owned' && Auth::check()) {
                 return $this->selectedDomain;
             }
 
-            if ($this->existingDomainSource === 'external') {
+            if ($this->existingDomainSource === 'external' || ! Auth::check()) {
                 return $this->externalDomainName ?: null;
             }
         }
@@ -450,8 +450,10 @@ class Configuration extends Component
     {
         $domainName = $this->finalDomainName;
 
+        $isExternal = $this->domainOption === 'existing' && ($this->existingDomainSource === 'external' || ! Auth::check());
+
         // For external domains, also check externalDomainName directly in case finalDomainName isn't updated yet
-        if (! $domainName && $this->domainOption === 'existing' && $this->existingDomainSource === 'external') {
+        if (! $domainName && $isExternal) {
             $domainName = $this->externalDomainName;
         }
 
@@ -462,7 +464,7 @@ class Configuration extends Component
         }
 
         // For external domains, ensure they have been validated
-        if ($this->domainOption === 'existing' && $this->existingDomainSource === 'external' && ! $this->externalDomainValid) {
+        if ($isExternal && ! $this->externalDomainValid) {
             $this->addError('base', 'Please validate your external domain by clicking the "Check" button first.');
 
             return;
@@ -476,7 +478,7 @@ class Configuration extends Component
         }
 
         // Check external domain restriction
-        if ($this->domainOption === 'existing' && $this->existingDomainSource === 'external' && ! $this->plan->category->allowsExternalDomain()) {
+        if ($isExternal && ! $this->plan->category->allowsExternalDomain()) {
             $this->addError('base', 'This plan requires a domain registered with us. External domains cannot be used.');
 
             return;
