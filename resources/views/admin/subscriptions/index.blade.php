@@ -80,17 +80,17 @@
                     <span class="text-muted small">Tracking {{ $subscriptions->total() }} records</span>
                 </div>
                 <div class="card-body">
-                    <form method="GET" action="{{ route('admin.subscriptions.index') }}" class="mb-4">
+                    <form method="GET" action="{{ route('admin.subscriptions.index') }}" class="mb-4" id="filters-form">
                         <div class="form-row">
                             <div class="form-group col-md-3">
                                 <label for="search">Search</label>
-                                <input type="text" id="search" name="search" class="form-control"
+                                <input type="text" id="search" name="search" class="form-control realtime-filter"
                                     placeholder="Customer or provider reference"
                                     value="{{ $filters['search'] }}">
                             </div>
                             <div class="form-group col-md-2">
                                 <label for="status">Status</label>
-                                <select id="status" name="status" class="form-control">
+                                <select id="status" name="status" class="form-control realtime-filter">
                                     <option value="">All statuses</option>
                                     @foreach ($statusOptions as $status)
                                         <option value="{{ $status }}" @selected($filters['status'] === $status)>
@@ -101,7 +101,7 @@
                             </div>
                             <div class="form-group col-md-2">
                                 <label for="billing_cycle">Billing Cycle</label>
-                                <select id="billing_cycle" name="billing_cycle" class="form-control">
+                                <select id="billing_cycle" name="billing_cycle" class="form-control realtime-filter">
                                     <option value="">All cycles</option>
                                     @foreach ($billingCycleOptions as $cycle)
                                         <option value="{{ $cycle }}" @selected($filters['billing_cycle'] === $cycle)>
@@ -112,17 +112,17 @@
                             </div>
                             <div class="form-group col-md-2">
                                 <label for="starts_from">Start Date (From)</label>
-                                <input type="date" id="starts_from" name="starts_from" class="form-control"
+                                <input type="date" id="starts_from" name="starts_from" class="form-control realtime-filter"
                                     value="{{ $filters['starts_from'] }}">
                             </div>
                             <div class="form-group col-md-2">
                                 <label for="starts_to">Start Date (To)</label>
-                                <input type="date" id="starts_to" name="starts_to" class="form-control"
+                                <input type="date" id="starts_to" name="starts_to" class="form-control realtime-filter"
                                     value="{{ $filters['starts_to'] }}">
                             </div>
                             <div class="form-group col-md-1">
                                 <label for="per_page">Per Page</label>
-                                <select id="per_page" name="per_page" class="form-control">
+                                <select id="per_page" name="per_page" class="form-control realtime-filter">
                                     @foreach ([10, 25, 50, 100] as $size)
                                         <option value="{{ $size }}" @selected((int) $filters['per_page'] === $size)>
                                             {{ $size }}
@@ -132,9 +132,6 @@
                             </div>
                         </div>
                         <div class="d-flex flex-wrap align-items-center" style="gap: 0.75rem;">
-                            <button type="submit" class="btn btn-primary mr-2">
-                                <i class="bi bi-search"></i> Apply Filters
-                            </button>
                             <a href="{{ route('admin.subscriptions.index') }}" class="btn btn-secondary">
                                 <i class="bi bi-arrow-counterclockwise"></i> Reset
                             </a>
@@ -240,7 +237,7 @@
                                 of {{ $subscriptions->total() }} results
                             </div>
                             <div>
-                                {{ $subscriptions->links('vendor.pagination.adminlte') }}
+                                {{ $subscriptions->links() }}
                             </div>
                         </div>
                     @endif
@@ -261,5 +258,32 @@
                 vertical-align: middle;
             }
         </style>
+    @endsection
+
+    @section('scripts')
+        @parent
+        <script>
+            $(document).ready(function() {
+                let searchTimeout;
+
+                // Real-time filtering for select inputs and date inputs
+                $('.realtime-filter').on('change', function() {
+                    $('#filters-form').submit();
+                });
+
+                // Real-time filtering for search input with debounce
+                $('#search').on('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(function() {
+                        $('#filters-form').submit();
+                    }, 500); // Wait 500ms after user stops typing
+                });
+
+                // Clear search timeout on form submit
+                $('#filters-form').on('submit', function() {
+                    clearTimeout(searchTimeout);
+                });
+            });
+        </script>
     @endsection
 </x-admin-layout>
