@@ -49,7 +49,7 @@
                         <div class="rts-footer__widget--menu ">
                             <ul>
                                 <li><a href="{{ route('domains') }}">Register Domain</a></li>
-                                <li><a href="#">Domain Transfer</a></li>
+                                <li><a href="{{ route('admin.domains.transfer') }}">Domain Transfer</a></li>
                                 <li><a href="domain-registration.html">Domain Registration</a></li>
                                 <li><a href="data-centers.html">Data Centers</a></li>
                                 <li><a href="whois.html">Whois</a></li>
