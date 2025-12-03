@@ -54,7 +54,6 @@
                     <thead>
                         <tr>
                             <th>Domain Name</th>
-                            <th>Order Number</th>
                             <th>User</th>
                             <th>Status</th>
                             <th>Retry Count</th>
@@ -67,9 +66,7 @@
                         @forelse ($failedRegistrations as $registration)
                             <tr data-entry-id="{{ $registration->id }}">
                                 <td>{{ $registration->domain_name }}</td>
-                                <td>
-                                    {{ $registration->order->order_number ?? 'N/A' }}
-                                </td>
+
                                 <td>
                                     {{ $registration->order->user->name ?? 'N/A' }}
                                 </td>
