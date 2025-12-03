@@ -224,7 +224,7 @@ final class PaymentController extends Controller
                         $message = 'Payment successful! Your order is being processed.';
                     }
 
-                    return to_route('payment.success.show', $order)
+                    return to_route('dashboard')
                         ->with('success', $message);
 
                 } catch (Exception $e) {
@@ -236,7 +236,7 @@ final class PaymentController extends Controller
                     ]);
 
                     // Still show success page since payment succeeded
-                    return to_route('payment.success.show', $order)
+                    return to_route('dashboard')
                         ->with('success', "Payment successful! We're processing your domain registration and will notify you once complete.");
                 }
             }
@@ -253,14 +253,6 @@ final class PaymentController extends Controller
         }
 
         return to_route('payment.failed', $order)->with('error', 'Payment verification failed.');
-    }
-
-    /**
-     * Show payment success page
-     */
-    public function showPaymentSuccess(Order $order): View
-    {
-        return view('payment.success', ['order' => $order]);
     }
 
     /**
