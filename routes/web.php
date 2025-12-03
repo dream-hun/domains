@@ -139,7 +139,6 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/payment', [PaymentController::class, 'showPaymentPage'])->name('payment.index');
     Route::post('/payment/stripe', [PaymentController::class, 'processStripePayment'])->name('payment.stripe');
     Route::get('/payment/success/{order}', [PaymentController::class, 'handlePaymentSuccess'])->name('payment.success');
-    Route::get('/payment/success/{order}/show', [PaymentController::class, 'showPaymentSuccess'])->name('payment.success.show');
     Route::get('/payment/cancel/{order}', [PaymentController::class, 'handlePaymentCancel'])->name('payment.cancel');
     Route::get('/payment/failed/{order}', [PaymentController::class, 'showPaymentFailed'])->name('payment.failed');
 
