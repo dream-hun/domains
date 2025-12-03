@@ -65,12 +65,9 @@
                         <h5 class="widget-title">Hosting</h5>
                         <div class="rts-footer__widget--menu">
                             <ul>
-                                <li><a href="shared-hosting.html">Shared Hosting</a></li>
-                                <li><a href="wordpress-hosting.html">Wordpress Hosting</a></li>
-                                <li><a href="vps-hosting.html">VPS Hosting</a></li>
-                                <li><a href="reseller-hosting.html">Reseller Hosting</a></li>
-                                <li><a href="dedicated-hosting.html">Dedicated Hosting</a></li>
-                                <li><a href="cloud-hosting.html">Cloud Hosting</a></li>
+                                @foreach ($hostings as $category)
+                                    <li><a href="{{ route('hosting.categories.show', $category->slug) }}">{{ $category->name }}</a></li>
+                                @endforeach
                             </ul>
                         </div>
                     </div>
