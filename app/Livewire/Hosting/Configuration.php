@@ -239,6 +239,8 @@ class Configuration extends Component
     #[Computed]
     public function highlightedFeatures(): array
     {
+        $this->plan->loadMissing(['planFeatures.hostingFeature']);
+
         return $this->plan->planFeatures
             ->where('is_included', true)
             ->take(4)
