@@ -200,7 +200,7 @@
                             <div class="domain-radio">
                                 <div class="domain-radio-inner"></div>
                             </div>
-                            <span class="ms-3 brand-desc" style="color: {{ $domainOption === 'existing' ? '#ffffff' : '#2d3748' }};">
+                            <span class="ms-3 brand-desc" style="color: {{ $domainOption === 'existing' ? '#000000' : '#2d3748' }};">
                                 Existing Domain Name
                             </span>
                         </div>
@@ -226,6 +226,7 @@
                                             <div class="domain-radio-inner" style="{{ $newDomainSource === 'already_in_cart' ? 'background-color: #4db6ac;' : '' }}"></div>
                                         </div>
                                     </div>
+                                    <div class="small" style="color: {{ $newDomainSource === 'already_in_cart' ? '#fff' : '#718096' }};">Already In Cart</div>
                                 </div>
 
                                 {{-- New Purchase Option --}}
@@ -237,7 +238,7 @@
                                             <div class="domain-radio-inner" style="{{ $newDomainSource === 'new_purchase' ? 'background-color: #4db6ac;' : '' }}"></div>
                                         </div>
                                     </div>
-                                    <div class="small" style="color: {{ $newDomainSource === 'new_purchase' ? '#fff' : '#718096' }};">New Purchase</div>
+                                    <div class="small" style="color: {{ $newDomainSource === 'new_purchase' ? '#000000' : '#718096' }};">New Purchase</div>
                                 </div>
                             </div>
 
