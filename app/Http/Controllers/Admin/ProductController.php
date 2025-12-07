@@ -17,7 +17,7 @@ class ProductController extends Controller
     public function domains(): Factory|View
     {
         abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        $domains = Domain::all();
+        $domains = Domain::with('owner')->get();
 
         return view('admin.products.domains', ['domains' => $domains]);
     }

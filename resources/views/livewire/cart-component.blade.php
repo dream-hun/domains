@@ -105,7 +105,7 @@
                 </div>
             </div>
 
-            
+
         </div>
 
         <div class="col-lg-3">
@@ -135,7 +135,7 @@
 
                     <div class="mt-3">
                         @if ($items && $items->isNotEmpty())
-                            <a href="{{ route('checkout.wizard') }}" class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
+                            <a href="{{ route('checkout.index') }}" class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
                                 style="font-size: 16px !important;">
 
                                     <i class="bi bi-credit-card me-2"></i>Proceed to Payment
@@ -149,13 +149,13 @@
                 <div class="card border shadow-0 mt-4">
                     <div class="card-body py-4">
                         <h6 class="mb-3">Have a coupon code?</h6>
-                        
+
                         @if (!$isCouponApplied)
                             <form wire:submit.prevent="applyCoupon">
                                 <div class="input-group">
-                                    <input type="text" 
-                                           wire:model="couponCode" 
-                                           class="form-control" 
+                                    <input type="text"
+                                           wire:model="couponCode"
+                                           class="form-control"
                                            placeholder="Enter coupon code"
                                            style="font-size: 16px !important; height: 40px;">
                                 </div>
@@ -166,7 +166,7 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
                                     @enderror
-                                    <button type="submit" 
+                                    <button type="submit"
                                             class="btn btn-primary btn-lg w-100 pb-3 pt-3 mt-4"
                                             wire:loading.attr="disabled"
                                             wire:target="applyCoupon"
@@ -182,7 +182,7 @@
                                     <i class="bi bi-check-circle"></i>
                                     {{ $appliedCoupon->code }}
                                 </span>
-                                <button wire:click="removeCoupon" 
+                                <button wire:click="removeCoupon"
                                         class="btn btn-md w-100 py-3 btn-outline-danger mt-4 gap-2"
                                         wire:loading.attr="disabled"
                                         wire:target="removeCoupon"

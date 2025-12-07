@@ -22,6 +22,6 @@ final class SmartCheckoutController extends Controller
                 ->with('error', 'Your cart is empty.');
         }
 
-        return view('checkout.index');
+        return view('checkout.wizard');
     }
 }

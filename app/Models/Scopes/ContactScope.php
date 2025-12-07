@@ -16,9 +16,14 @@ final class ContactScope implements Scope
     public function apply(Builder $builder, Model $model): void
     {
         $user = auth()->user();
+
+        if (! $user) {
+            return;
+        }
+
         $user->loadMissing('roles');
 
-        if ($user && ! $user->isAdmin()) {
+        if (! $user->isAdmin()) {
             $builder->where('contacts.user_id', $user->id);
         }
     }

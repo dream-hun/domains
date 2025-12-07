@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Helpers\CurrencyExchangeHelper;
 use App\Helpers\DomainSearchHelper;
+use App\Models\HostingCategory;
 use App\Models\Setting;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\DomainServiceInterface;
@@ -15,7 +16,6 @@ use App\Services\Domain\Testing\FakeEppDomainService;
 use App\Services\Domain\Testing\FakeNamecheapDomainService;
 use App\Services\ExchangeRateClient;
 use Cknow\Money\Money;
-use App\Models\HostingCategory;
 use Exception;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;

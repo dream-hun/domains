@@ -278,7 +278,7 @@ final class CheckoutController extends Controller
             'user_id' => auth()->id(),
         ]);
 
-        return to_route('checkout.wizard')->with('error', 'Unable to locate the payment session. Please restart checkout.');
+        return to_route('checkout.index')->with('error', 'Unable to locate the payment session. Please restart checkout.');
     }
 
     /**
