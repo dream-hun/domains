@@ -553,10 +553,14 @@
                                                     <div class="fw-bold">{{ $selectedDomain }}</div>
                                                     <div class="text-muted small">Will be connected to this hosting plan</div>
                                                 </div>
-                                                <button class="btn btn-primary px-4" wire:click="confirmDomainSelection" wire:loading.attr="disabled">
-                                                    <span wire:loading.remove wire:target="confirmDomainSelection">Connect To Hosting</span>
+                                                <button class="btn btn-primary btn-lg px-5 py-3 fw-semibold" wire:click="confirmDomainSelection" wire:loading.attr="disabled" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(77, 182, 172, 0.3);">
+                                                    <span wire:loading.remove wire:target="confirmDomainSelection">
+                                                        <i class="bi bi-link-45deg me-2"></i>
+                                                        Connect To Hosting
+                                                    </span>
                                                     <span wire:loading wire:target="confirmDomainSelection">
-                                                        <span class="spinner-border spinner-border-sm"></span>
+                                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                                        Connecting...
                                                     </span>
                                                 </button>
                                             </div>
@@ -605,10 +609,14 @@
                                                 <div class="fw-bold">{{ $externalDomainName }}</div>
                                                 <div class="text-muted small">External domain - update nameservers after purchase</div>
                                             </div>
-                                            <button class="btn btn-primary px-4" wire:click="confirmDomainSelection" wire:loading.attr="disabled">
-                                                <span wire:loading.remove wire:target="confirmDomainSelection">Connect To Hosting</span>
+                                            <button class="btn btn-primary btn-lg px-5 py-3 fw-semibold" wire:click="confirmDomainSelection" wire:loading.attr="disabled" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(77, 182, 172, 0.3);">
+                                                <span wire:loading.remove wire:target="confirmDomainSelection">
+                                                    <i class="bi bi-link-45deg me-2"></i>
+                                                    Connect To Hosting
+                                                </span>
                                                 <span wire:loading wire:target="confirmDomainSelection">
-                                                    <span class="spinner-border spinner-border-sm"></span>
+                                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                                    Connecting...
                                                 </span>
                                             </button>
                                         </div>
@@ -651,10 +659,14 @@
                                                 <div class="fw-bold">{{ $externalDomainName }}</div>
                                                 <div class="text-muted small">External domain - update nameservers after purchase</div>
                                             </div>
-                                            <button class="btn btn-primary px-4" wire:click="confirmDomainSelection" wire:loading.attr="disabled">
-                                                <span wire:loading.remove wire:target="confirmDomainSelection">Connect To Hosting</span>
+                                            <button class="btn btn-primary btn-lg px-5 py-3 fw-semibold" wire:click="confirmDomainSelection" wire:loading.attr="disabled" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(77, 182, 172, 0.3);">
+                                                <span wire:loading.remove wire:target="confirmDomainSelection">
+                                                    <i class="bi bi-link-45deg me-2"></i>
+                                                    Connect To Hosting
+                                                </span>
                                                 <span wire:loading wire:target="confirmDomainSelection">
-                                                    <span class="spinner-border spinner-border-sm"></span>
+                                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                                    Connecting...
                                                 </span>
                                             </button>
                                         </div>
