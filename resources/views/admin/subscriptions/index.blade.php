@@ -156,6 +156,7 @@
                                         <th>Expiry</th>
                                         <th>Next Renewal</th>
                                         <th>Provider Ref</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -212,6 +213,24 @@
                                                 <span class="text-monospace">
                                                     {{ $subscription->provider_resource_id ?? '—' }}
                                                 </span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <div class="btn-group" role="group">
+                                                    @can('subscription_show')
+                                                        <a href="{{ route('admin.subscriptions.show', $subscription) }}"
+                                                           class="btn btn-sm btn-info"
+                                                           title="View Details">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                    @endcan
+                                                    @can('subscription_edit')
+                                                        <a href="{{ route('admin.subscriptions.edit', $subscription) }}"
+                                                           class="btn btn-sm btn-primary"
+                                                           title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                    @endcan
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach

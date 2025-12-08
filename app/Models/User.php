@@ -95,6 +95,14 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Order::class);
     }
 
+    /**
+     * @return HasMany<Subscription, static>
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
     public function isAdmin(): bool
     {
         if ($this->relationLoaded('roles')) {

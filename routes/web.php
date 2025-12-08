@@ -40,7 +40,7 @@ use App\Livewire\Hosting\Configuration;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
-Route::get('/hosting/configure/{plan}', Configuration::class)->name('hosting.configure');
+Route::get('/hosting/purchase/{plan}', Configuration::class)->name('hosting.configure');
 Route::get('/hosting/{slug}', CategoryShowController::class)->name('hosting.categories.show');
 
 Route::get('/shopping-cart', CartController::class)->name('cart.index');
@@ -81,6 +81,10 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::post('currencies/update-rates', [CurrencyController::class, 'updateRates'])->name('currencies.update-rates');
     Route::resource('settings', SettingController::class);
     Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::get('subscriptions/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
+    Route::get('subscriptions/{subscription}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');
+    Route::put('subscriptions/{subscription}', [SubscriptionController::class, 'update'])->name('subscriptions.update');
+    Route::post('subscriptions/{subscription}/renew', [SubscriptionController::class, 'renewNow'])->name('subscriptions.renew-now');
 
     // Failed domain registration routes
     Route::get('failed-registrations', [FailedDomainRegistrationController::class, 'index'])->name('failed-registrations.index');
@@ -99,6 +103,8 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::get('audit-logs', AuditLogController::class)->name('audit-logs.index');
     Route::get('products/domains', [ProductController::class, 'domains'])->name('products.domains');
     Route::get('products/hosting', [ProductController::class, 'hosting'])->name('products.hosting');
+    Route::get('products/subscriptions/{subscription}', [ProductController::class, 'showSubscription'])->name('products.subscription.show');
+    Route::post('products/subscriptions/{subscription}/renew', [ProductController::class, 'addSubscriptionRenewalToCart'])->name('products.subscription.renew');
 
 });
 

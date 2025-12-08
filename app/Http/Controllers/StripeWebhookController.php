@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Hosting\BillingCycle;
 use App\Jobs\ProcessDomainRenewalJob;
 use App\Models\Payment;
+use App\Models\Subscription;
+use App\Notifications\SubscriptionAutoRenewalFailedNotification;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -54,6 +57,9 @@ final class StripeWebhookController extends Controller
                 'payment_intent.succeeded' => $this->handlePaymentIntentSucceeded($event->data->object),
                 'payment_intent.payment_failed' => $this->handlePaymentIntentFailed($event->data->object),
                 'charge.refunded' => $this->handleChargeRefunded($event->data->object),
+                'invoice.payment_succeeded' => $this->handleInvoicePaymentSucceeded($event->data->object),
+                'invoice.payment_failed' => $this->handleInvoicePaymentFailed($event->data->object),
+                'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event->data->object),
                 default => Log::info('Unhandled webhook event type', ['type' => $event->type]),
             };
 
@@ -225,6 +231,158 @@ final class StripeWebhookController extends Controller
                 'error' => $exception->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Handle successful invoice payment (for subscriptions)
+     */
+    private function handleInvoicePaymentSucceeded(object $invoice): void
+    {
+        try {
+            Log::info('Processing invoice.payment_succeeded', [
+                'invoice_id' => $invoice->id,
+                'subscription_id' => $invoice->subscription ?? null,
+            ]);
+
+            if (! $invoice->subscription) {
+                Log::info('Invoice not associated with a subscription, skipping');
+
+                return;
+            }
+
+            // Find subscription by Stripe subscription ID
+            $subscription = Subscription::query()
+                ->where('provider_resource_id', $invoice->subscription)
+                ->first();
+
+            if (! $subscription) {
+                Log::warning('Subscription not found for Stripe subscription ID', [
+                    'stripe_subscription_id' => $invoice->subscription,
+                ]);
+
+                return;
+            }
+
+            // Extend subscription period
+            $billingCycle = $this->resolveBillingCycle($subscription->billing_cycle);
+            $subscription->extendSubscription($billingCycle);
+            $subscription->update(['last_renewal_attempt_at' => now()]);
+
+            Log::info('Subscription extended successfully via Stripe webhook', [
+                'subscription_id' => $subscription->id,
+                'new_expiry' => $subscription->expires_at->toDateString(),
+            ]);
+
+        } catch (Exception $exception) {
+            Log::error('Error handling invoice.payment_succeeded webhook', [
+                'invoice_id' => $invoice->id ?? 'unknown',
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Handle failed invoice payment (for subscriptions)
+     */
+    private function handleInvoicePaymentFailed(object $invoice): void
+    {
+        try {
+            Log::warning('Invoice payment failed', [
+                'invoice_id' => $invoice->id,
+                'subscription_id' => $invoice->subscription ?? null,
+                'attempt_count' => $invoice->attempt_count ?? 0,
+            ]);
+
+            if (! $invoice->subscription) {
+                return;
+            }
+
+            $subscription = Subscription::query()
+                ->where('provider_resource_id', $invoice->subscription)
+                ->first();
+
+            if (! $subscription) {
+                Log::warning('Subscription not found for failed invoice', [
+                    'stripe_subscription_id' => $invoice->subscription,
+                ]);
+
+                return;
+            }
+
+            $subscription->update([
+                'last_renewal_attempt_at' => now(),
+            ]);
+
+            // Notify user about failed renewal
+            if ($subscription->user) {
+                $failureReason = $invoice->last_payment_error->message ?? 'Payment method declined';
+                $subscription->user->notify(
+                    new SubscriptionAutoRenewalFailedNotification($subscription, $failureReason)
+                );
+            }
+
+            Log::info('User notified about failed subscription renewal', [
+                'subscription_id' => $subscription->id,
+                'user_id' => $subscription->user_id,
+            ]);
+
+        } catch (Exception $exception) {
+            Log::error('Error handling invoice.payment_failed webhook', [
+                'invoice_id' => $invoice->id ?? 'unknown',
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Handle subscription deletion/cancellation
+     */
+    private function handleSubscriptionDeleted(object $stripeSubscription): void
+    {
+        try {
+            Log::info('Processing customer.subscription.deleted', [
+                'subscription_id' => $stripeSubscription->id,
+            ]);
+
+            $subscription = Subscription::query()
+                ->where('provider_resource_id', $stripeSubscription->id)
+                ->first();
+
+            if (! $subscription) {
+                Log::warning('Subscription not found for deleted Stripe subscription', [
+                    'stripe_subscription_id' => $stripeSubscription->id,
+                ]);
+
+                return;
+            }
+
+            $subscription->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'auto_renew' => false,
+            ]);
+
+            Log::info('Subscription marked as cancelled', [
+                'subscription_id' => $subscription->id,
+            ]);
+
+        } catch (Exception $exception) {
+            Log::error('Error handling customer.subscription.deleted webhook', [
+                'subscription_id' => $stripeSubscription->id ?? 'unknown',
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    private function resolveBillingCycle(string $cycle): BillingCycle
+    {
+        foreach (BillingCycle::cases() as $case) {
+            if ($case->value === $cycle) {
+                return $case;
+            }
+        }
+
+        return BillingCycle::Monthly;
     }
 
     private function findPaymentForIntent(object $paymentIntent): ?Payment

@@ -14,7 +14,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('subscriptions', function (Blueprint $table): void {
-            $table->string('domain')->nullable()->change();
+            $table->boolean('auto_renew')->default(false)->after('status');
+            $table->timestamp('last_renewal_attempt_at')->nullable()->after('next_renewal_at');
         });
     }
 
@@ -24,7 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('subscriptions', function (Blueprint $table): void {
-            $table->string('domain')->nullable(false)->change();
+            $table->dropColumn(['auto_renew', 'last_renewal_attempt_at']);
         });
     }
 };

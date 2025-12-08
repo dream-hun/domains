@@ -104,6 +104,14 @@ final readonly class OrderService
             $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
             $exchangeRate = $itemCurrencyModel ? $itemCurrencyModel->exchange_rate : 1.0;
 
+            // For subscription renewals, metadata might have subscription_id
+            $subscriptionId = $item->attributes->subscription_id ?? null;
+            $itemMetadata = $metadata ?? [];
+
+            if ($subscriptionId) {
+                $itemMetadata['subscription_id'] = $subscriptionId;
+            }
+
             OrderItem::query()->create([
                 'order_id' => $order->id,
                 'domain_name' => $item->attributes->domain_name ?? $item->name,
@@ -115,7 +123,7 @@ final readonly class OrderService
                 'quantity' => $item->quantity,
                 'years' => $item->quantity,
                 'total_amount' => $itemTotal,
-                'metadata' => $metadata,
+                'metadata' => $itemMetadata,
             ]);
         }
 
@@ -128,7 +136,11 @@ final readonly class OrderService
 
         try {
             // Check order type
-            if ($order->type === 'renewal') {
+            if ($order->type === 'subscription_renewal') {
+                // Process subscription renewals via job
+                Log::info('Processing subscription renewal order', ['order_id' => $order->id]);
+                \App\Jobs\ProcessSubscriptionRenewalJob::dispatch($order);
+            } elseif ($order->type === 'renewal') {
                 // Process renewals
                 Log::info('Processing renewal order', ['order_id' => $order->id]);
                 $results = $this->renewalService->processDomainRenewals($order);
@@ -194,6 +206,7 @@ final readonly class OrderService
         $hasRenewal = false;
         $hasTransfer = false;
         $hasHosting = false;
+        $hasSubscriptionRenewal = false;
 
         foreach ($cartItems as $item) {
             $itemType = $item->attributes->type ?? 'registration';
@@ -208,9 +221,17 @@ final readonly class OrderService
                 case 'hosting':
                     $hasHosting = true;
                     break;
+                case 'subscription_renewal':
+                    $hasSubscriptionRenewal = true;
+                    break;
                 default:
                     $hasRegistration = true;
             }
+        }
+
+        // If all items are subscription renewals, mark as subscription_renewal order
+        if ($hasSubscriptionRenewal && ! $hasRenewal && ! $hasRegistration && ! $hasTransfer && ! $hasHosting) {
+            return 'subscription_renewal';
         }
 
         // If all items are renewals, mark as renewal order

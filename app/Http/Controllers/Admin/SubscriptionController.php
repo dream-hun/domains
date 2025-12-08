@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateSubscriptionRequest;
 use App\Models\Subscription;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 final class SubscriptionController extends Controller
@@ -111,6 +115,93 @@ final class SubscriptionController extends Controller
             'statusOptions' => $statusOptions,
             'billingCycleOptions' => $billingCycleOptions,
         ]);
+    }
+
+    public function show(Subscription $subscription): View|Factory
+    {
+        abort_if(Gate::denies('subscription_show'), 403);
+
+        $subscription->load(['user', 'plan', 'planPrice']);
+
+        return view('admin.subscriptions.show', [
+            'subscription' => $subscription,
+        ]);
+    }
+
+    public function edit(Subscription $subscription): View|Factory
+    {
+        abort_if(Gate::denies('subscription_edit'), 403);
+
+        $subscription->load(['user', 'plan', 'planPrice']);
+
+        $statusOptions = ['active', 'expired', 'cancelled', 'suspended'];
+
+        return view('admin.subscriptions.edit', [
+            'subscription' => $subscription,
+            'statusOptions' => $statusOptions,
+        ]);
+    }
+
+    public function update(UpdateSubscriptionRequest $request, Subscription $subscription): Redirector|RedirectResponse
+    {
+        $subscription->update([
+            'status' => $request->input('status'),
+            'starts_at' => $request->input('starts_at'),
+            'expires_at' => $request->input('expires_at'),
+            'next_renewal_at' => $request->input('next_renewal_at'),
+            'domain' => $request->input('domain'),
+            'auto_renew' => $request->boolean('auto_renew'),
+        ]);
+
+        Log::info('Subscription updated by admin', [
+            'subscription_id' => $subscription->id,
+            'admin_user_id' => auth()->id(),
+            'changes' => $request->validated(),
+        ]);
+
+        return to_route('admin.subscriptions.show', $subscription)
+            ->with('success', 'Subscription updated successfully.');
+    }
+
+    public function renewNow(Subscription $subscription): Redirector|RedirectResponse
+    {
+        abort_if(Gate::denies('subscription_edit'), 403);
+
+        if (! $subscription->canBeRenewed()) {
+            return back()->with('error', 'This subscription cannot be renewed at this time.');
+        }
+
+        try {
+            $billingCycle = $this->resolveBillingCycle($subscription->billing_cycle);
+            $subscription->extendSubscription($billingCycle);
+
+            Log::info('Subscription renewed manually by admin', [
+                'subscription_id' => $subscription->id,
+                'admin_user_id' => auth()->id(),
+                'new_expiry' => $subscription->expires_at->toDateString(),
+            ]);
+
+            return back()->with('success', 'Subscription renewed successfully. New expiry date: '.$subscription->expires_at->format('F d, Y'));
+        } catch (Throwable $exception) {
+            Log::error('Failed to renew subscription manually', [
+                'subscription_id' => $subscription->id,
+                'admin_user_id' => auth()->id(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return back()->with('error', 'Failed to renew subscription: '.$exception->getMessage());
+        }
+    }
+
+    private function resolveBillingCycle(string $cycle): \App\Enums\Hosting\BillingCycle
+    {
+        foreach (\App\Enums\Hosting\BillingCycle::cases() as $case) {
+            if ($case->value === $cycle) {
+                return $case;
+            }
+        }
+
+        return \App\Enums\Hosting\BillingCycle::Monthly;
     }
 
     private function applyDateFilter(Builder $query, string $column, string $operator, string $value): void
