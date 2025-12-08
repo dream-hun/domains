@@ -42,6 +42,14 @@ class HostingCategory extends Model
         ], true);
     }
 
+    public function requiresDomain(): bool
+    {
+        return in_array($this->slug, [
+            'shared-hosting',
+            'reseller-hosting',
+        ], true);
+    }
+
     protected static function boot(): void
     {
         parent::boot();

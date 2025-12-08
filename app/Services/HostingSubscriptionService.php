@@ -35,7 +35,11 @@ final class HostingSubscriptionService
         $planId = (int) ($metadata['hosting_plan_id'] ?? 0);
         $planPriceId = (int) ($metadata['hosting_plan_price_id'] ?? 0);
         $billingCycle = (string) ($metadata['billing_cycle'] ?? '');
-        $linkedDomain = (string) ($metadata['linked_domain'] ?? $orderItem->domain_name);
+        // Check if linked_domain key exists in metadata - if it does, use that value (even if null)
+        // Otherwise fall back to domain_name from order item
+        $linkedDomain = array_key_exists('linked_domain', $metadata)
+            ? $metadata['linked_domain']
+            : ($orderItem->domain_name ?? null);
 
         if ($planId === 0 || $planPriceId === 0) {
             Log::warning('Skipping hosting subscription creation due to missing plan metadata', [
@@ -61,14 +65,17 @@ final class HostingSubscriptionService
         }
 
         // Prevent duplicates if we already created a subscription for this user/domain combo
-        $alreadyExists = Subscription::query()
-            ->where('user_id', $order->user_id)
-            ->where('domain', $linkedDomain)
-            ->where('hosting_plan_price_id', $planPrice->id)
-            ->exists();
+        // For VPS with no domain, we skip duplicate checking since each VPS is independent
+        if ($linkedDomain !== null) {
+            $alreadyExists = Subscription::query()
+                ->where('user_id', $order->user_id)
+                ->where('domain', $linkedDomain)
+                ->where('hosting_plan_price_id', $planPrice->id)
+                ->exists();
 
-        if ($alreadyExists) {
-            return;
+            if ($alreadyExists) {
+                return;
+            }
         }
 
         $cycle = $this->resolveBillingCycle($billingCycle ?: $planPrice->billing_cycle);

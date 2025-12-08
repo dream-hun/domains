@@ -34,7 +34,7 @@ class Configuration extends Component
     public int $currentStep = 1;
 
     // Step 2: Domain connection
-    public string $domainOption = 'new'; // 'new' or 'existing'
+    public string $domainOption = 'new'; // 'new', 'existing', or 'none'
 
     public string $newDomainSource = 'new_purchase';
 
@@ -332,6 +332,11 @@ class Configuration extends Component
     #[Computed]
     public function canAddToCart(): bool
     {
+        // If category doesn't require domain, allow adding to cart without domain
+        if (! $this->plan->category->requiresDomain()) {
+            return $this->domainOption === 'none' || ($this->domainConfirmed && $this->finalDomainName !== null);
+        }
+
         return $this->domainConfirmed && $this->finalDomainName !== null;
     }
 
@@ -450,6 +455,19 @@ class Configuration extends Component
      */
     public function confirmDomainSelection(): void
     {
+        // If 'none' option is selected, skip domain validation
+        if ($this->domainOption === 'none') {
+            $this->resetErrorBag();
+            $this->domainConfirmed = true;
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Hosting plan ready. Click \'Add to Cart\' to proceed.',
+            ]);
+
+            return;
+        }
+
         $domainName = $this->finalDomainName;
 
         $isExternal = $this->domainOption === 'existing' && ($this->existingDomainSource === 'external' || ! Auth::check());
@@ -503,34 +521,46 @@ class Configuration extends Component
     {
         $domainName = $this->finalDomainName;
 
-        if (! $domainName) {
+        // Check if domain is required for this category
+        $domainRequired = $this->plan->category->requiresDomain();
+
+        if ($domainRequired && ! $domainName) {
             $this->addError('base', 'Please select or enter a domain name first.');
 
             return;
         }
 
-        if (! $this->domainConfirmed) {
+        if ($domainRequired && ! $this->domainConfirmed) {
             $this->addError('base', 'Please click "Connect To Hosting" to confirm your domain selection first.');
 
             return;
         }
 
-        // Check if hosting is already in cart for this domain
+        // For VPS/plans that don't require domain, allow proceeding without confirmation if no domain selected
+        if (! $domainRequired && $this->domainOption === 'none') {
+            $domainName = null;
+            $this->domainConfirmed = true;
+        }
+
+        // Check if hosting is already in cart for this domain (only if domain is provided)
         $cartContent = Cart::getContent();
-        $alreadyInCart = $cartContent->first(function ($item) use ($domainName): bool {
-            $isHosting = $item->attributes->get('type') === 'hosting';
 
-            if (! $isHosting) {
-                return false;
+        if ($domainName) {
+            $alreadyInCart = $cartContent->first(function ($item) use ($domainName): bool {
+                $isHosting = $item->attributes->get('type') === 'hosting';
+
+                if (! $isHosting) {
+                    return false;
+                }
+
+                return mb_strtolower((string) $item->attributes->get('linked_domain')) === mb_strtolower($domainName);
+            });
+
+            if ($alreadyInCart) {
+                $this->addError('base', 'A hosting plan is already in your cart for this domain.');
+
+                return;
             }
-
-            return mb_strtolower((string) $item->attributes->get('linked_domain')) === mb_strtolower($domainName);
-        });
-
-        if ($alreadyInCart) {
-            $this->addError('base', 'A hosting plan is already in your cart for this domain.');
-
-            return;
         }
 
         try {
@@ -547,7 +577,9 @@ class Configuration extends Component
             $hostingPrice = $priceModel->getPriceInCurrency('regular_price', $userCurrency);
 
             // Add Hosting Plan to Cart
-            $cartId = sprintf('hosting-%s-%s-%s', $this->plan->id, $this->billingCycle, $domainName);
+            // Use timestamp for unique cart ID when no domain is attached
+            $cartIdSuffix = $domainName ?? 'no-domain-'.now()->timestamp;
+            $cartId = sprintf('hosting-%s-%s-%s', $this->plan->id, $this->billingCycle, $cartIdSuffix);
 
             Cart::add([
                 'id' => $cartId,
@@ -562,12 +594,14 @@ class Configuration extends Component
                     'linked_domain' => $domainName,
                     'domain_name' => $domainName,
                     'is_existing_domain' => $this->domainOption === 'existing',
+                    'domain_required' => $domainRequired,
                     'currency' => $userCurrency,
                     'metadata' => [
                         'hosting_plan_id' => $this->plan->id,
                         'hosting_plan_price_id' => $priceModel->id,
                         'billing_cycle' => $this->billingCycle,
                         'linked_domain' => $domainName,
+                        'domain_required' => $domainRequired,
                         'plan' => $this->plan->only(['id', 'name', 'slug']),
                         'price' => [
                             'id' => $priceModel->id,

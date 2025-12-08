@@ -24,6 +24,7 @@ use Psr\Container\NotFoundExceptionInterface;
 /**
  * @property-read CartCollection $cartItems
  * @property-read bool $hasOnlyRenewals
+ * @property-read bool $hasItemsRequiringContacts
  * @property-read Collection $userContacts
  * @property-read ?Contact $selectedRegistrant
  * @property-read ?Contact $selectedAdmin
@@ -131,6 +132,33 @@ final class CheckoutWizard extends Component
         }
 
         return $cartItems->every(fn ($item): bool => ($item->attributes->type ?? 'registration') === 'renewal');
+    }
+
+    #[Computed(persist: false)]
+    public function hasItemsRequiringContacts(): bool
+    {
+        $cartItems = $this->cartItems;
+
+        if ($cartItems->isEmpty()) {
+            return false;
+        }
+
+        // Check if any item requires contact information (domains and hosting that requires domain)
+        return $cartItems->contains(function ($item): bool {
+            $itemType = $item->attributes->type ?? 'registration';
+
+            // Domain registrations and transfers require contacts
+            if (in_array($itemType, ['domain', 'registration', 'transfer'], true)) {
+                return true;
+            }
+
+            // Hosting only requires contacts if domain is required
+            if ($itemType === 'hosting') {
+                return $item->attributes->domain_required ?? false;
+            }
+
+            return false;
+        });
     }
 
     #[Computed(persist: false)]
@@ -272,8 +300,8 @@ final class CheckoutWizard extends Component
             return;
         }
 
-        // Skip contact step if cart has only renewals
-        if ($this->currentStep === self::STEP_REVIEW && $this->hasOnlyRenewals) {
+        // Skip contact step if cart has only renewals or no items requiring contacts
+        if ($this->currentStep === self::STEP_REVIEW && (! $this->hasItemsRequiringContacts || $this->hasOnlyRenewals)) {
             $this->currentStep = self::STEP_PAYMENT;
         } else {
             $this->currentStep++;
@@ -285,8 +313,8 @@ final class CheckoutWizard extends Component
     public function previousStep(): void
     {
         if ($this->currentStep > 1) {
-            // Skip contact step when going back if cart has only renewals
-            if ($this->currentStep === self::STEP_PAYMENT && $this->hasOnlyRenewals) {
+            // Skip contact step when going back if cart has only renewals or no items requiring contacts
+            if ($this->currentStep === self::STEP_PAYMENT && (! $this->hasItemsRequiringContacts || $this->hasOnlyRenewals)) {
                 $this->currentStep = self::STEP_REVIEW;
             } else {
                 $this->currentStep--;
@@ -365,9 +393,9 @@ final class CheckoutWizard extends Component
         try {
             $checkoutService = app(CheckoutService::class);
 
-            // For renewals, use user's primary contact as billing contact if not selected
+            // For renewals or orders without contact requirements, use user's primary contact as billing contact if not selected
             $billingContactId = $this->selectedBillingId;
-            if ($this->hasOnlyRenewals && ! $billingContactId) {
+            if ((! $this->hasItemsRequiringContacts || $this->hasOnlyRenewals) && ! $billingContactId) {
                 /** @var Contact|null $primaryContact */
                 $primaryContact = auth()->user()->contacts()->where('is_primary', true)->first();
                 $billingContactId = $primaryContact?->id;
@@ -446,8 +474,8 @@ final class CheckoutWizard extends Component
 
     private function validateContactStep(): bool
     {
-        // Skip contact validation for renewal-only orders
-        if ($this->hasOnlyRenewals) {
+        // Skip contact validation for renewal-only orders or orders with no items requiring contacts
+        if ($this->hasOnlyRenewals || ! $this->hasItemsRequiringContacts) {
             return true;
         }
 

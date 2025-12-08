@@ -33,8 +33,8 @@ final readonly class OrderService
         $billingContactId = $data['contact_ids']['billing'] ?? null;
         $contact = $billingContactId ? Contact::query()->find($billingContactId) : null;
 
-        // For renewals, use user's email if no contact specified
-        if (! $contact && $orderType === 'renewal') {
+        // For renewals or hosting-only orders, use user's email if no contact specified
+        if (! $contact && in_array($orderType, ['renewal', 'hosting'], true)) {
             $user = User::query()->find($data['user_id']);
             $billingEmail = $user->email;
             $billingName = $user->name;
@@ -223,8 +223,29 @@ final readonly class OrderService
             return 'transfer';
         }
 
-        // If all items are hosting only (no domain operations), mark as hosting order
+        // If cart has hosting and no domain operations, mark as hosting order
+        // Also check if hosting items don't require domain
         if ($hasHosting && ! $hasRegistration && ! $hasRenewal && ! $hasTransfer) {
+            return 'hosting';
+        }
+
+        // If cart has only hosting without domains (domain_required = false)
+        $allHostingWithoutDomain = true;
+        foreach ($cartItems as $item) {
+            $itemType = $item->attributes->type ?? 'registration';
+            if ($itemType !== 'hosting') {
+                $allHostingWithoutDomain = false;
+                break;
+            }
+
+            // Check if this hosting requires a domain
+            if ($item->attributes->domain_required ?? false) {
+                $allHostingWithoutDomain = false;
+                break;
+            }
+        }
+
+        if ($allHostingWithoutDomain && $hasHosting) {
             return 'hosting';
         }
 

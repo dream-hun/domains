@@ -85,15 +85,20 @@
         .search-input-group .search-icon-svg {
             width: 24px;
             height: 24px;
-            color: #94a3b8;
+            color: #4db6ac;
             flex-shrink: 0;
-            margin-right: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .search-input-group .search-icon-svg:hover {
+            color: #26a69a;
+            transform: scale(1.1);
         }
         .search-input-group input {
             border: none;
             outline: none;
             flex: 1;
-            padding: 0.5rem 0;
+            padding: 0.5rem 0.75rem;
             background: transparent;
         }
         .search-input-group input::placeholder {
@@ -205,6 +210,28 @@
                             </span>
                         </div>
                     </div>
+
+                    {{-- No Domain Option (only for VPS and other non-domain-required plans) --}}
+                    @if(!$plan->category->requiresDomain())
+                        <div class="domain-option-card mt-3 cursor-pointer {{ $domainOption === 'none' ? 'selected' : '' }}"
+                             wire:click="$set('domainOption', 'none')"
+                             style="
+                                border-radius: 12px;
+                                border: 2px solid {{ $domainOption === 'none' ? '#4db6ac' : '#e2e8f0' }};
+                                background: {{ $domainOption === 'none' ? 'linear-gradient(135deg, #4db6ac 0%, #26a69a 100%)' : '#ffffff' }};
+                                overflow: hidden;
+                             ">
+                            <div class="d-flex align-items-center px-4 py-3">
+                                {{-- Custom Radio Circle --}}
+                                <div class="domain-radio">
+                                    <div class="domain-radio-inner"></div>
+                                </div>
+                                <span class="ms-3 brand-desc" style="color: {{ $domainOption === 'none' ? '#ffffff' : '#2d3748' }};">
+                                    No Domain (Configure Later)
+                                </span>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 {{-- NEW DOMAIN SECTION --}}
@@ -340,18 +367,29 @@
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold mb-2" style="color: #2d3748;">Find a domain name:</label>
                                     <div class="search-input-group @error('domainSearchQuery') border-danger @enderror">
-                                        <svg wire:loading.remove wire:target="searchDomains" class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <circle cx="11" cy="11" r="8"></circle>
-                                            <path d="m21 21-4.35-4.35"></path>
-                                        </svg>
-
                                         <input type="text"
                                                wire:model="domainSearchQuery"
                                                wire:keydown.enter="searchDomains"
                                                wire:loading.attr="disabled"
                                                wire:target="searchDomains"
                                                placeholder="Search for domains" class="brand-desc">
-                                        <div wire:loading wire:target="searchDomains" class="spinner-border text-primary" role="status" style="display: none; width: 24px; height: 24px; margin-right: 0.75rem;">
+
+                                        <svg wire:loading.remove
+                                             wire:target="searchDomains"
+                                             wire:click="searchDomains"
+                                             class="search-icon-svg"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             viewBox="0 0 24 24"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-width="2"
+                                             stroke-linecap="round"
+                                             stroke-linejoin="round">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <path d="m21 21-4.35-4.35"></path>
+                                        </svg>
+
+                                        <div wire:loading wire:target="searchDomains" class="spinner-border text-primary" role="status" style="width: 24px; height: 24px;">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
                                     </div>
@@ -579,20 +617,32 @@
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold mb-2" style="color: #2d3748;">Enter your external domain name:</label>
                                         <div class="search-input-group @error('externalDomainName') border-danger @enderror">
-                                            <svg wire:loading.remove wire:target="validateExternalDomain" class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="10"></circle>
-                                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                                            </svg>
-                                            <div wire:loading wire:target="validateExternalDomain" class="spinner-border text-primary" role="status" style="display: none; width: 24px; height: 24px; margin-right: 0.75rem;">
-                                                <span class="visually-hidden">Validating...</span>
-                                            </div>
                                             <input type="text"
                                                    wire:model.blur="externalDomainName"
                                                    wire:keydown.enter="validateExternalDomain"
                                                    wire:loading.attr="disabled"
                                                    wire:target="validateExternalDomain"
                                                    placeholder="example.com" class="brand-desc">
+
+                                            <svg wire:loading.remove
+                                                 wire:target="validateExternalDomain"
+                                                 wire:click="validateExternalDomain"
+                                                 class="search-icon-svg"
+                                                 xmlns="http://www.w3.org/2000/svg"
+                                                 viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="2"
+                                                 stroke-linecap="round"
+                                                 stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                            </svg>
+
+                                            <div wire:loading wire:target="validateExternalDomain" class="spinner-border text-primary" role="status" style="width: 24px; height: 24px;">
+                                                <span class="visually-hidden">Validating...</span>
+                                            </div>
                                         </div>
                                         <div class="form-text mt-2">
                                             <i class="bi bi-info-circle me-1"></i>
@@ -633,20 +683,32 @@
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold mb-2" style="color: #2d3748;">Or enter an external domain:</label>
                                         <div class="search-input-group @error('externalDomainName') border-danger @enderror">
-                                            <svg wire:loading.remove wire:target="validateExternalDomain" class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="10"></circle>
-                                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                                            </svg>
-                                            <div wire:loading wire:target="validateExternalDomain" class="spinner-border text-primary" role="status" style="display: none; width: 24px; height: 24px; margin-right: 0.75rem;">
-                                                <span class="visually-hidden">Validating...</span>
-                                            </div>
                                             <input type="text"
                                                    wire:model.blur="externalDomainName"
                                                    wire:keydown.enter="validateExternalDomain"
                                                    wire:loading.attr="disabled"
                                                    wire:target="validateExternalDomain"
                                                    placeholder="example.com" class="brand-desc">
+
+                                            <svg wire:loading.remove
+                                                 wire:target="validateExternalDomain"
+                                                 wire:click="validateExternalDomain"
+                                                 class="search-icon-svg"
+                                                 xmlns="http://www.w3.org/2000/svg"
+                                                 viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="2"
+                                                 stroke-linecap="round"
+                                                 stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                            </svg>
+
+                                            <div wire:loading wire:target="validateExternalDomain" class="spinner-border text-primary" role="status" style="width: 24px; height: 24px;">
+                                                <span class="visually-hidden">Validating...</span>
+                                            </div>
                                         </div>
                                         @error('externalDomainName')
                                             <div class="text-danger small mt-1">{{ $message }}</div>
@@ -673,6 +735,42 @@
                                     @endif
                                 @endif
                             @endauth
+                        </div>
+                    </div>
+                @endif
+
+                {{-- NO DOMAIN SECTION --}}
+                @if($domainOption === 'none')
+                    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-4">No Domain Connection</h5>
+
+                            <div class="alert alert-info border-0" style="background: rgba(77, 182, 172, 0.1); color: #2d5f5f; border-radius: 8px;">
+                                <i class="bi bi-info-circle me-2"></i>
+                                You can configure a domain later. Your {{ $plan->category->name }} will be ready to use with its IP address.
+                            </div>
+
+                            @if(!$domainConfirmed)
+                                <div class="text-center mt-4">
+                                    <button class="btn btn-primary btn-lg px-5 py-3 fw-semibold" wire:click="confirmDomainSelection" wire:loading.attr="disabled" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(77, 182, 172, 0.3);">
+                                        <span wire:loading.remove wire:target="confirmDomainSelection">
+                                            <i class="bi bi-check-circle me-2"></i>
+                                            Confirm & Continue
+                                        </span>
+                                        <span wire:loading wire:target="confirmDomainSelection">
+                                            <span class="spinner-border spinner-border-sm me-2"></span>
+                                            Confirming...
+                                        </span>
+                                    </button>
+                                </div>
+                            @endif
+
+                            @if($domainConfirmed)
+                                <div class="alert alert-success d-flex align-items-center">
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                    <strong>Ready!</strong> Click "Add to Cart" at the bottom to proceed.
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -714,12 +812,20 @@
                         </div>
                         <div>
                             <div class="small text-muted">2. Domain Name Connection</div>
-                            @if($domainConfirmed && $this->finalDomainName)
+                            @if($domainConfirmed && $domainOption === 'none')
+                                <div class="fw-semibold text-success">No Domain (Will Configure Later)</div>
+                            @elseif($domainConfirmed && $this->finalDomainName)
                                 <div class="fw-semibold text-success">{{ $this->finalDomainName }}</div>
                             @elseif($this->finalDomainName)
                                 <div class="fw-semibold text-warning">{{ $this->finalDomainName }} <small>(not confirmed)</small></div>
                             @else
-                                <div class="text-muted">Connect a domain name to your Hosting Plan</div>
+                                <div class="text-muted">
+                                    @if(!$plan->category->requiresDomain())
+                                        Select a domain option or choose "No Domain"
+                                    @else
+                                        Connect a domain name to your Hosting Plan
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     </div>
