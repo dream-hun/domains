@@ -8,17 +8,27 @@
                     @php($supportEmail = data_get($settings, 'email'))
                     @if ($supportEmail)
                         <div class="rts-ht__email">
-                            <a href="mailto:{{ $supportEmail }}"><img src="assets/images/icon/email.svg" alt=""
-                                    class="icon">{{ $supportEmail }}</a>
+                            <a href="mailto:{{ $supportEmail }}">
+                                <img src="assets/images/icon/email.svg" alt="" class="icon">{{ $supportEmail }}
+                            </a>
                         </div>
                     @endif
-
                     <div class="rts-ht__links">
                         <div class="live-chat-has-dropdown">
-                            <a href="#" class="live__chat"><img src="assets/images/icon/forum.svg" alt=""
-                                    class="icon">Live Chat</a>
+                            <a href="#" class="live__chat">
+                                <img src="assets/images/icon/forum.svg" alt="" class="icon">Live Chat
+                            </a>
                         </div>
-                        <livewire:cart-total />
+                        <div class="live-chat-has-dropdown">
+                            <a href="#" class="live__chat">
+                                <livewire:currency-switcher />
+                            </a>
+                        </div>
+
+
+                        <div class="live-chat-has-dropdown">
+                            <livewire:cart-total />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -52,36 +62,31 @@
                                         <div class="row g-0">
                                             <div class="col-lg-12">
                                                 <ul class="mega-menu-item">
-                                                    <li>
-                                                        <a href="{{-- {{ route('shared.index') }} --}}">
-                                                            <img src="{{ asset('assets/images/mega-menu/22.svg') }}"
-                                                                alt="icon">
-                                                            <div class="info">
-                                                                <p>Shared Hosting</p>
-                                                                <span>Manage Shared Hosting</span>
-                                                            </div>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#">
-                                                            <img src="{{ asset('assets/images/mega-menu/27.svg') }}"
-                                                                alt="icon">
-                                                            <div class="info">
-                                                                <p>VPS - High Storage</p>
-                                                                <span>Get your highest storage VPS</span>
-                                                            </div>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#">
-                                                            <img src="{{ asset('assets/images/mega-menu/24.svg') }}"
-                                                                alt="icon">
-                                                            <div class="info">
-                                                                <p>VPS High Performance</p>
-                                                                <span>Dedicated resources</span>
-                                                            </div>
-                                                        </a>
-                                                    </li>
+                                                    @foreach ($hostingCategories as $category)
+                                                        <li>
+                                                            <a href="{{ route('hosting.categories.show', $category->slug) }}">
+                                                                @if($category->slug == 'shared-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/22.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'wordpress-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/27.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'vps-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/24.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'reseller-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/25.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'dedicated-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/26.svg') }}" alt="icon">
+                                                                @elseif($category->slug == 'cloud-hosting')
+                                                                    <img src="{{ asset('assets/images/mega-menu/28.svg') }}" alt="icon">
+                                                                @else
+                                                                    <img src="{{ asset('assets/images/mega-menu/22.svg') }}" alt="icon">
+                                                                @endif
+
+                                                                <div class="info">
+                                                                    <p>{{ $category->name }}</p>
+                                                                </div>
+                                                            </a>
+                                                        </li>
+                                                    @endforeach
                                                 </ul>
                                             </div>
 
@@ -92,11 +97,14 @@
                             <li class="menu-item hostie-has-dropdown">
                                 <a href="#" class="hostie-dropdown-main-element">Domain</a>
                                 <ul class="hostie-submenu list-unstyled menu-pages">
-                                    <li class="nav-item"><a class="nav-link" href="{{-- {{ route('domains.index') }} --}}">Register
-                                            Domain</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="{{-- {{route('admin.domains.transfer.check')}} --}}">Transfer
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{{ route('domains') }}">Register Domain</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{{-- {{route('admin.domains.transfer.check')}} --}}">Transfer
                                             Domain
-                                        </a></li>
+                                        </a>
+                                    </li>
 
                                 </ul>
                             </li>
@@ -117,11 +125,18 @@
                             <li class="menu-item hostie-has-dropdown">
                                 <a href="#" class="hostie-dropdown-main-element">Help Center</a>
                                 <ul class="hostie-submenu list-unstyled menu-pages">
-                                    <li class="nav-item"><a class="nav-link" href="#">FAQ</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Support</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Contact</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Knowledgebase</a></li>
-
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="#">FAQ</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="#">Support</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="#">Contact</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="#">Knowledgebase</a>
+                                    </li>
                                 </ul>
                             </li>
                         </ul>

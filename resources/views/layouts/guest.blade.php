@@ -50,7 +50,7 @@
 
 {{ $slot }}
 
-<x-footer-component></x-footer-component>
+<x-footer-component/>
 @stack('scripts')
 
 </body>
