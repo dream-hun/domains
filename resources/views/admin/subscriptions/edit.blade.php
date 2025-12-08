@@ -24,10 +24,10 @@
     <section class="content">
         <div class="container-fluid">
             <div class="row">
-                <div class="col-md-8 mx-auto">
+                <div class="col-md-12 mx-auto">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">Edit Subscription #{{ $subscription->uuid }}</h3>
+                            <h3 class="card-title">Edit Subscription #{{ $subscription->plan?->name }}</h3>
                         </div>
                         <div class="card-body">
                             <form action="{{ route('admin.subscriptions.update', $subscription) }}" method="POST">

@@ -148,14 +148,14 @@
                             <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Customer</th>
-                                        <th>Plan</th>
-                                        <th>Billing</th>
+                                        <th>Customer Name</th>
+                                        <th>Plan Name</th>
+                                        <th>Regular Price</th>
+                                        <th>Renewal Price</th>
+                                        <th>Billing Cycle</th>
                                         <th>Status</th>
-                                        <th>Start</th>
-                                        <th>Expiry</th>
-                                        <th>Next Renewal</th>
-                                        <th>Provider Ref</th>
+                                        <th>Start Date</th>
+                                        <th>Expires At</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -170,26 +170,28 @@
                                                 );
                                             @endphp
                                             <td class="align-middle">
-                                                <div class="font-weight-semibold">
-                                                    {{ $customerName !== '' ? $customerName : 'N/A' }}
-                                                </div>
+                                                {{ $customerName !== '' ? $customerName : 'N/A' }}
                                             </td>
                                             <td class="align-middle">
-                                                <div>{{ $subscription->plan?->name ?? 'N/A' }}</div>
-                                                <small class="text-muted">
-                                                    @if ($subscription->planPrice)
-                                                        Reg:
-                                                        {{ $subscription->planPrice->getFormattedPrice('regular_price') }}
-                                                        · Ren:
-                                                        {{ $subscription->planPrice->getFormattedPrice('renewal_price') }}
-                                                    @else
-                                                        Pricing unavailable
-                                                    @endif
-                                                </small>
+                                                {{ $subscription->plan?->name ?? 'N/A' }}
                                             </td>
                                             <td class="align-middle">
-                                                <span class="badge badge-light text-uppercase">
-                                                    {{ $subscription->billing_cycle ?? '—' }}
+                                                @if ($subscription->planPrice)
+                                                    {{ $subscription->planPrice->getFormattedPrice('regular_price') }}
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
+                                            <td class="align-middle">
+                                                @if ($subscription->planPrice)
+                                                    {{ $subscription->planPrice->getFormattedPrice('renewal_price') }}
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="badge badge-light">
+                                                    {{ ucfirst(str_replace('_', ' ', $subscription->billing_cycle ?? '—')) }}
                                                 </span>
                                             </td>
                                             <td class="align-middle">
@@ -201,18 +203,10 @@
                                                 </span>
                                             </td>
                                             <td class="align-middle">
-                                                {{ optional($subscription->starts_at)->format('M d, Y') ?? '—' }}
+                                                {{ $subscription->starts_at?->format('M d, Y') ?? '—' }}
                                             </td>
                                             <td class="align-middle">
-                                                {{ optional($subscription->expires_at)->format('M d, Y') ?? '—' }}
-                                            </td>
-                                            <td class="align-middle">
-                                                {{ optional($subscription->next_renewal_at)->format('M d, Y') ?? '—' }}
-                                            </td>
-                                            <td class="align-middle">
-                                                <span class="text-monospace">
-                                                    {{ $subscription->provider_resource_id ?? '—' }}
-                                                </span>
+                                                {{ $subscription->expires_at?->format('M d, Y') ?? '—' }}
                                             </td>
                                             <td class="align-middle">
                                                 <div class="btn-group" role="group">

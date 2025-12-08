@@ -42,7 +42,7 @@
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title mb-0">Subscription #{{ $subscription->uuid }}</h3>
+                    <h3 class="card-title mb-0">Subscription #{{ $subscription->plan?->name }}</h3>
                     @php
                         $statusBadgeClass = match($subscription->status) {
                             'active' => 'badge-success',
