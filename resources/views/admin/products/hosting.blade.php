@@ -98,26 +98,24 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-center">
-                                                    <div class="btn-group" role="group">
-                                                        <a href="{{ route('admin.products.subscription.show', $subscription) }}"
-                                                           class="btn btn-sm btn-info"
-                                                           title="View Details">
-                                                            <i class="bi bi-eye"></i>
-                                                            View Details
-                                                        </a>
-                                                        @if($subscription->canBeRenewed())
-                                                            <form action="{{ route('admin.products.subscription.renew', $subscription) }}"
-                                                                  method="POST"
-                                                                  class="d-inline">
-                                                                @csrf
-                                                                <button type="submit"
-                                                                        class="btn btn-sm btn-success"
-                                                                        title="Add Renewal to Cart">
-                                                                    <i class="bi bi-cart-plus"></i> Renew
-                                                                </button>
-                                                            </form>
-                                                        @endif
-                                                    </div>
+                                                    <a href="{{ route('admin.products.subscription.show', $subscription) }}"
+                                                       class="btn btn-sm btn-info"
+                                                       title="View Details">
+                                                        <i class="bi bi-eye"></i>
+                                                        View Details
+                                                    </a>
+                                                    @if($subscription->canBeRenewed())
+                                                        <form action="{{ route('admin.products.subscription.renew', $subscription) }}"
+                                                              method="POST"
+                                                              class="d-inline ms-2">
+                                                            @csrf
+                                                            <button type="submit"
+                                                                    class="btn btn-sm btn-success"
+                                                                    title="Add Renewal to Cart">
+                                                                <i class="bi bi-cart-plus"></i> Renew
+                                                            </button>
+                                                        </form>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @endforeach
