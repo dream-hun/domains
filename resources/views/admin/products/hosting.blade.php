@@ -90,12 +90,6 @@
                                                 <td>{{ $subscription->starts_at?->format('M d, Y') ?? 'N/A' }}</td>
                                                 <td>
                                                     {{ $subscription->expires_at?->format('M d, Y') ?? 'N/A' }}
-                                                    @if($subscription->expires_at)
-                                                        <br>
-                                                        <small class="text-muted">
-                                                            {{ $subscription->expires_at->diffForHumans() }}
-                                                        </small>
-                                                    @endif
                                                 </td>
                                                 <td class="text-center">
                                                     <a href="{{ route('admin.products.subscription.show', $subscription) }}"
