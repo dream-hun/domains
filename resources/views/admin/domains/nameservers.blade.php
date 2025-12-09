@@ -67,7 +67,7 @@
                                             <i class="bi bi-arrow-clockwise"></i> Fetch Contacts
                                         </button>
                                     </form>
-                                    @can('domain_assign')
+                                    @can('ownership_assignment_access')
                                         <div class="d-inline-block ms-2">
                                             <a href="{{ route('admin.domains.assign', $domain->uuid) }}" class="btn btn-info btn-sm">
                                                 <i class="bi bi-person"></i> Assign Owner
