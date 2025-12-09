@@ -8,6 +8,7 @@ use App\Enums\Hosting\BillingCycle;
 use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Domain;
+use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
@@ -28,15 +29,38 @@ class ProductController extends Controller
         return view('admin.products.domains', ['domains' => $domains]);
     }
 
-    public function hosting(): Factory|View
+    public function hosting(Request $request): Factory|View
     {
         abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
-        $subscriptions = Subscription::with(['user', 'plan', 'planPrice'])
-            ->where('user_id', auth()->user()->id)->latest()
+
+        $planId = $request->string('plan_id')->trim()->toString();
+
+        $subscriptionsQuery = Subscription::with(['user', 'plan', 'planPrice'])
+            ->where('user_id', auth()->user()->id);
+
+        if ($planId !== '') {
+            $subscriptionsQuery->where('hosting_plan_id', $planId);
+        }
+
+        $subscriptions = $subscriptionsQuery->latest()
             ->paginate(25)
             ->withQueryString();
 
-        return view('admin.products.hosting', ['subscriptions' => $subscriptions]);
+        $planIds = Subscription::query()
+            ->where('user_id', auth()->user()->id)
+            ->distinct()
+            ->pluck('hosting_plan_id');
+
+        $plans = HostingPlan::query()
+            ->whereIn('id', $planIds)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('admin.products.hosting', [
+            'subscriptions' => $subscriptions,
+            'plans' => $plans,
+            'selectedPlanId' => $planId,
+        ]);
     }
 
     public function showSubscription(Request $request, Subscription $subscription): View|Factory

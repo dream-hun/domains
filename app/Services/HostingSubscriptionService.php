@@ -130,6 +130,7 @@ final class HostingSubscriptionService
             BillingCycle::Annually => $start->copy()->addYear(),
             BillingCycle::Biennially => $start->copy()->addYears(2),
             BillingCycle::Triennially => $start->copy()->addYears(3),
+            default => $start->copy()->addMonth(),
         };
     }
 }

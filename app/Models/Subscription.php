@@ -110,6 +110,7 @@ class Subscription extends Model
             BillingCycle::Annually => $currentExpiry->copy()->addYear(),
             BillingCycle::Biennially => $currentExpiry->copy()->addYears(2),
             BillingCycle::Triennially => $currentExpiry->copy()->addYears(3),
+            default => $currentExpiry->copy()->addMonth(),
         };
 
         $snapshot = $this->product_snapshot ?? [];
