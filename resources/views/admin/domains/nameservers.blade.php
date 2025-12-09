@@ -67,9 +67,13 @@
                                             <i class="bi bi-arrow-clockwise"></i> Fetch Contacts
                                         </button>
                                     </form>
-                                    <a href="{{ route('admin.domains.assign', $domain->uuid) }}" class="btn btn-info btn-sm">
-                                        <i class="bi bi-person"></i> Assign Owner
-                                    </a>
+                                    @can('domain_assign')
+                                        <div class="d-inline-block ms-2">
+                                            <a href="{{ route('admin.domains.assign', $domain->uuid) }}" class="btn btn-info btn-sm">
+                                                <i class="bi bi-person"></i> Assign Owner
+                                            </a>
+                                        </div>
+                                    @endcan
                                 </div>
                             </div>
                         </div>
