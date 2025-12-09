@@ -62,15 +62,15 @@ final readonly class CheckoutService
             throw new Exception($paymentResult['error'] ?? 'Payment processing failed');
         });
 
-        // Payment is now committed - process domain registrations outside transaction
+        // Payment is now committed - process order items outside transaction
         if ($order->isPaid()) {
             try {
-                $this->domainRegistrationService->processDomainRegistrations($order, $data['contact_ids']);
+                $this->orderService->processDomainRegistrations($order, $data['contact_ids']);
                 $this->orderService->sendOrderConfirmation($order);
             } catch (Exception $e) {
-                // Registration failed but payment succeeded - this is handled by DomainRegistrationService
+                // Processing failed but payment succeeded - this is handled by OrderService
                 // Order status will be updated to 'requires_attention' and notifications sent
-                Log::error('Domain registration failed after successful payment', [
+                Log::error('Order processing failed after successful payment', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'error' => $e->getMessage(),

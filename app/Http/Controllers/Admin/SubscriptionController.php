@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSubscriptionRequest;
 use App\Models\Subscription;
+use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -163,7 +164,7 @@ final class SubscriptionController extends Controller
             ->with('success', 'Subscription updated successfully.');
     }
 
-    public function renewNow(Subscription $subscription): Redirector|RedirectResponse
+    public function renewNow(Request $request, Subscription $subscription): Redirector|RedirectResponse
     {
         abort_if(Gate::denies('subscription_edit'), 403);
 
@@ -171,17 +172,57 @@ final class SubscriptionController extends Controller
             return back()->with('error', 'This subscription cannot be renewed at this time.');
         }
 
-        try {
-            $billingCycle = $this->resolveBillingCycle($subscription->billing_cycle);
-            $subscription->extendSubscription($billingCycle);
+        $isComp = $request->boolean('is_comp', false);
+        $compReason = $request->string('comp_reason')->trim()->toString();
 
-            Log::info('Subscription renewed manually by admin', [
+        if (! $isComp) {
+            return back()->with('error', 'Admin renewals require explicit "comp" flag. Please use the comp renewal option or create a payment order.');
+        }
+
+        if (empty($compReason)) {
+            return back()->with('error', 'Comp renewal reason is required for audit purposes.');
+        }
+
+        try {
+            $billingCycleValue = $request->string('billing_cycle')->trim()->toString() ?: $subscription->billing_cycle;
+            $billingCycle = $this->resolveBillingCycle($billingCycleValue);
+
+            $planPrice = \App\Models\HostingPlanPrice::query()
+                ->where('hosting_plan_id', $subscription->hosting_plan_id)
+                ->where('billing_cycle', $billingCycle->value)
+                ->where('status', 'active')
+                ->first();
+
+            if (! $planPrice) {
+                throw new Exception("No active pricing found for billing cycle {$billingCycle->value}");
+            }
+
+            $renewalSnapshot = [
+                'id' => $planPrice->id,
+                'regular_price' => $planPrice->regular_price,
+                'renewal_price' => $planPrice->renewal_price,
+                'billing_cycle' => $planPrice->billing_cycle,
+                'comp_reason' => $compReason,
+                'comp_admin_id' => auth()->id(),
+            ];
+
+            $subscription->extendSubscription(
+                $billingCycle,
+                paidAmount: null,
+                validatePayment: false,
+                isComp: true,
+                renewalSnapshot: $renewalSnapshot
+            );
+
+            Log::info('Subscription renewed manually by admin (comp)', [
                 'subscription_id' => $subscription->id,
                 'admin_user_id' => auth()->id(),
+                'billing_cycle' => $billingCycle->value,
+                'comp_reason' => $compReason,
                 'new_expiry' => $subscription->expires_at->toDateString(),
             ]);
 
-            return back()->with('success', 'Subscription renewed successfully. New expiry date: '.$subscription->expires_at->format('F d, Y'));
+            return back()->with('success', 'Subscription renewed successfully (comp). New expiry date: '.$subscription->expires_at->format('F d, Y'));
         } catch (Throwable $exception) {
             Log::error('Failed to renew subscription manually', [
                 'subscription_id' => $subscription->id,

@@ -93,13 +93,19 @@ final class CartComponent extends Component
         // This ensures items stay in the same order regardless of updates
         $this->items = $cartContent->sortBy(fn ($item) => $item->attributes->get('added_at', 0));
 
-        // Calculate totals with currency conversion
         $subtotal = 0;
 
         try {
             foreach ($this->items as $item) {
                 $itemCurrency = $item->attributes->currency ?? 'USD';
-                $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+                $itemType = $item->attributes->get('type', 'registration');
+
+                if (! in_array($itemType, ['hosting', 'subscription_renewal'], true)) {
+                    $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+                } else {
+                    $convertedPrice = $item->price;
+                }
+
                 $itemTotal = $convertedPrice * $item->quantity;
                 $subtotal += $itemTotal;
             }
@@ -166,11 +172,17 @@ final class CartComponent extends Component
     public function getFormattedItemPrice($item): string
     {
         $itemCurrency = $item->attributes->currency ?? 'USD';
+        $itemType = $item->attributes->get('type', 'registration');
 
         try {
-            $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+            if (! in_array($itemType, ['hosting', 'subscription_renewal'], true)) {
+                $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
 
-            return CurrencyHelper::formatMoney($convertedPrice, $this->currency);
+                return CurrencyHelper::formatMoney($convertedPrice, $this->currency);
+            }
+
+            return CurrencyHelper::formatMoney($item->price, $itemCurrency);
+
         } catch (Exception $exception) {
             Log::warning('Falling back to original currency for cart item price display', [
                 'display_currency' => $this->currency,
@@ -192,12 +204,19 @@ final class CartComponent extends Component
     public function getFormattedItemTotal($item): string
     {
         $itemCurrency = $item->attributes->currency ?? 'USD';
+        $itemType = $item->attributes->get('type', 'registration');
 
         try {
-            $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
-            $total = $convertedPrice * $item->quantity;
+            if (! in_array($itemType, ['hosting', 'subscription_renewal'], true)) {
+                $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+                $total = $convertedPrice * $item->quantity;
 
-            return CurrencyHelper::formatMoney($total, $this->currency);
+                return CurrencyHelper::formatMoney($total, $this->currency);
+            }
+            $total = $item->price * $item->quantity;
+
+            return CurrencyHelper::formatMoney($total, $itemCurrency);
+
         } catch (Exception $exception) {
             Log::warning('Falling back to original currency for cart item total display', [
                 'display_currency' => $this->currency,
@@ -242,8 +261,6 @@ final class CartComponent extends Component
                     ],
                 ]);
 
-                // Make sure we preserve the original added_at timestamp
-                // This ensures the item maintains its position in the list
                 if (! $currentItem->attributes->has('added_at')) {
                     Cart::update($id, [
                         'attributes' => [
@@ -477,6 +494,139 @@ final class CartComponent extends Component
         }
     }
 
+    /**
+     * Add subscription renewal to cart
+     */
+    public function addSubscriptionRenewalToCart(int $subscriptionId, string $billingCycle): void
+    {
+        try {
+            $subscription = \App\Models\Subscription::with(['plan', 'planPrice'])->findOrFail($subscriptionId);
+            $user = auth()->user();
+
+            if (! $user) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'You must be logged in to renew a subscription',
+                ]);
+
+                return;
+            }
+
+            if ($subscription->user_id !== $user->id && ! $user->isAdmin()) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'You do not own this subscription',
+                ]);
+
+                return;
+            }
+
+            if (! $subscription->canBeRenewed()) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'This subscription cannot be renewed at this time',
+                ]);
+
+                return;
+            }
+
+            $billingCycleEnum = \App\Enums\Hosting\BillingCycle::tryFrom($billingCycle);
+            if (! $billingCycleEnum) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Invalid billing cycle selected',
+                ]);
+
+                return;
+            }
+
+            $planPrice = \App\Models\HostingPlanPrice::query()
+                ->where('hosting_plan_id', $subscription->hosting_plan_id)
+                ->where('billing_cycle', $billingCycle)
+                ->where('status', 'active')
+                ->first();
+
+            if (! $planPrice) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Pricing information not available for the selected billing cycle',
+                ]);
+
+                return;
+            }
+
+            $userCurrency = $this->currency;
+            $renewalPrice = $planPrice->getPriceInCurrency('renewal_price', $userCurrency);
+            $cartId = 'subscription-renewal-'.$subscription->id;
+
+            if (Cart::get($cartId)) {
+                $this->dispatch('notify', [
+                    'type' => 'warning',
+                    'message' => 'This subscription renewal is already in your cart',
+                ]);
+
+                return;
+            }
+
+            Cart::add([
+                'id' => $cartId,
+                'name' => ($subscription->domain ?: 'Hosting').' - '.$subscription->plan->name.' (Renewal)',
+                'price' => $renewalPrice,
+                'quantity' => 1,
+                'attributes' => [
+                    'type' => 'subscription_renewal',
+                    'subscription_id' => $subscription->id,
+                    'subscription_uuid' => $subscription->uuid,
+                    'billing_cycle' => $billingCycle,
+                    'hosting_plan_id' => $subscription->hosting_plan_id,
+                    'hosting_plan_price_id' => $planPrice->id,
+                    'domain' => $subscription->domain,
+                    'current_expiry' => $subscription->expires_at?->format('Y-m-d'),
+                    'currency' => $userCurrency,
+                    'unit_price' => $renewalPrice,
+                    'total_price' => $renewalPrice,
+                    'added_at' => now()->timestamp,
+                ],
+            ]);
+
+            $this->updateCartTotal();
+
+            // Recalculate discount if coupon is applied
+            if ($this->isCouponApplied && $this->appliedCoupon) {
+                $this->calculateDiscount();
+
+                // Update coupon session with new discount amount
+                session([
+                    'coupon' => [
+                        'code' => $this->appliedCoupon->code,
+                        'type' => $this->appliedCoupon->type->value,
+                        'value' => $this->appliedCoupon->value,
+                        'discount_amount' => $this->discountAmount,
+                        'currency' => $this->currency,
+                    ],
+                ]);
+            }
+
+            $this->dispatch('refreshCart');
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => sprintf('Subscription renewal for %s added to cart (%s billing cycle)', $subscription->plan->name, $billingCycleEnum->label()),
+            ]);
+        } catch (Exception $exception) {
+            Log::error('Failed to add subscription renewal to cart', [
+                'subscription_id' => $subscriptionId,
+                'billing_cycle' => $billingCycle,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Failed to add subscription renewal to cart: '.$exception->getMessage(),
+            ]);
+        }
+    }
+
     public function removeItem($id): void
     {
         try {
@@ -620,13 +770,12 @@ final class CartComponent extends Component
 
         foreach ($this->items as $item) {
             $itemCurrency = $item->attributes->currency ?? 'USD';
+            $itemType = $item->attributes->get('type', 'registration');
             $itemPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
 
-            // Build metadata array, including hosting-specific fields if present
             $metadata = $item->attributes->get('metadata', []);
 
-            // For hosting items, ensure plan metadata is included
-            if ($item->attributes->get('type') === 'hosting') {
+            if ($itemType === 'hosting') {
                 $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
                 $metadata['hosting_plan_price_id'] = $item->attributes->get('hosting_plan_price_id');
                 $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
@@ -634,9 +783,16 @@ final class CartComponent extends Component
                 $metadata['is_existing_domain'] = $item->attributes->get('is_existing_domain');
             }
 
+            if ($itemType === 'subscription_renewal') {
+                $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
+                $metadata['hosting_plan_price_id'] = $item->attributes->get('hosting_plan_price_id');
+                $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
+                $metadata['subscription_id'] = $item->attributes->get('subscription_id');
+            }
+
             $cartItems[] = [
                 'domain_name' => $item->attributes->get('domain_name') ?? $item->name,
-                'domain_type' => $item->attributes->get('type', 'registration'),
+                'domain_type' => $itemType,
                 'price' => $itemPrice,
                 'currency' => $this->currency,
                 'quantity' => $item->quantity,

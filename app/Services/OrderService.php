@@ -19,6 +19,7 @@ final readonly class OrderService
         private DomainRegistrationService $domainRegistrationService,
         private NotificationService $notificationService,
         private RenewalService $renewalService,
+        private SubscriptionRenewalService $subscriptionRenewalService,
         private HostingSubscriptionService $hostingSubscriptionService,
     ) {}
 

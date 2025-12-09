@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\Hosting\BillingCycle;
 use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Domain;
+use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
-use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -19,10 +20,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ProductController extends Controller
 {
-    public function __construct(
-        private readonly CurrencyService $currencyService
-    ) {}
-
     public function domains(): Factory|View
     {
         abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
@@ -71,55 +68,54 @@ class ProductController extends Controller
             return back()->with('error', 'This subscription cannot be renewed at this time.');
         }
 
-        $planPrice = $subscription->planPrice;
+        $planPrice = HostingPlanPrice::query()
+            ->where('hosting_plan_id', $subscription->hosting_plan_id)
+            ->where('billing_cycle', $subscription->billing_cycle)
+            ->where('status', 'active')
+            ->first();
 
         if (! $planPrice) {
-            return back()->with('error', 'Unable to find pricing information for this subscription.');
+            return back()->with('error', 'Unable to find pricing information for this subscription\'s billing cycle.');
         }
 
-        // Create unique cart ID for subscription renewal
         $cartId = 'subscription-renewal-'.$subscription->id;
 
-        // Check if already in cart
         if (Cart::get($cartId)) {
             return back()->with('info', 'This subscription renewal is already in your cart.');
         }
 
-        // Get user's selected currency
-        $currency = CurrencyHelper::getUserCurrency();
+        $userCurrency = CurrencyHelper::getUserCurrency();
+        $renewalPrice = $planPrice->getPriceInCurrency('renewal_price', $userCurrency);
+        $billingCycle = BillingCycle::tryFrom($subscription->billing_cycle);
 
-        // Convert price to selected currency
-        $renewalPrice = $this->currencyService->convert(
-            $planPrice->renewal_price,
-            'USD', // Assuming prices are stored in USD
-            $currency
-        );
-
-        // Add to cart
         Cart::add([
             'id' => $cartId,
-            'name' => ($subscription->plan?->name ?? 'Hosting Plan').' Renewal',
+            'name' => ($subscription->domain ?: 'Hosting').' - '.($subscription->plan?->name ?? 'Hosting Plan').' (Renewal)',
             'price' => $renewalPrice,
             'quantity' => 1,
             'attributes' => [
                 'type' => 'subscription_renewal',
                 'subscription_id' => $subscription->id,
                 'subscription_uuid' => $subscription->uuid,
+                'domain' => $subscription->domain,
                 'domain_name' => $subscription->domain ?? 'N/A',
                 'billing_cycle' => $subscription->billing_cycle,
-                'currency' => $currency,
+                'hosting_plan_id' => $subscription->hosting_plan_id,
+                'hosting_plan_price_id' => $planPrice->id,
+                'current_expiry' => $subscription->expires_at?->format('Y-m-d'),
+                'currency' => $userCurrency,
                 'unit_price' => $renewalPrice,
                 'total_price' => $renewalPrice,
                 'added_at' => now()->timestamp,
                 'metadata' => [
                     'hosting_plan_id' => $subscription->hosting_plan_id,
-                    'hosting_plan_price_id' => $subscription->hosting_plan_price_id,
+                    'hosting_plan_price_id' => $planPrice->id,
                     'billing_cycle' => $subscription->billing_cycle,
                     'subscription_id' => $subscription->id,
                 ],
             ],
         ]);
 
-        return redirect()->route('cart.index')->with('success', 'Subscription renewal added to cart.');
+        return redirect()->route('cart.index')->with('success', sprintf('Subscription renewal added to cart for %s billing cycle.', $billingCycle?->label() ?? $subscription->billing_cycle));
     }
 }

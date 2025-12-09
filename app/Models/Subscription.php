@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Hosting\BillingCycle;
+use Exception;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -68,8 +69,38 @@ class Subscription extends Model
         return in_array($this->status, ['active', 'expired'], true);
     }
 
-    public function extendSubscription(BillingCycle $billingCycle): void
-    {
+    /**
+     * @throws Exception
+     */
+    public function extendSubscription(
+        BillingCycle $billingCycle,
+        ?float $paidAmount = null,
+        bool $validatePayment = true,
+        bool $isComp = false,
+        ?array $renewalSnapshot = null
+    ): void {
+        if ($validatePayment && $paidAmount !== null && ! $isComp) {
+            $planPrice = HostingPlanPrice::query()
+                ->where('hosting_plan_id', $this->hosting_plan_id)
+                ->where('billing_cycle', $billingCycle->value)
+                ->where('status', 'active')
+                ->first();
+
+            if (! $planPrice) {
+                throw new Exception(
+                    "No active pricing found for plan {$this->hosting_plan_id} with billing cycle {$billingCycle->value}"
+                );
+            }
+
+            $expectedAmount = $planPrice->getPriceInBaseCurrency('renewal_price');
+
+            if (abs($paidAmount - $expectedAmount) > 0.01) {
+                throw new Exception(
+                    "Payment amount mismatch. Expected: {$expectedAmount}, Paid: {$paidAmount} for billing cycle {$billingCycle->value}"
+                );
+            }
+        }
+
         $currentExpiry = $this->expires_at ?? Date::now();
 
         $newExpiry = match ($billingCycle) {
@@ -81,11 +112,44 @@ class Subscription extends Model
             BillingCycle::Triennially => $currentExpiry->copy()->addYears(3),
         };
 
-        $this->update([
+        $snapshot = $this->product_snapshot ?? [];
+        if ($renewalSnapshot !== null) {
+            $snapshot['renewals'][] = [
+                'renewed_at' => Date::now()->toIso8601String(),
+                'billing_cycle' => $billingCycle->value,
+                'paid_amount' => $paidAmount,
+                'is_comp' => $isComp,
+                'price' => $renewalSnapshot,
+            ];
+        } else {
+            $planPrice = HostingPlanPrice::query()
+                ->where('hosting_plan_id', $this->hosting_plan_id)
+                ->where('billing_cycle', $billingCycle->value)
+                ->first();
+
+            if ($planPrice) {
+                $snapshot['price'] = [
+                    'id' => $planPrice->id,
+                    'regular_price' => $planPrice->regular_price,
+                    'renewal_price' => $planPrice->renewal_price,
+                    'billing_cycle' => $planPrice->billing_cycle,
+                    'updated_at' => Date::now()->toIso8601String(),
+                ];
+            }
+        }
+
+        $updateData = [
             'expires_at' => $newExpiry,
             'next_renewal_at' => $newExpiry,
             'status' => 'active',
-        ]);
+            'product_snapshot' => $snapshot,
+        ];
+
+        if ($this->billing_cycle !== $billingCycle->value) {
+            $updateData['billing_cycle'] = $billingCycle->value;
+        }
+
+        $this->update($updateData);
     }
 
     #[Scope]

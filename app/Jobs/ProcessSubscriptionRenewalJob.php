@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Enums\Hosting\BillingCycle;
 use App\Models\Order;
 use App\Models\Subscription;
 use App\Notifications\SubscriptionRenewedNotification;
+use App\Services\SubscriptionRenewalService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -37,7 +37,7 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(SubscriptionRenewalService $subscriptionRenewalService): void
     {
         try {
             Log::info('Processing subscription renewals for order', [
@@ -45,84 +45,13 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
                 'order_number' => $this->order->order_number,
             ]);
 
-            $allSuccessful = true;
-            $failedSubscriptions = [];
-            $renewedSubscriptions = [];
+            $results = $subscriptionRenewalService->processSubscriptionRenewals($this->order);
 
-            // Process each order item
-            foreach ($this->order->orderItems as $orderItem) {
-                // Check if this is a subscription renewal item
-                if ($orderItem->domain_type !== 'subscription_renewal') {
-                    continue;
-                }
-
-                $subscriptionId = $orderItem->metadata['subscription_id'] ?? null;
-
-                if (! $subscriptionId) {
-                    Log::error('Subscription ID not found in order item metadata', [
-                        'order_item_id' => $orderItem->id,
-                        'order_id' => $this->order->id,
-                    ]);
-                    $allSuccessful = false;
-                    $failedSubscriptions[] = $orderItem->domain_name ?? 'Unknown';
-
-                    continue;
-                }
-
-                $subscription = Subscription::query()->find($subscriptionId);
-
-                if (! $subscription) {
-                    Log::error('Subscription not found for renewal', [
-                        'subscription_id' => $subscriptionId,
-                        'order_id' => $this->order->id,
-                    ]);
-                    $allSuccessful = false;
-                    $failedSubscriptions[] = $orderItem->domain_name ?? "Subscription ID: {$subscriptionId}";
-
-                    continue;
-                }
-
-                Log::info('Processing renewal for subscription', [
-                    'subscription_id' => $subscription->id,
-                    'subscription_uuid' => $subscription->uuid,
-                    'domain' => $subscription->domain,
-                    'billing_cycle' => $subscription->billing_cycle,
-                ]);
-
-                try {
-                    // Resolve billing cycle
-                    $billingCycle = $this->resolveBillingCycle($subscription->billing_cycle);
-
-                    // Extend subscription
-                    $subscription->extendSubscription($billingCycle);
-
-                    $renewedSubscriptions[] = $subscription;
-
-                    Log::info('Subscription renewed successfully', [
-                        'subscription_id' => $subscription->id,
-                        'subscription_uuid' => $subscription->uuid,
-                        'new_expiry' => $subscription->expires_at->toDateString(),
-                    ]);
-
-                } catch (Exception $exception) {
-                    $allSuccessful = false;
-                    $failedSubscriptions[] = $subscription->domain ?? "Subscription UUID: {$subscription->uuid}";
-
-                    Log::error('Subscription renewal failed', [
-                        'subscription_id' => $subscription->id,
-                        'subscription_uuid' => $subscription->uuid,
-                        'error' => $exception->getMessage(),
-                    ]);
-                }
+            if ($results['successful'] !== []) {
+                $this->notifyUserSubscriptionRenewed($results['successful']);
             }
 
-            // Send notification to user about renewed subscriptions
-            if ($renewedSubscriptions !== []) {
-                $this->notifyUserSubscriptionRenewed($renewedSubscriptions);
-            }
-
-            // Update order status based on results
-            if ($allSuccessful) {
+            if ($results['failed'] === []) {
                 $this->order->update([
                     'status' => 'completed',
                 ]);
@@ -131,7 +60,19 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
                     'order_id' => $this->order->id,
                     'order_number' => $this->order->order_number,
                 ]);
+            } elseif ($results['successful'] === []) {
+                $this->order->update([
+                    'status' => 'failed',
+                    'notes' => 'All subscription renewals failed: '.implode(', ', array_column($results['failed'], 'subscription')),
+                ]);
+
+                Log::error('All subscription renewals failed', [
+                    'order_id' => $this->order->id,
+                    'order_number' => $this->order->order_number,
+                    'failed_subscriptions' => $results['failed'],
+                ]);
             } else {
+                $failedSubscriptions = array_column($results['failed'], 'subscription');
                 $this->order->update([
                     'status' => 'partially_completed',
                     'notes' => 'Some subscriptions failed to renew: '.implode(', ', $failedSubscriptions),
@@ -152,13 +93,11 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
                 'trace' => $exception->getTraceAsString(),
             ]);
 
-            // Update order status to failed
             $this->order->update([
                 'status' => 'failed',
                 'notes' => 'Subscription renewal processing failed: '.$exception->getMessage(),
             ]);
 
-            // Re-throw to trigger job retry
             throw $exception;
         }
     }
@@ -174,28 +113,16 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
             'error' => $exception?->getMessage() ?? 'Unknown error',
         ]);
 
-        // Update order status to failed
         $this->order->update([
             'status' => 'failed',
             'notes' => 'Subscription renewal processing failed after multiple attempts: '.($exception?->getMessage() ?? 'Unknown error'),
         ]);
     }
 
-    private function resolveBillingCycle(string $cycle): BillingCycle
-    {
-        foreach (BillingCycle::cases() as $case) {
-            if ($case->value === $cycle) {
-                return $case;
-            }
-        }
-
-        return BillingCycle::Monthly;
-    }
-
     /**
-     * @param  array<int, Subscription>  $subscriptions
+     * @param  array<int, array{subscription_id: int, subscription_uuid: string}>  $successfulResults
      */
-    private function notifyUserSubscriptionRenewed(array $subscriptions): void
+    private function notifyUserSubscriptionRenewed(array $successfulResults): void
     {
         $this->order->loadMissing('user');
 
@@ -208,6 +135,9 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
 
             return;
         }
+
+        $subscriptionIds = array_column($successfulResults, 'subscription_id');
+        $subscriptions = Subscription::query()->whereIn('id', $subscriptionIds)->get()->all();
 
         $user->notify(new SubscriptionRenewedNotification($this->order, $subscriptions));
     }

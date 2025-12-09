@@ -213,21 +213,19 @@ final class CheckoutWizard extends Component
     #[Computed]
     public function orderTotal(): float
     {
-        // Calculate total with currency conversion
         $total = 0;
         foreach ($this->cartItems as $item) {
             $itemPrice = $item->getPriceSum();
             $itemCurrency = $item->attributes->currency ?? 'USD';
+            $itemType = $item->attributes->get('type', 'registration');
 
-            // Convert to user's currency if different
-            if ($itemCurrency !== $this->userCurrencyCode) {
+            if (! in_array($itemType, ['subscription_renewal', 'hosting'], true) && $itemCurrency !== $this->userCurrencyCode) {
                 $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
             }
 
             $total += $itemPrice;
         }
 
-        // Subtract discount if coupon is applied
         return max(0, $total - $this->discountAmount);
     }
 
@@ -237,12 +235,13 @@ final class CheckoutWizard extends Component
     #[Computed]
     public function orderSubtotal(): float
     {
-        // Calculate subtotal with currency conversion
         $subtotal = 0;
         foreach ($this->cartItems as $item) {
             $itemPrice = $item->getPriceSum();
             $itemCurrency = $item->attributes->currency ?? 'USD';
-            if ($itemCurrency !== $this->userCurrencyCode) {
+            $itemType = $item->attributes->get('type', 'registration');
+
+            if (! in_array($itemType, ['subscription_renewal', 'hosting'], true) && $itemCurrency !== $this->userCurrencyCode) {
                 $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
             }
 
@@ -252,8 +251,6 @@ final class CheckoutWizard extends Component
         return $subtotal;
     }
 
-    // Helper method to format currency - always uses user's selected currency
-
     /**
      * @throws Exception
      */
@@ -262,8 +259,6 @@ final class CheckoutWizard extends Component
         return CurrencyHelper::formatMoney($amount, $this->userCurrencyCode);
     }
 
-    // Helper method to get item price - converts and formats in user's currency
-
     /**
      * @throws Exception
      */
@@ -271,13 +266,15 @@ final class CheckoutWizard extends Component
     {
         $itemPrice = $item->getPriceSum();
         $itemCurrency = $item->attributes->currency ?? 'USD';
+        $itemType = $item->attributes->get('type', 'registration');
 
-        // Convert to user's currency if different
-        if ($itemCurrency !== $this->userCurrencyCode) {
+        if (! in_array($itemType, ['subscription_renewal', 'hosting'], true) && $itemCurrency !== $this->userCurrencyCode) {
             $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
         }
 
-        return CurrencyHelper::formatMoney($itemPrice, $this->userCurrencyCode);
+        $displayCurrency = in_array($itemType, ['subscription_renewal', 'hosting'], true) ? $itemCurrency : $this->userCurrencyCode;
+
+        return CurrencyHelper::formatMoney($itemPrice, $displayCurrency);
     }
 
     public function goToStep(int $step): void
@@ -401,8 +398,8 @@ final class CheckoutWizard extends Component
                 $billingContactId = $primaryContact?->id;
             }
 
-            // Convert cart items to user's currency before creating order
-            $convertedCartItems = $this->convertCartItemsCurrency($this->cartItems, $this->userCurrencyCode);
+            $orderCurrency = $this->userCurrencyCode;
+            $convertedCartItems = $this->convertCartItemsCurrency($this->cartItems, $orderCurrency);
 
             $order = $checkoutService->processCheckout([
                 'user_id' => auth()->id(),
@@ -413,15 +410,13 @@ final class CheckoutWizard extends Component
                     'billing' => $billingContactId,
                 ],
                 'payment_method' => $this->selectedPaymentMethod,
-                'currency' => $this->userCurrencyCode,
+                'currency' => $orderCurrency,
                 'cart_items' => $convertedCartItems,
                 'coupon' => $this->appliedCoupon,
                 'discount_amount' => $this->discountAmount,
             ]);
 
-            // Check if we need to redirect to Stripe Checkout
             if ($this->selectedPaymentMethod === 'stripe' && $order->stripe_session_id) {
-                // Redirect to Stripe Checkout
                 return to_route('checkout.stripe.redirect', ['order' => $order->order_number]);
             }
 
@@ -599,12 +594,9 @@ final class CheckoutWizard extends Component
                         'amount' => $item->price,
                         'error' => $exception->getMessage(),
                     ]);
-
-                    // Keep original price if conversion fails
                 }
             }
 
-            // Clone the item with converted price and currency
             $convertedItem = clone $item;
             $convertedItem->price = $itemPrice;
             $convertedItem->attributes->currency = $targetCurrency;

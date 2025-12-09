@@ -6,9 +6,13 @@ namespace App\Http\Controllers;
 
 use App\Enums\Hosting\BillingCycle;
 use App\Jobs\ProcessDomainRenewalJob;
+use App\Models\Currency;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Notifications\SubscriptionAutoRenewalFailedNotification;
+use App\Services\OrderService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -19,8 +23,9 @@ use Stripe\Webhook;
 
 final class StripeWebhookController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        private OrderService $orderService
+    ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
 
@@ -263,22 +268,132 @@ final class StripeWebhookController extends Controller
                 return;
             }
 
-            // Extend subscription period
-            $billingCycle = $this->resolveBillingCycle($subscription->billing_cycle);
-            $subscription->extendSubscription($billingCycle);
-            $subscription->update(['last_renewal_attempt_at' => now()]);
+            $billingCycleValue = $invoice->metadata->billing_cycle ?? $subscription->billing_cycle;
+            $billingCycle = $this->resolveBillingCycle($billingCycleValue);
 
-            Log::info('Subscription extended successfully via Stripe webhook', [
+            $paidAmount = isset($invoice->amount_paid) ? ($invoice->amount_paid / 100) : null;
+
+            if ($paidAmount === null && isset($invoice->total)) {
+                $paidAmount = $invoice->total / 100;
+            }
+
+            $planPrice = \App\Models\HostingPlanPrice::query()
+                ->where('hosting_plan_id', $subscription->hosting_plan_id)
+                ->where('billing_cycle', $billingCycle->value)
+                ->where('status', 'active')
+                ->first();
+
+            if (! $planPrice) {
+                Log::error('No active pricing found for subscription renewal', [
+                    'subscription_id' => $subscription->id,
+                    'billing_cycle' => $billingCycle->value,
+                ]);
+                throw new Exception("No active pricing found for billing cycle {$billingCycle->value}");
+            }
+
+            $order = $this->createSubscriptionRenewalOrder(
+                $subscription,
+                $planPrice,
+                $billingCycle,
+                $paidAmount,
+                $invoice->id
+            );
+
+            $this->orderService->processDomainRegistrations($order);
+
+            Log::info('Subscription renewal order created and processed via Stripe webhook', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
                 'subscription_id' => $subscription->id,
-                'new_expiry' => $subscription->expires_at->toDateString(),
+                'billing_cycle' => $billingCycle->value,
+                'paid_amount' => $paidAmount,
             ]);
 
         } catch (Exception $exception) {
             Log::error('Error handling invoice.payment_succeeded webhook', [
                 'invoice_id' => $invoice->id ?? 'unknown',
                 'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
         }
+    }
+
+    /**
+     * Create an order for automatic subscription renewal
+     */
+    private function createSubscriptionRenewalOrder(
+        Subscription $subscription,
+        \App\Models\HostingPlanPrice $planPrice,
+        BillingCycle $billingCycle,
+        ?float $paidAmount,
+        string $stripeInvoiceId
+    ): Order {
+        $user = $subscription->user;
+
+        if (! $user) {
+            throw new Exception('Subscription has no associated user');
+        }
+
+        $currency = Currency::query()->where('code', 'USD')->firstOrFail();
+
+        $order = Order::query()->create([
+            'user_id' => $user->id,
+            'order_number' => Order::generateOrderNumber(),
+            'type' => 'subscription_renewal',
+            'status' => 'paid',
+            'payment_method' => 'stripe',
+            'payment_status' => 'paid',
+            'total_amount' => $paidAmount ?? $planPrice->renewal_price,
+            'subtotal' => $paidAmount ?? $planPrice->renewal_price,
+            'tax' => 0,
+            'currency' => 'USD',
+            'billing_email' => $user->email,
+            'billing_name' => $user->name,
+            'billing_address' => [],
+            'stripe_payment_intent_id' => $stripeInvoiceId,
+            'processed_at' => now(),
+            'items' => [
+                [
+                    'id' => $subscription->id,
+                    'name' => ($subscription->domain ?: 'Hosting').' - '.($subscription->plan?->name ?? 'Hosting Plan').' (Auto-Renewal)',
+                    'price' => $paidAmount ?? $planPrice->renewal_price,
+                    'quantity' => 1,
+                    'attributes' => [
+                        'type' => 'subscription_renewal',
+                        'subscription_id' => $subscription->id,
+                        'subscription_uuid' => $subscription->uuid,
+                        'billing_cycle' => $billingCycle->value,
+                        'hosting_plan_id' => $subscription->hosting_plan_id,
+                        'hosting_plan_price_id' => $planPrice->id,
+                        'domain' => $subscription->domain,
+                        'currency' => 'USD',
+                    ],
+                ],
+            ],
+        ]);
+
+        OrderItem::query()->create([
+            'order_id' => $order->id,
+            'domain_name' => $subscription->domain ?: 'Hosting',
+            'domain_type' => 'subscription_renewal',
+            'price' => $paidAmount ?? $planPrice->renewal_price,
+            'currency' => 'USD',
+            'exchange_rate' => 1.0,
+            'quantity' => 1,
+            'years' => 1,
+            'total_amount' => $paidAmount ?? $planPrice->renewal_price,
+            'metadata' => [
+                'subscription_id' => $subscription->id,
+                'subscription_uuid' => $subscription->uuid,
+                'billing_cycle' => $billingCycle->value,
+                'hosting_plan_id' => $subscription->hosting_plan_id,
+                'hosting_plan_price_id' => $planPrice->id,
+                'stripe_invoice_id' => $stripeInvoiceId,
+                'auto_renewal' => true,
+            ],
+        ]);
+
+        return $order->fresh(['orderItems']);
     }
 
     /**

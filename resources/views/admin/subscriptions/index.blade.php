@@ -215,6 +215,7 @@
                                                            class="btn btn-sm btn-info"
                                                            title="View Details">
                                                             <i class="bi bi-eye"></i>
+                                                            View
                                                         </a>
                                                     @endcan
                                                     @can('subscription_edit')
@@ -222,8 +223,19 @@
                                                            class="btn btn-sm btn-primary"
                                                            title="Edit">
                                                             <i class="bi bi-pencil"></i>
+                                                            Edit
                                                         </a>
                                                     @endcan
+                                                    <form action="{{ route('admin.products.subscription.renew', $subscription) }}"
+                                                    method="POST"
+                                                    class="d-inline">
+                                                  @csrf
+                                                  <button type="submit"
+                                                          class="btn btn-sm btn-success"
+                                                          title="Add Renewal to Cart">
+                                                      <i class="bi bi-cart-plus"></i> Renew
+                                                  </button>
+                                              </form>
                                                 </div>
                                             </td>
                                         </tr>

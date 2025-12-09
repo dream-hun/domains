@@ -63,7 +63,7 @@ test('extendSubscription extends expiry by monthly billing cycle', function (): 
         'expires_at' => $originalExpiry,
     ]);
 
-    $subscription->extendSubscription(BillingCycle::Monthly);
+    $subscription->extendSubscription(BillingCycle::Monthly, validatePayment: false);
 
     $expectedNewExpiry = $originalExpiry->copy()->addMonth();
 
@@ -79,7 +79,7 @@ test('extendSubscription extends expiry by annual billing cycle', function (): v
         'expires_at' => $originalExpiry,
     ]);
 
-    $subscription->extendSubscription(BillingCycle::Annually);
+    $subscription->extendSubscription(BillingCycle::Annually, validatePayment: false);
 
     $expectedNewExpiry = $originalExpiry->copy()->addYear();
 
@@ -94,7 +94,149 @@ test('extendSubscription reactivates expired subscription', function (): void {
         'expires_at' => now()->subDays(5),
     ]);
 
-    $subscription->extendSubscription(BillingCycle::Monthly);
+    $subscription->extendSubscription(BillingCycle::Monthly, validatePayment: false);
+
+    expect($subscription->status)->toBe('active');
+});
+
+test('extendSubscription validates payment amount correctly', function (): void {
+    $plan = HostingPlan::factory()->create();
+    $planPrice = HostingPlanPrice::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+        'renewal_price' => 10000, // $100.00 in cents
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+    ]);
+
+    // Should succeed with correct amount
+    $subscription->extendSubscription(BillingCycle::Monthly, paidAmount: 100.00, validatePayment: true);
+
+    expect($subscription->status)->toBe('active');
+});
+
+test('extendSubscription throws exception on payment amount mismatch', function (): void {
+    $plan = HostingPlan::factory()->create();
+    $planPrice = HostingPlanPrice::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+        'renewal_price' => 10000, // $100.00 in cents
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+    ]);
+
+    // Should fail with incorrect amount
+    expect(fn () => $subscription->extendSubscription(BillingCycle::Monthly, paidAmount: 50.00, validatePayment: true))
+        ->toThrow(Exception::class, 'Payment amount mismatch');
+});
+
+test('extendSubscription uses renewal_price not regular_price', function (): void {
+    $plan = HostingPlan::factory()->create();
+    $planPrice = HostingPlanPrice::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+        'regular_price' => 12000, // $120.00 in cents
+        'renewal_price' => 10000, // $100.00 in cents (different from regular)
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+    ]);
+
+    // Should accept renewal_price ($100), not regular_price ($120)
+    $subscription->extendSubscription(BillingCycle::Monthly, paidAmount: 100.00, validatePayment: true);
+
+    expect($subscription->status)->toBe('active');
+});
+
+test('extendSubscription updates billing cycle when changed', function (): void {
+    $plan = HostingPlan::factory()->create();
+    $monthlyPrice = HostingPlanPrice::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+        'renewal_price' => 10000,
+    ]);
+    $annualPrice = HostingPlanPrice::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'annually',
+        'renewal_price' => 100000,
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+    ]);
+
+    // Change to annual billing cycle
+    $subscription->extendSubscription(BillingCycle::Annually, paidAmount: 1000.00, validatePayment: true);
+
+    expect($subscription->billing_cycle)->toBe('annually')
+        ->and($subscription->status)->toBe('active');
+});
+
+test('extendSubscription updates product snapshot on renewal', function (): void {
+    $plan = HostingPlan::factory()->create();
+    $planPrice = HostingPlanPrice::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+        'renewal_price' => 10000,
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+    ]);
+
+    $renewalSnapshot = [
+        'id' => $planPrice->id,
+        'regular_price' => $planPrice->regular_price,
+        'renewal_price' => $planPrice->renewal_price,
+        'billing_cycle' => $planPrice->billing_cycle,
+    ];
+
+    $subscription->extendSubscription(
+        BillingCycle::Monthly,
+        paidAmount: 100.00,
+        validatePayment: true,
+        isComp: false,
+        renewalSnapshot: $renewalSnapshot
+    );
+
+    $snapshot = $subscription->product_snapshot;
+    expect($snapshot)->toHaveKey('renewals')
+        ->and($snapshot['renewals'])->toBeArray()
+        ->and(count($snapshot['renewals']))->toBe(1)
+        ->and($snapshot['renewals'][0])->toHaveKey('renewed_at')
+        ->and($snapshot['renewals'][0])->toHaveKey('paid_amount', 100.00);
+});
+
+test('extendSubscription allows comp renewal without payment validation', function (): void {
+    $plan = HostingPlan::factory()->create();
+    $planPrice = HostingPlanPrice::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+        'renewal_price' => 10000,
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+    ]);
+
+    // Comp renewal should not require payment validation
+    $subscription->extendSubscription(
+        BillingCycle::Monthly,
+        paidAmount: null,
+        validatePayment: false,
+        isComp: true
+    );
 
     expect($subscription->status)->toBe('active');
 });

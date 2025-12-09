@@ -41,7 +41,6 @@ final class SubscriptionRenewedNotification extends Notification implements Shou
     public function toMail(object $notifiable): MailMessage
     {
         $subscriptionCount = count($this->subscriptions);
-        $firstSubscription = $this->subscriptions[0] ?? null;
 
         $message = (new MailMessage)
             ->subject('Subscription'.($subscriptionCount > 1 ? 's' : '').' Renewed Successfully')
@@ -53,7 +52,7 @@ final class SubscriptionRenewedNotification extends Notification implements Shou
             $domain = $subscription->domain ?? 'N/A';
             $expiryDate = $subscription->expires_at?->format('F d, Y') ?? 'N/A';
 
-            $message->line("**{$planName}** (Domain: {$domain}) - New expiry: {$expiryDate}");
+            $message->line("**$planName** (Domain: $domain) - New expiry: $expiryDate");
         }
 
         $message->line('Order Number: **'.$this->order->order_number.'**')
@@ -89,7 +88,7 @@ final class SubscriptionRenewedNotification extends Notification implements Shou
                 $this->subscriptions
             ),
             'message' => $subscriptionCount > 1
-                ? "{$subscriptionCount} subscriptions renewed successfully"
+                ? "$subscriptionCount subscriptions renewed successfully"
                 : 'Subscription renewed successfully',
         ];
     }

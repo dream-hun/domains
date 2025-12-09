@@ -36,6 +36,7 @@ use App\Http\Controllers\RegisterDomainController;
 use App\Http\Controllers\SearchDomainController;
 use App\Http\Controllers\SmartCheckoutController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\SubscriptionRenewalController;
 use App\Livewire\Hosting\Configuration;
 use Illuminate\Support\Facades\Route;
 
@@ -124,6 +125,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     // Domain renewal routes
     Route::get('/domains/{domain}/renew', [DomainRenewalController::class, 'show'])->name('domains.renew.show');
     Route::post('/domains/{domain}/renew', [DomainRenewalController::class, 'addToCart'])->name('domains.renew.add-to-cart');
+
+    // Subscription renewal routes
+    Route::get('/subscriptions/{subscription}/renew', [SubscriptionRenewalController::class, 'show'])->name('subscriptions.renew.show');
+    Route::post('/subscriptions/{subscription}/renew', [SubscriptionRenewalController::class, 'addToCart'])->name('subscriptions.renew.add-to-cart');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
