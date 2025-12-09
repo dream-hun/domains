@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\StripeHelper;
 use App\Jobs\ProcessDomainRenewalJob;
+use App\Jobs\ProcessSubscriptionRenewalJob;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\TransactionLogger;
@@ -170,7 +171,8 @@ final class CheckoutController extends Controller
 
                 Cart::clear();
 
-                dispatch(new ProcessDomainRenewalJob($order));
+                // Dispatch appropriate renewal jobs based on order items
+                $this->dispatchRenewalJobs($order);
 
                 $order->refresh();
                 $paymentAttempt?->refresh();
@@ -436,5 +438,48 @@ final class CheckoutController extends Controller
             'failure_details' => $failureDetails,
             'last_attempted_at' => now(),
         ]);
+    }
+
+    /**
+     * Dispatch appropriate renewal jobs based on order items
+     */
+    private function dispatchRenewalJobs(Order $order): void
+    {
+        $items = $order->items ?? [];
+        $hasDomainRenewals = false;
+        $hasSubscriptionRenewals = false;
+
+        foreach ($items as $item) {
+            $itemType = $item['attributes']['type'] ?? null;
+
+            if ($itemType === 'renewal') {
+                $hasDomainRenewals = true;
+            } elseif ($itemType === 'subscription_renewal') {
+                $hasSubscriptionRenewals = true;
+            }
+        }
+
+        if ($hasDomainRenewals) {
+            Log::info('Dispatching ProcessDomainRenewalJob', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+            dispatch(new ProcessDomainRenewalJob($order));
+        }
+
+        if ($hasSubscriptionRenewals) {
+            Log::info('Dispatching ProcessSubscriptionRenewalJob', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+            dispatch(new ProcessSubscriptionRenewalJob($order));
+        }
+
+        if (! $hasDomainRenewals && ! $hasSubscriptionRenewals) {
+            Log::warning('No renewal items found in order, no jobs dispatched', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+        }
     }
 }

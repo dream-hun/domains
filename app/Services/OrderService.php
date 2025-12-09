@@ -113,6 +113,14 @@ final readonly class OrderService
                 $itemMetadata['subscription_id'] = $subscriptionId;
             }
 
+            // For subscription renewals, ensure billing_cycle is included in metadata
+            if ($itemType === 'subscription_renewal') {
+                $billingCycle = $item->attributes->billing_cycle ?? null;
+                if ($billingCycle) {
+                    $itemMetadata['billing_cycle'] = $billingCycle;
+                }
+            }
+
             OrderItem::query()->create([
                 'order_id' => $order->id,
                 'domain_name' => $item->attributes->domain_name ?? $item->name,

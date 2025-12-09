@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Hosting\BillingCycle;
 use App\Jobs\ProcessDomainRenewalJob;
+use App\Jobs\ProcessSubscriptionRenewalJob;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -133,8 +134,9 @@ final class StripeWebhookController extends Controller
                     'processed_at' => now(),
                 ]);
 
-                if ($order->type === 'renewal') {
-                    dispatch(new ProcessDomainRenewalJob($order));
+                // Dispatch appropriate renewal jobs based on order items
+                if (in_array($order->type, ['renewal', 'subscription_renewal'], true)) {
+                    $this->dispatchRenewalJobs($order);
                 }
             }
 
@@ -512,5 +514,48 @@ final class StripeWebhookController extends Controller
         }
 
         return Payment::query()->where('stripe_payment_intent_id', $paymentIntent->id)->first();
+    }
+
+    /**
+     * Dispatch appropriate renewal jobs based on order items
+     */
+    private function dispatchRenewalJobs(Order $order): void
+    {
+        $items = $order->items ?? [];
+        $hasDomainRenewals = false;
+        $hasSubscriptionRenewals = false;
+
+        foreach ($items as $item) {
+            $itemType = $item['attributes']['type'] ?? null;
+
+            if ($itemType === 'renewal') {
+                $hasDomainRenewals = true;
+            } elseif ($itemType === 'subscription_renewal') {
+                $hasSubscriptionRenewals = true;
+            }
+        }
+
+        if ($hasDomainRenewals) {
+            Log::info('Dispatching ProcessDomainRenewalJob', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+            dispatch(new ProcessDomainRenewalJob($order));
+        }
+
+        if ($hasSubscriptionRenewals) {
+            Log::info('Dispatching ProcessSubscriptionRenewalJob', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+            dispatch(new ProcessSubscriptionRenewalJob($order));
+        }
+
+        if (! $hasDomainRenewals && ! $hasSubscriptionRenewals) {
+            Log::warning('No renewal items found in order, no jobs dispatched', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+        }
     }
 }

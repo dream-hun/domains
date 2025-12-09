@@ -73,24 +73,31 @@ final class DomainRenewalController extends Controller
         $tld = $domainPrice->tld ? Str::ltrim($domainPrice->tld, '.') : $this->extractTldFallback($domain->name);
         $tld = $tld ? '.'.$tld : null;
 
-        // Clear existing cart items to ensure single item checkout
-        // You can modify this to allow multiple renewals in one cart
-        Cart::clear();
+        // Create unique cart ID for renewal (consistent with CartController)
+        $cartId = 'renewal-'.$domain->id;
+
+        // Check if already in cart
+        if (Cart::get($cartId)) {
+            return $this->respondRenewalError($request, 'This domain renewal is already in your cart.', 400);
+        }
 
         // Add to cart
         Cart::add([
-            'id' => $domain->id,
-            'name' => $domain->name,
+            'id' => $cartId,
+            'name' => $domain->name.' (Renewal)',
             'price' => $renewalPricePerYear,
             'quantity' => $years,
             'attributes' => [
                 'type' => 'renewal',
+                'domain_id' => $domain->id,
+                'domain_name' => $domain->name,
                 'years' => $years,
-                'current_expiry' => $domain->expires_at->toDateString(),
+                'current_expiry' => $domain->expires_at?->toDateString(),
                 'tld' => $tld,
                 'currency' => $currency,
                 'unit_price' => $renewalPricePerYear,
                 'total_price' => $totalPrice,
+                'added_at' => now()->timestamp,
             ],
         ]);
 

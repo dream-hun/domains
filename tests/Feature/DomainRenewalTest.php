@@ -79,7 +79,7 @@ it('adds domain to cart for renewal', function (): void {
     $response->assertSessionHas('success');
 
     expect(Cart::getContent())->not->toBeEmpty();
-    expect(Cart::getContent()->first()->name)->toBe($this->domain->name);
+    expect(Cart::getContent()->first()->name)->toBe($this->domain->name.' (Renewal)');
     expect(Cart::getContent()->first()->quantity)->toBe(2);
 });
 
@@ -191,4 +191,52 @@ it('redirects to dashboard if cart is empty', function (): void {
 
     $response->assertRedirect(route('dashboard'));
     $response->assertSessionHas('error');
+});
+
+it('allows multiple items in cart including renewals', function (): void {
+    // Add a domain to cart first
+    Cart::add([
+        'id' => 'example2.com',
+        'name' => 'example2.com',
+        'price' => 10.00,
+        'quantity' => 1,
+        'attributes' => [
+            'type' => 'domain',
+            'domain_name' => 'example2.com',
+            'currency' => 'USD',
+        ],
+    ]);
+
+    // Add renewal for another domain
+    $response = actingAs($this->user)
+        ->post(route('domains.renew.add-to-cart', $this->domain), [
+            'years' => 1,
+        ]);
+
+    $response->assertRedirect(route('checkout.index'));
+    $response->assertSessionHas('success');
+
+    // Verify both items are in cart
+    $cartItems = Cart::getContent();
+    expect($cartItems)->toHaveCount(2);
+    expect($cartItems->pluck('name')->toArray())->toContain('example2.com', 'example.com (Renewal)');
+});
+
+it('prevents adding duplicate renewals to cart', function (): void {
+    // Add renewal first time
+    $response1 = actingAs($this->user)
+        ->post(route('domains.renew.add-to-cart', $this->domain), [
+            'years' => 1,
+        ]);
+
+    $response1->assertRedirect(route('checkout.index'));
+
+    // Try to add same renewal again
+    $response2 = actingAs($this->user)
+        ->post(route('domains.renew.add-to-cart', $this->domain), [
+            'years' => 1,
+        ]);
+
+    $response2->assertSessionHas('error');
+    expect(Cart::getContent())->toHaveCount(1);
 });

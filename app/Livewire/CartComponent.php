@@ -14,6 +14,7 @@ use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -102,11 +103,15 @@ final class CartComponent extends Component
 
                 if (! in_array($itemType, ['hosting', 'subscription_renewal'], true)) {
                     $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+                    $itemTotal = $convertedPrice * $item->quantity;
+                } elseif ($itemType === 'subscription_renewal') {
+                    $monthlyPrice = $item->attributes->get('monthly_unit_price', $item->price);
+                    $itemTotal = $monthlyPrice * $item->quantity;
                 } else {
                     $convertedPrice = $item->price;
+                    $itemTotal = $convertedPrice * $item->quantity;
                 }
 
-                $itemTotal = $convertedPrice * $item->quantity;
                 $subtotal += $itemTotal;
             }
 
@@ -181,6 +186,12 @@ final class CartComponent extends Component
                 return CurrencyHelper::formatMoney($convertedPrice, $this->currency);
             }
 
+            if ($itemType === 'subscription_renewal') {
+                $monthlyPrice = $item->attributes->get('monthly_unit_price', $item->price);
+
+                return CurrencyHelper::formatMoney($monthlyPrice, $itemCurrency);
+            }
+
             return CurrencyHelper::formatMoney($item->price, $itemCurrency);
 
         } catch (Exception $exception) {
@@ -213,7 +224,13 @@ final class CartComponent extends Component
 
                 return CurrencyHelper::formatMoney($total, $this->currency);
             }
-            $total = $item->price * $item->quantity;
+
+            if ($itemType === 'subscription_renewal') {
+                $monthlyPrice = $item->attributes->get('monthly_unit_price', $item->price);
+                $total = $monthlyPrice * $item->quantity;
+            } else {
+                $total = $item->price * $item->quantity;
+            }
 
             return CurrencyHelper::formatMoney($total, $itemCurrency);
 
@@ -243,7 +260,9 @@ final class CartComponent extends Component
                 return;
             }
 
-            if ($currentItem->attributes->get('type', 'registration') === 'hosting') {
+            $itemType = $currentItem->attributes->get('type', 'registration');
+
+            if ($itemType === 'hosting') {
                 $this->dispatch('notify', [
                     'type' => 'error',
                     'message' => 'Hosting plans are billed as subscriptions and cannot change quantity.',
@@ -252,14 +271,28 @@ final class CartComponent extends Component
                 return;
             }
 
-            if ($quantity > 0 && $quantity <= 10) {
-                // Update quantity while preserving attributes
-                Cart::update($id, [
-                    'quantity' => [
-                        'relative' => false,
-                        'value' => (int) $quantity,
-                    ],
-                ]);
+            $maxQuantity = $itemType === 'subscription_renewal' ? 36 : 10;
+
+            if ($quantity >= 1 && $quantity <= $maxQuantity) {
+                if ($itemType === 'subscription_renewal') {
+                    $existingAttributes = $currentItem->attributes->all();
+                    Cart::update($id, [
+                        'quantity' => [
+                            'relative' => false,
+                            'value' => (int) $quantity,
+                        ],
+                        'attributes' => array_merge($existingAttributes, [
+                            'duration_months' => (int) $quantity,
+                        ]),
+                    ]);
+                } else {
+                    Cart::update($id, [
+                        'quantity' => [
+                            'relative' => false,
+                            'value' => (int) $quantity,
+                        ],
+                    ]);
+                }
 
                 if (! $currentItem->attributes->has('added_at')) {
                     Cart::update($id, [
@@ -292,6 +325,12 @@ final class CartComponent extends Component
                 $this->dispatch('notify', [
                     'type' => 'success',
                     'message' => 'Quantity updated successfully',
+                ]);
+            } else {
+                $maxLabel = $itemType === 'subscription_renewal' ? '36 months' : '10 years';
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => sprintf('Quantity must be between 1 and %s', $maxLabel),
                 ]);
             }
         } catch (Exception) {
@@ -540,23 +579,31 @@ final class CartComponent extends Component
                 return;
             }
 
-            $planPrice = \App\Models\HostingPlanPrice::query()
+            $monthlyPlanPrice = \App\Models\HostingPlanPrice::query()
                 ->where('hosting_plan_id', $subscription->hosting_plan_id)
-                ->where('billing_cycle', $billingCycle)
+                ->where('billing_cycle', 'monthly')
                 ->where('status', 'active')
                 ->first();
 
-            if (! $planPrice) {
+            if (! $monthlyPlanPrice) {
+                $monthlyPlanPrice = \App\Models\HostingPlanPrice::query()
+                    ->where('hosting_plan_id', $subscription->hosting_plan_id)
+                    ->where('status', 'active')
+                    ->first();
+            }
+
+            if (! $monthlyPlanPrice) {
                 $this->dispatch('notify', [
                     'type' => 'error',
-                    'message' => 'Pricing information not available for the selected billing cycle',
+                    'message' => 'Pricing information not available for this subscription',
                 ]);
 
                 return;
             }
 
             $userCurrency = $this->currency;
-            $renewalPrice = $planPrice->getPriceInCurrency('renewal_price', $userCurrency);
+            $monthlyRenewalPrice = $monthlyPlanPrice->getPriceInCurrency('renewal_price', $userCurrency);
+            $durationMonths = $this->getBillingCycleMonths($billingCycle);
             $cartId = 'subscription-renewal-'.$subscription->id;
 
             if (Cart::get($cartId)) {
@@ -571,20 +618,19 @@ final class CartComponent extends Component
             Cart::add([
                 'id' => $cartId,
                 'name' => ($subscription->domain ?: 'Hosting').' - '.$subscription->plan->name.' (Renewal)',
-                'price' => $renewalPrice,
-                'quantity' => 1,
+                'price' => $monthlyRenewalPrice,
+                'quantity' => $durationMonths,
                 'attributes' => [
                     'type' => 'subscription_renewal',
                     'subscription_id' => $subscription->id,
                     'subscription_uuid' => $subscription->uuid,
-                    'billing_cycle' => $billingCycle,
                     'hosting_plan_id' => $subscription->hosting_plan_id,
-                    'hosting_plan_price_id' => $planPrice->id,
+                    'hosting_plan_price_id' => $monthlyPlanPrice->id,
                     'domain' => $subscription->domain,
                     'current_expiry' => $subscription->expires_at?->format('Y-m-d'),
                     'currency' => $userCurrency,
-                    'unit_price' => $renewalPrice,
-                    'total_price' => $renewalPrice,
+                    'monthly_unit_price' => $monthlyRenewalPrice,
+                    'duration_months' => $durationMonths,
                     'added_at' => now()->timestamp,
                 ],
             ]);
@@ -609,9 +655,10 @@ final class CartComponent extends Component
 
             $this->dispatch('refreshCart');
 
+            $durationLabel = $this->formatDurationLabel($durationMonths);
             $this->dispatch('notify', [
                 'type' => 'success',
-                'message' => sprintf('Subscription renewal for %s added to cart (%s billing cycle)', $subscription->plan->name, $billingCycleEnum->label()),
+                'message' => sprintf('Subscription renewal for %s added to cart (%s)', $subscription->plan->name, $durationLabel),
             ]);
         } catch (Exception $exception) {
             Log::error('Failed to add subscription renewal to cart', [
@@ -871,6 +918,17 @@ final class CartComponent extends Component
         return view('livewire.cart-component');
     }
 
+    public function formatDurationLabel(int $months): string
+    {
+        if ($months < 12) {
+            return $months.' '.Str::plural('month', $months);
+        }
+
+        $years = (int) ($months / 12);
+
+        return $years.' '.Str::plural('year', $years);
+    }
+
     /**
      * Convert an amount from its original currency into the current display currency.
      *
@@ -944,5 +1002,18 @@ final class CartComponent extends Component
                 Cart::remove($item->id);
             }
         }
+    }
+
+    private function getBillingCycleMonths(string $billingCycle): int
+    {
+        return match ($billingCycle) {
+            'monthly' => 1,
+            'quarterly' => 3,
+            'semi-annually' => 6,
+            'annually' => 12,
+            'biennially' => 24,
+            'triennially' => 36,
+            default => 1,
+        };
     }
 }
