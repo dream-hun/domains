@@ -55,7 +55,15 @@ final readonly class RenewDomainAction
                 // Calculate the renewal amount from the order
                 $renewalAmount = 0;
                 foreach ($order->items as $item) {
-                    if ($item['id'] === $domain->id && $item['attributes']['type'] === 'renewal') {
+                    // Check domain_id from attributes (for renewals) or item id (for backward compatibility)
+                    $itemDomainId = $item['attributes']['domain_id'] ?? $item['id'];
+
+                    // If item ID is a string like "renewal-6", extract the numeric part
+                    if (is_string($itemDomainId) && str_starts_with($itemDomainId, 'renewal-')) {
+                        $itemDomainId = (int) str_replace('renewal-', '', $itemDomainId);
+                    }
+
+                    if ($itemDomainId === $domain->id && ($item['attributes']['type'] ?? null) === 'renewal') {
                         $renewalAmount = $item['price'] * $item['quantity'];
                         break;
                     }

@@ -62,8 +62,15 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                     continue;
                 }
 
-                $domainId = $item['id'];
+                // Get domain ID from attributes (where it's stored for renewals)
+                // Fallback to item ID if domain_id is not in attributes (for backward compatibility)
+                $domainId = $item['attributes']['domain_id'] ?? $item['id'];
                 $years = $item['attributes']['years'] ?? $item['quantity'];
+
+                // If domain_id is still a string like "renewal-6", extract the numeric part
+                if (is_string($domainId) && str_starts_with($domainId, 'renewal-')) {
+                    $domainId = (int) str_replace('renewal-', '', $domainId);
+                }
 
                 // Find the domain (bypass global scopes since we're in a job context)
                 $domain = Domain::query()->withoutGlobalScopes()->find($domainId);
@@ -72,6 +79,8 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                     Log::error('Domain not found for renewal', [
                         'domain_id' => $domainId,
                         'order_id' => $this->order->id,
+                        'item_id' => $item['id'],
+                        'item_attributes' => $item['attributes'] ?? [],
                     ]);
                     $allSuccessful = false;
                     $failedDomains[] = $item['name'] ?? 'Domain ID: '.$domainId;
