@@ -11,23 +11,23 @@
                         <h4>Hosting</h4>
                     </div>
                     <div class="card-body">
-                        @if(!$plans->isEmpty())
+                        @if(!$categories->isEmpty())
                             <form method="GET" action="{{ route('admin.products.hosting') }}" class="mb-3">
                                 <div class="row align-items-end">
                                     <div class="col-md-4">
                                         <div class="form-group mb-0">
-                                            <label for="plan_id">Filter by Plan:</label>
-                                            <select name="plan_id" id="plan_id" class="form-control" onchange="this.form.submit()">
-                                                <option value="">All Plans</option>
-                                                @foreach($plans as $plan)
-                                                    <option value="{{ $plan->id }}" {{ $selectedPlanId == $plan->id ? 'selected' : '' }}>
-                                                        {{ $plan->name }}
+                                            <label for="category_slug">Filter by Category:</label>
+                                            <select name="category_slug" id="category_slug" class="form-control" onchange="this.form.submit()">
+                                                <option value="">All Categories</option>
+                                                @foreach($categories as $category)
+                                                    <option value="{{ $category->slug }}" {{ $selectedCategorySlug == $category->slug ? 'selected' : '' }}>
+                                                        {{ $category->name }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                         </div>
                                     </div>
-                                    @if($selectedPlanId)
+                                    @if($selectedCategorySlug)
                                         <div class="col-md-auto">
                                             <a href="{{ route('admin.products.hosting') }}" class="btn btn-secondary btn-sm">
                                                 <i class="bi bi-x-lg"></i> Clear Filter

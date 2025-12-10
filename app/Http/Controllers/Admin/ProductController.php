@@ -8,7 +8,7 @@ use App\Enums\Hosting\BillingCycle;
 use App\Helpers\CurrencyHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Domain;
-use App\Models\HostingPlan;
+use App\Models\HostingCategory;
 use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
@@ -33,33 +33,36 @@ class ProductController extends Controller
     {
         abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $planId = $request->string('plan_id')->trim()->toString();
+        $categorySlug = $request->string('category_slug')->trim()->toString();
 
-        $subscriptionsQuery = Subscription::with(['user', 'plan', 'planPrice'])
+        $subscriptionsQuery = Subscription::with(['user', 'plan.category', 'planPrice'])
             ->where('user_id', auth()->user()->id);
 
-        if ($planId !== '') {
-            $subscriptionsQuery->where('hosting_plan_id', $planId);
+        if ($categorySlug !== '') {
+            $subscriptionsQuery->whereHas('plan.category', function ($query) use ($categorySlug): void {
+                $query->where('slug', $categorySlug);
+            });
         }
 
         $subscriptions = $subscriptionsQuery->latest()
             ->paginate(25)
             ->withQueryString();
 
-        $planIds = Subscription::query()
+        $categoryIds = Subscription::query()
             ->where('user_id', auth()->user()->id)
+            ->join('hosting_plans', 'subscriptions.hosting_plan_id', '=', 'hosting_plans.id')
             ->distinct()
-            ->pluck('hosting_plan_id');
+            ->pluck('hosting_plans.category_id');
 
-        $plans = HostingPlan::query()
-            ->whereIn('id', $planIds)
+        $categories = HostingCategory::query()
+            ->whereIn('id', $categoryIds)
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'slug']);
 
         return view('admin.products.hosting', [
             'subscriptions' => $subscriptions,
-            'plans' => $plans,
-            'selectedPlanId' => $planId,
+            'categories' => $categories,
+            'selectedCategorySlug' => $categorySlug,
         ]);
     }
 
