@@ -8,6 +8,7 @@ use App\Enums\Hosting\BillingCycle;
 use App\Helpers\CurrencyHelper;
 use App\Models\Contact;
 use App\Models\Coupon;
+use App\Models\HostingPlan;
 use App\Services\CheckoutService;
 use App\Services\Coupon\CouponService;
 use App\Services\CurrencyService;
@@ -286,28 +287,107 @@ final class CheckoutWizard extends Component
     {
         $itemType = $item->attributes->get('type', 'registration');
 
-        // For subscription renewals, use billing_cycle to determine the period
+        // For subscription renewals, use duration_months or quantity to determine the actual period
         if ($itemType === 'subscription_renewal') {
+            $durationMonths = $item->attributes->get('duration_months', $item->quantity);
+
+            return $this->formatDurationLabel($durationMonths).' renewal';
+        }
+
+        // For hosting items, use billing_cycle to determine the period
+        if ($itemType === 'hosting') {
             $billingCycle = $item->attributes->get('billing_cycle');
 
             if ($billingCycle) {
                 $billingCycleEnum = BillingCycle::tryFrom($billingCycle);
 
                 if ($billingCycleEnum) {
-                    return $this->formatBillingCycleLabel($billingCycleEnum).' renewal';
+                    return $this->formatBillingCycleLabel($billingCycleEnum);
                 }
             }
-
-            // Fallback to duration_months if billing_cycle is not available
-            $durationMonths = $item->attributes->get('duration_months', $item->quantity);
-
-            return $this->formatDurationLabel($durationMonths).' renewal';
         }
 
         // For domain renewals and registrations, use quantity as years
-        $years = $item->quantity;
+        $years = $item->quantity ?? 1;
 
         return $years.' '.Str::plural('year', $years).' of registration';
+    }
+
+    /**
+     * Get unit price per billing cycle for display
+     */
+    public function getItemUnitPrice($item): string
+    {
+        $itemType = $item->attributes->get('type', 'registration');
+        $itemCurrency = $item->attributes->get('currency', 'USD');
+
+        // For subscription renewals and hosting, show price per billing cycle
+        if (in_array($itemType, ['subscription_renewal', 'hosting'], true)) {
+            $unitPrice = $item->price; // Price is already per billing cycle for these items
+
+            return CurrencyHelper::formatMoney($unitPrice, $itemCurrency);
+        }
+
+        // For domain renewals and registrations, show price per year
+        $unitPrice = $item->price; // Price per year
+
+        return CurrencyHelper::formatMoney($unitPrice, $itemCurrency);
+    }
+
+    /**
+     * Get display name for cart item (plan name only for subscription renewals and hosting)
+     */
+    public function getItemDisplayName($item): string
+    {
+        $itemType = $item->attributes->get('type', 'registration');
+
+        // For subscription renewals and hosting, show only plan name
+        if (in_array($itemType, ['subscription_renewal', 'hosting'], true)) {
+            $hostingPlanId = $item->attributes->get('hosting_plan_id');
+
+            if ($hostingPlanId) {
+                $plan = HostingPlan::query()->find($hostingPlanId);
+
+                if ($plan) {
+                    return $plan->name;
+                }
+            }
+
+            // Fallback: try to extract plan name from metadata
+            $metadata = $item->attributes->get('metadata', []);
+            $planData = $metadata['plan'] ?? null;
+
+            if ($planData && isset($planData['name'])) {
+                return $planData['name'];
+            }
+
+            // Last resort: parse the name to extract plan name
+            // Format: "domain - Plan Name (Renewal)" or "domain Hosting (cycle)"
+            $name = $item->name ?? '';
+
+            if ($name && str_contains($name, ' - ')) {
+                // Format: "domain - Plan Name (Renewal)"
+                $parts = explode(' - ', $name, 2);
+                if (count($parts) === 2) {
+                    $planPart = $parts[1];
+                    // Remove "(Renewal)" suffix
+                    $planPart = preg_replace('/\s*\(Renewal\)\s*$/i', '', $planPart);
+
+                    return mb_trim($planPart);
+                }
+            }
+
+            if ($name && str_contains($name, ' Hosting (')) {
+                // Format: "domain Hosting (cycle)"
+                $planName = str_replace(' Hosting (', '', $name);
+                $planName = preg_replace('/\s*\([^)]*\)\s*$/', '', $planName);
+
+                return mb_trim($planName);
+            }
+        }
+
+        // For other item types, return the name as-is
+        return $item->name ?? '';
     }
 
     public function goToStep(int $step): void
@@ -661,7 +741,7 @@ final class CheckoutWizard extends Component
 
             $convertedItem = clone $item;
             $convertedItem->price = $itemPrice;
-            $convertedItem->attributes->put('currency', $targetCurrency);
+            $convertedItem->attributes->currency = $targetCurrency;
 
             return $convertedItem;
         });

@@ -8,7 +8,7 @@
             <div class="order-item mb-3 pb-3 border-bottom">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
-                        <strong class="d-block">{{ $item->name }}</strong>
+                        <strong class="d-block">{{ $this->getItemDisplayName($item) }}</strong>
                         <small class="text-muted">
                             {{ $this->getRegistrationPeriod($item) }}
                         </small>
