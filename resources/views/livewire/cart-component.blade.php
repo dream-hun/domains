@@ -77,6 +77,14 @@
                                                             {{ $durationMonths >= 36 ? 'disabled' : '' }}>
                                                             <i class="bi bi-plus"></i>
                                                         </button>
+                                                    @elseif($itemType === 'hosting')
+                                                        @php
+                                                            $billingCycle = $item->attributes->billing_cycle ?? 'annually';
+                                                            $durationLabel = $this->formatBillingCycleDuration($billingCycle);
+                                                        @endphp
+                                                        <span class="fs-5" style="font-size: 16px !important;">
+                                                            {{ $durationLabel }}
+                                                        </span>
                                                     @else
                                                         <button type="button" class="btn btn-outline-primary rounded-circle p-2"
                                                             style="width: 35px; height: 35px; font-size:16px !important;"

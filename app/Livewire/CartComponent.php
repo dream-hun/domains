@@ -931,6 +931,20 @@ final class CartComponent extends Component
     }
 
     /**
+     * Format billing cycle duration for display in cart
+     */
+    public function formatBillingCycleDuration(?string $billingCycle): string
+    {
+        if (! $billingCycle) {
+            return '1 Year';
+        }
+
+        $months = $this->getBillingCycleMonths($billingCycle);
+
+        return $this->formatDurationLabel($months);
+    }
+
+    /**
      * Convert an amount from its original currency into the current display currency.
      *
      * @throws Exception
