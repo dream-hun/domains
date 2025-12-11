@@ -9,14 +9,15 @@
                     <tr>
                         <th>Domain</th>
                         <th>Registration Period</th>
-                        <th class="text-right">Price</th>
+                        <th class="text-right">Price per Period</th>
+                        <th class="text-right">Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($this->cartItems as $item)
                         <tr>
                             <td>
-                                <strong>{{ $item->name }}</strong>
+                                <strong>{{ $this->getItemDisplayName($item) }}</strong>
                                 @if(isset($item->attributes['whois_privacy']) && $item->attributes['whois_privacy'])
                                     <br>
                                     <small class="text-muted">
@@ -25,10 +26,13 @@
                                 @endif
                             </td>
                             <td>
-                                {{ $item->quantity }} {{ Str::plural('year', $item->quantity) }} of registration
+                                {{ $this->getRegistrationPeriod($item) }}
                             </td>
                             <td class="text-right">
-                                {{ $this->getItemPrice($item) }}
+                                {{ $this->getItemUnitPrice($item) }}
+                            </td>
+                            <td class="text-right">
+                                <strong>{{ $this->getItemPrice($item) }}</strong>
                             </td>
                         </tr>
                     @endforeach
