@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Checkout;
 
+use App\Enums\Hosting\BillingCycle;
 use App\Helpers\CurrencyHelper;
 use App\Models\Contact;
 use App\Models\Coupon;
@@ -16,6 +17,7 @@ use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Psr\Container\ContainerExceptionInterface;
@@ -277,6 +279,37 @@ final class CheckoutWizard extends Component
         return CurrencyHelper::formatMoney($itemPrice, $displayCurrency);
     }
 
+    /**
+     * Get formatted registration period for display
+     */
+    public function getRegistrationPeriod($item): string
+    {
+        $itemType = $item->attributes->get('type', 'registration');
+
+        // For subscription renewals, use billing_cycle to determine the period
+        if ($itemType === 'subscription_renewal') {
+            $billingCycle = $item->attributes->get('billing_cycle');
+
+            if ($billingCycle) {
+                $billingCycleEnum = BillingCycle::tryFrom($billingCycle);
+
+                if ($billingCycleEnum) {
+                    return $this->formatBillingCycleLabel($billingCycleEnum).' renewal';
+                }
+            }
+
+            // Fallback to duration_months if billing_cycle is not available
+            $durationMonths = $item->attributes->get('duration_months', $item->quantity);
+
+            return $this->formatDurationLabel($durationMonths).' renewal';
+        }
+
+        // For domain renewals and registrations, use quantity as years
+        $years = $item->quantity;
+
+        return $years.' '.Str::plural('year', $years).' of registration';
+    }
+
     public function goToStep(int $step): void
     {
         if ($step < 1 || $step > 4) {
@@ -443,6 +476,35 @@ final class CheckoutWizard extends Component
         return view('livewire.checkout.checkout-wizard');
     }
 
+    /**
+     * Format billing cycle enum to readable label
+     */
+    private function formatBillingCycleLabel(BillingCycle $cycle): string
+    {
+        return match ($cycle) {
+            BillingCycle::Monthly => '1 month',
+            BillingCycle::Quarterly => '3 months',
+            BillingCycle::SemiAnnually => '6 months',
+            BillingCycle::Annually => '1 year',
+            BillingCycle::Biennially => '2 years',
+            BillingCycle::Triennially => '3 years',
+        };
+    }
+
+    /**
+     * Format duration in months to readable label
+     */
+    private function formatDurationLabel(int $months): string
+    {
+        if ($months < 12) {
+            return $months.' '.Str::plural('month', $months);
+        }
+
+        $years = (int) ($months / 12);
+
+        return $years.' '.Str::plural('year', $years);
+    }
+
     // Validation
     private function validateCurrentStep(): bool
     {
@@ -599,7 +661,7 @@ final class CheckoutWizard extends Component
 
             $convertedItem = clone $item;
             $convertedItem->price = $itemPrice;
-            $convertedItem->attributes->currency = $targetCurrency;
+            $convertedItem->attributes->put('currency', $targetCurrency);
 
             return $convertedItem;
         });

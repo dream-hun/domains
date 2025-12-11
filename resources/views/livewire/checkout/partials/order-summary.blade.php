@@ -10,7 +10,7 @@
                     <div class="flex-grow-1">
                         <strong class="d-block">{{ $item->name }}</strong>
                         <small class="text-muted">
-                            {{ $item->quantity }} {{ Str::plural('year', $item->quantity) }}
+                            {{ $this->getRegistrationPeriod($item) }}
                         </small>
                         @if(isset($item->attributes['whois_privacy']) && $item->attributes['whois_privacy'])
                             <br>
@@ -42,9 +42,9 @@
                     <strong>-{{ $this->formatCurrency($discountAmount) }}</strong>
                 </div>
             @endif
-            
+
             <hr class="my-3">
-            
+
             <div class="d-flex justify-content-between mb-3">
                 <span class="h5 mb-0">Total:</span>
                 <strong class="h5 mb-0 text-primary">{{ $this->formatCurrency($this->orderTotal) }}</strong>

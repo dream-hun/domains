@@ -624,6 +624,7 @@ final class CartComponent extends Component
                     'type' => 'subscription_renewal',
                     'subscription_id' => $subscription->id,
                     'subscription_uuid' => $subscription->uuid,
+                    'billing_cycle' => $billingCycle,
                     'hosting_plan_id' => $subscription->hosting_plan_id,
                     'hosting_plan_price_id' => $monthlyPlanPrice->id,
                     'domain' => $subscription->domain,

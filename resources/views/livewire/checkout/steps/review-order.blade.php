@@ -25,7 +25,7 @@
                                 @endif
                             </td>
                             <td>
-                                {{ $item->quantity }} {{ Str::plural('year', $item->quantity) }} of registration
+                                {{ $this->getRegistrationPeriod($item) }}
                             </td>
                             <td class="text-right">
                                 {{ $this->getItemPrice($item) }}
