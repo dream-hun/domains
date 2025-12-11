@@ -615,8 +615,9 @@ final class CheckoutController extends Controller
 
         // For domain renewals and registrations, use quantity as years
         $years = $item->quantity ?? 1;
+        $suffix = ($itemType === 'renewal') ? 'renewal' : 'of registration';
 
-        return $years.' '.Str::plural('year', $years).' of registration';
+        return $years.' '.Str::plural('year', $years).' '.$suffix;
     }
 
     /**

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\Hosting\BillingCycle;
 use App\Helpers\CurrencyHelper;
 use App\Helpers\StripeHelper;
+use App\Models\HostingPlan;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\User;
 use Exception;
@@ -128,34 +131,39 @@ final readonly class PaymentService
             $user->update(['stripe_id' => $customer->id]);
         }
 
-        // Build description from order items
-        $itemDescriptions = $order->orderItems->map(
-            /** @var \App\Models\OrderItem $item */
-            fn ($item): string => sprintf('%s (%s year(s))', $item->domain_name, $item->years)
-        )->join(', ');
-
-        // Convert to Stripe amount format
-        $stripeAmount = StripeHelper::convertToStripeAmount(
-            $processingAmount,
-            $processingCurrency
-        );
-
         $successUrl = $this->resolveStripeSuccessUrl($order);
         $cancelUrl = $this->resolveStripeCancelUrl($order);
 
-        $lineItems = [
-            [
+        // Build line items from order items individually
+        $lineItems = [];
+        $orderItems = $order->orderItems;
+
+        if ($orderItems->isEmpty()) {
+            throw new Exception('Order has no items to process');
+        }
+
+        foreach ($orderItems as $orderItem) {
+            $displayName = $this->getItemDisplayName($orderItem);
+            $period = $this->getItemPeriod($orderItem);
+
+            // Convert item total amount to Stripe format
+            $itemStripeAmount = StripeHelper::convertToStripeAmount(
+                (float) $orderItem->total_amount,
+                $processingCurrency
+            );
+
+            $lineItems[] = [
                 'price_data' => [
                     'currency' => mb_strtolower((string) $processingCurrency),
                     'product_data' => [
-                        'name' => 'Order '.$order->order_number,
-                        'description' => $itemDescriptions,
+                        'name' => $displayName,
+                        'description' => $period,
                     ],
-                    'unit_amount' => $stripeAmount,
+                    'unit_amount' => $itemStripeAmount,
                 ],
                 'quantity' => 1,
-            ],
-        ];
+            ];
+        }
 
         $session = Session::create([
             'customer' => $user->stripe_id,
@@ -323,5 +331,165 @@ final readonly class PaymentService
             ]),
             'last_attempted_at' => now(),
         ]);
+    }
+
+    /**
+     * Get display name for order item (plan name for subscriptions/hosting, domain name for domains)
+     */
+    private function getItemDisplayName(OrderItem $item): string
+    {
+        $itemType = $item->domain_type ?? 'registration';
+        $itemName = $item->domain_name ?? '';
+
+        // For subscription renewals and hosting, show only plan name
+        if (in_array($itemType, ['subscription_renewal', 'hosting'], true)) {
+            $metadata = $item->metadata ?? [];
+            $hostingPlanId = $metadata['hosting_plan_id'] ?? null;
+
+            if ($hostingPlanId) {
+                $plan = HostingPlan::query()->find($hostingPlanId);
+
+                if ($plan && $plan->name) {
+                    return $plan->name;
+                }
+            }
+
+            // Fallback: try to extract plan name from metadata
+            $planData = $metadata['plan'] ?? null;
+
+            if ($planData && isset($planData['name']) && $planData['name'] !== 'N/A') {
+                return $planData['name'];
+            }
+
+            // Last resort: parse the name to extract plan name
+            // Format: "domain - Plan Name (Renewal)" or "domain Hosting (cycle)" or "Hosting - Plan Name (Renewal)"
+            if ($itemName && str_contains($itemName, ' - ')) {
+                // Format: "domain - Plan Name (Renewal)" or "Hosting - Plan Name (Renewal)"
+                $parts = explode(' - ', $itemName, 2);
+                if (count($parts) === 2) {
+                    $planPart = $parts[1];
+                    // Remove "(Renewal)" suffix
+                    $planPart = preg_replace('/\s*\(Renewal\)\s*$/i', '', $planPart);
+                    $planPart = mb_trim($planPart);
+
+                    // Don't return if it's "N/A" or empty
+                    if ($planPart && $planPart !== 'N/A') {
+                        return $planPart;
+                    }
+                }
+            }
+
+            if ($itemName && str_contains($itemName, ' Hosting (')) {
+                // Format: "domain Hosting (cycle)"
+                $planName = str_replace(' Hosting (', '', $itemName);
+                $planName = preg_replace('/\s*\([^)]*\)\s*$/', '', $planName);
+                $planName = mb_trim($planName);
+
+                // Don't return if it's "N/A" or empty
+                if ($planName && $planName !== 'N/A') {
+                    return $planName;
+                }
+            }
+
+            // If all else fails and we have a name, try to clean it up
+            if ($itemName && $itemName !== 'N/A') {
+                // Remove common prefixes like "N/A - " or "Hosting - "
+                $cleaned = preg_replace('/^(N\/A|N\/A\s*-\s*|Hosting\s*-\s*)/i', '', $itemName);
+                $cleaned = mb_trim($cleaned);
+
+                if ($cleaned && $cleaned !== 'N/A') {
+                    return $cleaned;
+                }
+            }
+        }
+
+        // For other item types (domains), return the name as-is, but filter out "N/A"
+        if ($itemName && $itemName !== 'N/A') {
+            return $itemName;
+        }
+
+        // Ultimate fallback
+        return 'Item';
+    }
+
+    /**
+     * Get formatted period for display in Stripe checkout
+     */
+    private function getItemPeriod(OrderItem $item): string
+    {
+        $itemType = $item->domain_type ?? 'registration';
+        $metadata = $item->metadata ?? [];
+
+        // For subscription renewals, use duration_months or billing_cycle to determine the actual period
+        if ($itemType === 'subscription_renewal') {
+            // Check duration_months first
+            $durationMonths = $metadata['duration_months'] ?? null;
+
+            if (! $durationMonths && $item->quantity) {
+                // If duration_months is not set, use quantity (which should be months for subscription renewals)
+                $durationMonths = $item->quantity;
+            }
+
+            if ($durationMonths) {
+                return $this->formatDurationLabel((int) $durationMonths).' renewal';
+            }
+
+            // Fallback: try billing_cycle if duration_months is not available
+            $billingCycle = $metadata['billing_cycle'] ?? null;
+            if ($billingCycle) {
+                $billingCycleEnum = BillingCycle::tryFrom($billingCycle);
+                if ($billingCycleEnum) {
+                    return $this->formatBillingCycleLabel($billingCycleEnum).' renewal';
+                }
+            }
+        }
+
+        // For hosting items, use billing_cycle to determine the period
+        if ($itemType === 'hosting') {
+            $billingCycle = $metadata['billing_cycle'] ?? null;
+
+            if ($billingCycle) {
+                $billingCycleEnum = BillingCycle::tryFrom($billingCycle);
+
+                if ($billingCycleEnum) {
+                    return $this->formatBillingCycleLabel($billingCycleEnum);
+                }
+            }
+        }
+
+        // For domain renewals and registrations, use years or quantity as years
+        $years = $item->years ?? $item->quantity ?? 1;
+        $suffix = ($itemType === 'renewal') ? 'renewal' : 'of registration';
+
+        return $years.' '.Str::plural('year', $years).' '.$suffix;
+    }
+
+    /**
+     * Format billing cycle enum to readable label
+     */
+    private function formatBillingCycleLabel(BillingCycle $cycle): string
+    {
+        return match ($cycle) {
+            BillingCycle::Monthly => '1 month',
+            BillingCycle::Quarterly => '3 months',
+            BillingCycle::SemiAnnually => '6 months',
+            BillingCycle::Annually => '1 year',
+            BillingCycle::Biennially => '2 years',
+            BillingCycle::Triennially => '3 years',
+        };
+    }
+
+    /**
+     * Format duration in months to readable label
+     */
+    private function formatDurationLabel(int $months): string
+    {
+        if ($months < 12) {
+            return $months.' '.Str::plural('month', $months);
+        }
+
+        $years = (int) ($months / 12);
+
+        return $years.' '.Str::plural('year', $years);
     }
 }

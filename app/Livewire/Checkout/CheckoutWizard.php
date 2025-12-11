@@ -289,9 +289,20 @@ final class CheckoutWizard extends Component
 
         // For subscription renewals, use duration_months or quantity to determine the actual period
         if ($itemType === 'subscription_renewal') {
-            $durationMonths = $item->attributes->get('duration_months', $item->quantity);
+            $durationMonths = $item->attributes->get('duration_months') ?? $item->quantity ?? null;
 
-            return $this->formatDurationLabel($durationMonths).' renewal';
+            if ($durationMonths) {
+                return $this->formatDurationLabel((int) $durationMonths).' renewal';
+            }
+
+            // Fallback: try billing_cycle if duration_months is not available
+            $billingCycle = $item->attributes->get('billing_cycle');
+            if ($billingCycle) {
+                $billingCycleEnum = BillingCycle::tryFrom($billingCycle);
+                if ($billingCycleEnum) {
+                    return $this->formatBillingCycleLabel($billingCycleEnum).' renewal';
+                }
+            }
         }
 
         // For hosting items, use billing_cycle to determine the period
@@ -309,8 +320,9 @@ final class CheckoutWizard extends Component
 
         // For domain renewals and registrations, use quantity as years
         $years = $item->quantity ?? 1;
+        $suffix = ($itemType === 'renewal') ? 'renewal' : 'of registration';
 
-        return $years.' '.Str::plural('year', $years).' of registration';
+        return $years.' '.Str::plural('year', $years).' '.$suffix;
     }
 
     /**
@@ -362,32 +374,57 @@ final class CheckoutWizard extends Component
             }
 
             // Last resort: parse the name to extract plan name
-            // Format: "domain - Plan Name (Renewal)" or "domain Hosting (cycle)"
-            $name = $item->name ?? '';
+            // Format: "domain - Plan Name (Renewal)" or "domain Hosting (cycle)" or "Hosting - Plan Name (Renewal)"
+            $itemName = $item->name ?? '';
 
-            if ($name && str_contains($name, ' - ')) {
-                // Format: "domain - Plan Name (Renewal)"
-                $parts = explode(' - ', $name, 2);
+            if ($itemName && str_contains($itemName, ' - ')) {
+                // Format: "domain - Plan Name (Renewal)" or "Hosting - Plan Name (Renewal)"
+                $parts = explode(' - ', $itemName, 2);
                 if (count($parts) === 2) {
                     $planPart = $parts[1];
                     // Remove "(Renewal)" suffix
                     $planPart = preg_replace('/\s*\(Renewal\)\s*$/i', '', $planPart);
+                    $planPart = mb_trim($planPart);
 
-                    return mb_trim($planPart);
+                    // Don't return if it's "N/A" or empty
+                    if ($planPart && $planPart !== 'N/A') {
+                        return $planPart;
+                    }
                 }
             }
 
-            if ($name && str_contains($name, ' Hosting (')) {
+            if ($itemName && str_contains($itemName, ' Hosting (')) {
                 // Format: "domain Hosting (cycle)"
-                $planName = str_replace(' Hosting (', '', $name);
+                $planName = str_replace(' Hosting (', '', $itemName);
                 $planName = preg_replace('/\s*\([^)]*\)\s*$/', '', $planName);
+                $planName = mb_trim($planName);
 
-                return mb_trim($planName);
+                // Don't return if it's "N/A" or empty
+                if ($planName && $planName !== 'N/A') {
+                    return $planName;
+                }
+            }
+
+            // If all else fails and we have a name, try to clean it up
+            if ($itemName && $itemName !== 'N/A') {
+                // Remove common prefixes like "N/A - " or "Hosting - "
+                $cleaned = preg_replace('/^(N\/A|N\/A\s*-\s*|Hosting\s*-\s*)/i', '', $itemName);
+                $cleaned = mb_trim($cleaned);
+
+                if ($cleaned && $cleaned !== 'N/A') {
+                    return $cleaned;
+                }
             }
         }
 
-        // For other item types, return the name as-is
-        return $item->name ?? '';
+        // For other item types (domains), return the name as-is, but filter out "N/A"
+        $itemName = $item->name ?? '';
+        if ($itemName && $itemName !== 'N/A') {
+            return $itemName;
+        }
+
+        // Ultimate fallback
+        return 'Item';
     }
 
     public function goToStep(int $step): void

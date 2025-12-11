@@ -106,7 +106,7 @@ it('displays correct period for domain renewal', function (): void {
 
     Livewire::actingAs($this->user)
         ->test(CheckoutWizard::class)
-        ->assertSee('1 year of registration');
+        ->assertSee('1 year renewal');
 });
 
 it('displays correct period for multi-year domain renewal', function (): void {
@@ -124,7 +124,7 @@ it('displays correct period for multi-year domain renewal', function (): void {
 
     Livewire::actingAs($this->user)
         ->test(CheckoutWizard::class)
-        ->assertSee('3 years of registration');
+        ->assertSee('3 years renewal');
 });
 
 it('displays correct period for domain registration', function (): void {
