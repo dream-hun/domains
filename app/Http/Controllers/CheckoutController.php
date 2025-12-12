@@ -8,8 +8,10 @@ use App\Enums\Hosting\BillingCycle;
 use App\Helpers\StripeHelper;
 use App\Jobs\ProcessDomainRenewalJob;
 use App\Jobs\ProcessSubscriptionRenewalJob;
+use App\Models\Currency;
 use App\Models\HostingPlan;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Services\TransactionLogger;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
@@ -172,6 +174,9 @@ final class CheckoutController extends Controller
                 DB::commit();
 
                 Cart::clear();
+
+                // Create OrderItem records from order's items JSON if they don't exist
+                $this->createOrderItemsFromJson($order);
 
                 // Dispatch appropriate renewal jobs based on order items
                 $this->dispatchRenewalJobs($order);
@@ -442,6 +447,109 @@ final class CheckoutController extends Controller
             'status' => 'failed',
             'failure_details' => $failureDetails,
             'last_attempted_at' => now(),
+        ]);
+    }
+
+    /**
+     * Create OrderItem records from order's items JSON field
+     * This ensures OrderItem records exist for SubscriptionRenewalService to process
+     */
+    private function createOrderItemsFromJson(Order $order): void
+    {
+        // Check if OrderItem records already exist to avoid duplicates
+        if ($order->orderItems()->exists()) {
+            Log::info('OrderItem records already exist for order', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+
+            return;
+        }
+
+        $items = $order->items ?? [];
+
+        if (empty($items)) {
+            Log::warning('No items found in order JSON to create OrderItem records', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+
+            return;
+        }
+
+        foreach ($items as $item) {
+            $attributes = $item['attributes'] ?? [];
+            $itemType = $attributes['type'] ?? 'registration';
+            $itemPrice = (float) ($item['price'] ?? 0);
+            $itemQuantity = (int) ($item['quantity'] ?? 1);
+            $itemTotal = $itemPrice * $itemQuantity;
+            $itemCurrency = $attributes['currency'] ?? $order->currency ?? 'USD';
+            $domainId = $attributes['domain_id'] ?? null;
+            $domainName = $attributes['domain_name'] ?? $item['name'] ?? 'Unknown';
+
+            // Get the exchange rate for the item's currency
+            $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
+            $exchangeRate = $itemCurrencyModel ? $itemCurrencyModel->exchange_rate : 1.0;
+
+            // Build metadata from attributes
+            $itemMetadata = $attributes['metadata'] ?? [];
+
+            // For subscription renewals, ensure subscription_id and billing_cycle are in metadata
+            if ($itemType === 'subscription_renewal') {
+                $subscriptionId = $attributes['subscription_id'] ?? null;
+                if ($subscriptionId) {
+                    $itemMetadata['subscription_id'] = $subscriptionId;
+                }
+
+                // CRITICAL: Ensure billing_cycle is stored in metadata
+                $billingCycle = $attributes['billing_cycle'] ?? null;
+                if ($billingCycle) {
+                    $itemMetadata['billing_cycle'] = $billingCycle;
+                } else {
+                    Log::warning('Billing cycle not found in subscription renewal attributes', [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'item_name' => $domainName,
+                        'attributes' => $attributes,
+                    ]);
+                }
+
+                // Also include other subscription-related attributes
+                if (isset($attributes['subscription_uuid'])) {
+                    $itemMetadata['subscription_uuid'] = $attributes['subscription_uuid'];
+                }
+                if (isset($attributes['hosting_plan_id'])) {
+                    $itemMetadata['hosting_plan_id'] = $attributes['hosting_plan_id'];
+                }
+                if (isset($attributes['hosting_plan_price_id'])) {
+                    $itemMetadata['hosting_plan_price_id'] = $attributes['hosting_plan_price_id'];
+                }
+            }
+
+            // For domain renewals, include years in metadata if present
+            if ($itemType === 'renewal' && isset($attributes['years'])) {
+                $itemMetadata['years'] = $attributes['years'];
+            }
+
+            OrderItem::query()->create([
+                'order_id' => $order->id,
+                'domain_name' => $domainName,
+                'domain_type' => $itemType,
+                'domain_id' => $domainId,
+                'price' => $itemPrice,
+                'currency' => $itemCurrency,
+                'exchange_rate' => $exchangeRate,
+                'quantity' => $itemQuantity,
+                'years' => $itemQuantity, // For renewals, quantity typically represents years
+                'total_amount' => $itemTotal,
+                'metadata' => $itemMetadata,
+            ]);
+        }
+
+        Log::info('Created OrderItem records from order JSON', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'items_count' => count($items),
         ]);
     }
 

@@ -53,10 +53,22 @@
                                             </td>
                                             <td class="text-center">
                                                 <div class="quantity-controls d-flex align-items-center justify-content-center">
-                                                    @if($itemType === 'subscription_renewal')
+                                                    @if($itemType === 'subscription_renewal' || $itemType === 'hosting')
                                                         @php
-                                                            $durationMonths = $item->attributes->duration_months ?? $item->quantity;
-                                                            $durationLabel = $this->formatDurationLabel((int) $durationMonths);
+                                                            // For hosting and subscription_renewal, use duration_months if set, otherwise use quantity
+                                                            // The quantity field should represent months for these item types
+                                                            if (isset($item->attributes->duration_months)) {
+                                                                $durationMonths = (int) $item->attributes->duration_months;
+                                                            } elseif ($itemType === 'hosting') {
+                                                                // For hosting, if duration_months not set, calculate from billing_cycle
+                                                                // This handles legacy items that were added before duration_months was set
+                                                                $billingCycle = $item->attributes->billing_cycle ?? 'monthly';
+                                                                $durationMonths = $this->getBillingCycleMonths($billingCycle);
+                                                            } else {
+                                                                // For subscription_renewal, use quantity as fallback
+                                                                $durationMonths = (int) $item->quantity;
+                                                            }
+                                                            $durationLabel = $this->formatDurationLabel($durationMonths);
                                                         @endphp
                                                         <button type="button" class="btn btn-outline-primary rounded-circle p-2"
                                                             style="width: 35px; height: 35px; font-size:16px !important;"
@@ -77,14 +89,6 @@
                                                             {{ $durationMonths >= 36 ? 'disabled' : '' }}>
                                                             <i class="bi bi-plus"></i>
                                                         </button>
-                                                    @elseif($itemType === 'hosting')
-                                                        @php
-                                                            $billingCycle = $item->attributes->billing_cycle ?? 'annually';
-                                                            $durationLabel = $this->formatBillingCycleDuration($billingCycle);
-                                                        @endphp
-                                                        <span class="fs-5" style="font-size: 16px !important;">
-                                                            {{ $durationLabel }}
-                                                        </span>
                                                     @else
                                                         <button type="button" class="btn btn-outline-primary rounded-circle p-2"
                                                             style="width: 35px; height: 35px; font-size:16px !important;"
@@ -112,9 +116,9 @@
                                                 <div class="d-flex flex-column align-items-end">
                                                     <span class="text-muted" style="font-size: 14px !important; text-transform:uppercase !important;">
                                                         {{ $this->getFormattedItemPrice($item) }}
-                                                        @if($itemType === 'subscription_renewal')
+                                                        @if($itemType === 'subscription_renewal' || $itemType === 'hosting')
                                                             <span class="text-muted" style="font-size: 11px !important;">/month</span>
-                                                        @elseif($itemType !== 'hosting')
+                                                        @else
                                                             <span class="text-muted" style="font-size: 11px !important;">/year</span>
                                                         @endif
                                                     </span>
