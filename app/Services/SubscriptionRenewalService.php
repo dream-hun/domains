@@ -160,7 +160,7 @@ final readonly class SubscriptionRenewalService
                     'subscription_id' => $subscription->id,
                     'subscription_uuid' => $subscription->uuid,
                     'billing_cycle' => $billingCycle->value,
-                    'new_expiry' => $subscription->expires_at?->format('Y-m-d'),
+                    'new_expiry' => $subscription->expires_at->format('Y-m-d'),
                     'message' => 'Subscription renewed successfully',
                 ];
 

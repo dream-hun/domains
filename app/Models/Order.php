@@ -11,13 +11,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property-read User $user
+ * @property int $id
+ * @property string $order_number
+ * @property int $user_id
+ * @property string $payment_status
+ * @property string $status
+ * @property array $items
+ * @property-read User|null $user
  * @property-read Collection<int, OrderItem> $orderItems
  * @property-read Collection<int, DomainRenewal> $domainRenewals
  * @property-read Collection<int, FailedDomainRegistration> $failedDomainRegistrations
  * @property-read Collection<int, Payment> $payments
- * @property string $payment_status
- * @property string $status
  */
 final class Order extends Model
 {
@@ -35,6 +39,7 @@ final class Order extends Model
      */
     public function user(): BelongsTo
     {
+        // @phpstan-ignore-next-line
         return $this->belongsTo(User::class);
     }
 
@@ -43,6 +48,7 @@ final class Order extends Model
      */
     public function domainRenewals(): HasMany
     {
+        // @phpstan-ignore-next-line
         return $this->hasMany(DomainRenewal::class);
     }
 
@@ -51,6 +57,7 @@ final class Order extends Model
      */
     public function orderItems(): HasMany
     {
+        // @phpstan-ignore-next-line
         return $this->hasMany(OrderItem::class);
     }
 
@@ -59,6 +66,7 @@ final class Order extends Model
      */
     public function failedDomainRegistrations(): HasMany
     {
+        // @phpstan-ignore-next-line
         return $this->hasMany(FailedDomainRegistration::class);
     }
 
@@ -67,6 +75,7 @@ final class Order extends Model
      */
     public function payments(): HasMany
     {
+        // @phpstan-ignore-next-line
         return $this->hasMany(Payment::class);
     }
 

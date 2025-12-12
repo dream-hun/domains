@@ -11,7 +11,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class HostingPlanFeature extends Model
 {
-    /** @use HasFactory<HostingPlanFeatureFactory> */
+    /**
+     * @use HasFactory<HostingPlanFeatureFactory>
+     *
+     * @property int $id
+     * @property string $name
+     * @property-read HostingPlan|null $hostingPlan
+     * @property-read HostingFeature|null $hostingFeature
+     */
     use HasFactory;
 
     protected $guarded = [];
@@ -40,7 +47,7 @@ final class HostingPlanFeature extends Model
 
         $feature = $this->hostingFeature;
 
-        if (! $feature) {
+        if (! $feature instanceof HostingFeature) {
             return '';
         }
 

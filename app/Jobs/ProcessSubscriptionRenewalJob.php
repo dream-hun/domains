@@ -128,9 +128,11 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
     {
         $this->order->loadMissing('user');
 
+        $this->order->loadMissing('user');
+
         $user = $this->order->user;
 
-        if (! $user) {
+        if ($user === null) {
             Log::warning('Skipping subscription renewal notification because order has no associated user', [
                 'order_id' => $this->order->id,
             ]);

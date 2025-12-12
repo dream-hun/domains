@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Support\Carbon;
 use App\Enums\Hosting\BillingCycle;
 use Exception;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -11,11 +12,41 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Date;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $user_id
+ * @property int $hosting_plan_id
+ * @property int $hosting_plan_price_id
+ * @property array $product_snapshot
+ * @property string $billing_cycle
+ * @property string $domain
+ * @property string $status
+ * @property Carbon $starts_at
+ * @property Carbon $expires_at
+ * @property Carbon|null $next_renewal_at
+ * @property string|null $provider_resource_id
+ * @property Carbon|null $cancelled_at
+ * @property bool $auto_renew
+ * @property Carbon|null $last_renewal_attempt_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read User|null $user
+ * @property-read HostingPlan $plan
+ * @property-read HostingPlanPrice $planPrice
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $unreadNotifications
+ */
 class Subscription extends Model
 {
     use HasFactory;
+
+    use Notifiable;
 
     protected $guarded = [];
 
@@ -53,7 +84,7 @@ class Subscription extends Model
 
     public function isExpiringSoon(int $days = 7): bool
     {
-        if ($this->status !== 'active' || ! $this->expires_at) {
+        if ($this->status !== 'active') {
             return false;
         }
 

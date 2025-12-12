@@ -94,10 +94,13 @@ final class HostingPromotionController extends Controller
             ->with('success', 'Hosting promotion deleted successfully.');
     }
 
-    /** @return Collection<int, array{id:int,name:string,category:string|null}> */
+    /**
+     * @return Collection<int, array{id:int,name:string,category:string|null}>
+     */
     private function plans(): Collection
     {
-        return HostingPlan::query()
+        /** @var Collection<int, array{id:int,name:string,category:string|null}> $result */
+        $result = HostingPlan::query()
             ->with('category:id,name')
             ->select(['id', 'name', 'category_id'])
             ->orderBy('name')
@@ -107,6 +110,8 @@ final class HostingPromotionController extends Controller
                 'name' => $plan->name,
                 'category' => $plan->category?->name,
             ]);
+
+        return $result;
     }
 
     private function categories(): Collection

@@ -33,7 +33,7 @@ final readonly class ToggleDomainLockAction
     {
         try {
             $domain->refresh();
-            $desiredLock = $forceLock ?? ! (bool) $domain->is_locked;
+            $desiredLock = $forceLock ?? ! $domain->is_locked;
 
             // Check if this is a local domain
             $domain->loadMissing('domainPrice');
@@ -65,7 +65,7 @@ final readonly class ToggleDomainLockAction
 
             $result = $service->setDomainLock($domain->name, $desiredLock);
 
-            if (! ($result['success'] ?? false)) {
+            if (! $result['success']) {
                 return [
                     'success' => false,
                     'message' => $result['message'] ?? 'Failed to update domain lock status',

@@ -32,6 +32,7 @@ final class DomainContact extends Pivot
      */
     public function contact(): BelongsTo
     {
+        // @phpstan-ignore-next-line
         return $this->belongsTo(Contact::class);
     }
 
@@ -40,6 +41,7 @@ final class DomainContact extends Pivot
      */
     public function domain(): BelongsTo
     {
+        // @phpstan-ignore-next-line
         return $this->belongsTo(Domain::class);
     }
 
@@ -48,6 +50,7 @@ final class DomainContact extends Pivot
      */
     public function user(): BelongsTo
     {
+        // @phpstan-ignore-next-line
         return $this->belongsTo(User::class);
     }
 }

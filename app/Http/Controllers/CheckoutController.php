@@ -91,7 +91,7 @@ final class CheckoutController extends Controller
     /**
      * Handle successful payment from Stripe
      */
-    public function success(Request $request, string $order): View|RedirectResponse
+    public function success(Request $request, string $order): RedirectResponse
     {
         try {
             $sessionId = $request->query('session_id');
@@ -217,7 +217,7 @@ final class CheckoutController extends Controller
     /**
      * Handle payment cancellation
      */
-    public function cancel(Request $request): View|RedirectResponse
+    public function cancel(Request $request): View
     {
         $orderNumber = $request->query('order');
 
@@ -285,7 +285,7 @@ final class CheckoutController extends Controller
     /**
      * Stripe success callback wrapper to retain legacy route.
      */
-    public function stripeSuccess(Request $request, string $orderNumber): View|RedirectResponse|ViewContract
+    public function stripeSuccess(Request $request, string $orderNumber): RedirectResponse|ViewContract
     {
         return $this->success($request, $orderNumber);
     }
@@ -293,7 +293,7 @@ final class CheckoutController extends Controller
     /**
      * Stripe cancel callback wrapper to retain legacy route.
      */
-    public function stripeCancel(Request $request, string $orderNumber): View|RedirectResponse
+    public function stripeCancel(Request $request, string $orderNumber): View
     {
         $request->query->set('order', $orderNumber);
 

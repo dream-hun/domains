@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Models\Permission;
 use App\Models\Role;
 use Closure;
 use Illuminate\Support\Facades\Gate;
@@ -22,8 +23,9 @@ final class AuthGates
         $permissionsArray = [];
 
         foreach ($roles as $role) {
-            foreach ($role->permissions as $permissions) {
-                $permissionsArray[$permissions->title][] = $role->id;
+            foreach ($role->permissions as $permission) {
+                /** @var Permission $permission */
+                $permissionsArray[$permission->title][] = $role->id;
             }
         }
 

@@ -12,7 +12,6 @@ use App\Models\User;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,7 +36,7 @@ final class UsersController extends Controller
         return view('admin.users.create', ['roles' => $roles]);
     }
 
-    public function store(StoreUserRequest $request): Redirector|RedirectResponse
+    public function store(StoreUserRequest $request): RedirectResponse
     {
         $data = $request->validated();
         $roles = $data['roles'] ?? [];
@@ -67,7 +66,7 @@ final class UsersController extends Controller
         return view('admin.users.edit', ['roles' => $roles, 'user' => $user]);
     }
 
-    public function update(UpdateUserRequest $request, User $user): Redirector|RedirectResponse
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
         $data = $request->validated();
         $roles = $data['roles'] ?? [];

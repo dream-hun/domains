@@ -37,9 +37,9 @@ final class SubscriptionExpiringNotification extends Notification implements Sho
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $planName = $this->subscription->plan?->name ?? 'Hosting Plan';
+        $planName = $this->subscription->plan->name;
         $domain = $this->subscription->domain ?? 'N/A';
-        $expiryDate = $this->subscription->expires_at?->format('F d, Y') ?? 'Unknown';
+        $expiryDate = $this->subscription->expires_at->format('F d, Y');
 
         $subject = $this->daysUntilExpiry === 0
             ? 'Your Subscription Expires Today'
@@ -74,10 +74,10 @@ final class SubscriptionExpiringNotification extends Notification implements Sho
             'type' => 'subscription_expiring',
             'subscription_id' => $this->subscription->id,
             'subscription_uuid' => $this->subscription->uuid,
-            'plan_name' => $this->subscription->plan?->name,
+            'plan_name' => $this->subscription->plan->name,
             'domain' => $this->subscription->domain,
             'days_until_expiry' => $this->daysUntilExpiry,
-            'expires_at' => $this->subscription->expires_at?->toIso8601String(),
+            'expires_at' => $this->subscription->expires_at->toIso8601String(),
             'message' => $this->daysUntilExpiry === 0
                 ? 'Your subscription expires today'
                 : sprintf('Your subscription expires in %s day', $this->daysUntilExpiry).($this->daysUntilExpiry > 1 ? 's' : ''),

@@ -30,7 +30,7 @@ final readonly class OrderItemFormatterService
     public function getCartItemPeriod(object $item): string
     {
         $itemType = $item->attributes->get('type', 'registration');
-        $metadata = $item->attributes->get('metadata', []);
+        $item->attributes->get('metadata', []);
 
         if ($itemType === 'subscription_renewal') {
             $durationMonths = $item->attributes->get('duration_months');
@@ -73,11 +73,7 @@ final readonly class OrderItemFormatterService
     {
         return match ($cycle) {
             BillingCycle::Monthly => '1 month',
-            BillingCycle::Quarterly => '3 months',
-            BillingCycle::SemiAnnually => '6 months',
             BillingCycle::Annually => '1 year',
-            BillingCycle::Biennially => '2 years',
-            BillingCycle::Triennially => '3 years',
         };
     }
 

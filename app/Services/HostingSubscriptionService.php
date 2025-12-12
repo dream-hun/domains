@@ -125,12 +125,7 @@ final class HostingSubscriptionService
     {
         return match ($cycle) {
             BillingCycle::Monthly => $start->copy()->addMonth(),
-            BillingCycle::Quarterly => $start->copy()->addMonths(3),
-            BillingCycle::SemiAnnually => $start->copy()->addMonths(6),
             BillingCycle::Annually => $start->copy()->addYear(),
-            BillingCycle::Biennially => $start->copy()->addYears(2),
-            BillingCycle::Triennially => $start->copy()->addYears(3),
-            default => $start->copy()->addMonth(),
         };
     }
 }

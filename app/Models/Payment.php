@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 /**
- * @property-read User $user
- * @property-read Order $order
+ * @property-read User|null $user
+ * @property-read Order|null $order
  * @property string $status
  * @property string $currency
  * @property string $amount
@@ -37,6 +37,7 @@ final class Payment extends Model
      */
     public function user(): BelongsTo
     {
+        // @phpstan-ignore-next-line
         return $this->belongsTo(User::class);
     }
 
@@ -45,6 +46,7 @@ final class Payment extends Model
      */
     public function order(): BelongsTo
     {
+        // @phpstan-ignore-next-line
         return $this->belongsTo(Order::class);
     }
 

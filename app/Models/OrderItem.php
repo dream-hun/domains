@@ -4,10 +4,29 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $order_id
+ * @property int|null $domain_id
+ * @property string $domain_name
+ * @property string $domain_type
+ * @property float $price
+ * @property string $currency
+ * @property float|null $exchange_rate
+ * @property int $quantity
+ * @property int $years
+ * @property float $total_amount
+ * @property array|null $metadata
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read Order $order
+ * @property-read Domain|null $domain
+ */
 final class OrderItem extends Model
 {
     use HasFactory;

@@ -4,10 +4,29 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $order_id
+ * @property int $order_item_id
+ * @property string $domain_name
+ * @property string $failure_reason
+ * @property int $retry_count
+ * @property int $max_retries
+ * @property Carbon|null $last_attempted_at
+ * @property Carbon|null $next_retry_at
+ * @property Carbon|null $resolved_at
+ * @property string $status
+ * @property array|null $contact_ids
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read Order $order
+ * @property-read OrderItem $orderItem
+ */
 final class FailedDomainRegistration extends Model
 {
     use HasFactory;

@@ -11,7 +11,6 @@ use App\Models\Permission;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -33,7 +32,7 @@ final class PermissionsController extends Controller
         return view('admin.permissions.create');
     }
 
-    public function store(StorePermissionRequest $request): Redirector|RedirectResponse
+    public function store(StorePermissionRequest $request): RedirectResponse
     {
         Permission::query()->create($request->all());
 
@@ -47,7 +46,7 @@ final class PermissionsController extends Controller
         return view('admin.permissions.edit', ['permission' => $permission]);
     }
 
-    public function update(UpdatePermissionRequest $request, Permission $permission): Redirector|RedirectResponse
+    public function update(UpdatePermissionRequest $request, Permission $permission): RedirectResponse
     {
         $permission->update($request->all());
 

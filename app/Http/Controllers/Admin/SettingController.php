@@ -11,7 +11,6 @@ use App\Models\Setting;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -33,7 +32,7 @@ final class SettingController extends Controller
         return view('admin.settings.create');
     }
 
-    public function store(StoreSettingRequest $request): Redirector|RedirectResponse
+    public function store(StoreSettingRequest $request): RedirectResponse
     {
         Setting::query()->create($request->all());
 
@@ -47,7 +46,7 @@ final class SettingController extends Controller
         return view('admin.settings.edit', ['setting' => $setting]);
     }
 
-    public function update(UpdateSettingRequest $request, Setting $setting): Redirector|RedirectResponse
+    public function update(UpdateSettingRequest $request, Setting $setting): RedirectResponse
     {
         $setting->update($request->all());
 
@@ -58,7 +57,10 @@ final class SettingController extends Controller
     {
         abort_if(Gate::denies('setting_show'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        return view('admin.settings.show', ['setting' => $setting]);
+        /** @var string $viewName */
+        $viewName = 'admin.settings.show';
+
+        return view($viewName, ['setting' => $setting]);
     }
 
     public function destroy(Setting $setting): RedirectResponse

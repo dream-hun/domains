@@ -48,6 +48,7 @@ final readonly class OrderService
                 'country_code' => $contact->country_code ?? '',
             ];
         }
+
         $total = 0;
         foreach ($data['cart_items'] as $item) {
             $total += $item->getPriceSum();

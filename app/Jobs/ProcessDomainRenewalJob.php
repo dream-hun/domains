@@ -205,7 +205,7 @@ final class ProcessDomainRenewalJob implements ShouldQueue
 
         $user = $this->order->user;
 
-        if (! $user) {
+        if ($user === null) {
             Log::warning('Skipping domain renewal notification because order has no associated user', [
                 'order_id' => $this->order->id,
             ]);

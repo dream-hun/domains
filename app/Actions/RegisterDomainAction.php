@@ -116,7 +116,7 @@ class RegisterDomainAction
             return [
                 'success' => false,
                 'message' => 'An error occurred during domain registration: '.$errorMessage,
-                'service' => $serviceName ?? $this->inferServiceName($domainName),
+                'service' => $serviceName,
             ];
         }
     }

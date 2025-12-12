@@ -739,7 +739,7 @@ final class CartComponent extends Component
                     'hosting_plan_id' => $subscription->hosting_plan_id,
                     'hosting_plan_price_id' => $monthlyPlanPrice->id,
                     'domain' => $subscription->domain,
-                    'current_expiry' => $subscription->expires_at?->format('Y-m-d'),
+                    'current_expiry' => $subscription->expires_at->format('Y-m-d'),
                     'currency' => $userCurrency,
                     'monthly_unit_price' => $monthlyRenewalPrice,
                     'duration_months' => $durationMonths,

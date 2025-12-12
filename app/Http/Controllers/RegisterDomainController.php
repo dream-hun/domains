@@ -9,7 +9,6 @@ use App\Enums\ContactType;
 use App\Enums\DomainType;
 use App\Http\Requests\RegisterDomainRequest;
 use App\Models\Country;
-use App\Models\Currency;
 use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -45,7 +44,7 @@ final class RegisterDomainController extends Controller
 
         // Determine display currency (user preferred or type-based default)
         $userCurrency = $this->currencyService->getUserCurrency();
-        $displayCurrency = mb_strtoupper($userCurrency instanceof Currency ? $userCurrency->code : $this->getDefaultCurrencyForDomainType($domainType));
+        $displayCurrency = mb_strtoupper($userCurrency->code);
 
         // Process cart items with currency conversion
         [$convertedItems, $cartTotalNumeric] = $this->processCartItemsWithCurrency($cartItems, $displayCurrency);
@@ -315,13 +314,5 @@ final class RegisterDomainController extends Controller
 
             return $currency.' '.number_format($amount, 2);
         }
-    }
-
-    /**
-     * Get default currency code for domain type
-     */
-    private function getDefaultCurrencyForDomainType(DomainType $domainType): string
-    {
-        return $domainType === DomainType::Local ? 'RWF' : 'USD';
     }
 }

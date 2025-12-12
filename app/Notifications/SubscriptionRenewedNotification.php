@@ -48,9 +48,9 @@ final class SubscriptionRenewedNotification extends Notification implements Shou
             ->line('Your hosting subscription'.($subscriptionCount > 1 ? 's have' : ' has').' been renewed successfully!');
 
         foreach ($this->subscriptions as $subscription) {
-            $planName = $subscription->plan?->name ?? 'Hosting Plan';
+            $planName = $subscription->plan->name;
             $domain = $subscription->domain ?? 'N/A';
-            $expiryDate = $subscription->expires_at?->format('F d, Y') ?? 'N/A';
+            $expiryDate = $subscription->expires_at->format('F d, Y');
 
             $message->line(sprintf('**%s** (Domain: %s) - New expiry: %s', $planName, $domain, $expiryDate));
         }
@@ -81,9 +81,9 @@ final class SubscriptionRenewedNotification extends Notification implements Shou
                 fn (Subscription $sub): array => [
                     'id' => $sub->id,
                     'uuid' => $sub->uuid,
-                    'plan_name' => $sub->plan?->name,
+                    'plan_name' => $sub->plan->name,
                     'domain' => $sub->domain,
-                    'expires_at' => $sub->expires_at?->toIso8601String(),
+                    'expires_at' => $sub->expires_at->toIso8601String(),
                 ],
                 $this->subscriptions
             ),

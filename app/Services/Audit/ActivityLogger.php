@@ -8,7 +8,6 @@ use BackedEnum;
 use DateTimeInterface;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
@@ -51,10 +50,12 @@ final class ActivityLogger
             ],
         ], fn (?array $value): bool => $value !== null && $value !== []);
 
+        $causer = $this->resolveCauser();
+        $causerId = $causer instanceof Model ? $causer : ($causer instanceof Authenticatable ? $causer->getAuthIdentifier() : null);
         activity()
             ->event($event)
             ->performedOn($model)
-            ->causedBy($this->resolveCauser())
+            ->causedBy($causerId)
             ->withProperties($properties)
             ->log($this->describeModelEvent($event, $model));
     }
@@ -71,9 +72,11 @@ final class ActivityLogger
             'context' => Arr::except($context, ['guard']),
         ], fn ($value): bool => $value !== null && $value !== []);
 
+        $causer = $user ?? $this->resolveCauser();
+        $causerId = $causer instanceof Model ? $causer : ($causer instanceof Authenticatable ? $causer->getAuthIdentifier() : null);
         activity()
             ->event($event)
-            ->causedBy($user ?? $this->resolveCauser())
+            ->causedBy($causerId)
             ->withProperties($properties)
             ->log($this->describeAuthEvent($event, $user));
     }
@@ -100,7 +103,7 @@ final class ActivityLogger
 
     private function describeAuthEvent(string $event, ?Authenticatable $user): string
     {
-        $identifier = $user?->email ?? $user?->getAuthIdentifier() ?? 'guest';
+        $identifier = $user instanceof Authenticatable ? ($user->email ?? $user->getAuthIdentifier() ?? 'guest') : 'guest';
 
         return sprintf('Authentication %s for %s', Str::headline($event), $identifier);
     }
@@ -133,10 +136,6 @@ final class ActivityLogger
         }
 
         $request = request();
-
-        if (! $request instanceof Request) {
-            return [];
-        }
 
         return array_filter([
             'ip' => $request->ip(),

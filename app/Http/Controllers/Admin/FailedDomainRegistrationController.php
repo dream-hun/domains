@@ -76,11 +76,14 @@ final class FailedDomainRegistrationController extends Controller
                 ->with('error', 'This domain registration cannot be retried. It may have already been resolved or abandoned.');
         }
 
+        $failedDomainRegistration->loadMissing(['order', 'orderItem']);
+
         try {
             // Attempt registration
+            $contactIds = $failedDomainRegistration->contact_ids ?? [];
             $result = $this->registerDomainAction->handle(
                 $failedDomainRegistration->domain_name,
-                $failedDomainRegistration->contact_ids,
+                $contactIds,
                 $failedDomainRegistration->orderItem->years,
                 [], // Use default nameservers
                 true, // Use single contact

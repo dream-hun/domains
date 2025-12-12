@@ -23,10 +23,10 @@ final class HostingPlanPriceController extends Controller
     public function index(ListPlanPriceAction $action): View|Factory
     {
         $categoryUuid = request()->input('category_id');
-        $categoryUuid = $categoryUuid && $categoryUuid !== '' ? (string) $categoryUuid : null;
+        $categoryUuid = ($categoryUuid !== null && $categoryUuid !== '') ? (string) $categoryUuid : null;
 
         $planUuid = request()->input('plan_id');
-        $planUuid = $planUuid && $planUuid !== '' ? (string) $planUuid : null;
+        $planUuid = ($planUuid !== null && $planUuid !== '') ? (string) $planUuid : null;
 
         $prices = $action->handle(10, $categoryUuid, $planUuid);
         $categories = HostingCategory::query()->select(['uuid', 'name'])->orderBy('name')->get();

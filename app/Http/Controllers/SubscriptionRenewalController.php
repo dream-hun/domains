@@ -137,7 +137,7 @@ final class SubscriptionRenewalController extends Controller
                 'hosting_plan_price_id' => $monthlyPlanPrice->id,
                 'domain' => $subscription->domain,
                 'domain_name' => $subscription->domain ?? 'N/A',
-                'current_expiry' => $subscription->expires_at?->format('Y-m-d'),
+                'current_expiry' => $subscription->expires_at->format('Y-m-d'),
                 'currency' => $userCurrency,
                 'unit_price' => $monthlyRenewalPrice, // Monthly price for calculations
                 'display_unit_price' => $displayUnitPrice, // Display price based on original billing cycle

@@ -13,7 +13,7 @@ final class RetryFailedDomainRegistrations extends Command
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'domain:retry-failed 
+    protected $signature = 'domain:retry-failed
                             {--order= : Filter by specific Order ID}
                             {--all : Retry all pending/retrying failed registrations}';
 
@@ -56,7 +56,7 @@ final class RetryFailedDomainRegistrations extends Command
 
         $this->table(
             ['ID', 'Order', 'Domain', 'Retry Count', 'Status', 'Last Error'],
-            $failedRegistrations->map(fn ($registration): array => [
+            $failedRegistrations->map(fn (FailedDomainRegistration $registration): array => [
                 $registration->id,
                 $registration->order->order_number,
                 $registration->domain_name,

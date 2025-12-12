@@ -15,7 +15,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -145,7 +144,7 @@ final class SubscriptionController extends Controller
         ]);
     }
 
-    public function update(UpdateSubscriptionRequest $request, Subscription $subscription): Redirector|RedirectResponse
+    public function update(UpdateSubscriptionRequest $request, Subscription $subscription): RedirectResponse
     {
         $subscription->update([
             'status' => $request->input('status'),
@@ -166,7 +165,7 @@ final class SubscriptionController extends Controller
             ->with('success', 'Subscription updated successfully.');
     }
 
-    public function renewNow(Request $request, Subscription $subscription): Redirector|RedirectResponse
+    public function renewNow(Request $request, Subscription $subscription): RedirectResponse
     {
         abort_if(Gate::denies('subscription_edit'), 403);
 

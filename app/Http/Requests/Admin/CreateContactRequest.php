@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 
 final class CreateContactRequest extends FormRequest
 {
-    public function authorize(): true
+    public function authorize(): bool
     {
         return Gate::allows('contact_create');
     }

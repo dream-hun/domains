@@ -107,13 +107,9 @@ final class SearchDomainController extends Controller
             'searchedDomain' => $request->input('domain'),
         ];
 
-        if (! $request->ajax()) {
-            session()->flash('error', $message);
+        session()->flash('error', $message);
 
-            return view('domains.search', $data);
-        }
-
-        return response()->json(['error' => $message], 400);
+        return view('domains.search', $data);
     }
 
     /**

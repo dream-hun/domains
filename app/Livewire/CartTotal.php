@@ -142,22 +142,20 @@ final class CartTotal extends Component
                 }
 
                 $itemTotal = $monthlyPrice * $item->quantity;
-            } else {
+            } elseif ($itemCurrency !== $this->selectedCurrency) {
                 // For other items (domains, etc.), use standard calculation
-                if ($itemCurrency !== $this->selectedCurrency) {
-                    try {
-                        $convertedPrice = $this->convertCurrency(
-                            $item->price,
-                            $itemCurrency,
-                            $this->selectedCurrency
-                        );
-                        $itemTotal = $convertedPrice * $item->quantity;
-                    } catch (Exception) {
-                        $itemTotal = $item->price * $item->quantity;
-                    }
-                } else {
+                try {
+                    $convertedPrice = $this->convertCurrency(
+                        $item->price,
+                        $itemCurrency,
+                        $this->selectedCurrency
+                    );
+                    $itemTotal = $convertedPrice * $item->quantity;
+                } catch (Exception) {
                     $itemTotal = $item->price * $item->quantity;
                 }
+            } else {
+                $itemTotal = $item->price * $item->quantity;
             }
 
             $subtotal += $itemTotal;

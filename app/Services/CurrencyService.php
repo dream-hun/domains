@@ -252,28 +252,26 @@ final readonly class CurrencyService
         $stalenessHours = config('services.exchange_rate.staleness_hours', 24);
 
         /** @var SupportCollection<int, array{code: string, name: string, symbol: string, is_base: bool, exchange_rate: float, rate_updated_at: Carbon|null, hours_since_update: float|null, is_stale: bool}> $result */
-        $result = Cache::remember('current_rates', self::CACHE_TTL / 4, fn () =>
-            /** @phpstan-ignore-next-line */
-            Currency::query()->where('is_active', true)
-                ->orderBy('is_base', 'desc')
-                ->orderBy('code')
-                ->get()
-                ->map(function (Currency $currency) use ($stalenessHours): array {
-                    $hoursSinceUpdate = $currency->rate_updated_at
-                        ? now()->diffInHours($currency->rate_updated_at)
-                        : null;
+        $result = Cache::remember('current_rates', self::CACHE_TTL / 4, fn () => Currency::query()->where('is_active', true)
+            ->orderBy('is_base', 'desc')
+            ->orderBy('code')
+            ->get()
+            ->map(function (Currency $currency) use ($stalenessHours): array {
+                $hoursSinceUpdate = $currency->rate_updated_at
+                    ? now()->diffInHours($currency->rate_updated_at)
+                    : null;
 
-                    return [
-                        'code' => $currency->code,
-                        'name' => $currency->name,
-                        'symbol' => $currency->symbol,
-                        'is_base' => $currency->is_base,
-                        'exchange_rate' => $currency->exchange_rate,
-                        'rate_updated_at' => $currency->rate_updated_at,
-                        'hours_since_update' => $hoursSinceUpdate,
-                        'is_stale' => $hoursSinceUpdate === null || $hoursSinceUpdate > $stalenessHours,
-                    ];
-                }));
+                return [
+                    'code' => $currency->code,
+                    'name' => $currency->name,
+                    'symbol' => $currency->symbol,
+                    'is_base' => $currency->is_base,
+                    'exchange_rate' => $currency->exchange_rate,
+                    'rate_updated_at' => $currency->rate_updated_at,
+                    'hours_since_update' => $hoursSinceUpdate,
+                    'is_stale' => $hoursSinceUpdate === null || $hoursSinceUpdate > $stalenessHours,
+                ];
+            }));
 
         return $result;
     }

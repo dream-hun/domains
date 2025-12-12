@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Hosting;
 
+use App\Models\HostingPlanFeature;
 use App\Enums\DomainStatus;
 use App\Enums\DomainType;
 use App\Helpers\CurrencyHelper;
@@ -25,6 +26,12 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.user')]
+/**
+ * @property-read ?HostingPlanPrice $selectedPrice
+ * @property-read float $totalPrice
+ * @property-read string $formattedPrice
+ * @property-read ?string $finalDomainName
+ */
 class Configuration extends Component
 {
     public HostingPlan $plan;
@@ -221,6 +228,7 @@ class Configuration extends Component
     #[Computed]
     public function formattedPrice(): string
     {
+        /** @var ?HostingPlanPrice $price */
         $price = $this->selectedPrice;
 
         if (! $price) {
@@ -245,6 +253,7 @@ class Configuration extends Component
             ->where('is_included', true)
             ->take(4)
             ->map(function ($planFeature): array {
+                /** @var HostingPlanFeature $planFeature */
                 $feature = $planFeature->hostingFeature;
 
                 return [
@@ -252,12 +261,13 @@ class Configuration extends Component
                     'value' => $planFeature->getDisplayText(),
                 ];
             })
-            ->toArray();
+            ->all();
     }
 
     #[Computed]
     public function totalPrice(): float
     {
+        /** @var ?HostingPlanPrice $price */
         $price = $this->selectedPrice;
 
         if (! $price) {
@@ -280,10 +290,15 @@ class Configuration extends Component
     {
         try {
             $userCurrency = CurrencyHelper::getUserCurrency();
+            /** @var float $totalPrice */
+            $totalPrice = $this->totalPrice;
 
-            return CurrencyHelper::formatMoney($this->totalPrice, $userCurrency);
+            return CurrencyHelper::formatMoney($totalPrice, $userCurrency);
         } catch (Exception) {
-            return $this->formattedPrice;
+            /** @var string $formattedPrice */
+            $formattedPrice = $this->formattedPrice;
+
+            return $formattedPrice;
         }
     }
 
@@ -334,10 +349,16 @@ class Configuration extends Component
     {
         // If category doesn't require domain, allow adding to cart without domain
         if (! $this->plan->category->requiresDomain()) {
-            return $this->domainOption === 'none' || ($this->domainConfirmed && $this->finalDomainName !== null);
+            /** @var ?string $finalDomainName */
+            $finalDomainName = $this->finalDomainName;
+
+            return $this->domainOption === 'none' || ($this->domainConfirmed && $finalDomainName !== null);
         }
 
-        return $this->domainConfirmed && $this->finalDomainName !== null;
+        /** @var ?string $finalDomainName */
+        $finalDomainName = $this->finalDomainName;
+
+        return $this->domainConfirmed && $finalDomainName !== null;
     }
 
     public function searchDomains(): void
@@ -468,6 +489,7 @@ class Configuration extends Component
             return;
         }
 
+        /** @var ?string $domainName */
         $domainName = $this->finalDomainName;
 
         $isExternal = $this->domainOption === 'existing' && ($this->existingDomainSource === 'external' || ! Auth::check());
@@ -519,6 +541,7 @@ class Configuration extends Component
      */
     public function addToCart(): void
     {
+        /** @var ?string $domainName */
         $domainName = $this->finalDomainName;
 
         // Check if domain is required for this category
@@ -564,7 +587,7 @@ class Configuration extends Component
         }
 
         try {
-            /** @var HostingPlanPrice|null $priceModel */
+            /** @var ?HostingPlanPrice $priceModel */
             $priceModel = $this->selectedPrice;
 
             if (! $priceModel) {

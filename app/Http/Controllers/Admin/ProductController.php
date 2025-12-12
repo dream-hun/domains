@@ -137,7 +137,7 @@ class ProductController extends Controller
 
         Cart::add([
             'id' => $cartId,
-            'name' => ($subscription->domain ?: 'Hosting').' - '.($subscription->plan?->name ?? 'Hosting Plan').' (Renewal)',
+            'name' => ($subscription->domain ?: 'Hosting').' - '.$subscription->plan->name.' (Renewal)',
             'price' => $monthlyRenewalPrice,
             'quantity' => $quantity,
             'attributes' => [
@@ -149,7 +149,7 @@ class ProductController extends Controller
                 'billing_cycle' => $subscription->billing_cycle, // Store original billing cycle for reference
                 'hosting_plan_id' => $subscription->hosting_plan_id,
                 'hosting_plan_price_id' => $monthlyPlanPrice->id,
-                'current_expiry' => $subscription->expires_at?->format('Y-m-d'),
+                'current_expiry' => $subscription->expires_at->format('Y-m-d'),
                 'currency' => $userCurrency,
                 'unit_price' => $monthlyRenewalPrice, // Monthly price for calculations
                 'display_unit_price' => $displayUnitPrice, // Display price based on original billing cycle

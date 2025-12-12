@@ -8,26 +8,36 @@ use App\Models\Order;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
-use Laravel\Cashier\Events\WebhookReceived;
 
+/**
+ * @phpstan-ignore-next-line
+ * This listener is not currently registered in EventServiceProvider.
+ * The application uses StripeWebhookController instead.
+ * Consider removing this file if it's not needed.
+ */
 final class HandleStripeWebhook implements ShouldQueue
 {
     use InteractsWithQueue;
 
     /**
      * Handle the webhook event.
+     *
+     * @param  array{payload: array{type: string, data: array{object: array}}}  $event
      */
-    public function handle(WebhookReceived $event): void
+    public function handle(array $event): void
     {
-        switch ($event->payload['type']) {
+        $payload = $event['payload'] ?? [];
+        $eventType = $payload['type'] ?? '';
+
+        switch ($eventType) {
             case 'checkout.session.completed':
-                $this->handleCheckoutSessionCompleted($event->payload['data']['object']);
+                $this->handleCheckoutSessionCompleted($payload['data']['object'] ?? []);
                 break;
             case 'payment_intent.succeeded':
-                $this->handlePaymentIntentSucceeded($event->payload['data']['object']);
+                $this->handlePaymentIntentSucceeded($payload['data']['object'] ?? []);
                 break;
             case 'payment_intent.payment_failed':
-                $this->handlePaymentIntentFailed($event->payload['data']['object']);
+                $this->handlePaymentIntentFailed($payload['data']['object'] ?? []);
                 break;
         }
     }

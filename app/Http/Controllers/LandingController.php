@@ -38,6 +38,7 @@ final class LandingController extends Controller
         // Manually attach already-loaded planPrices to plans in categories to avoid duplicate queries
         foreach ($hostingCategories as $category) {
             foreach ($category->plans as $plan) {
+                /** @var HostingPlan $plan */
                 $loadedPlan = $allPlans->firstWhere('id', $plan->id);
                 if ($loadedPlan && $loadedPlan->relationLoaded('planPrices')) {
                     $plan->setRelation('planPrices', $loadedPlan->planPrices);

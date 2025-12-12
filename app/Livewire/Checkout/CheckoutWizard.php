@@ -283,7 +283,7 @@ final class CheckoutWizard extends Component
     /**
      * Get formatted registration period for display
      */
-    public function getRegistrationPeriod($item): string
+    public function getRegistrationPeriod(object $item): string
     {
         $formatter = app(OrderItemFormatterService::class);
 
@@ -308,7 +308,7 @@ final class CheckoutWizard extends Component
     /**
      * Get display name for cart item (plan name only for subscription renewals and hosting)
      */
-    public function getItemDisplayName($item): string
+    public function getItemDisplayName(object $item): string
     {
         $formatter = app(OrderItemFormatterService::class);
 

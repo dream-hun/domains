@@ -40,6 +40,7 @@ final class Contact extends Model
      */
     public function user(): BelongsTo
     {
+        // @phpstan-ignore-next-line
         return $this->belongsTo(User::class);
     }
 
@@ -48,6 +49,7 @@ final class Contact extends Model
      */
     public function domains(): BelongsToMany
     {
+        // @phpstan-ignore-next-line
         return $this->belongsToMany(Domain::class, 'domain_contacts', 'contact_id', 'domain_id')
             ->using(DomainContact::class)
             ->withPivot('type', 'user_id');

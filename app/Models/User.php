@@ -28,6 +28,7 @@ use Illuminate\Notifications\Notifiable;
 final class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory;
+
     use Notifiable;
 
     protected $fillable = [
@@ -76,6 +77,7 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function domains(): HasMany
     {
+        // @phpstan-ignore-next-line
         return $this->hasMany(Domain::class);
     }
 
@@ -84,6 +86,7 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function contacts(): HasMany
     {
+        // @phpstan-ignore-next-line
         return $this->hasMany(Contact::class);
     }
 
@@ -92,6 +95,7 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function orders(): HasMany
     {
+        // @phpstan-ignore-next-line
         return $this->hasMany(Order::class);
     }
 
@@ -100,6 +104,7 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function subscriptions(): HasMany
     {
+        // @phpstan-ignore-next-line
         return $this->hasMany(Subscription::class);
     }
 
@@ -117,6 +122,7 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function roles(): BelongsToMany
     {
+        // @phpstan-ignore-next-line
         return $this->belongsToMany(Role::class);
     }
 

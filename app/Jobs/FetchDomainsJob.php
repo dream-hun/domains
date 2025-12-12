@@ -35,7 +35,7 @@ final class FetchDomainsJob implements ShouldQueue
             do {
                 $result = $this->domainService->getDomainList($page, $perPage);
                 Log::debug('Namecheap getDomainList result', ['page' => $page, 'result' => $result]);
-                if (! ($result['success'] ?? false) || empty($result['domains'])) {
+                if (! $result['success'] || ! isset($result['domains']) || empty($result['domains'])) {
                     if ($page === 1) {
                         Log::warning('No domains fetched from Namecheap.', ['result' => $result]);
                     }
@@ -127,7 +127,7 @@ final class FetchDomainsJob implements ShouldQueue
                     break;
                 }
 
-            } while ($result['domains'] !== []);
+            } while (isset($result['domains']) && is_array($result['domains']) && $result['domains'] !== []);
 
             Log::info(sprintf('Fetched and upserted %d domains from Namecheap.', $totalFetched));
 

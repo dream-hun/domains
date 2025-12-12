@@ -102,7 +102,7 @@ final class DomainSearchController extends Controller
         return [
             'domain' => $fullDomain,
             'available' => $available,
-            'type' => $price->type?->value ?? DomainType::International->value,
+            'type' => $price->type->value,
             'register_price' => $price->getPriceInBaseCurrency('register_price'),
             'renewal_price' => $price->getPriceInBaseCurrency('renewal_price'),
             'transfer_price' => $price->getPriceInBaseCurrency('transfer_price'),

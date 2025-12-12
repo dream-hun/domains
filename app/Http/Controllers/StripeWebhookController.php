@@ -128,7 +128,7 @@ final class StripeWebhookController extends Controller
 
             $order = $payment->order;
 
-            if ($order && $order->payment_status === 'pending') {
+            if ($order !== null && $order->payment_status === 'pending') {
                 $order->update([
                     'payment_status' => 'paid',
                     'status' => $order->status === 'pending' ? 'processing' : $order->status,
@@ -181,7 +181,7 @@ final class StripeWebhookController extends Controller
                 ]);
 
                 // Update order status if exists
-                if ($payment->order) {
+                if ($payment->order !== null) {
                     $payment->order->update([
                         'status' => 'failed',
                         'payment_status' => 'failed',
@@ -221,7 +221,7 @@ final class StripeWebhookController extends Controller
                 ]);
 
                 // Update order status if exists
-                if ($payment->order) {
+                if ($payment->order !== null) {
                     $payment->order->update([
                         'status' => 'refunded',
                         'payment_status' => 'refunded',
@@ -359,7 +359,7 @@ final class StripeWebhookController extends Controller
             'items' => [
                 [
                     'id' => $subscription->id,
-                    'name' => ($subscription->domain ?: 'Hosting').' - '.($subscription->plan?->name ?? 'Hosting Plan').' (Auto-Renewal)',
+                    'name' => ($subscription->domain ?: 'Hosting').' - '.$subscription->plan->name.' (Auto-Renewal)',
                     'price' => $paidAmount ?? $planPrice->renewal_price,
                     'quantity' => 1,
                     'attributes' => [

@@ -22,6 +22,16 @@ final class FakeEppDomainService implements DomainRegistrationServiceInterface
     /** @var array<string, array<string, mixed>> */
     private array $contacts = [];
 
+    /**
+     * Get stored contacts (for testing purposes)
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function getContacts(): array
+    {
+        return $this->contacts;
+    }
+
     public function setDomainAvailability(string $domain, bool $available, string $reason = ''): self
     {
         $this->domainAvailability[$domain] = [

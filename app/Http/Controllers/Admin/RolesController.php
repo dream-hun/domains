@@ -12,7 +12,6 @@ use App\Models\Role;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -36,7 +35,7 @@ final class RolesController extends Controller
         return view('admin.roles.create', ['permissions' => $permissions]);
     }
 
-    public function store(StoreRoleRequest $request): Redirector|RedirectResponse
+    public function store(StoreRoleRequest $request): RedirectResponse
     {
         $role = Role::query()->create($request->only(['title']));
         $role->permissions()->sync($request->input('permissions', []));
@@ -55,7 +54,7 @@ final class RolesController extends Controller
         return view('admin.roles.edit', ['permissions' => $permissions, 'role' => $role]);
     }
 
-    public function update(UpdateRoleRequest $request, Role $role): Redirector|RedirectResponse
+    public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
     {
         $role->update($request->only(['title']));
         $role->permissions()->sync($request->input('permissions', []));

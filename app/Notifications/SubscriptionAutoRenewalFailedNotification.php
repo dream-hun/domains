@@ -37,9 +37,9 @@ final class SubscriptionAutoRenewalFailedNotification extends Notification imple
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $planName = $this->subscription->plan?->name ?? 'Hosting Plan';
+        $planName = $this->subscription->plan->name;
         $domain = $this->subscription->domain ?? 'N/A';
-        $expiryDate = $this->subscription->expires_at?->format('F d, Y') ?? 'Unknown';
+        $expiryDate = $this->subscription->expires_at->format('F d, Y');
 
         return (new MailMessage)
             ->error()
@@ -66,9 +66,9 @@ final class SubscriptionAutoRenewalFailedNotification extends Notification imple
             'type' => 'subscription_auto_renewal_failed',
             'subscription_id' => $this->subscription->id,
             'subscription_uuid' => $this->subscription->uuid,
-            'plan_name' => $this->subscription->plan?->name,
+            'plan_name' => $this->subscription->plan->name,
             'domain' => $this->subscription->domain,
-            'expires_at' => $this->subscription->expires_at?->toIso8601String(),
+            'expires_at' => $this->subscription->expires_at->toIso8601String(),
             'failure_reason' => $this->failureReason,
             'message' => 'Automatic renewal failed for your subscription',
         ];

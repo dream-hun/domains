@@ -31,7 +31,7 @@ final class UpdateHostingPlanRequest extends FormRequest
     {
         /** @var HostingPlan|null $hostingPlan */
         $hostingPlan = $this->route('hosting_plan');
-        $planId = $hostingPlan?->id ?? null;
+        $planId = $hostingPlan !== null ? $hostingPlan->id : null;
 
         return [
             'name' => ['required', 'string', 'max:255'],

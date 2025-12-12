@@ -167,7 +167,6 @@ final class DomainController extends Controller
         foreach ($domain->contacts as $contact) {
             $contactType = $contact->pivot->type;
             $contactsByType[$contactType] = $contact;
-            $contact->type = $contactType;
         }
 
         return view('admin.domains.nameservers', [
@@ -298,12 +297,5 @@ final class DomainController extends Controller
 
             return back()->withErrors(['error' => 'Failed to reactivate domain: '.$exception->getMessage()]);
         }
-    }
-
-    private function extractTld(string $domain): string
-    {
-        $parts = explode('.', $domain);
-
-        return '.'.end($parts);
     }
 }
