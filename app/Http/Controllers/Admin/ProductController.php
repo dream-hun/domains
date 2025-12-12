@@ -11,6 +11,7 @@ use App\Models\Domain;
 use App\Models\HostingCategory;
 use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
+use Darryldecode\Cart\Exceptions\InvalidItemException;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -82,11 +83,12 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * @throws InvalidItemException
+     */
     public function addSubscriptionRenewalToCart(Request $request, Subscription $subscription): RedirectResponse
     {
         $user = $request->user();
-
-        // Users can only renew their own subscriptions
         if (! $user->isAdmin() && $subscription->user_id !== $user->id) {
             abort(403, 'Unauthorized');
         }

@@ -104,7 +104,6 @@ class Subscription extends Model
         $currentExpiry = $this->expires_at ?? Date::now();
 
         $newExpiry = match ($billingCycle) {
-            BillingCycle::Monthly => $currentExpiry->copy()->addMonth(),
             BillingCycle::Quarterly => $currentExpiry->copy()->addMonths(3),
             BillingCycle::SemiAnnually => $currentExpiry->copy()->addMonths(6),
             BillingCycle::Annually => $currentExpiry->copy()->addYear(),

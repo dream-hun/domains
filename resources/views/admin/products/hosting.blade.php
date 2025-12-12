@@ -48,6 +48,7 @@
                                     <thead>
                                         <tr>
                                             <th>Plan</th>
+                                            <th>Domain</th>
                                             <th>Billing Cycle</th>
                                             <th>Status</th>
                                             <th>Starts At</th>
@@ -72,6 +73,7 @@
                                                 <td>
                                                     <strong>{{ $subscription->plan->name ?? 'N/A' }}</strong>
                                                 </td>
+                                                <td>{{ $subscription->domain ?? 'None' }}</td>
                                                 <td>
                                                     <span class="badge badge-light">
                                                         {{ ucfirst(str_replace('_', ' ', $subscription->billing_cycle)) }}
