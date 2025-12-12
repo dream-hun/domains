@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Domain;
 
+use App\Models\Contact;
 use App\Models\Domain;
 use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Support\Facades\Log;
@@ -48,7 +49,7 @@ final readonly class UpdateDomainContactsAction
 
             foreach ($domainContacts as $contact) {
                 /** @var Contact $contact */
-                /** @var object{type: string} $pivotData */
+                /** @var \App\Models\DomainContact $pivotData */
                 $pivotData = $contact->pivot;
                 $type = $pivotData->type;
 

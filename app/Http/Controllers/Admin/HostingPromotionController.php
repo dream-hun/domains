@@ -95,12 +95,11 @@ final class HostingPromotionController extends Controller
     }
 
     /**
-     * @return Collection<int, array{id:int,name:string,category:string|null}>
+     * @phpstan-return Collection<int, array{id:int,name:string,category:string|null}>
      */
     private function plans(): Collection
     {
-        /** @var Collection<int, array{id:int,name:string,category:string|null}> $result */
-        $result = HostingPlan::query()
+        return HostingPlan::query()
             ->with('category:id,name')
             ->select(['id', 'name', 'category_id'])
             ->orderBy('name')
@@ -110,8 +109,6 @@ final class HostingPromotionController extends Controller
                 'name' => $plan->name,
                 'category' => $plan->category?->name,
             ]);
-
-        return $result;
     }
 
     private function categories(): Collection

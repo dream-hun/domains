@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Livewire\Hosting;
 
-use App\Models\HostingPlanFeature;
 use App\Enums\DomainStatus;
 use App\Enums\DomainType;
 use App\Helpers\CurrencyHelper;
 use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Models\HostingPlan;
+use App\Models\HostingPlanFeature;
 use App\Models\HostingPlanPrice;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\InternationalDomainService;
@@ -228,8 +228,7 @@ class Configuration extends Component
     #[Computed]
     public function formattedPrice(): string
     {
-        /** @var ?HostingPlanPrice $price */
-        $price = $this->selectedPrice;
+        $price = $this->selectedPrice();
 
         if (! $price) {
             return 'N/A';
@@ -252,12 +251,11 @@ class Configuration extends Component
         return $this->plan->planFeatures
             ->where('is_included', true)
             ->take(4)
-            ->map(function ($planFeature): array {
-                /** @var HostingPlanFeature $planFeature */
+            ->map(function (HostingPlanFeature $planFeature): array {
                 $feature = $planFeature->hostingFeature;
 
                 return [
-                    'name' => $feature?->name ?? 'Feature',
+                    'name' => $feature->name ?? 'Feature',
                     'value' => $planFeature->getDisplayText(),
                 ];
             })
@@ -267,8 +265,7 @@ class Configuration extends Component
     #[Computed]
     public function totalPrice(): float
     {
-        /** @var ?HostingPlanPrice $price */
-        $price = $this->selectedPrice;
+        $price = $this->selectedPrice();
 
         if (! $price) {
             return 0;
@@ -290,15 +287,11 @@ class Configuration extends Component
     {
         try {
             $userCurrency = CurrencyHelper::getUserCurrency();
-            /** @var float $totalPrice */
-            $totalPrice = $this->totalPrice;
+            $totalPrice = $this->totalPrice();
 
             return CurrencyHelper::formatMoney($totalPrice, $userCurrency);
         } catch (Exception) {
-            /** @var string $formattedPrice */
-            $formattedPrice = $this->formattedPrice;
-
-            return $formattedPrice;
+            return $this->formattedPrice();
         }
     }
 
@@ -349,14 +342,12 @@ class Configuration extends Component
     {
         // If category doesn't require domain, allow adding to cart without domain
         if (! $this->plan->category->requiresDomain()) {
-            /** @var ?string $finalDomainName */
-            $finalDomainName = $this->finalDomainName;
+            $finalDomainName = $this->finalDomainName();
 
             return $this->domainOption === 'none' || ($this->domainConfirmed && $finalDomainName !== null);
         }
 
-        /** @var ?string $finalDomainName */
-        $finalDomainName = $this->finalDomainName;
+        $finalDomainName = $this->finalDomainName();
 
         return $this->domainConfirmed && $finalDomainName !== null;
     }
@@ -489,8 +480,7 @@ class Configuration extends Component
             return;
         }
 
-        /** @var ?string $domainName */
-        $domainName = $this->finalDomainName;
+        $domainName = $this->finalDomainName();
 
         $isExternal = $this->domainOption === 'existing' && ($this->existingDomainSource === 'external' || ! Auth::check());
 
@@ -541,8 +531,7 @@ class Configuration extends Component
      */
     public function addToCart(): void
     {
-        /** @var ?string $domainName */
-        $domainName = $this->finalDomainName;
+        $domainName = $this->finalDomainName();
 
         // Check if domain is required for this category
         $domainRequired = $this->plan->category->requiresDomain();
@@ -587,8 +576,7 @@ class Configuration extends Component
         }
 
         try {
-            /** @var ?HostingPlanPrice $priceModel */
-            $priceModel = $this->selectedPrice;
+            $priceModel = $this->selectedPrice();
 
             if (! $priceModel) {
                 $this->addError('base', 'Price not available for this billing cycle.');

@@ -10,7 +10,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
 /**
- * @phpstan-ignore-next-line
  * This listener is not currently registered in EventServiceProvider.
  * The application uses StripeWebhookController instead.
  * Consider removing this file if it's not needed.
@@ -26,18 +25,18 @@ final class HandleStripeWebhook implements ShouldQueue
      */
     public function handle(array $event): void
     {
-        $payload = $event['payload'] ?? [];
-        $eventType = $payload['type'] ?? '';
+        $payload = $event['payload'];
+        $eventType = $payload['type'];
 
         switch ($eventType) {
             case 'checkout.session.completed':
-                $this->handleCheckoutSessionCompleted($payload['data']['object'] ?? []);
+                $this->handleCheckoutSessionCompleted($payload['data']['object']);
                 break;
             case 'payment_intent.succeeded':
-                $this->handlePaymentIntentSucceeded($payload['data']['object'] ?? []);
+                $this->handlePaymentIntentSucceeded($payload['data']['object']);
                 break;
             case 'payment_intent.payment_failed':
-                $this->handlePaymentIntentFailed($payload['data']['object'] ?? []);
+                $this->handlePaymentIntentFailed($payload['data']['object']);
                 break;
         }
     }

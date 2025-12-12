@@ -127,7 +127,8 @@ final class FetchDomainsJob implements ShouldQueue
                     break;
                 }
 
-            } while (isset($result['domains']) && is_array($result['domains']) && $result['domains'] !== []);
+                // Continue if we got domains in this iteration
+            } while ($count > 0);
 
             Log::info(sprintf('Fetched and upserted %d domains from Namecheap.', $totalFetched));
 

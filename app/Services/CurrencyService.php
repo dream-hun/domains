@@ -16,49 +16,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
 
-/**
- * Request-level cache for currency lookups to prevent duplicate queries
- */
-final class CurrencyRequestCache
-{
-    /**
-     * @var array<string, Currency|null>
-     */
-    private static array $currencyCache = [];
-
-    private static ?Currency $baseCurrencyCache = null;
-
-    public static function getCurrency(string $code): ?Currency
-    {
-        return self::$currencyCache[$code] ?? null;
-    }
-
-    public static function setCurrency(string $code, ?Currency $currency): void
-    {
-        self::$currencyCache[$code] = $currency;
-    }
-
-    public static function hasCurrency(string $code): bool
-    {
-        return isset(self::$currencyCache[$code]);
-    }
-
-    public static function getBaseCurrency(): ?Currency
-    {
-        return self::$baseCurrencyCache;
-    }
-
-    public static function setBaseCurrency(Currency $currency): void
-    {
-        self::$baseCurrencyCache = $currency;
-    }
-
-    public static function hasBaseCurrency(): bool
-    {
-        return self::$baseCurrencyCache instanceof Currency;
-    }
-}
-
 final readonly class CurrencyService
 {
     private const CACHE_TTL = 3600; // 1 hour
@@ -245,14 +202,13 @@ final readonly class CurrencyService
     /**
      * Get current exchange rates with metadata
      *
-     * @return SupportCollection<int, array{code: string, name: string, symbol: string, is_base: bool, exchange_rate: float, rate_updated_at: Carbon|null, hours_since_update: float|null, is_stale: bool}>
+     * @phpstan-return SupportCollection<int, array{code: string, name: string, symbol: string, is_base: bool, exchange_rate: float, rate_updated_at: Carbon|null, hours_since_update: float|null, is_stale: bool}>
      */
     public function getCurrentRates(): SupportCollection
     {
         $stalenessHours = config('services.exchange_rate.staleness_hours', 24);
 
-        /** @var SupportCollection<int, array{code: string, name: string, symbol: string, is_base: bool, exchange_rate: float, rate_updated_at: Carbon|null, hours_since_update: float|null, is_stale: bool}> $result */
-        $result = Cache::remember('current_rates', self::CACHE_TTL / 4, fn () => Currency::query()->where('is_active', true)
+        return Cache::remember('current_rates', self::CACHE_TTL / 4, fn () => Currency::query()->where('is_active', true)
             ->orderBy('is_base', 'desc')
             ->orderBy('code')
             ->get()
@@ -272,8 +228,6 @@ final readonly class CurrencyService
                     'is_stale' => $hoursSinceUpdate === null || $hoursSinceUpdate > $stalenessHours,
                 ];
             }));
-
-        return $result;
     }
 
     /**
