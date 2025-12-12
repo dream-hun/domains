@@ -101,6 +101,34 @@ final class CartComponent extends Component
                 $itemCurrency = $item->attributes->currency ?? 'USD';
                 $itemType = $item->attributes->get('type', 'registration');
 
+                // Initialize duration_months and quantity for hosting items if not set
+                if ($itemType === 'hosting' && ! $item->attributes->has('duration_months')) {
+                    $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
+                    $durationMonths = $this->getBillingCycleMonths($billingCycle);
+
+                    // Calculate monthly price if not stored
+                    $monthlyPrice = $item->attributes->get('monthly_unit_price');
+                    if (! $monthlyPrice) {
+                        $monthlyPrice = $durationMonths > 0 ? $item->price / $durationMonths : $item->price;
+                    }
+
+                    // Update the item to set duration_months, quantity, and monthly_unit_price
+                    $existingAttributes = $item->attributes->all();
+                    Cart::update($item->id, [
+                        'quantity' => [
+                            'relative' => false,
+                            'value' => $durationMonths,
+                        ],
+                        'attributes' => array_merge($existingAttributes, [
+                            'duration_months' => $durationMonths,
+                            'monthly_unit_price' => $monthlyPrice,
+                        ]),
+                    ]);
+
+                    // Re-fetch the item to get updated values
+                    $item = Cart::get($item->id);
+                }
+
                 if (! in_array($itemType, ['hosting', 'subscription_renewal'], true)) {
                     $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
                     $itemTotal = $convertedPrice * $item->quantity;
@@ -108,8 +136,14 @@ final class CartComponent extends Component
                     $monthlyPrice = $item->attributes->get('monthly_unit_price', $item->price);
                     $itemTotal = $monthlyPrice * $item->quantity;
                 } else {
-                    $convertedPrice = $item->price;
-                    $itemTotal = $convertedPrice * $item->quantity;
+                    // For hosting, use monthly unit price if available, otherwise calculate from billing cycle
+                    $monthlyPrice = $item->attributes->get('monthly_unit_price');
+                    if (! $monthlyPrice) {
+                        $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
+                        $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
+                        $monthlyPrice = $billingCycleMonths > 0 ? $item->price / $billingCycleMonths : $item->price;
+                    }
+                    $itemTotal = $monthlyPrice * $item->quantity;
                 }
 
                 $subtotal += $itemTotal;
@@ -192,7 +226,15 @@ final class CartComponent extends Component
                 return CurrencyHelper::formatMoney($monthlyPrice, $itemCurrency);
             }
 
-            return CurrencyHelper::formatMoney($item->price, $itemCurrency);
+            // For hosting, return monthly unit price
+            $monthlyPrice = $item->attributes->get('monthly_unit_price');
+            if (! $monthlyPrice) {
+                $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
+                $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
+                $monthlyPrice = $billingCycleMonths > 0 ? $item->price / $billingCycleMonths : $item->price;
+            }
+
+            return CurrencyHelper::formatMoney($monthlyPrice, $itemCurrency);
 
         } catch (Exception $exception) {
             Log::warning('Falling back to original currency for cart item price display', [
@@ -229,7 +271,14 @@ final class CartComponent extends Component
                 $monthlyPrice = $item->attributes->get('monthly_unit_price', $item->price);
                 $total = $monthlyPrice * $item->quantity;
             } else {
-                $total = $item->price * $item->quantity;
+                // For hosting, use monthly unit price if available
+                $monthlyPrice = $item->attributes->get('monthly_unit_price');
+                if (! $monthlyPrice) {
+                    $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
+                    $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
+                    $monthlyPrice = $billingCycleMonths > 0 ? $item->price / $billingCycleMonths : $item->price;
+                }
+                $total = $monthlyPrice * $item->quantity;
             }
 
             return CurrencyHelper::formatMoney($total, $itemCurrency);
@@ -262,20 +311,29 @@ final class CartComponent extends Component
 
             $itemType = $currentItem->attributes->get('type', 'registration');
 
-            if ($itemType === 'hosting') {
-                $this->dispatch('notify', [
-                    'type' => 'error',
-                    'message' => 'Hosting plans are billed as subscriptions and cannot change quantity.',
-                ]);
-
-                return;
-            }
-
-            $maxQuantity = $itemType === 'subscription_renewal' ? 36 : 10;
+            $maxQuantity = match ($itemType) {
+                'subscription_renewal', 'hosting' => 36,
+                default => 10,
+            };
 
             if ($quantity >= 1 && $quantity <= $maxQuantity) {
-                if ($itemType === 'subscription_renewal') {
+                if (in_array($itemType, ['subscription_renewal', 'hosting'], true)) {
                     $existingAttributes = $currentItem->attributes->all();
+
+                    // For hosting, calculate monthly price if not already stored
+                    if ($itemType === 'hosting' && ! isset($existingAttributes['monthly_unit_price'])) {
+                        $billingCycle = $existingAttributes['billing_cycle'] ?? 'monthly';
+                        $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
+                        $monthlyPrice = $billingCycleMonths > 0 ? $currentItem->price / $billingCycleMonths : $currentItem->price;
+                        $existingAttributes['monthly_unit_price'] = $monthlyPrice;
+                    }
+
+                    // Update billing cycle based on new duration for hosting
+                    if ($itemType === 'hosting') {
+                        $newBillingCycle = $this->getBillingCycleFromMonths((int) $quantity);
+                        $existingAttributes['billing_cycle'] = $newBillingCycle;
+                    }
+
                     Cart::update($id, [
                         'quantity' => [
                             'relative' => false,
@@ -327,7 +385,7 @@ final class CartComponent extends Component
                     'message' => 'Quantity updated successfully',
                 ]);
             } else {
-                $maxLabel = $itemType === 'subscription_renewal' ? '36 months' : '10 years';
+                $maxLabel = in_array($itemType, ['subscription_renewal', 'hosting'], true) ? '36 months' : '10 years';
                 $this->dispatch('notify', [
                     'type' => 'error',
                     'message' => sprintf('Quantity must be between 1 and %s', $maxLabel),
@@ -944,6 +1002,19 @@ final class CartComponent extends Component
         return $this->formatDurationLabel($months);
     }
 
+    public function getBillingCycleMonths(string $billingCycle): int
+    {
+        return match ($billingCycle) {
+            'monthly' => 1,
+            'quarterly' => 3,
+            'semi-annually' => 6,
+            'annually' => 12,
+            'biennially' => 24,
+            'triennially' => 36,
+            default => 1,
+        };
+    }
+
     /**
      * Convert an amount from its original currency into the current display currency.
      *
@@ -1019,16 +1090,19 @@ final class CartComponent extends Component
         }
     }
 
-    private function getBillingCycleMonths(string $billingCycle): int
+    /**
+     * Get billing cycle string from number of months
+     */
+    private function getBillingCycleFromMonths(int $months): string
     {
-        return match ($billingCycle) {
-            'monthly' => 1,
-            'quarterly' => 3,
-            'semi-annually' => 6,
-            'annually' => 12,
-            'biennially' => 24,
-            'triennially' => 36,
-            default => 1,
+        return match (true) {
+            $months === 1 => 'monthly',
+            $months === 3 => 'quarterly',
+            $months === 6 => 'semi-annually',
+            $months === 12 => 'annually',
+            $months === 24 => 'biennially',
+            $months === 36 => 'triennially',
+            default => 'monthly',
         };
     }
 }

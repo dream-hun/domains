@@ -120,38 +120,102 @@
                         <h3 class="card-title">Order Items</h3>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Domain Name</th>
-                                        <th>Type</th>
-                                        <th>Years</th>
-                                        <th>Price</th>
-                                        <th>Quantity</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($order->orderItems as $item)
+                        @if ($order->orderItems->isEmpty())
+                            <div class="alert alert-info" role="alert">
+                                <i class="bi bi-info-circle"></i> No items found in this order.
+                            </div>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
                                         <tr>
-                                            <td>{{ $item->domain_name }}</td>
-                                            <td>{{ ucfirst($item->domain_type) }}</td>
-                                            <td>{{ $item->years }} {{ $item->years > 1 ? 'years' : 'year' }}</td>
-                                            <td>{{ $item->currency }} {{ number_format($item->price, 2) }}</td>
-                                            <td>{{ $item->quantity }}</td>
-                                            <td>{{ $item->currency }} {{ number_format($item->total_amount, 2) }}</td>
+                                            <th>Description</th>
+                                            <th>Type</th>
+                                            <th>Period</th>
+                                            <th>Price</th>
+                                            <th>Quantity</th>
+                                            <th>Total</th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="5" class="text-end">Total:</th>
-                                        <th>{{ $order->currency }} {{ number_format($order->total_amount, 2) }}</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($order->orderItems as $item)
+                                            <tr>
+                                                <td>
+                                                    @if ($item->domain_type === 'hosting')
+                                                        @php
+                                                            $metadata = $item->metadata ?? [];
+                                                            $planName = $metadata['plan']['name'] ?? 'Hosting Plan';
+                                                            $linkedDomain = $metadata['linked_domain'] ?? null;
+                                                        @endphp
+                                                        <strong>{{ $planName }}</strong>
+                                                        @if ($linkedDomain)
+                                                            <br><small class="text-muted">Domain: {{ $linkedDomain }}</small>
+                                                        @endif
+                                                    @elseif ($item->domain_type === 'subscription_renewal')
+                                                        @php
+                                                            $metadata = $item->metadata ?? [];
+                                                            $subscriptionId = $metadata['subscription_id'] ?? null;
+                                                            $planName = null;
+
+                                                            // Try to get plan name from subscription
+                                                            if ($subscriptionId) {
+                                                                $subscription = \App\Models\Subscription::query()->find($subscriptionId);
+                                                                if ($subscription && $subscription->product_snapshot) {
+                                                                    $planName = $subscription->product_snapshot['plan']['name'] ?? null;
+                                                                }
+                                                                // Fallback: try to get from plan relationship
+                                                                if (!$planName && $subscription && $subscription->plan) {
+                                                                    $planName = $subscription->plan->name;
+                                                                }
+                                                            }
+
+                                                            // Fallback: try to get from hosting_plan_id in metadata
+                                                            if (!$planName && isset($metadata['hosting_plan_id'])) {
+                                                                $plan = \App\Models\HostingPlan::query()->find($metadata['hosting_plan_id']);
+                                                                if ($plan) {
+                                                                    $planName = $plan->name;
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        <strong>{{ $planName ?: 'Subscription Renewal' }}</strong>
+                                                        @if ($subscriptionId)
+                                                            <br><small class="text-muted">Subscription ID: {{ $subscriptionId }}</small>
+                                                        @endif
+                                                    @else
+                                                        {{ $item->domain_name }}
+                                                    @endif
+                                                </td>
+                                                <td>{{ ucfirst(str_replace('_', ' ', $item->domain_type)) }}</td>
+                                                <td>
+                                                    @if (in_array($item->domain_type, ['hosting', 'subscription_renewal'], true))
+                                                        @php
+                                                            $metadata = $item->metadata ?? [];
+                                                            $billingCycle = $metadata['billing_cycle'] ?? null;
+                                                        @endphp
+                                                        @if ($billingCycle)
+                                                            {{ ucfirst($billingCycle) }}
+                                                        @else
+                                                            N/A
+                                                        @endif
+                                                    @else
+                                                        {{ $item->years }} {{ $item->years == 1 ? 'year' : 'years' }}
+                                                    @endif
+                                                </td>
+                                                <td>{{ $item->currency }} {{ number_format($item->price, 2) }}</td>
+                                                <td>{{ $item->quantity }}</td>
+                                                <td>{{ $item->currency }} {{ number_format($item->total_amount, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="5" class="text-end">Total:</th>
+                                            <th>{{ $order->currency }} {{ number_format($order->total_amount, 2) }}</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -164,7 +228,7 @@
                     <div class="card-body">
                         <p><strong>Name:</strong><br>{{ $order->billing_name }}</p>
                         <p><strong>Email:</strong><br>{{ $order->billing_email }}</p>
-                        
+
                         @if ($order->billing_address)
                             <p>
                                 <strong>Address:</strong><br>
@@ -207,5 +271,3 @@
         </div>
     </div>
 </x-admin-layout>
-
-
