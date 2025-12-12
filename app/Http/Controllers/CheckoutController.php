@@ -9,10 +9,12 @@ use App\Helpers\StripeHelper;
 use App\Jobs\ProcessDomainRenewalJob;
 use App\Jobs\ProcessSubscriptionRenewalJob;
 use App\Models\Currency;
+use App\Models\Domain;
 use App\Models\HostingPlan;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Subscription;
 use App\Services\TransactionLogger;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -198,7 +200,11 @@ final class CheckoutController extends Controller
                     'user_id' => $order->user_id,
                 ]);
 
-                return view('checkout.success', ['order' => $order]);
+                // Redirect to service details instead of showing success page
+                $redirectUrl = $this->getServiceDetailsRedirectUrl($order);
+
+                return redirect($redirectUrl)
+                    ->with('success', 'Payment processed successfully!');
 
             } catch (Exception $e) {
                 DB::rollBack();
@@ -755,5 +761,48 @@ final class CheckoutController extends Controller
         $years = (int) ($months / 12);
 
         return $years.' '.Str::plural('year', $years);
+    }
+
+    /**
+     * Get redirect URL to service details based on order items
+     * Prioritizes domain renewals, then subscription renewals, then falls back to billing
+     */
+    private function getServiceDetailsRedirectUrl(Order $order): string
+    {
+        // Load order items if not already loaded
+        $orderItems = $order->orderItems;
+
+        if ($orderItems->isEmpty()) {
+            // Fallback to billing page if no order items
+            return route('billing.show', $order);
+        }
+
+        // First, check for domain renewals
+        foreach ($orderItems as $item) {
+            if ($item->domain_type === 'renewal' && $item->domain_id) {
+                $domain = Domain::query()->find($item->domain_id);
+                if ($domain && $domain->uuid) {
+                    return route('admin.domain.info', $domain);
+                }
+            }
+        }
+
+        // Then, check for subscription renewals
+        foreach ($orderItems as $item) {
+            if ($item->domain_type === 'subscription_renewal') {
+                $metadata = $item->metadata ?? [];
+                $subscriptionId = $metadata['subscription_id'] ?? null;
+
+                if ($subscriptionId) {
+                    $subscription = Subscription::query()->find($subscriptionId);
+                    if ($subscription) {
+                        return route('admin.products.subscription.show', $subscription);
+                    }
+                }
+            }
+        }
+
+        // Fallback to billing page
+        return route('billing.show', $order);
     }
 }
