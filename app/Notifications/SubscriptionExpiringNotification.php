@@ -43,7 +43,7 @@ final class SubscriptionExpiringNotification extends Notification implements Sho
 
         $subject = $this->daysUntilExpiry === 0
             ? 'Your Subscription Expires Today'
-            : "Your Subscription Expires in {$this->daysUntilExpiry} Day".($this->daysUntilExpiry > 1 ? 's' : '');
+            : sprintf('Your Subscription Expires in %s Day', $this->daysUntilExpiry).($this->daysUntilExpiry > 1 ? 's' : '');
 
         $urgencyMessage = match (true) {
             $this->daysUntilExpiry === 0 => 'Your subscription expires today! Renew now to avoid service interruption.',
@@ -55,12 +55,12 @@ final class SubscriptionExpiringNotification extends Notification implements Sho
             ->subject($subject)
             ->greeting('Hello '.$notifiable->name.',')
             ->line($urgencyMessage)
-            ->line("**Plan:** {$planName}")
-            ->line("**Domain:** {$domain}")
-            ->line("**Expires on:** {$expiryDate}")
+            ->line('**Plan:** '.$planName)
+            ->line('**Domain:** '.$domain)
+            ->line('**Expires on:** '.$expiryDate)
             ->action('View Details', route('dashboard'))
             ->line('Please contact our support team to renew your subscription.')
-            ->line('If you have any questions or need assistance, please don\'t hesitate to reach out.');
+            ->line("If you have any questions or need assistance, please don't hesitate to reach out.");
     }
 
     /**
@@ -80,7 +80,7 @@ final class SubscriptionExpiringNotification extends Notification implements Sho
             'expires_at' => $this->subscription->expires_at?->toIso8601String(),
             'message' => $this->daysUntilExpiry === 0
                 ? 'Your subscription expires today'
-                : "Your subscription expires in {$this->daysUntilExpiry} day".($this->daysUntilExpiry > 1 ? 's' : ''),
+                : sprintf('Your subscription expires in %s day', $this->daysUntilExpiry).($this->daysUntilExpiry > 1 ? 's' : ''),
         ];
     }
 }

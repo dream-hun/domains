@@ -55,27 +55,33 @@
                                                 <div class="quantity-controls d-flex align-items-center justify-content-center">
                                                     @if($itemType === 'subscription_renewal' || $itemType === 'hosting')
                                                         @php
-                                                            // For hosting and subscription_renewal, use duration_months if set, otherwise use quantity
-                                                            // The quantity field should represent months for these item types
                                                             if (isset($item->attributes->duration_months)) {
                                                                 $durationMonths = (int) $item->attributes->duration_months;
                                                             } elseif ($itemType === 'hosting') {
-                                                                // For hosting, if duration_months not set, calculate from billing_cycle
-                                                                // This handles legacy items that were added before duration_months was set
+
                                                                 $billingCycle = $item->attributes->billing_cycle ?? 'monthly';
                                                                 $durationMonths = $this->getBillingCycleMonths($billingCycle);
                                                             } else {
                                                                 // For subscription_renewal, use quantity as fallback
                                                                 $durationMonths = (int) $item->quantity;
                                                             }
+
+                                                            // Calculate step size based on original billing cycle
+                                                            $originalBillingCycle = $item->attributes->billing_cycle ?? 'monthly';
+                                                            $stepSize = $this->getBillingCycleMonths($originalBillingCycle);
+
+                                                            // Calculate min/max values
+                                                            $minMonths = $stepSize; // Minimum is one billing cycle
+                                                            $maxMonths = 48; // Maximum 4 years (48 months)
+
                                                             $durationLabel = $this->formatDurationLabel($durationMonths);
                                                         @endphp
                                                         <button type="button" class="btn btn-outline-primary rounded-circle p-2"
                                                             style="width: 35px; height: 35px; font-size:16px !important;"
-                                                            wire:click="updateQuantity('{{ $item->id }}', {{ $durationMonths - 1 }})"
+                                                            wire:click="updateQuantity('{{ $item->id }}', {{ max($minMonths, $durationMonths - $stepSize) }})"
                                                             wire:loading.class="opacity-75"
-                                                            wire:target="updateQuantity('{{ $item->id }}', {{ $durationMonths - 1 }})"
-                                                            {{ $durationMonths <= 1 ? 'disabled' : '' }}>
+                                                            wire:target="updateQuantity('{{ $item->id }}', {{ max($minMonths, $durationMonths - $stepSize) }})"
+                                                            {{ $durationMonths <= $minMonths ? 'disabled' : '' }}>
                                                             <i class="bi bi-dash"></i>
                                                         </button>
                                                         <span class="mx-4 fs-5" style="font-size: 16px !important;">
@@ -83,10 +89,10 @@
                                                         </span>
                                                         <button type="button" class="btn btn-outline-primary rounded-circle p-2"
                                                             style="width: 35px; height: 35px;"
-                                                            wire:click="updateQuantity('{{ $item->id }}', {{ $durationMonths + 1 }})"
+                                                            wire:click="updateQuantity('{{ $item->id }}', {{ min($maxMonths, $durationMonths + $stepSize) }})"
                                                             wire:loading.class="opacity-75"
-                                                            wire:target="updateQuantity('{{ $item->id }}', {{ $durationMonths + 1 }})"
-                                                            {{ $durationMonths >= 36 ? 'disabled' : '' }}>
+                                                            wire:target="updateQuantity('{{ $item->id }}', {{ min($maxMonths, $durationMonths + $stepSize) }})"
+                                                            {{ $durationMonths >= $maxMonths ? 'disabled' : '' }}>
                                                             <i class="bi bi-plus"></i>
                                                         </button>
                                                     @else
@@ -116,7 +122,13 @@
                                                 <div class="d-flex flex-column align-items-end">
                                                     <span class="text-muted" style="font-size: 14px !important; text-transform:uppercase !important;">
                                                         {{ $this->getFormattedItemPrice($item) }}
-                                                        @if($itemType === 'subscription_renewal' || $itemType === 'hosting')
+                                                        @if($itemType === 'subscription_renewal')
+                                                            @php
+                                                                $originalBillingCycle = $item->attributes->billing_cycle ?? 'monthly';
+                                                                $priceLabel = $originalBillingCycle === 'annually' ? '/year' : '/month';
+                                                            @endphp
+                                                            <span class="text-muted" style="font-size: 11px !important;">{{ $priceLabel }}</span>
+                                                        @elseif($itemType === 'hosting')
                                                             <span class="text-muted" style="font-size: 11px !important;">/month</span>
                                                         @else
                                                             <span class="text-muted" style="font-size: 11px !important;">/year</span>

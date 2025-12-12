@@ -238,5 +238,6 @@ it('prevents adding duplicate renewals to cart', function (): void {
         ]);
 
     $response2->assertSessionHas('error');
+
     expect(Cart::getContent())->toHaveCount(1);
 });

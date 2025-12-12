@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\Hosting\BillingCycle;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSubscriptionRequest;
+use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
 use Exception;
 use Illuminate\Contracts\View\Factory;
@@ -187,14 +189,14 @@ final class SubscriptionController extends Controller
             $billingCycleValue = $request->string('billing_cycle')->trim()->toString() ?: $subscription->billing_cycle;
             $billingCycle = $this->resolveBillingCycle($billingCycleValue);
 
-            $planPrice = \App\Models\HostingPlanPrice::query()
+            $planPrice = HostingPlanPrice::query()
                 ->where('hosting_plan_id', $subscription->hosting_plan_id)
                 ->where('billing_cycle', $billingCycle->value)
                 ->where('status', 'active')
                 ->first();
 
             if (! $planPrice) {
-                throw new Exception("No active pricing found for billing cycle {$billingCycle->value}");
+                throw new Exception('No active pricing found for billing cycle '.$billingCycle->value);
             }
 
             $renewalSnapshot = [
@@ -223,26 +225,26 @@ final class SubscriptionController extends Controller
             ]);
 
             return back()->with('success', 'Subscription renewed successfully (comp). New expiry date: '.$subscription->expires_at->format('F d, Y'));
-        } catch (Throwable $exception) {
+        } catch (Throwable $throwable) {
             Log::error('Failed to renew subscription manually', [
                 'subscription_id' => $subscription->id,
                 'admin_user_id' => auth()->id(),
-                'error' => $exception->getMessage(),
+                'error' => $throwable->getMessage(),
             ]);
 
-            return back()->with('error', 'Failed to renew subscription: '.$exception->getMessage());
+            return back()->with('error', 'Failed to renew subscription: '.$throwable->getMessage());
         }
     }
 
-    private function resolveBillingCycle(string $cycle): \App\Enums\Hosting\BillingCycle
+    private function resolveBillingCycle(string $cycle): BillingCycle
     {
-        foreach (\App\Enums\Hosting\BillingCycle::cases() as $case) {
+        foreach (BillingCycle::cases() as $case) {
             if ($case->value === $cycle) {
                 return $case;
             }
         }
 
-        return \App\Enums\Hosting\BillingCycle::Monthly;
+        return BillingCycle::Monthly;
     }
 
     private function applyDateFilter(Builder $query, string $column, string $operator, string $value): void

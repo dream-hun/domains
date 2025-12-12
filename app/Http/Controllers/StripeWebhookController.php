@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\Hosting\BillingCycle;
-use App\Jobs\ProcessDomainRenewalJob;
-use App\Jobs\ProcessSubscriptionRenewalJob;
 use App\Models\Currency;
+use App\Models\HostingPlanPrice;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Notifications\SubscriptionAutoRenewalFailedNotification;
+use App\Services\OrderProcessingService;
 use App\Services\OrderService;
 use Exception;
 use Illuminate\Http\Request;
@@ -21,11 +21,13 @@ use Illuminate\Support\Facades\Log;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Stripe;
 use Stripe\Webhook;
+use Throwable;
 
 final class StripeWebhookController extends Controller
 {
     public function __construct(
-        private OrderService $orderService
+        private readonly OrderService $orderService,
+        private readonly OrderProcessingService $orderProcessingService
     ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
@@ -136,7 +138,7 @@ final class StripeWebhookController extends Controller
 
                 // Dispatch appropriate renewal jobs based on order items
                 if (in_array($order->type, ['renewal', 'subscription_renewal'], true)) {
-                    $this->dispatchRenewalJobs($order);
+                    $this->orderProcessingService->dispatchRenewalJobs($order);
                 }
             }
 
@@ -279,7 +281,7 @@ final class StripeWebhookController extends Controller
                 $paidAmount = $invoice->total / 100;
             }
 
-            $planPrice = \App\Models\HostingPlanPrice::query()
+            $planPrice = HostingPlanPrice::query()
                 ->where('hosting_plan_id', $subscription->hosting_plan_id)
                 ->where('billing_cycle', $billingCycle->value)
                 ->where('status', 'active')
@@ -290,7 +292,7 @@ final class StripeWebhookController extends Controller
                     'subscription_id' => $subscription->id,
                     'billing_cycle' => $billingCycle->value,
                 ]);
-                throw new Exception("No active pricing found for billing cycle {$billingCycle->value}");
+                throw new Exception('No active pricing found for billing cycle '.$billingCycle->value);
             }
 
             $order = $this->createSubscriptionRenewalOrder(
@@ -322,21 +324,21 @@ final class StripeWebhookController extends Controller
 
     /**
      * Create an order for automatic subscription renewal
+     *
+     * @throws Throwable
      */
     private function createSubscriptionRenewalOrder(
         Subscription $subscription,
-        \App\Models\HostingPlanPrice $planPrice,
+        HostingPlanPrice $planPrice,
         BillingCycle $billingCycle,
         ?float $paidAmount,
         string $stripeInvoiceId
     ): Order {
         $user = $subscription->user;
 
-        if (! $user) {
-            throw new Exception('Subscription has no associated user');
-        }
+        throw_unless($user, Exception::class, 'Subscription has no associated user');
 
-        $currency = Currency::query()->where('code', 'USD')->firstOrFail();
+        Currency::query()->where('code', 'USD')->firstOrFail();
 
         $order = Order::query()->create([
             'user_id' => $user->id,
@@ -514,48 +516,5 @@ final class StripeWebhookController extends Controller
         }
 
         return Payment::query()->where('stripe_payment_intent_id', $paymentIntent->id)->first();
-    }
-
-    /**
-     * Dispatch appropriate renewal jobs based on order items
-     */
-    private function dispatchRenewalJobs(Order $order): void
-    {
-        $items = $order->items ?? [];
-        $hasDomainRenewals = false;
-        $hasSubscriptionRenewals = false;
-
-        foreach ($items as $item) {
-            $itemType = $item['attributes']['type'] ?? null;
-
-            if ($itemType === 'renewal') {
-                $hasDomainRenewals = true;
-            } elseif ($itemType === 'subscription_renewal') {
-                $hasSubscriptionRenewals = true;
-            }
-        }
-
-        if ($hasDomainRenewals) {
-            Log::info('Dispatching ProcessDomainRenewalJob', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-            ]);
-            dispatch(new ProcessDomainRenewalJob($order));
-        }
-
-        if ($hasSubscriptionRenewals) {
-            Log::info('Dispatching ProcessSubscriptionRenewalJob', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-            ]);
-            dispatch(new ProcessSubscriptionRenewalJob($order));
-        }
-
-        if (! $hasDomainRenewals && ! $hasSubscriptionRenewals) {
-            Log::warning('No renewal items found in order, no jobs dispatched', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-            ]);
-        }
     }
 }

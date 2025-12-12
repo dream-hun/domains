@@ -14,8 +14,7 @@ final readonly class CheckoutService
 {
     public function __construct(
         private PaymentService $paymentService,
-        private OrderService $orderService,
-        private DomainRegistrationService $domainRegistrationService
+        private OrderService $orderService
     ) {}
 
     /**

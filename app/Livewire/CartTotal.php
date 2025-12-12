@@ -85,21 +85,82 @@ final class CartTotal extends Component
 
         foreach ($cartItems as $item) {
             $itemCurrency = $item->attributes->currency ?? 'USD';
+            $itemType = $item->attributes->get('type', 'registration');
+            $itemTotal = 0;
 
-            if ($itemCurrency !== $this->selectedCurrency) {
-                try {
-                    $convertedPrice = $this->convertCurrency(
-                        $item->price,
-                        $itemCurrency,
-                        $this->selectedCurrency
-                    );
-                    $subtotal += $convertedPrice * $item->quantity;
-                } catch (Exception) {
-                    $subtotal += $item->price * $item->quantity;
+            // Handle subscription_renewal items with proper billing cycle calculation
+            if ($itemType === 'subscription_renewal') {
+                $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
+                $displayUnitPrice = $item->attributes->get('display_unit_price');
+
+                // If display_unit_price is not set, fall back to unit_price
+                if (! $displayUnitPrice) {
+                    $displayUnitPrice = $item->attributes->get('unit_price', $item->price);
                 }
+
+                // Convert price to selected currency if needed
+                if ($itemCurrency !== $this->selectedCurrency) {
+                    try {
+                        $displayUnitPrice = $this->convertCurrency(
+                            $displayUnitPrice,
+                            $itemCurrency,
+                            $this->selectedCurrency
+                        );
+                    } catch (Exception) {
+                        $displayUnitPrice = $item->price;
+                    }
+                }
+
+                // If billing cycle is annually, convert months to years for calculation
+                if ($billingCycle === 'annually') {
+                    $years = $item->quantity / 12;
+                    $itemTotal = $displayUnitPrice * $years;
+                } else {
+                    // For monthly, use monthly price × quantity (in months)
+                    $itemTotal = $displayUnitPrice * $item->quantity;
+                }
+            } elseif ($itemType === 'hosting') {
+                // For hosting, use monthly unit price if available
+                $monthlyPrice = $item->attributes->get('monthly_unit_price');
+                if (! $monthlyPrice) {
+                    $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
+                    $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
+                    $monthlyPrice = $billingCycleMonths > 0 ? $item->price / $billingCycleMonths : $item->price;
+                }
+
+                // Convert price to selected currency if needed
+                if ($itemCurrency !== $this->selectedCurrency) {
+                    try {
+                        $monthlyPrice = $this->convertCurrency(
+                            $monthlyPrice,
+                            $itemCurrency,
+                            $this->selectedCurrency
+                        );
+                    } catch (Exception) {
+                        $monthlyPrice = $item->price;
+                    }
+                }
+
+                $itemTotal = $monthlyPrice * $item->quantity;
             } else {
-                $subtotal += $item->price * $item->quantity;
+                // For other items (domains, etc.), use standard calculation
+                if ($itemCurrency !== $this->selectedCurrency) {
+                    try {
+                        $convertedPrice = $this->convertCurrency(
+                            $item->price,
+                            $itemCurrency,
+                            $this->selectedCurrency
+                        );
+                        $itemTotal = $convertedPrice * $item->quantity;
+                    } catch (Exception) {
+                        $itemTotal = $item->price * $item->quantity;
+                    }
+                } else {
+                    $itemTotal = $item->price * $item->quantity;
+                }
             }
+
+            $subtotal += $itemTotal;
         }
 
         // Apply discount from session if coupon is applied
@@ -121,6 +182,22 @@ final class CartTotal extends Component
             'currencies' => $currencyService->getActiveCurrencies(),
             'currentCurrency' => $currencyService->getCurrency($this->selectedCurrency) ?? $currencyService->getUserCurrency(),
         ]);
+    }
+
+    /**
+     * Get the number of months for a billing cycle
+     */
+    private function getBillingCycleMonths(string $billingCycle): int
+    {
+        return match ($billingCycle) {
+            'monthly' => 1,
+            'quarterly' => 3,
+            'semi-annually' => 6,
+            'annually' => 12,
+            'biennially' => 24,
+            'triennially' => 36,
+            default => 1,
+        };
     }
 
     private function calculateDiscount(float $subtotal): float

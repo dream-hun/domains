@@ -52,55 +52,53 @@
                             @endif
                         </div>
 
+                        @php
+                            $monthlyPrice = $availableBillingCycles['monthly']['renewal_price'] ?? 0;
+                            $defaultBillingCycle = BillingCycle::tryFrom($subscription->billing_cycle) ?? BillingCycle::Monthly;
+                            $defaultQuantity = $defaultBillingCycle->toMonths();
+                        @endphp
                         <form action="{{ route('subscriptions.renew.add-to-cart', $subscription) }}" method="POST"
                               x-data="{
                                   billingCycle: '{{ $subscription->billing_cycle }}',
+                                  quantity: {{ $defaultQuantity }},
+                                  monthlyPrice: {{ $monthlyPrice }},
                                   availableCycles: @js($availableBillingCycles),
-                                  get selectedPrice() {
-                                      return this.availableCycles[this.billingCycle]?.renewal_price || 0;
+                                  cycleToMonths: {
+                                      'monthly': 1,
+                                      'annually': 12
+                                  },
+                                  originalQuantity: {{ $defaultQuantity }},
+                                  updateQuantityFromBillingCycle() {
+                                      const months = this.cycleToMonths[this.billingCycle] || 1;
+                                      // Update quantity to match selected billing cycle
+                                      this.quantity = months;
+                                      this.originalQuantity = months;
                                   },
                                   get selectedCycleLabel() {
                                       const cycle = this.availableCycles[this.billingCycle]?.cycle;
                                       return cycle ? cycle.label : '';
                                   },
+                                  get totalPrice() {
+                                      return this.monthlyPrice * this.quantity;
+                                  },
                                   get newExpiryDate() {
                                       const currentExpiry = new Date('{{ $subscription->expires_at->toIso8601String() }}');
-                                      const cycle = this.billingCycle;
                                       const newDate = new Date(currentExpiry);
-
-                                      if (cycle === 'monthly') newDate.setMonth(newDate.getMonth() + 1);
-                                      else if (cycle === 'quarterly') newDate.setMonth(newDate.getMonth() + 3);
-                                      else if (cycle === 'semi-annually') newDate.setMonth(newDate.getMonth() + 6);
-                                      else if (cycle === 'annually') newDate.setFullYear(newDate.getFullYear() + 1);
-                                      else if (cycle === 'biennially') newDate.setFullYear(newDate.getFullYear() + 2);
-                                      else if (cycle === 'triennially') newDate.setFullYear(newDate.getFullYear() + 3);
-
+                                      newDate.setMonth(newDate.getMonth() + this.quantity);
                                       return newDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
                                   }
                               }">
                             @csrf
 
                             <div class="mb-4">
-                                <label for="billing_cycle" class="form-label fw-bold">Select Billing Cycle</label>
+                                <label for="billing_cycle" class="form-label fw-bold">Billing Cycle Reference</label>
                                 <select class="form-select form-select-lg" id="billing_cycle" name="billing_cycle"
-                                        x-model="billingCycle" required>
+                                        x-model="billingCycle"
+                                        @change="updateQuantityFromBillingCycle()"
+                                        required>
                                     @foreach($availableBillingCycles as $cycleValue => $cycleData)
-                                        <option value="{{ $cycleValue }}">
-                                            {{ $cycleData['cycle']->label() }} -
-                                            ${{ number_format($cycleData['renewal_price'], 2) }}
-                                            @if($cycleValue === 'monthly')
-                                                /month
-                                            @elseif($cycleValue === 'quarterly')
-                                                /3 months
-                                            @elseif($cycleValue === 'semi-annually')
-                                                /6 months
-                                            @elseif($cycleValue === 'annually')
-                                                /year
-                                            @elseif($cycleValue === 'biennially')
-                                                /2 years
-                                            @elseif($cycleValue === 'triennially')
-                                                /3 years
-                                            @endif
+                                        <option value="{{ $cycleValue }}" @selected($cycleValue === $subscription->billing_cycle)>
+                                            {{ $cycleData['cycle']->label() }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -108,7 +106,25 @@
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
                                 <small class="form-text text-muted">
-                                    You can change your billing cycle during renewal.
+                                    Select a billing cycle to quickly set the renewal period. You can also manually enter any number of months below.
+                                </small>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="quantity" class="form-label fw-bold">Renewal Period (Months)</label>
+                                <input type="number"
+                                       class="form-control form-control-lg"
+                                       id="quantity"
+                                       name="quantity"
+                                       x-model.number="quantity"
+                                       min="1"
+                                       max="120"
+                                       required>
+                                @error('quantity')
+                                    <div class="text-danger mt-1">{{ $message }}</div>
+                                @enderror
+                                <small class="form-text text-muted">
+                                    Enter the number of months to renew (1-120 months, up to 10 years).
                                 </small>
                             </div>
 
@@ -117,18 +133,18 @@
                                     <div class="card-body">
                                         <h5 class="card-title mb-3">Renewal Summary</h5>
                                         <div class="d-flex justify-content-between mb-2">
-                                            <span>Selected Billing Cycle:</span>
-                                            <span><strong x-text="selectedCycleLabel"></strong></span>
+                                            <span>Monthly Renewal Price:</span>
+                                            <span><strong>$<span x-text="monthlyPrice.toFixed(2)"></span></strong></span>
                                         </div>
                                         <div class="d-flex justify-content-between mb-2">
-                                            <span>Renewal Price:</span>
-                                            <span><strong>$<span x-text="selectedPrice.toFixed(2)"></span></strong></span>
+                                            <span>Renewal Period:</span>
+                                            <span><strong x-text="quantity + (quantity === 1 ? ' month' : ' months')"></strong></span>
                                         </div>
                                         <hr>
                                         <div class="d-flex justify-content-between mb-2">
                                             <span class="h5 mb-0">Total:</span>
                                             <span class="h5 mb-0">
-                                                <strong>$<span x-text="selectedPrice.toFixed(2)"></span></strong>
+                                                <strong>$<span x-text="totalPrice.toFixed(2)"></span></strong>
                                             </span>
                                         </div>
                                         <div class="d-flex justify-content-between mt-3">

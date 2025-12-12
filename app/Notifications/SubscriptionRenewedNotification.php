@@ -52,13 +52,13 @@ final class SubscriptionRenewedNotification extends Notification implements Shou
             $domain = $subscription->domain ?? 'N/A';
             $expiryDate = $subscription->expires_at?->format('F d, Y') ?? 'N/A';
 
-            $message->line("**$planName** (Domain: $domain) - New expiry: $expiryDate");
+            $message->line(sprintf('**%s** (Domain: %s) - New expiry: %s', $planName, $domain, $expiryDate));
         }
 
         $message->line('Order Number: **'.$this->order->order_number.'**')
             ->line('Thank you for your continued business!')
             ->action('View Dashboard', route('dashboard'))
-            ->line('If you have any questions, please don\'t hesitate to contact our support team.');
+            ->line("If you have any questions, please don't hesitate to contact our support team.");
 
         return $message;
     }
@@ -78,7 +78,7 @@ final class SubscriptionRenewedNotification extends Notification implements Shou
             'order_number' => $this->order->order_number,
             'subscription_count' => $subscriptionCount,
             'subscriptions' => array_map(
-                fn (Subscription $sub) => [
+                fn (Subscription $sub): array => [
                     'id' => $sub->id,
                     'uuid' => $sub->uuid,
                     'plan_name' => $sub->plan?->name,
@@ -88,7 +88,7 @@ final class SubscriptionRenewedNotification extends Notification implements Shou
                 $this->subscriptions
             ),
             'message' => $subscriptionCount > 1
-                ? "$subscriptionCount subscriptions renewed successfully"
+                ? $subscriptionCount.' subscriptions renewed successfully'
                 : 'Subscription renewed successfully',
         ];
     }

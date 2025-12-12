@@ -88,7 +88,7 @@ class Subscription extends Model
 
             if (! $planPrice) {
                 throw new Exception(
-                    "No active pricing found for plan {$this->hosting_plan_id} with billing cycle {$billingCycle->value}"
+                    sprintf('No active pricing found for plan %s with billing cycle %s', $this->hosting_plan_id, $billingCycle->value)
                 );
             }
 
@@ -96,7 +96,7 @@ class Subscription extends Model
 
             if (abs($paidAmount - $expectedAmount) > 0.01) {
                 throw new Exception(
-                    "Payment amount mismatch. Expected: {$expectedAmount}, Paid: {$paidAmount} for billing cycle {$billingCycle->value}"
+                    sprintf('Payment amount mismatch. Expected: %s, Paid: %s for billing cycle %s', $expectedAmount, $paidAmount, $billingCycle->value)
                 );
             }
         }
@@ -104,11 +104,7 @@ class Subscription extends Model
         $currentExpiry = $this->expires_at ?? Date::now();
 
         $newExpiry = match ($billingCycle) {
-            BillingCycle::Quarterly => $currentExpiry->copy()->addMonths(3),
-            BillingCycle::SemiAnnually => $currentExpiry->copy()->addMonths(6),
             BillingCycle::Annually => $currentExpiry->copy()->addYear(),
-            BillingCycle::Biennially => $currentExpiry->copy()->addYears(2),
-            BillingCycle::Triennially => $currentExpiry->copy()->addYears(3),
             default => $currentExpiry->copy()->addMonth(),
         };
 
@@ -148,6 +144,72 @@ class Subscription extends Model
         if ($this->billing_cycle !== $billingCycle->value) {
             $updateData['billing_cycle'] = $billingCycle->value;
         }
+
+        $this->update($updateData);
+    }
+
+    /**
+     * Extend subscription by a specific number of months
+     * Used for renewals where quantity represents months
+     *
+     * @throws Exception
+     */
+    public function extendSubscriptionByMonths(
+        int $months,
+        ?float $paidAmount = null,
+        bool $isComp = false,
+        ?array $renewalSnapshot = null
+    ): void {
+        if ($paidAmount !== null && ! $isComp) {
+            // Get monthly plan price for validation
+            $monthlyPlanPrice = HostingPlanPrice::query()
+                ->where('hosting_plan_id', $this->hosting_plan_id)
+                ->where('billing_cycle', 'monthly')
+                ->where('status', 'active')
+                ->first();
+
+            if (! $monthlyPlanPrice) {
+                throw new Exception(
+                    sprintf('No active monthly pricing found for plan %s', $this->hosting_plan_id)
+                );
+            }
+
+            $expectedMonthlyPrice = $monthlyPlanPrice->getPriceInBaseCurrency('renewal_price');
+            $expectedTotalAmount = $expectedMonthlyPrice * $months;
+
+            // Use a more lenient tolerance (0.50) to account for currency conversion rounding
+            // Currency conversions can introduce small rounding differences (typically 0.01-0.05)
+            $tolerance = 0.50;
+            $difference = abs($paidAmount - $expectedTotalAmount);
+
+            if ($difference > $tolerance) {
+                throw new Exception(
+                    sprintf('Payment amount mismatch. Expected: %s (monthly price %s × %d months), Paid: %s (difference: %s)', $expectedTotalAmount, $expectedMonthlyPrice, $months, $paidAmount, $difference)
+                );
+            }
+        }
+
+        $currentExpiry = $this->expires_at ?? Date::now();
+
+        $newExpiry = $currentExpiry->copy()->addMonths($months);
+
+        $snapshot = $this->product_snapshot ?? [];
+        if ($renewalSnapshot !== null) {
+            $snapshot['renewals'][] = [
+                'renewed_at' => Date::now()->toIso8601String(),
+                'months' => $months,
+                'paid_amount' => $paidAmount,
+                'is_comp' => $isComp,
+                'price' => $renewalSnapshot,
+            ];
+        }
+
+        $updateData = [
+            'expires_at' => $newExpiry,
+            'next_renewal_at' => $newExpiry,
+            'status' => 'active',
+            'product_snapshot' => $snapshot,
+        ];
 
         $this->update($updateData);
     }

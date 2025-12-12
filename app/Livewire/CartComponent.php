@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Enums\Hosting\BillingCycle;
 use App\Helpers\CurrencyHelper;
 use App\Models\Coupon;
 use App\Models\Domain;
+use App\Models\HostingPlanPrice;
+use App\Models\Subscription;
 use App\Services\Coupon\CouponService;
 use App\Services\CurrencyService;
+use App\Services\OrderItemFormatterService;
 use App\Services\RenewalService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -133,8 +136,22 @@ final class CartComponent extends Component
                     $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
                     $itemTotal = $convertedPrice * $item->quantity;
                 } elseif ($itemType === 'subscription_renewal') {
-                    $monthlyPrice = $item->attributes->get('monthly_unit_price', $item->price);
-                    $itemTotal = $monthlyPrice * $item->quantity;
+                    $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
+                    $displayUnitPrice = $item->attributes->get('display_unit_price');
+
+                    // If display_unit_price is not set, fall back to unit_price
+                    if (! $displayUnitPrice) {
+                        $displayUnitPrice = $item->attributes->get('unit_price', $item->price);
+                    }
+
+                    // If billing cycle is annually, convert months to years for calculation
+                    if ($billingCycle === 'annually') {
+                        $years = $item->quantity / 12;
+                        $itemTotal = $displayUnitPrice * $years;
+                    } else {
+                        // For monthly, use monthly price × quantity (in months)
+                        $itemTotal = $displayUnitPrice * $item->quantity;
+                    }
                 } else {
                     // For hosting, use monthly unit price if available, otherwise calculate from billing cycle
                     $monthlyPrice = $item->attributes->get('monthly_unit_price');
@@ -143,6 +160,7 @@ final class CartComponent extends Component
                         $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
                         $monthlyPrice = $billingCycleMonths > 0 ? $item->price / $billingCycleMonths : $item->price;
                     }
+
                     $itemTotal = $monthlyPrice * $item->quantity;
                 }
 
@@ -221,9 +239,13 @@ final class CartComponent extends Component
             }
 
             if ($itemType === 'subscription_renewal') {
-                $monthlyPrice = $item->attributes->get('monthly_unit_price', $item->price);
+                // Use display_unit_price if available (for original billing cycle), otherwise use monthly unit_price
+                $displayPrice = $item->attributes->get('display_unit_price');
+                if (! $displayPrice) {
+                    $displayPrice = $item->attributes->get('unit_price', $item->price);
+                }
 
-                return CurrencyHelper::formatMoney($monthlyPrice, $itemCurrency);
+                return CurrencyHelper::formatMoney($displayPrice, $itemCurrency);
             }
 
             // For hosting, return monthly unit price
@@ -268,8 +290,22 @@ final class CartComponent extends Component
             }
 
             if ($itemType === 'subscription_renewal') {
-                $monthlyPrice = $item->attributes->get('monthly_unit_price', $item->price);
-                $total = $monthlyPrice * $item->quantity;
+                $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
+                $displayUnitPrice = $item->attributes->get('display_unit_price');
+
+                // If display_unit_price is not set, fall back to unit_price
+                if (! $displayUnitPrice) {
+                    $displayUnitPrice = $item->attributes->get('unit_price', $item->price);
+                }
+
+                // If billing cycle is annually, convert months to years for calculation
+                if ($billingCycle === 'annually') {
+                    $years = $item->quantity / 12;
+                    $total = $displayUnitPrice * $years;
+                } else {
+                    // For monthly, use monthly price × quantity (in months)
+                    $total = $displayUnitPrice * $item->quantity;
+                }
             } else {
                 // For hosting, use monthly unit price if available
                 $monthlyPrice = $item->attributes->get('monthly_unit_price');
@@ -278,6 +314,7 @@ final class CartComponent extends Component
                     $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
                     $monthlyPrice = $billingCycleMonths > 0 ? $item->price / $billingCycleMonths : $item->price;
                 }
+
                 $total = $monthlyPrice * $item->quantity;
             }
 
@@ -312,13 +349,29 @@ final class CartComponent extends Component
             $itemType = $currentItem->attributes->get('type', 'registration');
 
             $maxQuantity = match ($itemType) {
-                'subscription_renewal', 'hosting' => 36,
+                'subscription_renewal', 'hosting' => 48, // Maximum 4 years (48 months)
                 default => 10,
             };
 
             if ($quantity >= 1 && $quantity <= $maxQuantity) {
                 if (in_array($itemType, ['subscription_renewal', 'hosting'], true)) {
                     $existingAttributes = $currentItem->attributes->all();
+
+                    // For subscription_renewal, get unit_price and update total_price
+                    if ($itemType === 'subscription_renewal') {
+                        $billingCycle = $existingAttributes['billing_cycle'] ?? 'monthly';
+                        $displayUnitPrice = $existingAttributes['display_unit_price'] ?? $existingAttributes['unit_price'] ?? $currentItem->price;
+
+                        // If billing cycle is annually, convert months to years for calculation
+                        if ($billingCycle === 'annually') {
+                            $years = (int) $quantity / 12;
+                            $existingAttributes['total_price'] = $displayUnitPrice * $years;
+                        } else {
+                            // For monthly, use monthly price × quantity (in months)
+                            $monthlyPrice = $existingAttributes['unit_price'] ?? $currentItem->price;
+                            $existingAttributes['total_price'] = $monthlyPrice * (int) $quantity;
+                        }
+                    }
 
                     // For hosting, calculate monthly price if not already stored
                     if ($itemType === 'hosting' && ! isset($existingAttributes['monthly_unit_price'])) {
@@ -597,7 +650,7 @@ final class CartComponent extends Component
     public function addSubscriptionRenewalToCart(int $subscriptionId, string $billingCycle): void
     {
         try {
-            $subscription = \App\Models\Subscription::with(['plan', 'planPrice'])->findOrFail($subscriptionId);
+            $subscription = Subscription::with(['plan', 'planPrice'])->findOrFail($subscriptionId);
             $user = auth()->user();
 
             if (! $user) {
@@ -627,7 +680,7 @@ final class CartComponent extends Component
                 return;
             }
 
-            $billingCycleEnum = \App\Enums\Hosting\BillingCycle::tryFrom($billingCycle);
+            $billingCycleEnum = BillingCycle::tryFrom($billingCycle);
             if (! $billingCycleEnum) {
                 $this->dispatch('notify', [
                     'type' => 'error',
@@ -637,14 +690,14 @@ final class CartComponent extends Component
                 return;
             }
 
-            $monthlyPlanPrice = \App\Models\HostingPlanPrice::query()
+            $monthlyPlanPrice = HostingPlanPrice::query()
                 ->where('hosting_plan_id', $subscription->hosting_plan_id)
                 ->where('billing_cycle', 'monthly')
                 ->where('status', 'active')
                 ->first();
 
             if (! $monthlyPlanPrice) {
-                $monthlyPlanPrice = \App\Models\HostingPlanPrice::query()
+                $monthlyPlanPrice = HostingPlanPrice::query()
                     ->where('hosting_plan_id', $subscription->hosting_plan_id)
                     ->where('status', 'active')
                     ->first();
@@ -714,7 +767,8 @@ final class CartComponent extends Component
 
             $this->dispatch('refreshCart');
 
-            $durationLabel = $this->formatDurationLabel($durationMonths);
+            $formatter = app(OrderItemFormatterService::class);
+            $durationLabel = $formatter->formatDurationLabel($durationMonths);
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => sprintf('Subscription renewal for %s added to cart (%s)', $subscription->plan->name, $durationLabel),
@@ -977,17 +1031,6 @@ final class CartComponent extends Component
         return view('livewire.cart-component');
     }
 
-    public function formatDurationLabel(int $months): string
-    {
-        if ($months < 12) {
-            return $months.' '.Str::plural('month', $months);
-        }
-
-        $years = (int) ($months / 12);
-
-        return $years.' '.Str::plural('year', $years);
-    }
-
     /**
      * Format billing cycle duration for display in cart
      */
@@ -997,9 +1040,20 @@ final class CartComponent extends Component
             return '1 Year';
         }
 
+        $formatter = app(OrderItemFormatterService::class);
         $months = $this->getBillingCycleMonths($billingCycle);
 
-        return $this->formatDurationLabel($months);
+        return $formatter->formatDurationLabel($months);
+    }
+
+    /**
+     * Format duration in months to readable label
+     */
+    public function formatDurationLabel(int $months): string
+    {
+        $formatter = app(OrderItemFormatterService::class);
+
+        return $formatter->formatDurationLabel($months);
     }
 
     public function getBillingCycleMonths(string $billingCycle): int

@@ -37,6 +37,12 @@ final class AddSubscriptionRenewalToCartRequest extends FormRequest
                 'string',
                 Rule::in($validBillingCycles),
             ],
+            'quantity' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:120',
+            ],
         ];
     }
 
@@ -48,6 +54,9 @@ final class AddSubscriptionRenewalToCartRequest extends FormRequest
         return [
             'billing_cycle.required' => 'Please select a billing cycle for renewal.',
             'billing_cycle.in' => 'The selected billing cycle is invalid.',
+            'quantity.integer' => 'Quantity must be a valid number.',
+            'quantity.min' => 'Quantity must be at least 1 month.',
+            'quantity.max' => 'Quantity cannot exceed 120 months (10 years).',
         ];
     }
 }

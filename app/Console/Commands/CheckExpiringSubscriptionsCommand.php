@@ -37,7 +37,7 @@ final class CheckExpiringSubscriptionsCommand extends Command
         $now = Date::now();
         $endDate = $now->copy()->addDays($days);
 
-        $this->info("Checking for subscriptions expiring within {$days} days...");
+        $this->info(sprintf('Checking for subscriptions expiring within %d days...', $days));
 
         // Find active subscriptions expiring within the specified days without auto-renewal
         $expiringSubscriptions = Subscription::query()
@@ -83,7 +83,7 @@ final class CheckExpiringSubscriptionsCommand extends Command
                 ->exists();
 
             if ($lastNotification) {
-                $this->line("Skipping subscription {$subscription->uuid} - notification already sent today");
+                $this->line(sprintf('Skipping subscription %s - notification already sent today', $subscription->uuid));
 
                 continue;
             }
@@ -92,7 +92,7 @@ final class CheckExpiringSubscriptionsCommand extends Command
                 $user->notify(new SubscriptionExpiringNotification($subscription, $daysUntilExpiry));
                 $notificationsSent++;
 
-                $this->line("Sent expiring notification for subscription {$subscription->uuid} ({$daysUntilExpiry} days)");
+                $this->line(sprintf('Sent expiring notification for subscription %s (%s days)', $subscription->uuid, $daysUntilExpiry));
 
                 Log::info('Subscription expiring notification sent', [
                     'subscription_id' => $subscription->id,
@@ -100,7 +100,7 @@ final class CheckExpiringSubscriptionsCommand extends Command
                     'days_until_expiry' => $daysUntilExpiry,
                 ]);
             } catch (Exception $exception) {
-                $this->error("Failed to send notification for subscription {$subscription->uuid}: {$exception->getMessage()}");
+                $this->error(sprintf('Failed to send notification for subscription %s: %s', $subscription->uuid, $exception->getMessage()));
 
                 Log::error('Failed to send subscription expiring notification', [
                     'subscription_id' => $subscription->id,
@@ -110,7 +110,7 @@ final class CheckExpiringSubscriptionsCommand extends Command
             }
         }
 
-        $this->info("Processed {$expiringSubscriptions->count()} expiring subscriptions, sent {$notificationsSent} notifications.");
+        $this->info(sprintf('Processed %s expiring subscriptions, sent %d notifications.', $expiringSubscriptions->count(), $notificationsSent));
 
         return self::SUCCESS;
     }

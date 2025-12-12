@@ -5,7 +5,9 @@ declare(strict_types=1);
 use App\Models\Order;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\OrderItemFormatterService;
 use App\Services\PaymentService;
+use App\Services\StripeCheckoutService;
 use App\Services\TransactionLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -24,7 +26,9 @@ beforeEach(function (): void {
 
     // Use a real TransactionLogger instance since it's final
     $this->transactionLogger = new TransactionLogger();
-    $this->paymentService = new PaymentService($this->transactionLogger);
+    $this->formatter = new OrderItemFormatterService();
+    $this->stripeCheckoutService = new StripeCheckoutService($this->formatter);
+    $this->paymentService = new PaymentService($this->transactionLogger, $this->stripeCheckoutService);
 });
 
 it('returns error when Stripe is not configured', function (): void {
@@ -107,22 +111,8 @@ it('processes orders with amount meeting Stripe minimum in original currency', f
     expect($result)->toHaveKey('success', false);
 });
 
-it('builds payment success and cancel URLs for registration orders', function (): void {
-    $user = User::factory()->create();
-    $order = Order::factory()->for($user)->create([
-        'type' => 'registration',
-    ]);
-
-    $successUrlMethod = new ReflectionMethod($this->paymentService, 'resolveStripeSuccessUrl');
-
-    $cancelUrlMethod = new ReflectionMethod($this->paymentService, 'resolveStripeCancelUrl');
-
-    $successUrl = $successUrlMethod->invoke($this->paymentService, $order);
-    $cancelUrl = $cancelUrlMethod->invoke($this->paymentService, $order);
-
-    expect($successUrl)->toBe(route('payment.success', ['order' => $order]))
-        ->and($cancelUrl)->toBe(route('payment.cancel', ['order' => $order]));
-});
+// Note: URL resolution methods have been moved to StripeCheckoutService
+// These are now tested in StripeCheckoutServiceTest
 
 // Note: The following tests would require extensive Stripe API mocking which is complex
 // without proper mocking libraries for non-facade classes. In a real-world scenario,

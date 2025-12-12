@@ -462,7 +462,7 @@ class Configuration extends Component
 
             $this->dispatch('notify', [
                 'type' => 'success',
-                'message' => 'Hosting plan ready. Click \'Add to Cart\' to proceed.',
+                'message' => "Hosting plan ready. Click 'Add to Cart' to proceed.",
             ]);
 
             return;

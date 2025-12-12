@@ -14,12 +14,12 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Create admin role and permissions
-    $adminRole = Role::create(['id' => 1, 'title' => 'Admin']);
-    $userRole = Role::create(['id' => 2, 'title' => 'User']);
+    $adminRole = Role::query()->create(['id' => 1, 'title' => 'Admin']);
+    $userRole = Role::query()->create(['id' => 2, 'title' => 'User']);
 
-    $subscriptionAccessPermission = Permission::create(['id' => 92, 'title' => 'subscription_access']);
-    $subscriptionShowPermission = Permission::create(['id' => 90, 'title' => 'subscription_show']);
-    $subscriptionEditPermission = Permission::create(['id' => 89, 'title' => 'subscription_edit']);
+    $subscriptionAccessPermission = Permission::query()->create(['id' => 92, 'title' => 'subscription_access']);
+    $subscriptionShowPermission = Permission::query()->create(['id' => 90, 'title' => 'subscription_show']);
+    $subscriptionEditPermission = Permission::query()->create(['id' => 89, 'title' => 'subscription_edit']);
 
     $adminRole->permissions()->attach([
         $subscriptionAccessPermission->id,

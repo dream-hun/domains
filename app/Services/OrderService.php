@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Jobs\ProcessSubscriptionRenewalJob;
 use App\Models\Contact;
 use App\Models\Currency;
 use App\Models\Order;
@@ -12,6 +13,7 @@ use App\Models\User;
 use App\Notifications\OrderConfirmationNotification;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final readonly class OrderService
 {
@@ -19,22 +21,16 @@ final readonly class OrderService
         private DomainRegistrationService $domainRegistrationService,
         private NotificationService $notificationService,
         private RenewalService $renewalService,
-        private SubscriptionRenewalService $subscriptionRenewalService,
         private HostingSubscriptionService $hostingSubscriptionService,
     ) {}
 
     public function createOrder(array $data): Order
     {
         $currency = Currency::query()->where('code', $data['currency'])->first();
-
-        // Determine order type based on cart items
         $orderType = $this->determineOrderType($data['cart_items']);
-
-        // Get billing contact
         $billingContactId = $data['contact_ids']['billing'] ?? null;
         $contact = $billingContactId ? Contact::query()->find($billingContactId) : null;
 
-        // For renewals or hosting-only orders, use user's email if no contact specified
         if (! $contact && in_array($orderType, ['renewal', 'hosting'], true)) {
             $user = User::query()->find($data['user_id']);
             $billingEmail = $user->email;
@@ -52,8 +48,6 @@ final readonly class OrderService
                 'country_code' => $contact->country_code ?? '',
             ];
         }
-
-        // Calculate total - items already have correct currency from cart
         $total = 0;
         foreach ($data['cart_items'] as $item) {
             $total += $item->getPriceSum();
@@ -90,10 +84,8 @@ final readonly class OrderService
                 'attributes' => $item->attributes->toArray(),
             ])->toArray(),
         ]);
-
-        // Create order items - prices already in correct currency
         foreach ($data['cart_items'] as $item) {
-            // No conversion needed - items are already in the correct currency
+
             $itemPrice = $item->price;
             $itemTotal = $item->getPriceSum();
             $itemCurrency = $item->attributes->currency ?? 'USD';
@@ -101,11 +93,8 @@ final readonly class OrderService
             $domainId = $item->attributes->domain_id ?? null;
             $metadata = $item->attributes->get('metadata');
 
-            // Get the exchange rate for the item's currency
             $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
             $exchangeRate = $itemCurrencyModel ? $itemCurrencyModel->exchange_rate : 1.0;
-
-            // For subscription renewals, metadata might have subscription_id
             $subscriptionId = $item->attributes->subscription_id ?? null;
             $itemMetadata = $metadata ?? [];
 
@@ -113,7 +102,6 @@ final readonly class OrderService
                 $itemMetadata['subscription_id'] = $subscriptionId;
             }
 
-            // For subscription renewals, ensure billing_cycle is included in metadata
             if ($itemType === 'subscription_renewal') {
                 $billingCycle = $item->attributes->billing_cycle ?? null;
                 if ($billingCycle) {
@@ -144,17 +132,16 @@ final readonly class OrderService
         $order->update(['status' => 'processing']);
 
         try {
-            // Check order type
+
             if ($order->type === 'subscription_renewal') {
-                // Process subscription renewals via job
+
                 Log::info('Processing subscription renewal order', ['order_id' => $order->id]);
-                \App\Jobs\ProcessSubscriptionRenewalJob::dispatch($order);
+                dispatch(new ProcessSubscriptionRenewalJob($order));
             } elseif ($order->type === 'renewal') {
-                // Process renewals
+
                 Log::info('Processing renewal order', ['order_id' => $order->id]);
                 $results = $this->renewalService->processDomainRenewals($order);
 
-                // Update order status based on results (for renewals)
                 if (empty($results['failed'])) {
                     $order->update(['status' => 'completed']);
                 } elseif (empty($results['successful'])) {
@@ -165,11 +152,11 @@ final readonly class OrderService
                     $this->notificationService->notifyAdminOfPartialFailure($order, $results);
                 }
             } elseif ($order->type === 'hosting') {
-                // Hosting-only orders don't require domain registration
+
                 Log::info('Processing hosting-only order', ['order_id' => $order->id]);
                 $order->update(['status' => 'completed']);
             } else {
-                // Process registrations/transfers - requires contact information
+
                 throw_unless(isset($contactIds['registrant'], $contactIds['admin'], $contactIds['tech'], $contactIds['billing']), Exception::class, 'All contact IDs (registrant, admin, tech, billing) are required for domain registration.');
                 $contacts = [
                     'registrant' => $contactIds['registrant'],
@@ -178,11 +165,10 @@ final readonly class OrderService
                     'billing' => $contactIds['billing'],
                 ];
                 Log::info('Processing registration order', ['order_id' => $order->id]);
-                // Use DomainRegistrationService which handles status updates and notifications
+
                 $this->domainRegistrationService->processDomainRegistrations($order, $contacts);
             }
 
-            // Provision hosting subscriptions for any hosting order items
             $this->hostingSubscriptionService->createSubscriptionsFromOrder($order);
 
         } catch (Exception $exception) {
@@ -198,6 +184,7 @@ final readonly class OrderService
             ]);
 
             $this->notificationService->notifyAdminOfCriticalFailure($order, $exception);
+        } catch (Throwable) {
         }
     }
 
@@ -206,9 +193,6 @@ final readonly class OrderService
         $order->user->notify(new OrderConfirmationNotification($order));
     }
 
-    /**
-     * Determine order type based on cart items
-     */
     private function determineOrderType($cartItems): string
     {
         $hasRegistration = false;
@@ -238,28 +222,22 @@ final readonly class OrderService
             }
         }
 
-        // If all items are subscription renewals, mark as subscription_renewal order
         if ($hasSubscriptionRenewal && ! $hasRenewal && ! $hasRegistration && ! $hasTransfer && ! $hasHosting) {
             return 'subscription_renewal';
         }
 
-        // If all items are renewals, mark as renewal order
         if ($hasRenewal && ! $hasRegistration && ! $hasTransfer) {
             return 'renewal';
         }
 
-        // If all items are transfers, mark as transfer order
         if ($hasTransfer && ! $hasRegistration && ! $hasRenewal) {
             return 'transfer';
         }
 
-        // If cart has hosting and no domain operations, mark as hosting order
-        // Also check if hosting items don't require domain
         if ($hasHosting && ! $hasRegistration && ! $hasRenewal && ! $hasTransfer) {
             return 'hosting';
         }
 
-        // If cart has only hosting without domains (domain_required = false)
         $allHostingWithoutDomain = true;
         foreach ($cartItems as $item) {
             $itemType = $item->attributes->type ?? 'registration';
@@ -268,7 +246,6 @@ final readonly class OrderService
                 break;
             }
 
-            // Check if this hosting requires a domain
             if ($item->attributes->domain_required ?? false) {
                 $allHostingWithoutDomain = false;
                 break;
@@ -279,7 +256,6 @@ final readonly class OrderService
             return 'hosting';
         }
 
-        // Default to registration (or mixed)
         return 'registration';
     }
 }

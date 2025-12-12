@@ -36,6 +36,8 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
 
     /**
      * Execute the job.
+     *
+     * @throws Exception
      */
     public function handle(SubscriptionRenewalService $subscriptionRenewalService): void
     {
