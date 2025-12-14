@@ -24,11 +24,9 @@ class ProductController extends Controller
 {
     public function domains(): Factory|View|RedirectResponse
     {
-        $user = auth()->user();
+        
         abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden') || $user->owner_id !== auth()->id() && ! auth()->user()->isAdmin();
-        if ($user->user_id !== $user->id) {
-            return to_route('dashboard')->with('error', 'You are not authorized to view domains.');
-        }
+
 
         $domains = Domain::with('owner')->get();
 
@@ -37,11 +35,9 @@ class ProductController extends Controller
 
     public function hosting(Request $request): Factory|View|RedirectResponse
     {
-        $user = auth()->user();
+
         abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden') || $user->owner_id !== $user->id && ! $user->isAdmin();
-        if ($user->user_id !== $user->id) {
-            return to_route('dashboard')->with('error', 'You are not authorized to view hosting products.');
-        }
+
 
         $categorySlug = $request->string('category')->trim()->toString();
 
