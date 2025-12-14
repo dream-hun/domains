@@ -59,7 +59,7 @@ final class DomainRenewalController extends Controller
 
         $domain->setRelation('domainPrice', $domainPrice);
 
-        $stripeValidation = $renewalService->validateStripeMinimumAmountForRenewal($domain, $domainPrice, $years);
+        $stripeValidation = $renewalService->validateStripeMinimumAmountForRenewal($domainPrice, $years);
 
         if (! $stripeValidation['valid']) {
             return $this->respondRenewalError($request, $stripeValidation['message'], 422, $stripeValidation);

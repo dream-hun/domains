@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Support\Carbon;
-use Illuminate\Database\Eloquent\Collection;
 use App\Enums\Hosting\HostingPlanStatus;
 use Database\Factories\HostingPlanFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id

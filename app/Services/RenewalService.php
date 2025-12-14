@@ -154,6 +154,8 @@ final readonly class RenewalService
      *     total_price: float,
      *     currency: string
      * }
+     *
+     * @throws Exception
      */
     public function getRenewalPrice(Domain $domain, int $years = 1): array
     {
@@ -245,9 +247,9 @@ final readonly class RenewalService
      *
      * @return array{valid: bool, message?: string, min_years?: int, currency?: string, required_total?: float}
      */
-    public function validateStripeMinimumAmountForRenewal(Domain $domain, DomainPrice $domainPrice, int $years): array
+    public function validateStripeMinimumAmountForRenewal(DomainPrice $domainPrice, int $years): array
     {
-        $pricePerYearUsd = $domainPrice->getPriceInCurrency('renewal_price', 'USD');
+        $pricePerYearUsd = $domainPrice->getPriceInCurrency('renewal_price');
 
         if ($pricePerYearUsd <= 0) {
             return [
@@ -297,11 +299,9 @@ final readonly class RenewalService
      */
     private function getDomainService(Domain $domain): DomainServiceInterface
     {
-        // Determine which service to use based on domain registrar
         return match (mb_strtolower($domain->registrar ?? 'epp')) {
             'namecheap' => app(NamecheapDomainService::class),
-            'epp', 'local' => app(EppDomainService::class),
-            default => app(EppDomainService::class), // Default to EPP
+            default => app(EppDomainService::class),
         };
     }
 

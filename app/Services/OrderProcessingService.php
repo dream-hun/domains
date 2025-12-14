@@ -98,6 +98,13 @@ final readonly class OrderProcessingService
                 $itemMetadata['years'] = $attributes['years'];
             }
 
+            // For renewal items, ensure years matches quantity to prevent renewal for wrong duration
+            $years = $attributes['years'] ?? $itemQuantity;
+            if ($itemType === 'renewal') {
+                // For renewals, quantity represents years, so use quantity to ensure accuracy
+                $years = $itemQuantity;
+            }
+
             OrderItem::query()->create([
                 'order_id' => $order->id,
                 'domain_name' => $domainName,
@@ -107,7 +114,7 @@ final readonly class OrderProcessingService
                 'currency' => $itemCurrency,
                 'exchange_rate' => $exchangeRate,
                 'quantity' => $itemQuantity,
-                'years' => $itemQuantity, // For renewals, quantity typically represents years
+                'years' => $years,
                 'total_amount' => $itemTotal,
                 'metadata' => $itemMetadata,
             ]);

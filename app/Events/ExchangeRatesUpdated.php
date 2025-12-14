@@ -10,7 +10,6 @@ use Illuminate\Queue\SerializesModels;
 final readonly class ExchangeRatesUpdated
 {
     use Dispatchable;
-
     use SerializesModels;
 
     public function __construct(

@@ -397,11 +397,18 @@ final class CartComponent extends Component
                         ]),
                     ]);
                 } else {
+                    // For renewal items, also update the years attribute to match quantity
+                    $existingAttributes = $currentItem->attributes->all();
+                    if ($itemType === 'renewal') {
+                        $existingAttributes['years'] = (int) $quantity;
+                    }
+
                     Cart::update($id, [
                         'quantity' => [
                             'relative' => false,
                             'value' => (int) $quantity,
                         ],
+                        'attributes' => $existingAttributes,
                     ]);
                 }
 
@@ -545,7 +552,7 @@ final class CartComponent extends Component
                 return;
             }
 
-            $minimumValidation = $renewalService->validateStripeMinimumAmountForRenewal($domain, $domainPrice, $years);
+            $minimumValidation = $renewalService->validateStripeMinimumAmountForRenewal($domainPrice, $years);
 
             if (! $minimumValidation['valid']) {
                 $this->dispatch('notify', [
@@ -598,6 +605,7 @@ final class CartComponent extends Component
                     'type' => 'renewal',
                     'domain_id' => $domain->id,
                     'domain_name' => $domain->name,
+                    'years' => $years,
                     'current_expiry' => $domain->expires_at?->format('Y-m-d'),
                     'tld' => $domainPrice->tld,
                     'currency' => $currency,

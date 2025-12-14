@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Support\Carbon;
 use App\Enums\Hosting\BillingCycle;
 use Exception;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -15,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Date;
 
 /**
@@ -45,7 +45,6 @@ use Illuminate\Support\Facades\Date;
 class Subscription extends Model
 {
     use HasFactory;
-
     use Notifiable;
 
     protected $guarded = [];

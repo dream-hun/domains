@@ -86,8 +86,9 @@ final readonly class StripeCheckoutService
 
         $session = $this->createSession($order, $user, $payment, $lineItems, $successUrl, $cancelUrl, $processingCurrency);
 
-        // Store session ID in order
+        // Store session ID in order and payment attempt
         $order->update(['stripe_session_id' => $session->id]);
+        $payment->update(['stripe_session_id' => $session->id]);
 
         return $session;
     }
