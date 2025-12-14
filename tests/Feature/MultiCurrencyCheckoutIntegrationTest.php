@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Services\CurrencyService;
 use App\Livewire\Checkout\CheckoutWizard;
 use App\Models\Contact;
 use App\Models\Currency;
@@ -188,7 +189,7 @@ it('updates checkout totals when currency changes', function (): void {
     // Change to EUR
     session(['selected_currency' => 'EUR']);
     $component->set('userCurrencyCode', 'EUR')
-        ->call('mount', app(App\Services\CurrencyService::class));
+        ->call('mount', app(CurrencyService::class));
 
     expect($component->get('orderSubtotal'))->toBe(92.0);
 });

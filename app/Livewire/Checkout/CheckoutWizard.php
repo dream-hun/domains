@@ -245,7 +245,7 @@ final class CheckoutWizard extends Component
     /**
      * @throws Exception
      */
-    public function getItemPrice($item): string
+    public function getItemPrice(object $item): string
     {
         $cartPriceConverter = app(CartPriceConverter::class);
         $itemTotal = $cartPriceConverter->calculateItemTotal($item, $this->userCurrencyCode);
@@ -586,7 +586,7 @@ final class CheckoutWizard extends Component
     /**
      * Convert cart items' prices to the target currency
      */
-    private function convertCartItemsCurrency($cartItems, string $targetCurrency)
+    private function convertCartItemsCurrency(CartCollection $cartItems, string $targetCurrency): CartCollection
     {
         $cartPriceConverter = app(CartPriceConverter::class);
 

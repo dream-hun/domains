@@ -360,9 +360,11 @@ final class CheckoutController extends Controller
         if ($hasDomainRenewal && $hasSubscriptionRenewal) {
             return 'Payment successful! Your domain and subscription renewals have been processed.';
         }
+
         if ($hasDomainRenewal) {
             return 'Payment successful! Your domain renewal has been processed.';
         }
+
         if ($hasSubscriptionRenewal) {
             return 'Payment successful! Your subscription renewal has been processed.';
         }

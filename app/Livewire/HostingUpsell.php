@@ -275,7 +275,7 @@ final class HostingUpsell extends Component
                 'description' => $plan->description,
                 'is_popular' => $plan->is_popular,
                 'monthly_price' => $monthly,
-                'prices' => $prices->toArray(),
+                'prices' => $prices->all(),
             ];
         })->all();
     }

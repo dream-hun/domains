@@ -344,16 +344,14 @@ final class PaymentController extends Controller
             $messages[] = 'Payment successful! Your hosting subscription has been activated.';
         } elseif ($hasSubscriptionRenewal) {
             $messages[] = 'Payment successful! Your subscription renewal has been processed.';
+        } elseif ($order->isCompleted()) {
+            $messages[] = 'Payment successful! Your order has been completed.';
+        } elseif ($order->isPartiallyCompleted()) {
+            $messages[] = "Payment successful! Some items were processed successfully. We're retrying others automatically.";
+        } elseif ($order->requiresAttention()) {
+            $messages[] = "Payment successful! We're processing your order and will notify you once complete.";
         } else {
-            if ($order->isCompleted()) {
-                $messages[] = 'Payment successful! Your order has been completed.';
-            } elseif ($order->isPartiallyCompleted()) {
-                $messages[] = "Payment successful! Some items were processed successfully. We're retrying others automatically.";
-            } elseif ($order->requiresAttention()) {
-                $messages[] = "Payment successful! We're processing your order and will notify you once complete.";
-            } else {
-                $messages[] = 'Payment successful! Your order is being processed.';
-            }
+            $messages[] = 'Payment successful! Your order is being processed.';
         }
 
         return implode(' ', $messages);

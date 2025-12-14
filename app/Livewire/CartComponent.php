@@ -233,7 +233,7 @@ final class CartComponent extends Component
      *
      * @throws Exception
      */
-    public function getFormattedItemPrice($item): string
+    public function getFormattedItemPrice(object $item): string
     {
         try {
             $cartPriceConverter = app(CartPriceConverter::class);
@@ -259,7 +259,7 @@ final class CartComponent extends Component
     /**
      * Get formatted total price for individual cart item (price * quantity)
      */
-    public function getFormattedItemTotal($item): string
+    public function getFormattedItemTotal(object $item): string
     {
         try {
             $cartPriceConverter = app(CartPriceConverter::class);
@@ -330,6 +330,7 @@ final class CartComponent extends Component
                             $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
                             $monthlyPrice = $billingCycleMonths > 0 ? $currentItem->price / $billingCycleMonths : $currentItem->price;
                         }
+
                         $existingAttributes['monthly_unit_price'] = $monthlyPrice;
 
                         $newBillingCycle = $this->getBillingCycleFromMonths((int) $quantity);
@@ -1120,7 +1121,7 @@ final class CartComponent extends Component
 
         try {
             // Extract TLD from domain name
-            $domainParts = explode('.', $domainName);
+            $domainParts = explode('.', (string) $domainName);
             if (count($domainParts) < 2) {
                 return 10; // Default if TLD can't be extracted
             }

@@ -290,6 +290,7 @@ final class CheckoutProcess extends Component
             } else {
                 $convertedPrice = $item['price'];
             }
+
             $total = $convertedPrice * $item['quantity'];
 
             return CurrencyHelper::formatMoney($total, $this->currency);

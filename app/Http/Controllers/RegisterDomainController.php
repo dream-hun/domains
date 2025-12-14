@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Domain;
 use App\Actions\RegisterDomainAction;
 use App\Enums\ContactType;
 use App\Enums\DomainType;
@@ -161,7 +162,7 @@ final class RegisterDomainController extends Controller
             if ($successfulRegistrations !== [] && $failedRegistrations === []) {
                 $firstDomain = $successfulRegistrations[0];
                 if ($firstDomain['domain_id']) {
-                    $domain = \App\Models\Domain::query()->find($firstDomain['domain_id']);
+                    $domain = Domain::query()->find($firstDomain['domain_id']);
                     if ($domain && $domain->uuid) {
                         return to_route('admin.domain.info', $domain)
                             ->with('success', implode(' ', $messages));
@@ -175,7 +176,7 @@ final class RegisterDomainController extends Controller
             if ($successfulRegistrations !== [] && $failedRegistrations !== []) {
                 $firstDomain = $successfulRegistrations[0];
                 if ($firstDomain['domain_id']) {
-                    $domain = \App\Models\Domain::query()->find($firstDomain['domain_id']);
+                    $domain = Domain::query()->find($firstDomain['domain_id']);
                     if ($domain && $domain->uuid) {
                         return to_route('admin.domain.info', $domain)
                             ->with('warning', implode(' ', $messages));

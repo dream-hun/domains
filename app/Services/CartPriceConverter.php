@@ -79,7 +79,6 @@ final readonly class CartPriceConverter
     public function calculateItemTotal(object $item, string $targetCurrency): float
     {
         $itemType = $item->attributes->get('type', 'registration');
-        $itemCurrency = $item->attributes->currency ?? 'USD';
 
         if ($itemType === 'hosting') {
             return $this->calculateHostingItemTotal($item, $targetCurrency);

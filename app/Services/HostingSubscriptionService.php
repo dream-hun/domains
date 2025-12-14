@@ -10,7 +10,6 @@ use App\Models\HostingPlanPrice;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Subscription;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -134,13 +133,5 @@ final class HostingSubscriptionService
         }
 
         return BillingCycle::Monthly;
-    }
-
-    private function calculateExpiry(Carbon $start, BillingCycle $cycle): Carbon
-    {
-        return match ($cycle) {
-            BillingCycle::Monthly => $start->copy()->addMonth(),
-            BillingCycle::Annually => $start->copy()->addYear(),
-        };
     }
 }

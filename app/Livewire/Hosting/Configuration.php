@@ -230,7 +230,7 @@ class Configuration extends Component
     {
         $price = $this->selectedPrice();
 
-        if (! $price) {
+        if (!$price instanceof HostingPlanPrice) {
             return 'N/A';
         }
 
@@ -267,7 +267,7 @@ class Configuration extends Component
     {
         $price = $this->selectedPrice();
 
-        if (! $price) {
+        if (!$price instanceof HostingPlanPrice) {
             return 0;
         }
 
@@ -578,7 +578,7 @@ class Configuration extends Component
         try {
             $priceModel = $this->selectedPrice();
 
-            if (! $priceModel) {
+            if (!$priceModel instanceof HostingPlanPrice) {
                 $this->addError('base', 'Price not available for this billing cycle.');
 
                 return;
