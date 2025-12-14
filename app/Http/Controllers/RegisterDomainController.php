@@ -100,9 +100,13 @@ final class RegisterDomainController extends Controller
                     );
 
                     if ($result['success']) {
-                        $successfulRegistrations[] = $domainName;
+                        $successfulRegistrations[] = [
+                            'domain' => $domainName,
+                            'domain_id' => $result['domain_id'] ?? null,
+                        ];
                         Log::info('Domain registered successfully', [
                             'domain' => $domainName,
+                            'domain_id' => $result['domain_id'] ?? null,
                             'user_id' => $user->id,
                         ]);
                     } else {
@@ -137,10 +141,11 @@ final class RegisterDomainController extends Controller
 
             if ($successfulRegistrations !== []) {
                 $successCount = count($successfulRegistrations);
+                $domainNames = array_column($successfulRegistrations, 'domain');
                 if ($successCount === 1) {
-                    $messages[] = sprintf('Domain %s has been successfully registered!', $successfulRegistrations[0]);
+                    $messages[] = sprintf('Domain %s has been successfully registered!', $domainNames[0]);
                 } else {
-                    $messages[] = $successCount.' domains have been successfully registered: '.implode(', ', $successfulRegistrations);
+                    $messages[] = $successCount.' domains have been successfully registered: '.implode(', ', $domainNames);
                 }
             }
 
@@ -153,15 +158,30 @@ final class RegisterDomainController extends Controller
                 }
             }
 
-            // Determine redirect and message type
             if ($successfulRegistrations !== [] && $failedRegistrations === []) {
-                // All successful
+                $firstDomain = $successfulRegistrations[0];
+                if ($firstDomain['domain_id']) {
+                    $domain = \App\Models\Domain::query()->find($firstDomain['domain_id']);
+                    if ($domain && $domain->uuid) {
+                        return to_route('admin.domain.info', $domain)
+                            ->with('success', implode(' ', $messages));
+                    }
+                }
+
                 return to_route('dashboard')
                     ->with('success', implode(' ', $messages));
             }
 
             if ($successfulRegistrations !== [] && $failedRegistrations !== []) {
-                // Partial success
+                $firstDomain = $successfulRegistrations[0];
+                if ($firstDomain['domain_id']) {
+                    $domain = \App\Models\Domain::query()->find($firstDomain['domain_id']);
+                    if ($domain && $domain->uuid) {
+                        return to_route('admin.domain.info', $domain)
+                            ->with('warning', implode(' ', $messages));
+                    }
+                }
+
                 return to_route('dashboard')
                     ->with('warning', implode(' ', $messages));
             }

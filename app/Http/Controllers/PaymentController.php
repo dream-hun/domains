@@ -7,6 +7,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StripePaymentRequest;
 use App\Models\Order;
 use App\Services\BillingService;
+use App\Services\HostingSubscriptionService;
+use App\Services\OrderProcessingService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
 use App\Services\TransactionLogger;
@@ -27,6 +29,8 @@ final class PaymentController extends Controller
     public function __construct(
         private readonly BillingService $billingService,
         private readonly OrderService $orderService,
+        private readonly OrderProcessingService $orderProcessingService,
+        private readonly HostingSubscriptionService $hostingSubscriptionService,
         private readonly PaymentService $paymentService,
         private readonly TransactionLogger $transactionLogger
     ) {
@@ -178,6 +182,12 @@ final class PaymentController extends Controller
 
                 // Payment is now committed - process domain registrations outside transaction
                 try {
+                    // Create OrderItem records from order's items JSON if they don't exist
+                    $this->orderProcessingService->createOrderItemsFromJson($order);
+
+                    // Create hosting subscriptions from order items
+                    $this->hostingSubscriptionService->createSubscriptionsFromOrder($order);
+
                     // Get contact ID from checkout session (use same contact for all roles)
                     $checkoutData = session('checkout', []);
                     $contactId = $checkoutData['selected_contact_id'] ?? $order->user->contacts()->where('is_primary', true)->first()?->id;
@@ -193,6 +203,9 @@ final class PaymentController extends Controller
                         // Process registrations - failures are handled internally
                         $this->orderService->processDomainRegistrations($order, $contactIds);
                     }
+
+                    // Dispatch appropriate renewal jobs based on order items
+                    $this->orderProcessingService->dispatchRenewalJobs($order);
 
                     // Clear cart and checkout session
                     Cart::clear();
@@ -213,18 +226,10 @@ final class PaymentController extends Controller
                         payment: $paymentAttempt
                     );
 
-                    // Prepare success message based on order status
-                    if ($order->isCompleted()) {
-                        $message = 'Payment successful! Your domain has been registered.';
-                    } elseif ($order->isPartiallyCompleted()) {
-                        $message = "Payment successful! Some domains were registered successfully. We're retrying others automatically.";
-                    } elseif ($order->requiresAttention()) {
-                        $message = "Payment successful! We're processing your domain registration and will notify you once complete.";
-                    } else {
-                        $message = 'Payment successful! Your order is being processed.';
-                    }
+                    $message = $this->getSuccessMessage($order);
+                    $redirectUrl = $this->orderProcessingService->getServiceDetailsRedirectUrl($order);
 
-                    return to_route('dashboard')
+                    return redirect($redirectUrl)
                         ->with('success', $message);
 
                 } catch (Exception $e) {
@@ -236,7 +241,9 @@ final class PaymentController extends Controller
                     ]);
 
                     // Still show success page since payment succeeded
-                    return to_route('dashboard')
+                    $redirectUrl = $this->orderProcessingService->getServiceDetailsRedirectUrl($order);
+
+                    return redirect($redirectUrl)
                         ->with('success', "Payment successful! We're processing your domain registration and will notify you once complete.");
                 }
             }
@@ -290,6 +297,66 @@ final class PaymentController extends Controller
     public function showPaymentFailed(Order $order): View
     {
         return view('payment.failed', ['order' => $order]);
+    }
+
+    private function getSuccessMessage(Order $order): string
+    {
+        $orderItems = $order->orderItems;
+        $hasDomainRegistration = false;
+        $hasDomainRenewal = false;
+        $hasSubscription = false;
+        $hasSubscriptionRenewal = false;
+
+        foreach ($orderItems as $item) {
+            if ($item->domain_type === 'registration') {
+                $hasDomainRegistration = true;
+            } elseif ($item->domain_type === 'renewal') {
+                $hasDomainRenewal = true;
+            } elseif ($item->domain_type === 'hosting') {
+                $hasSubscription = true;
+            } elseif ($item->domain_type === 'subscription_renewal') {
+                $hasSubscriptionRenewal = true;
+            }
+        }
+
+        $messages = [];
+        if ($hasDomainRegistration && $hasSubscription) {
+            $messages[] = 'Payment successful! Your domain and hosting subscription have been processed.';
+        } elseif ($hasDomainRegistration && $hasSubscriptionRenewal) {
+            $messages[] = 'Payment successful! Your domain registration and subscription renewal have been processed.';
+        } elseif ($hasDomainRenewal && $hasSubscription) {
+            $messages[] = 'Payment successful! Your domain renewal and hosting subscription have been processed.';
+        } elseif ($hasDomainRenewal && $hasSubscriptionRenewal) {
+            $messages[] = 'Payment successful! Your domain and subscription renewals have been processed.';
+        } elseif ($hasDomainRegistration) {
+            if ($order->isCompleted()) {
+                $messages[] = 'Payment successful! Your domain has been registered.';
+            } elseif ($order->isPartiallyCompleted()) {
+                $messages[] = "Payment successful! Some domains were registered successfully. We're retrying others automatically.";
+            } elseif ($order->requiresAttention()) {
+                $messages[] = "Payment successful! We're processing your domain registration and will notify you once complete.";
+            } else {
+                $messages[] = 'Payment successful! Your domain registration is being processed.';
+            }
+        } elseif ($hasDomainRenewal) {
+            $messages[] = 'Payment successful! Your domain renewal has been processed.';
+        } elseif ($hasSubscription) {
+            $messages[] = 'Payment successful! Your hosting subscription has been activated.';
+        } elseif ($hasSubscriptionRenewal) {
+            $messages[] = 'Payment successful! Your subscription renewal has been processed.';
+        } else {
+            if ($order->isCompleted()) {
+                $messages[] = 'Payment successful! Your order has been completed.';
+            } elseif ($order->isPartiallyCompleted()) {
+                $messages[] = "Payment successful! Some items were processed successfully. We're retrying others automatically.";
+            } elseif ($order->requiresAttention()) {
+                $messages[] = "Payment successful! We're processing your order and will notify you once complete.";
+            } else {
+                $messages[] = 'Payment successful! Your order is being processed.';
+            }
+        }
+
+        return implode(' ', $messages);
     }
 
     private function markPaymentAttemptFailed(Order $order, string $sessionId, ?string $message = null): void

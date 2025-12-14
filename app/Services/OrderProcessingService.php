@@ -79,6 +79,12 @@ final readonly class OrderProcessingService
                     ]);
                 }
 
+                if (isset($attributes['duration_months'])) {
+                    $itemMetadata['duration_months'] = (int) $attributes['duration_months'];
+                } else {
+                    $itemMetadata['duration_months'] = $itemQuantity;
+                }
+
                 // Also include other subscription-related attributes
                 if (isset($attributes['subscription_uuid'])) {
                     $itemMetadata['subscription_uuid'] = $attributes['subscription_uuid'];
@@ -90,6 +96,18 @@ final readonly class OrderProcessingService
 
                 if (isset($attributes['hosting_plan_price_id'])) {
                     $itemMetadata['hosting_plan_price_id'] = $attributes['hosting_plan_price_id'];
+                }
+            }
+
+            if ($itemType === 'hosting') {
+                if (isset($attributes['duration_months'])) {
+                    $itemMetadata['duration_months'] = (int) $attributes['duration_months'];
+                } else {
+                    $itemMetadata['duration_months'] = $itemQuantity;
+                }
+
+                if (isset($attributes['billing_cycle'])) {
+                    $itemMetadata['billing_cycle'] = $attributes['billing_cycle'];
                 }
             }
 
@@ -170,23 +188,16 @@ final readonly class OrderProcessingService
         }
     }
 
-    /**
-     * Get redirect URL to service details based on order items
-     * Prioritizes domain renewals, then subscription renewals, then falls back to billing
-     */
     public function getServiceDetailsRedirectUrl(Order $order): string
     {
-        // Load order items if not already loaded
         $orderItems = $order->orderItems;
 
         if ($orderItems->isEmpty()) {
-            // Fallback to billing page if no order items
             return route('billing.show', $order);
         }
 
-        // First, check for domain renewals
         foreach ($orderItems as $item) {
-            if ($item->domain_type === 'renewal' && $item->domain_id) {
+            if (in_array($item->domain_type, ['registration', 'renewal'], true) && $item->domain_id) {
                 $domain = Domain::query()->find($item->domain_id);
                 if ($domain && $domain->uuid) {
                     return route('admin.domain.info', $domain);
@@ -194,22 +205,36 @@ final readonly class OrderProcessingService
             }
         }
 
-        // Then, check for subscription renewals
         foreach ($orderItems as $item) {
-            if ($item->domain_type === 'subscription_renewal') {
+            if (in_array($item->domain_type, ['hosting', 'subscription_renewal'], true)) {
                 $metadata = $item->metadata ?? [];
                 $subscriptionId = $metadata['subscription_id'] ?? null;
 
-                if ($subscriptionId) {
-                    $subscription = Subscription::query()->find($subscriptionId);
-                    if ($subscription) {
-                        return route('admin.products.subscription.show', $subscription);
+                if (! $subscriptionId && $item->domain_type === 'hosting') {
+                    $planId = $metadata['hosting_plan_id'] ?? null;
+                    $planPriceId = $metadata['hosting_plan_price_id'] ?? null;
+
+                    if ($planId && $planPriceId) {
+                        $subscription = Subscription::query()
+                            ->where('user_id', $order->user_id)
+                            ->where('hosting_plan_id', $planId)
+                            ->where('hosting_plan_price_id', $planPriceId)
+                            ->where('created_at', '>=', $order->created_at->subMinutes(5))
+                            ->latest()
+                            ->first();
+                    } else {
+                        $subscription = null;
                     }
+                } else {
+                    $subscription = $subscriptionId ? Subscription::query()->find($subscriptionId) : null;
+                }
+
+                if ($subscription) {
+                    return route('admin.products.subscription.show', $subscription);
                 }
             }
         }
 
-        // Fallback to billing page
         return route('billing.show', $order);
     }
 }

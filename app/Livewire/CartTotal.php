@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use App\Models\Currency;
+use App\Services\CartPriceConverter;
 use App\Services\CurrencyService;
 use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
@@ -81,84 +82,18 @@ final class CartTotal extends Component
     public function calculateTotal(): string
     {
         $cartItems = Cart::getContent();
-        $subtotal = 0;
 
-        foreach ($cartItems as $item) {
-            $itemCurrency = $item->attributes->currency ?? 'USD';
-            $itemType = $item->attributes->get('type', 'registration');
-            $itemTotal = 0;
+        try {
+            $cartPriceConverter = app(CartPriceConverter::class);
+            $subtotal = $cartPriceConverter->calculateCartSubtotal($cartItems, $this->selectedCurrency);
+        } catch (Exception $exception) {
+            Log::error('Failed to calculate cart total in CartTotal', [
+                'currency' => $this->selectedCurrency,
+                'error' => $exception->getMessage(),
+            ]);
 
-            // Handle subscription_renewal items with proper billing cycle calculation
-            if ($itemType === 'subscription_renewal') {
-                $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
-                $displayUnitPrice = $item->attributes->get('display_unit_price');
-
-                // If display_unit_price is not set, fall back to unit_price
-                if (! $displayUnitPrice) {
-                    $displayUnitPrice = $item->attributes->get('unit_price', $item->price);
-                }
-
-                // Convert price to selected currency if needed
-                if ($itemCurrency !== $this->selectedCurrency) {
-                    try {
-                        $displayUnitPrice = $this->convertCurrency(
-                            $displayUnitPrice,
-                            $itemCurrency,
-                            $this->selectedCurrency
-                        );
-                    } catch (Exception) {
-                        $displayUnitPrice = $item->price;
-                    }
-                }
-
-                // If billing cycle is annually, convert months to years for calculation
-                if ($billingCycle === 'annually') {
-                    $years = $item->quantity / 12;
-                    $itemTotal = $displayUnitPrice * $years;
-                } else {
-                    // For monthly, use monthly price × quantity (in months)
-                    $itemTotal = $displayUnitPrice * $item->quantity;
-                }
-            } elseif ($itemType === 'hosting') {
-                // For hosting, use monthly unit price if available
-                $monthlyPrice = $item->attributes->get('monthly_unit_price');
-                if (! $monthlyPrice) {
-                    $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
-                    $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
-                    $monthlyPrice = $billingCycleMonths > 0 ? $item->price / $billingCycleMonths : $item->price;
-                }
-
-                // Convert price to selected currency if needed
-                if ($itemCurrency !== $this->selectedCurrency) {
-                    try {
-                        $monthlyPrice = $this->convertCurrency(
-                            $monthlyPrice,
-                            $itemCurrency,
-                            $this->selectedCurrency
-                        );
-                    } catch (Exception) {
-                        $monthlyPrice = $item->price;
-                    }
-                }
-
-                $itemTotal = $monthlyPrice * $item->quantity;
-            } elseif ($itemCurrency !== $this->selectedCurrency) {
-                // For other items (domains, etc.), use standard calculation
-                try {
-                    $convertedPrice = $this->convertCurrency(
-                        $item->price,
-                        $itemCurrency,
-                        $this->selectedCurrency
-                    );
-                    $itemTotal = $convertedPrice * $item->quantity;
-                } catch (Exception) {
-                    $itemTotal = $item->price * $item->quantity;
-                }
-            } else {
-                $itemTotal = $item->price * $item->quantity;
-            }
-
-            $subtotal += $itemTotal;
+            // Fallback to 0 if conversion fails
+            $subtotal = 0;
         }
 
         // Apply discount from session if coupon is applied

@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Stripe\Checkout\Session;
 use Stripe\Customer;
 use Stripe\Exception\ApiErrorException;
@@ -122,11 +123,22 @@ final readonly class StripeCheckoutService
     private function buildLineItemsFromCart(Collection $cartItems, string $currency): array
     {
         $lineItems = [];
+        $cartPriceConverter = app(CartPriceConverter::class);
 
         foreach ($cartItems as $item) {
-            $itemPrice = $item->getPriceSum();
+            try {
+                $itemTotal = $cartPriceConverter->calculateItemTotal($item, $currency);
+            } catch (Exception $exception) {
+                Log::error('Failed to convert cart item price for Stripe', [
+                    'item_id' => $item->id,
+                    'currency' => $currency,
+                    'error' => $exception->getMessage(),
+                ]);
+                throw $exception;
+            }
+
             $stripeAmount = StripeHelper::convertToStripeAmount(
-                $itemPrice,
+                $itemTotal,
                 $currency
             );
 

@@ -53,6 +53,21 @@ final readonly class OrderItemFormatterService
         }
 
         if ($itemType === 'hosting') {
+            $durationMonths = $item->attributes->get('duration_months');
+            $metadata = $item->attributes->get('metadata', []);
+
+            if (! $durationMonths && isset($metadata['duration_months'])) {
+                $durationMonths = $metadata['duration_months'];
+            }
+
+            if (! $durationMonths && $item->quantity) {
+                $durationMonths = $item->quantity;
+            }
+
+            if ($durationMonths) {
+                return $this->formatDurationLabel((int) $durationMonths);
+            }
+
             $billingCycle = $item->attributes->get('billing_cycle');
 
             if ($billingCycle) {
@@ -245,6 +260,16 @@ final readonly class OrderItemFormatterService
         }
 
         if ($itemType === 'hosting') {
+            $durationMonths = $metadata['duration_months'] ?? null;
+
+            if (! $durationMonths && $item->quantity) {
+                $durationMonths = $item->quantity;
+            }
+
+            if ($durationMonths) {
+                return $this->formatDurationLabel((int) $durationMonths);
+            }
+
             $billingCycle = $metadata['billing_cycle'] ?? null;
 
             if ($billingCycle) {

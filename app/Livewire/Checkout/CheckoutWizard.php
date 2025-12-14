@@ -7,6 +7,7 @@ namespace App\Livewire\Checkout;
 use App\Helpers\CurrencyHelper;
 use App\Models\Contact;
 use App\Models\Coupon;
+use App\Services\CartPriceConverter;
 use App\Services\CheckoutService;
 use App\Services\Coupon\CouponService;
 use App\Services\CurrencyService;
@@ -216,20 +217,10 @@ final class CheckoutWizard extends Component
     #[Computed]
     public function orderTotal(): float
     {
-        $total = 0;
-        foreach ($this->cartItems as $item) {
-            $itemPrice = $item->getPriceSum();
-            $itemCurrency = $item->attributes->currency ?? 'USD';
-            $itemType = $item->attributes->get('type', 'registration');
+        $cartPriceConverter = app(CartPriceConverter::class);
+        $subtotal = $cartPriceConverter->calculateCartSubtotal($this->cartItems, $this->userCurrencyCode);
 
-            if (! in_array($itemType, ['subscription_renewal', 'hosting'], true) && $itemCurrency !== $this->userCurrencyCode) {
-                $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
-            }
-
-            $total += $itemPrice;
-        }
-
-        return max(0, $total - $this->discountAmount);
+        return max(0, $subtotal - $this->discountAmount);
     }
 
     /**
@@ -238,20 +229,9 @@ final class CheckoutWizard extends Component
     #[Computed]
     public function orderSubtotal(): float
     {
-        $subtotal = 0;
-        foreach ($this->cartItems as $item) {
-            $itemPrice = $item->getPriceSum();
-            $itemCurrency = $item->attributes->currency ?? 'USD';
-            $itemType = $item->attributes->get('type', 'registration');
+        $cartPriceConverter = app(CartPriceConverter::class);
 
-            if (! in_array($itemType, ['subscription_renewal', 'hosting'], true) && $itemCurrency !== $this->userCurrencyCode) {
-                $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
-            }
-
-            $subtotal += $itemPrice;
-        }
-
-        return $subtotal;
+        return $cartPriceConverter->calculateCartSubtotal($this->cartItems, $this->userCurrencyCode);
     }
 
     /**
@@ -267,17 +247,10 @@ final class CheckoutWizard extends Component
      */
     public function getItemPrice($item): string
     {
-        $itemPrice = $item->getPriceSum();
-        $itemCurrency = $item->attributes->currency ?? 'USD';
-        $itemType = $item->attributes->get('type', 'registration');
+        $cartPriceConverter = app(CartPriceConverter::class);
+        $itemTotal = $cartPriceConverter->calculateItemTotal($item, $this->userCurrencyCode);
 
-        if (! in_array($itemType, ['subscription_renewal', 'hosting'], true) && $itemCurrency !== $this->userCurrencyCode) {
-            $itemPrice = CurrencyHelper::convert($itemPrice, $itemCurrency, $this->userCurrencyCode);
-        }
-
-        $displayCurrency = in_array($itemType, ['subscription_renewal', 'hosting'], true) ? $itemCurrency : $this->userCurrencyCode;
-
-        return CurrencyHelper::formatMoney($itemPrice, $displayCurrency);
+        return CurrencyHelper::formatMoney($itemTotal, $this->userCurrencyCode);
     }
 
     /**
@@ -615,32 +588,16 @@ final class CheckoutWizard extends Component
      */
     private function convertCartItemsCurrency($cartItems, string $targetCurrency)
     {
-        return $cartItems->map(function ($item) use ($targetCurrency): object {
-            $itemCurrency = $item->attributes->currency ?? 'USD';
-            $itemPrice = $item->price;
+        $cartPriceConverter = app(CartPriceConverter::class);
 
-            if ($itemCurrency !== $targetCurrency) {
-                try {
-                    $itemPrice = CurrencyHelper::convert(
-                        $item->price,
-                        $itemCurrency,
-                        $targetCurrency
-                    );
-                } catch (Exception $exception) {
-                    logger()->warning('Failed to convert cart item currency in checkout', [
-                        'from' => $itemCurrency,
-                        'to' => $targetCurrency,
-                        'amount' => $item->price,
-                        'error' => $exception->getMessage(),
-                    ]);
-                }
-            }
-
-            $convertedItem = clone $item;
-            $convertedItem->price = $itemPrice;
-            $convertedItem->attributes->currency = $targetCurrency;
-
-            return $convertedItem;
-        });
+        try {
+            return $cartPriceConverter->convertCartItemsToCurrency($cartItems, $targetCurrency);
+        } catch (Exception $exception) {
+            logger()->error('Failed to convert cart items currency in checkout', [
+                'to' => $targetCurrency,
+                'error' => $exception->getMessage(),
+            ]);
+            throw $exception;
+        }
     }
 }

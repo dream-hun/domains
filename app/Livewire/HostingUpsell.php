@@ -177,12 +177,13 @@ final class HostingUpsell extends Component
             }
 
             $price = $planPrice->getPriceInCurrency('regular_price', $this->currencyCode);
+            $durationMonths = $this->getBillingCycleMonths($planPrice->billing_cycle);
 
             Cart::add([
                 'id' => sprintf('hosting-%d-%s', $planPrice->id, md5($this->selectedDomain)),
                 'name' => sprintf('%s Hosting (%s)', $plan->name, ucfirst((string) $planPrice->billing_cycle)),
                 'price' => $price,
-                'quantity' => 1,
+                'quantity' => $durationMonths,
                 'attributes' => [
                     'type' => 'hosting',
                     'currency' => $this->currencyCode,
@@ -191,11 +192,13 @@ final class HostingUpsell extends Component
                     'billing_cycle' => $planPrice->billing_cycle,
                     'linked_domain' => $this->selectedDomain,
                     'domain_name' => $this->selectedDomain,
+                    'duration_months' => $durationMonths,
                     'metadata' => [
                         'hosting_plan_id' => $plan->id,
                         'hosting_plan_price_id' => $planPrice->id,
                         'billing_cycle' => $planPrice->billing_cycle,
                         'linked_domain' => $this->selectedDomain,
+                        'duration_months' => $durationMonths,
                         'plan' => $plan->only(['id', 'name', 'slug']),
                         'price' => [
                             'id' => $planPrice->id,
@@ -275,5 +278,21 @@ final class HostingUpsell extends Component
                 'prices' => $prices->toArray(),
             ];
         })->all();
+    }
+
+    /**
+     * Get billing cycle duration in months
+     */
+    private function getBillingCycleMonths(string $billingCycle): int
+    {
+        return match ($billingCycle) {
+            'monthly' => 1,
+            'quarterly' => 3,
+            'semi-annually' => 6,
+            'annually' => 12,
+            'biennially' => 24,
+            'triennially' => 36,
+            default => 1,
+        };
     }
 }

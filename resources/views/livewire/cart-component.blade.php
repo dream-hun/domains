@@ -55,25 +55,11 @@
                                                 <div class="quantity-controls d-flex align-items-center justify-content-center">
                                                     @if($itemType === 'subscription_renewal' || $itemType === 'hosting')
                                                         @php
-                                                            if (isset($item->attributes->duration_months)) {
-                                                                $durationMonths = (int) $item->attributes->duration_months;
-                                                            } elseif ($itemType === 'hosting') {
-
-                                                                $billingCycle = $item->attributes->billing_cycle ?? 'monthly';
-                                                                $durationMonths = $this->getBillingCycleMonths($billingCycle);
-                                                            } else {
-                                                                // For subscription_renewal, use quantity as fallback
-                                                                $durationMonths = (int) $item->quantity;
-                                                            }
-
-                                                            // Calculate step size based on original billing cycle
-                                                            $originalBillingCycle = $item->attributes->billing_cycle ?? 'monthly';
-                                                            $stepSize = $this->getBillingCycleMonths($originalBillingCycle);
-
-                                                            // Calculate min/max values
-                                                            $minMonths = $stepSize; // Minimum is one billing cycle
-                                                            $maxMonths = 48; // Maximum 4 years (48 months)
-
+                                                            $metadata = $item->attributes->get('metadata', []);
+                                                            $durationMonths = (int) ($item->attributes->get('duration_months') ?? $metadata['duration_months'] ?? $item->quantity ?? 1);
+                                                            $stepSize = 1;
+                                                            $minMonths = 1;
+                                                            $maxMonths = 48;
                                                             $durationLabel = $this->formatDurationLabel($durationMonths);
                                                         @endphp
                                                         <button type="button" class="btn btn-outline-primary rounded-circle p-2"
@@ -129,7 +115,12 @@
                                                             @endphp
                                                             <span class="text-muted" style="font-size: 11px !important;">{{ $priceLabel }}</span>
                                                         @elseif($itemType === 'hosting')
-                                                            <span class="text-muted" style="font-size: 11px !important;">/month</span>
+                                                            @php
+                                                                $metadata = $item->attributes->metadata ?? [];
+                                                                $billingCycle = $item->attributes->billing_cycle ?? $metadata['billing_cycle'] ?? 'monthly';
+                                                                $priceLabel = $billingCycle === 'annually' ? '/year' : '/month';
+                                                            @endphp
+                                                            <span class="text-muted" style="font-size: 11px !important;">{{ $priceLabel }}</span>
                                                         @else
                                                             <span class="text-muted" style="font-size: 11px !important;">/year</span>
                                                         @endif

@@ -80,7 +80,21 @@ final class HostingSubscriptionService
 
         $cycle = $this->resolveBillingCycle($billingCycle ?: $planPrice->billing_cycle);
         $now = Date::now();
-        $expiresAt = $this->calculateExpiry($now, $cycle);
+
+        $durationMonths = (int) ($metadata['duration_months'] ?? $orderItem->quantity ?? 1);
+        $durationMonths = min($durationMonths, 48);
+
+        Log::info('Creating subscription from order item', [
+            'order_item_id' => $orderItem->id,
+            'order_id' => $order->id,
+            'plan_id' => $planId,
+            'quantity' => $orderItem->quantity,
+            'duration_months_from_metadata' => $metadata['duration_months'] ?? null,
+            'duration_months_used' => $durationMonths,
+            'billing_cycle' => $billingCycle,
+        ]);
+
+        $expiresAt = $now->copy()->addMonths($durationMonths);
 
         Subscription::query()->create([
             'uuid' => (string) Str::uuid(),
@@ -100,6 +114,7 @@ final class HostingSubscriptionService
                     'billing_cycle' => $planPrice->billing_cycle,
                 ],
                 'order_item_id' => $orderItem->id,
+                'duration_months' => $durationMonths,
             ],
             'billing_cycle' => $cycle->value,
             'domain' => $linkedDomain,

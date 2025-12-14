@@ -592,11 +592,13 @@ class Configuration extends Component
             $cartIdSuffix = $domainName ?? 'no-domain-'.now()->timestamp;
             $cartId = sprintf('hosting-%s-%s-%s', $this->plan->id, $this->billingCycle, $cartIdSuffix);
 
+            $durationMonths = $this->getBillingCycleMonths($this->billingCycle);
+
             Cart::add([
                 'id' => $cartId,
                 'name' => sprintf('%s (%s)', $this->plan->name, $this->billingCycle),
                 'price' => $hostingPrice,
-                'quantity' => 1,
+                'quantity' => $durationMonths,
                 'attributes' => [
                     'type' => 'hosting',
                     'hosting_plan_id' => $this->plan->id,
@@ -606,6 +608,7 @@ class Configuration extends Component
                     'domain_name' => $domainName,
                     'is_existing_domain' => $this->domainOption === 'existing',
                     'domain_required' => $domainRequired,
+                    'duration_months' => $durationMonths,
                     'currency' => $userCurrency,
                     'metadata' => [
                         'hosting_plan_id' => $this->plan->id,
@@ -613,6 +616,7 @@ class Configuration extends Component
                         'billing_cycle' => $this->billingCycle,
                         'linked_domain' => $domainName,
                         'domain_required' => $domainRequired,
+                        'duration_months' => $durationMonths,
                         'plan' => $this->plan->only(['id', 'name', 'slug']),
                         'price' => [
                             'id' => $priceModel->id,
@@ -664,5 +668,21 @@ class Configuration extends Component
     public function render(): View
     {
         return view('livewire.hosting.configuration');
+    }
+
+    /**
+     * Get billing cycle duration in months
+     */
+    private function getBillingCycleMonths(string $billingCycle): int
+    {
+        return match ($billingCycle) {
+            'monthly' => 1,
+            'quarterly' => 3,
+            'semi-annually' => 6,
+            'annually' => 12,
+            'biennially' => 24,
+            'triennially' => 36,
+            default => 1,
+        };
     }
 }

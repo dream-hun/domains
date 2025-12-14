@@ -12,6 +12,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Notifications\SubscriptionAutoRenewalFailedNotification;
+use App\Services\HostingSubscriptionService;
 use App\Services\OrderProcessingService;
 use App\Services\OrderService;
 use Exception;
@@ -27,7 +28,8 @@ final class StripeWebhookController extends Controller
 {
     public function __construct(
         private readonly OrderService $orderService,
-        private readonly OrderProcessingService $orderProcessingService
+        private readonly OrderProcessingService $orderProcessingService,
+        private readonly HostingSubscriptionService $hostingSubscriptionService
     ) {
         Stripe::setApiKey(config('services.stripe.secret'));
     }
@@ -135,6 +137,12 @@ final class StripeWebhookController extends Controller
                     'stripe_payment_intent_id' => $paymentIntent->id,
                     'processed_at' => now(),
                 ]);
+
+                // Create OrderItem records from order's items JSON if they don't exist
+                $this->orderProcessingService->createOrderItemsFromJson($order);
+
+                // Create hosting subscriptions from order items
+                $this->hostingSubscriptionService->createSubscriptionsFromOrder($order);
 
                 // Dispatch appropriate renewal jobs based on order items
                 if (in_array($order->type, ['renewal', 'subscription_renewal'], true)) {

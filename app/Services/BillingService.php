@@ -6,7 +6,6 @@ namespace App\Services;
 
 use App\Helpers\CurrencyHelper;
 use App\Livewire\CartComponent;
-use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
@@ -74,19 +73,14 @@ final readonly class BillingService
                 'notes' => $notes,
             ]);
 
-            // Create order items from prepared cart data
             foreach ($items as $item) {
-                // Get the exchange rate for the item's currency
-                $itemCurrency = Currency::query()->where('code', $item['currency'])->first();
-                $exchangeRate = $itemCurrency->exchange_rate ?? 1.0;
-
                 OrderItem::query()->create([
                     'order_id' => $order->id,
                     'domain_name' => $item['domain_name'],
                     'domain_type' => $item['domain_type'],
                     'price' => $item['price'],
-                    'currency' => $item['currency'],
-                    'exchange_rate' => $exchangeRate,
+                    'currency' => $currency,
+                    'exchange_rate' => 1.0,
                     'quantity' => $item['quantity'],
                     'years' => $item['years'],
                     'total_amount' => $item['price'] * $item['quantity'],

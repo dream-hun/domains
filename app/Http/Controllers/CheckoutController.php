@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\HostingSubscriptionService;
 use App\Services\OrderProcessingService;
 use App\Services\StripeCheckoutService;
 use App\Services\TransactionLogger;
@@ -26,7 +27,8 @@ final class CheckoutController extends Controller
     public function __construct(
         private readonly TransactionLogger $transactionLogger,
         private readonly StripeCheckoutService $stripeCheckoutService,
-        private readonly OrderProcessingService $orderProcessingService
+        private readonly OrderProcessingService $orderProcessingService,
+        private readonly HostingSubscriptionService $hostingSubscriptionService
     ) {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
     }
@@ -166,6 +168,9 @@ final class CheckoutController extends Controller
                 // Create OrderItem records from order's items JSON if they don't exist
                 $this->orderProcessingService->createOrderItemsFromJson($order);
 
+                // Create hosting subscriptions from order items
+                $this->hostingSubscriptionService->createSubscriptionsFromOrder($order);
+
                 // Dispatch appropriate renewal jobs based on order items
                 $this->orderProcessingService->dispatchRenewalJobs($order);
 
@@ -186,11 +191,11 @@ final class CheckoutController extends Controller
                     'user_id' => $order->user_id,
                 ]);
 
-                // Redirect to service details instead of showing success page
+                $message = $this->getSuccessMessage($order);
                 $redirectUrl = $this->orderProcessingService->getServiceDetailsRedirectUrl($order);
 
                 return redirect($redirectUrl)
-                    ->with('success', 'Payment processed successfully!');
+                    ->with('success', $message);
 
             } catch (Exception $e) {
                 DB::rollBack();
@@ -336,6 +341,33 @@ final class CheckoutController extends Controller
             ]),
             'last_attempted_at' => now(),
         ]);
+    }
+
+    private function getSuccessMessage(Order $order): string
+    {
+        $orderItems = $order->orderItems;
+        $hasDomainRenewal = false;
+        $hasSubscriptionRenewal = false;
+
+        foreach ($orderItems as $item) {
+            if ($item->domain_type === 'renewal') {
+                $hasDomainRenewal = true;
+            } elseif ($item->domain_type === 'subscription_renewal') {
+                $hasSubscriptionRenewal = true;
+            }
+        }
+
+        if ($hasDomainRenewal && $hasSubscriptionRenewal) {
+            return 'Payment successful! Your domain and subscription renewals have been processed.';
+        }
+        if ($hasDomainRenewal) {
+            return 'Payment successful! Your domain renewal has been processed.';
+        }
+        if ($hasSubscriptionRenewal) {
+            return 'Payment successful! Your subscription renewal has been processed.';
+        }
+
+        return 'Payment processed successfully!';
     }
 
     private function markPaymentAttemptFailed(Order $order, string $sessionId, ?string $message = null): void

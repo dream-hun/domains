@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use App\Helpers\CurrencyHelper;
+use App\Services\CartPriceConverter;
 use App\Services\Coupon\CouponService;
 use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
@@ -75,15 +76,10 @@ final class CheckoutProcess extends Component
     public function calculateTotals(): void
     {
         $cartContent = Cart::getContent();
-        $subtotal = 0;
 
         try {
-            foreach ($cartContent as $item) {
-                $itemCurrency = $item->attributes->currency ?? 'USD';
-                $convertedPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
-                $itemTotal = $convertedPrice * $item->quantity;
-                $subtotal += $itemTotal;
-            }
+            $cartPriceConverter = app(CartPriceConverter::class);
+            $subtotal = $cartPriceConverter->calculateCartSubtotal($cartContent, $this->currency);
 
             $this->subtotal = $subtotal;
             $this->total = max(0, $this->subtotal - $this->discount);
@@ -260,7 +256,11 @@ final class CheckoutProcess extends Component
     {
         $itemCurrency = $item['attributes']['currency'] ?? 'USD';
         try {
-            $convertedPrice = $this->convertToDisplayCurrency($item['price'], $itemCurrency);
+            if ($itemCurrency !== $this->currency) {
+                $convertedPrice = CurrencyHelper::convert($item['price'], $itemCurrency, $this->currency);
+            } else {
+                $convertedPrice = $item['price'];
+            }
 
             return CurrencyHelper::formatMoney($convertedPrice, $this->currency);
         } catch (Exception $exception) {
@@ -285,7 +285,11 @@ final class CheckoutProcess extends Component
     {
         $itemCurrency = $item['attributes']['currency'] ?? 'USD';
         try {
-            $convertedPrice = $this->convertToDisplayCurrency($item['price'], $itemCurrency);
+            if ($itemCurrency !== $this->currency) {
+                $convertedPrice = CurrencyHelper::convert($item['price'], $itemCurrency, $this->currency);
+            } else {
+                $convertedPrice = $item['price'];
+            }
             $total = $convertedPrice * $item['quantity'];
 
             return CurrencyHelper::formatMoney($total, $this->currency);
@@ -313,20 +317,55 @@ final class CheckoutProcess extends Component
     {
         $cartItems = [];
         $cartContent = Cart::getContent();
+        $cartPriceConverter = app(CartPriceConverter::class);
 
         foreach ($cartContent as $item) {
-            $itemCurrency = $item->attributes->currency ?? 'USD';
-            $itemPrice = $this->convertToDisplayCurrency($item->price, $itemCurrency);
+            try {
+                $itemPrice = $cartPriceConverter->convertItemPrice($item, $this->currency);
+            } catch (Exception $exception) {
+                Log::error('Failed to convert item price in prepareCartForPayment', [
+                    'item_id' => $item->id,
+                    'currency' => $this->currency,
+                    'error' => $exception->getMessage(),
+                ]);
+                throw $exception;
+            }
+
+            $itemType = $item->attributes->get('type', 'registration');
+
+            $years = match ($itemType) {
+                'subscription_renewal', 'hosting' => (int) ($item->quantity / 12),
+                'renewal', 'registration' => (int) $item->quantity,
+                default => (int) $item->quantity,
+            };
+
+            $metadata = $item->attributes->get('metadata', []);
+
+            if ($itemType === 'hosting') {
+                $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
+                $metadata['hosting_plan_price_id'] = $item->attributes->get('hosting_plan_price_id');
+                $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
+                $metadata['linked_domain'] = $item->attributes->get('linked_domain');
+                $metadata['duration_months'] = (int) ($item->attributes->get('duration_months') ?? $item->quantity);
+            }
+
+            if ($itemType === 'subscription_renewal') {
+                $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
+                $metadata['hosting_plan_price_id'] = $item->attributes->get('hosting_plan_price_id');
+                $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
+                $metadata['subscription_id'] = $item->attributes->get('subscription_id');
+                $metadata['duration_months'] = (int) ($item->attributes->get('duration_months') ?? $item->quantity);
+            }
 
             $cartItems[] = [
                 'domain_name' => $item->attributes->get('domain_name') ?? $item->name,
-                'domain_type' => $item->attributes->get('type', 'registration'),
+                'domain_type' => $itemType,
                 'price' => $itemPrice,
                 'currency' => $this->currency,
                 'quantity' => $item->quantity,
-                'years' => $item->quantity,
+                'years' => $years,
                 'domain_id' => $item->attributes->get('domain_id'),
-                'metadata' => $item->attributes->get('metadata', []),
+                'metadata' => $metadata,
                 'hosting_plan_id' => $item->attributes->get('hosting_plan_id'),
                 'hosting_plan_price_id' => $item->attributes->get('hosting_plan_price_id'),
                 'linked_domain' => $item->attributes->get('linked_domain'),

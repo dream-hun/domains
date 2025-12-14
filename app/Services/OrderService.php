@@ -22,6 +22,7 @@ final readonly class OrderService
         private NotificationService $notificationService,
         private RenewalService $renewalService,
         private HostingSubscriptionService $hostingSubscriptionService,
+        private CartPriceConverter $cartPriceConverter,
     ) {}
 
     public function createOrder(array $data): Order
@@ -49,9 +50,22 @@ final readonly class OrderService
             ];
         }
 
+        // Calculate total in order currency using unified converter
+        $orderCurrency = $currency->code;
         $total = 0;
         foreach ($data['cart_items'] as $item) {
-            $total += $item->getPriceSum();
+            try {
+                $itemTotal = $this->cartPriceConverter->calculateItemTotal($item, $orderCurrency);
+                $total += $itemTotal;
+            } catch (Exception $exception) {
+                Log::error('Failed to calculate item total for order', [
+                    'item_id' => $item->id,
+                    'item_type' => $item->attributes->type ?? 'unknown',
+                    'order_currency' => $orderCurrency,
+                    'error' => $exception->getMessage(),
+                ]);
+                throw $exception;
+            }
         }
 
         $discountAmount = $data['discount_amount'] ?? 0;
@@ -86,16 +100,39 @@ final readonly class OrderService
             ])->toArray(),
         ]);
         foreach ($data['cart_items'] as $item) {
-
-            $itemPrice = $item->price;
-            $itemTotal = $item->getPriceSum();
             $itemCurrency = $item->attributes->currency ?? 'USD';
             $itemType = $item->attributes->type ?? 'registration';
             $domainId = $item->attributes->domain_id ?? null;
             $metadata = $item->attributes->get('metadata');
 
+            // Get original currency model for exchange rate
             $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
-            $exchangeRate = $itemCurrencyModel ? $itemCurrencyModel->exchange_rate : 1.0;
+            $originalExchangeRate = $itemCurrencyModel ? $itemCurrencyModel->exchange_rate : 1.0;
+
+            // Get order currency model for exchange rate
+            $orderCurrencyModel = Currency::query()->where('code', $orderCurrency)->first();
+            $orderExchangeRate = $orderCurrencyModel ? $orderCurrencyModel->exchange_rate : 1.0;
+
+            // Calculate exchange rate from item currency to order currency
+            $exchangeRate = $originalExchangeRate > 0 && $orderExchangeRate > 0
+                ? $orderExchangeRate / $originalExchangeRate
+                : 1.0;
+
+            // Convert item price to order currency
+            try {
+                $convertedItemPrice = $this->cartPriceConverter->convertItemPrice($item, $orderCurrency);
+                $convertedItemTotal = $this->cartPriceConverter->calculateItemTotal($item, $orderCurrency);
+            } catch (Exception $exception) {
+                Log::error('Failed to convert item price for OrderItem', [
+                    'item_id' => $item->id,
+                    'item_type' => $itemType,
+                    'item_currency' => $itemCurrency,
+                    'order_currency' => $orderCurrency,
+                    'error' => $exception->getMessage(),
+                ]);
+                throw $exception;
+            }
+
             $subscriptionId = $item->attributes->subscription_id ?? null;
             $itemMetadata = $metadata ?? [];
 
@@ -107,6 +144,24 @@ final readonly class OrderService
                 $billingCycle = $item->attributes->billing_cycle ?? null;
                 if ($billingCycle) {
                     $itemMetadata['billing_cycle'] = $billingCycle;
+                }
+
+                if (isset($item->attributes->duration_months)) {
+                    $itemMetadata['duration_months'] = (int) $item->attributes->duration_months;
+                } else {
+                    $itemMetadata['duration_months'] = (int) $item->quantity;
+                }
+            }
+
+            if ($itemType === 'hosting') {
+                if (isset($item->attributes->duration_months)) {
+                    $itemMetadata['duration_months'] = (int) $item->attributes->duration_months;
+                } else {
+                    $itemMetadata['duration_months'] = (int) $item->quantity;
+                }
+
+                if (isset($item->attributes->billing_cycle)) {
+                    $itemMetadata['billing_cycle'] = $item->attributes->billing_cycle;
                 }
             }
 
@@ -122,13 +177,16 @@ final readonly class OrderService
                 'domain_name' => $item->attributes->domain_name ?? $item->name,
                 'domain_type' => $itemType,
                 'domain_id' => $domainId,
-                'price' => $itemPrice,
-                'currency' => $itemCurrency,
+                'price' => $convertedItemPrice,
+                'currency' => $orderCurrency,
                 'exchange_rate' => $exchangeRate,
                 'quantity' => $item->quantity,
                 'years' => $years,
-                'total_amount' => $itemTotal,
-                'metadata' => $itemMetadata,
+                'total_amount' => $convertedItemTotal,
+                'metadata' => array_merge($itemMetadata, [
+                    'original_currency' => $itemCurrency,
+                    'original_price' => $item->price,
+                ]),
             ]);
         }
 
