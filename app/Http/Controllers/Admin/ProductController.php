@@ -22,7 +22,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ProductController extends Controller
 {
-    public function domains(): Factory|View
+    public function domains(): Factory|View|RedirectResponse
     {
         $user = auth()->user();
         abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden') || $user->owner_id !== auth()->id() && ! auth()->user()->isAdmin();
@@ -35,13 +35,19 @@ class ProductController extends Controller
         return view('admin.products.domains', ['domains' => $domains]);
     }
 
-    public function hosting(Request $request): Factory|View
+    public function hosting(Request $request): Factory|View|RedirectResponse
     {
         $user = auth()->user();
-        abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden') || $user->user_id !== $user->id && ! $user->isAdmin();
-        if ($user->user_id !== $user->id && ! $user->isAdmin()) {
+        abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden') || $user->owner_id !== $user->id && ! $user->isAdmin();
+        if ($user->owner_id !== $user->id && ! $user->isAdmin()) {
             return to_route('dashboard')->with('error', 'You are not authorized to view hosting products.');
         }
+
+        $categorySlug = $request->string('category')->trim()->toString();
+
+        $subscriptionsQuery = Subscription::query()
+            ->where('user_id', $user->id)
+            ->with(['plan.category', 'planPrice']);
 
         if ($categorySlug !== '') {
             $subscriptionsQuery->whereHas('plan.category', function ($query) use ($categorySlug): void {
