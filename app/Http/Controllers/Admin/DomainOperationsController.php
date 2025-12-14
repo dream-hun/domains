@@ -26,13 +26,12 @@ final class DomainOperationsController extends Controller
      */
     public function domainInfo(Domain $domain): View|Factory
     {
-        if ($domain->owner_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return redirect()->back()->with('error', 'You are not authorized to view this domain.');
         }
         $domain->load(['contacts' => function ($query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
-    
 
         return view('admin.domainOps.info', ['domain' => $domain]);
     }
@@ -42,7 +41,7 @@ final class DomainOperationsController extends Controller
      */
     public function getContacts(Domain $domain): RedirectResponse
     {
-        if ($domain->owner_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return redirect()->back()->with('error', 'You are not authorized to sync contacts for this domain.');
         }
 
@@ -60,7 +59,7 @@ final class DomainOperationsController extends Controller
      */
     public function updateContacts(Domain $domain): RedirectResponse
     {
-        if ($domain->owner_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return redirect()->back()->with('error', 'You are not authorized to update contacts for this domain.');
         }
 

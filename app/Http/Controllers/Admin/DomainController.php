@@ -41,8 +41,8 @@ final class DomainController extends Controller
 
     public function domainInfo(Domain $domain, GetDomainInfoAction $action): View
     {
-        abort_if(Gate::denies('domain_show'), 403) || $domain->owner_id !== auth()->id() && !auth()->user()->isAdmin();
-        if ($domain->owner_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        abort_if(Gate::denies('domain_show'), 403) || $domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin();
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return redirect()->back()->with('error', 'You are not authorized to view this domain.');
         }
 
@@ -110,8 +110,8 @@ final class DomainController extends Controller
 
     public function ownerShipForm(Domain $domain): View
     {
-        abort_if(Gate::denies('domain_renew'), 403) || $domain->owner_id !== auth()->id() && !auth()->user()->isAdmin();
-        if ($domain->owner_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        abort_if(Gate::denies('domain_renew'), 403) || $domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin();
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return redirect()->back()->with('error', 'You are not authorized to assign owner for this domain.');
         }
         $domain->load(['owner']);
@@ -134,8 +134,9 @@ final class DomainController extends Controller
 
     public function edit(Domain $domain): View
     {
-        $canEdit = Gate::allows('domain_edit') || $domain->owner_id === auth()->id();
-        abort_unless($canEdit, 403);
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+            return redirect()->back()->with('error', 'You are not authorized to edit this domain.');
+        }
         $countries = Country::query()->select('name', 'iso_code')->get();
         $domain->load(['owner', 'nameservers']);
         $domain->load(['contacts' => function ($query): void {
@@ -185,8 +186,9 @@ final class DomainController extends Controller
 
     public function updateNameservers(Domain $domain, UpdateNameserversRequest $request, UpdateNameserversAction $action): RedirectResponse
     {
-        $canEdit = Gate::allows('domain_edit') || $domain->owner_id === auth()->id();
-        abort_unless($canEdit, 403);
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+            return redirect()->back()->with('error', 'You are not authorized to update nameservers for this domain.');
+        }
 
         $result = $action->handle($domain, $request->validated()['nameservers']);
 
@@ -202,8 +204,9 @@ final class DomainController extends Controller
 
     public function toggleLock(Domain $domain, ToggleDomainLockRequest $request, ToggleDomainLockAction $action): RedirectResponse
     {
-        $canEdit = Gate::allows('domain_edit') || $domain->owner_id === auth()->id();
-        abort_unless($canEdit, 403);
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+            return redirect()->back()->with('error', 'You are not authorized to toggle lock for this domain.');
+        }
         $desiredLock = $request->has('lock') ? $request->boolean('lock') : null;
         $result = $action->execute($domain, $desiredLock);
 
@@ -216,7 +219,9 @@ final class DomainController extends Controller
 
     public function editContact(Domain $domain, string $type): View
     {
-        abort_if(Gate::denies('domain_edit'), 403);
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+            return redirect()->back()->with('error', 'You are not authorized to edit contact for this domain.');
+        }
         $validTypes = ['registrant', 'admin', 'technical', 'billing'];
         abort_unless(in_array($type, $validTypes), 404, 'Invalid contact type');
 
@@ -267,9 +272,9 @@ final class DomainController extends Controller
 
     public function updateContacts(Domain $domain, UpdateDomainContactsRequest $request, UpdateDomainContactsAction $action): RedirectResponse
     {
-        $canEdit = Gate::allows('domain_edit') || $domain->owner_id === auth()->id();
-
-        abort_unless($canEdit, 403);
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+            return redirect()->back()->with('error', 'You are not authorized to update contacts for this domain.');
+        }
 
         $result = $action->handle($domain, $request->validated());
 
@@ -284,6 +289,9 @@ final class DomainController extends Controller
 
     public function reactivate(ReactivateDomainRequest $request, ReactivateDomainAction $action): RedirectResponse
     {
+        if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
+            return redirect()->back()->with('error', 'You are not authorized to reactivate this domain.');
+        }
         try {
             $domain = Domain::query()->where('name', $request->validated('domain'))->firstOrFail();
 
