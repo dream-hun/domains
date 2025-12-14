@@ -133,7 +133,7 @@ final class DomainController extends Controller
         return to_route('admin.domains.index')->with('success', 'Owner assigned successfully');
     }
 
-    public function edit(Domain $domain): View
+    public function edit(Domain $domain): View|RedirectResponse
     {
         if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return back()->with('error', 'You are not authorized to edit this domain.');
@@ -220,7 +220,7 @@ final class DomainController extends Controller
         return back()->withErrors(['error' => $result['message'] ?? 'Failed to update domain lock status']);
     }
 
-    public function editContact(Domain $domain, string $type): View
+    public function editContact(Domain $domain, string $type): View|RedirectResponse
     {
         if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return back()->with('error', 'You are not authorized to edit contact for this domain.');
