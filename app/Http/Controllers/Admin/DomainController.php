@@ -41,7 +41,10 @@ final class DomainController extends Controller
 
     public function domainInfo(Domain $domain, GetDomainInfoAction $action): View
     {
-        abort_if(Gate::denies('domain_show'), 403);
+        abort_if(Gate::denies('domain_show'), 403) || $domain->owner_id !== auth()->id() && !auth()->user()->isAdmin();
+        if ($domain->owner_id !== auth()->id() && !auth()->user()->isAdmin()) {
+            return redirect()->back()->with('error', 'You are not authorized to view this domain.');
+        }
 
         try {
 
@@ -107,7 +110,10 @@ final class DomainController extends Controller
 
     public function ownerShipForm(Domain $domain): View
     {
-        abort_if(Gate::denies('domain_renew'), 403);
+        abort_if(Gate::denies('domain_renew'), 403) || $domain->owner_id !== auth()->id() && !auth()->user()->isAdmin();
+        if ($domain->owner_id !== auth()->id() && !auth()->user()->isAdmin()) {
+            return redirect()->back()->with('error', 'You are not authorized to assign owner for this domain.');
+        }
         $domain->load(['owner']);
 
         $users = User::query()->with('roles')->whereHas('roles', function ($query): void {
