@@ -31,8 +31,10 @@ class ProductController extends Controller
         }
 
         $domains = Domain::with('owner')->get();
+
         return view('admin.products.domains', ['domains' => $domains]);
     }
+
     public function hosting(Request $request): Factory|View
     {
         $user = auth()->user();

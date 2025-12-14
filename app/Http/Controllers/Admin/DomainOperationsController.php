@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Domain\GetDomainContactStatsAction;
 use App\Actions\Domain\SyncDomainContactsAction;
-use App\Actions\Domain\UpdateDomainContactsAction;
 use App\Http\Controllers\Controller;
 use App\Models\Domain;
 use Illuminate\Contracts\View\Factory;
@@ -17,7 +16,6 @@ final class DomainOperationsController extends Controller
 {
     public function __construct(
         private readonly SyncDomainContactsAction $syncContactsAction,
-        private readonly UpdateDomainContactsAction $updateContactsAction,
         private readonly GetDomainContactStatsAction $contactStatsAction
     ) {}
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Domain;
 
-use App\Models\DomainContact;
 use App\Models\Domain;
+use App\Models\DomainContact;
 use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Support\Facades\Log;
 use Throwable;

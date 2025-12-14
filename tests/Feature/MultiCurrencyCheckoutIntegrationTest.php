@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Services\CurrencyService;
 use App\Livewire\Checkout\CheckoutWizard;
 use App\Models\Contact;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Livewire\Livewire;
 

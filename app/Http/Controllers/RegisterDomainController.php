@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\Domain;
 use App\Actions\RegisterDomainAction;
 use App\Enums\ContactType;
 use App\Enums\DomainType;
 use App\Http\Requests\RegisterDomainRequest;
 use App\Models\Country;
+use App\Models\Domain;
 use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
