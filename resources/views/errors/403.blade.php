@@ -50,7 +50,7 @@
         </div>
     </nav>
 
-    <div class="content-wrapper" style="min-height: 2838.8px;">
+    <div class="content-wrapper" style="min-height: 2839px;">
         <!-- Content Header (Page header) -->
         <section class="content-header">
             <div class="container-fluid">
@@ -60,7 +60,7 @@
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
-                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                             <li class="breadcrumb-item active">404 Error Page</li>
                         </ol>
                     </div>
@@ -78,7 +78,7 @@
 
                     <p>
                         We could not find the page you were looking for.
-                        Meanwhile, you may <a href="../../index.html">return to dashboard</a> or try using the search form.
+                        Meanwhile, you may <a href="{{route('dashboard')}}">return to dashboard</a> or try using the search form.
                     </p>
 
                     <form class="search-form">
