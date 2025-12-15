@@ -107,11 +107,11 @@ final readonly class BillingService
     /**
      * Get prepared cart data from provided data, session, or Cart facade
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     private function getPreparedCartData(?array $preparedCartData): array
     {
-        // Use provided prepared data if available
+
         if ($preparedCartData !== null) {
             Log::info('Using provided prepared cart data for order creation');
             $this->validateCartData($preparedCartData);
@@ -119,7 +119,7 @@ final readonly class BillingService
             return $preparedCartData;
         }
 
-        // Try to get from session
+
         if (session()->has('cart')) {
             Log::info('Using cart data from session for order creation');
             $sessionCartData = [
@@ -138,7 +138,7 @@ final readonly class BillingService
             return $sessionCartData;
         }
 
-        // Fall back to Cart facade and prepare data
+
         Log::info('Preparing cart data from Cart facade for order creation');
         $cartItems = Cart::getContent();
 
@@ -154,7 +154,7 @@ final readonly class BillingService
     /**
      * Validate cart data structure
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     private function validateCartData(array &$cartData): void
     {

@@ -8,6 +8,7 @@ use App\Helpers\CurrencyHelper;
 use Darryldecode\Cart\CartCollection;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final readonly class CartPriceConverter
 {
@@ -16,10 +17,8 @@ final readonly class CartPriceConverter
     ) {}
 
     /**
-     * Convert a cart item's price to the target currency.
-     * Handles all item types including hosting and subscription_renewal.
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     public function convertItemPrice(object $item, string $targetCurrency): float
     {
@@ -68,7 +67,7 @@ final readonly class CartPriceConverter
      * Calculate the total price for a cart item in the target currency.
      * This handles quantity and special pricing logic for different item types.
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     public function calculateItemTotal(object $item, string $targetCurrency): float
     {
@@ -91,7 +90,7 @@ final readonly class CartPriceConverter
      * Convert all cart items to the target currency and return a collection.
      * This is useful for order creation where all items need to be in the same currency.
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     public function convertCartItemsToCurrency(CartCollection $cartItems, string $targetCurrency): CartCollection
     {
@@ -114,7 +113,7 @@ final readonly class CartPriceConverter
     /**
      * Calculate the total subtotal for all cart items in the target currency.
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     public function calculateCartSubtotal(CartCollection $cartItems, string $targetCurrency): float
     {
@@ -128,7 +127,7 @@ final readonly class CartPriceConverter
     }
 
     /**
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     private function convertHostingItemPrice(object $item, string $targetCurrency): float
     {
@@ -174,7 +173,7 @@ final readonly class CartPriceConverter
      * Calculate hosting item total in target currency.
      * Uses monthly price × quantity (where quantity is in months).
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     private function calculateHostingItemTotal(object $item, string $targetCurrency): float
     {
@@ -184,7 +183,7 @@ final readonly class CartPriceConverter
     }
 
     /**
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     private function convertSubscriptionRenewalItemPrice(object $item, string $targetCurrency): float
     {
@@ -226,7 +225,7 @@ final readonly class CartPriceConverter
     }
 
     /**
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     private function calculateSubscriptionRenewalItemTotal(object $item, string $targetCurrency): float
     {

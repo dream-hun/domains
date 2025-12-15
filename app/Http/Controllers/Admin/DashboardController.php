@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Domain;
 use App\Models\DomainPrice;
+use App\Models\HostingPlan;
 use App\Models\Scopes\DomainPriceScope;
 use App\Models\User;
 use Illuminate\Contracts\View\Factory;
@@ -28,7 +29,8 @@ final class DashboardController extends Controller
             $query->where('title', 'user');
         })->count());
         $domains = Cache::remember('dashboard.domains', 3600, fn () => Domain::query()->count());
+        $hostingPlans = HostingPlan::count();
 
-        return view('dashboard', ['tlds' => $tlds, 'customers' => $customers, 'domains' => $domains, 'plans' => $plans]);
+        return view('dashboard', ['tlds' => $tlds, 'customers' => $customers, 'domains' => $domains, 'plans' => $plans, 'hostingPlans' => $hostingPlans]);
     }
 }

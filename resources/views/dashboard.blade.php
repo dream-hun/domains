@@ -27,7 +27,7 @@
                     <div class="icon">
                         <i class="ion ion-bag"></i>
                     </div>
-                    <a href="{{--{{ route('admin.domain-pricings.index') }}--}}" class="small-box-footer">More info
+                    <a href="{{ route('admin.prices.index') }}" class="small-box-footer">More info
                         <i
                             class="bi bi-arrow-right"></i>
                     </a>
