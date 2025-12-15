@@ -9,10 +9,6 @@ use Darryldecode\Cart\CartCollection;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Unified service for converting cart item prices to a target currency.
- * Handles all item types (domain, renewal, hosting, subscription_renewal) consistently.
- */
 final readonly class CartPriceConverter
 {
     public function __construct(
@@ -31,7 +27,6 @@ final readonly class CartPriceConverter
         $itemType = $item->attributes->get('type', 'registration');
         $itemPrice = $item->price;
 
-        // For hosting and subscription_renewal, we need special handling
         if ($itemType === 'hosting') {
             return $this->convertHostingItemPrice($item, $targetCurrency);
         }
@@ -40,7 +35,6 @@ final readonly class CartPriceConverter
             return $this->convertSubscriptionRenewalItemPrice($item, $targetCurrency);
         }
 
-        // For all other item types (domain, renewal, registration, transfer)
         if ($itemCurrency === $targetCurrency) {
             return $itemPrice;
         }
@@ -88,7 +82,6 @@ final readonly class CartPriceConverter
             return $this->calculateSubscriptionRenewalItemTotal($item, $targetCurrency);
         }
 
-        // For all other item types
         $convertedPrice = $this->convertItemPrice($item, $targetCurrency);
 
         return $convertedPrice * $item->quantity;
@@ -135,9 +128,6 @@ final readonly class CartPriceConverter
     }
 
     /**
-     * Convert hosting item price to target currency.
-     * Hosting items use monthly_unit_price for calculations.
-     *
      * @throws Exception
      */
     private function convertHostingItemPrice(object $item, string $targetCurrency): float
@@ -145,7 +135,6 @@ final readonly class CartPriceConverter
         $itemCurrency = $item->attributes->currency ?? 'USD';
         $monthlyPrice = $item->attributes->get('monthly_unit_price');
 
-        // If monthly_unit_price is not set, calculate it from the item price
         if (! $monthlyPrice) {
             $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
             $billingCycleMonths = $this->getBillingCycleMonths($billingCycle);
@@ -195,9 +184,6 @@ final readonly class CartPriceConverter
     }
 
     /**
-     * Convert subscription renewal item price to target currency.
-     * Subscription renewals use display_unit_price or unit_price.
-     *
      * @throws Exception
      */
     private function convertSubscriptionRenewalItemPrice(object $item, string $targetCurrency): float
@@ -240,9 +226,6 @@ final readonly class CartPriceConverter
     }
 
     /**
-     * Calculate subscription renewal item total in target currency.
-     * Handles annual billing cycles by converting months to years.
-     *
      * @throws Exception
      */
     private function calculateSubscriptionRenewalItemTotal(object $item, string $targetCurrency): float
@@ -250,7 +233,6 @@ final readonly class CartPriceConverter
         $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
         $displayUnitPrice = $this->convertSubscriptionRenewalItemPrice($item, $targetCurrency);
 
-        // If billing cycle is annually, convert months to years for calculation
         if ($billingCycle === 'annually') {
             $years = $item->quantity / 12;
 
@@ -267,7 +249,6 @@ final readonly class CartPriceConverter
     private function getBillingCycleMonths(string $billingCycle): int
     {
         return match ($billingCycle) {
-            'monthly' => 1,
             'quarterly' => 3,
             'semi-annually' => 6,
             'annually' => 12,

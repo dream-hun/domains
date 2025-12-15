@@ -15,6 +15,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 final readonly class CurrencyService
 {
@@ -103,6 +104,7 @@ final readonly class CurrencyService
      * Uses API-based conversion for USD/RWF pairs, database for others
      *
      * @throws Exception
+     * @throws Throwable
      */
     public function convert(float $amount, string $fromCurrency, string $targetCurrency): float
     {
@@ -234,6 +236,7 @@ final readonly class CurrencyService
      * Convert amount between currencies and return Money object
      *
      * @throws Exception
+     * @throws Throwable
      */
     public function convertToMoney(float $amount, string $from, string $to): Money
     {

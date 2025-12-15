@@ -147,16 +147,13 @@ final class CheckoutWizard extends Component
             return false;
         }
 
-        // Check if any item requires contact information (domains and hosting that requires domain)
         return $cartItems->contains(function ($item): bool {
             $itemType = $item->attributes->type ?? 'registration';
 
-            // Domain registrations and transfers require contacts
             if (in_array($itemType, ['domain', 'registration', 'transfer'], true)) {
                 return true;
             }
 
-            // Hosting only requires contacts if domain is required
             if ($itemType === 'hosting') {
                 return $item->attributes->domain_required ?? false;
             }
@@ -308,7 +305,6 @@ final class CheckoutWizard extends Component
             return;
         }
 
-        // Skip contact step if cart has only renewals or no items requiring contacts
         if ($this->currentStep === self::STEP_REVIEW && (! $this->hasItemsRequiringContacts || $this->hasOnlyRenewals)) {
             $this->currentStep = self::STEP_PAYMENT;
         } else {
@@ -321,7 +317,7 @@ final class CheckoutWizard extends Component
     public function previousStep(): void
     {
         if ($this->currentStep > 1) {
-            // Skip contact step when going back if cart has only renewals or no items requiring contacts
+
             if ($this->currentStep === self::STEP_PAYMENT && (! $this->hasItemsRequiringContacts || $this->hasOnlyRenewals)) {
                 $this->currentStep = self::STEP_REVIEW;
             } else {
@@ -401,7 +397,6 @@ final class CheckoutWizard extends Component
         try {
             $checkoutService = app(CheckoutService::class);
 
-            // For renewals or orders without contact requirements, use user's primary contact as billing contact if not selected
             $billingContactId = $this->selectedBillingId;
             if ((! $this->hasItemsRequiringContacts || $this->hasOnlyRenewals) && ! $billingContactId) {
                 /** @var Contact|null $primaryContact */
@@ -455,7 +450,6 @@ final class CheckoutWizard extends Component
         return view('livewire.checkout.checkout-wizard');
     }
 
-    // Validation
     private function validateCurrentStep(): bool
     {
         $this->errorMessage = '';
@@ -481,7 +475,7 @@ final class CheckoutWizard extends Component
 
     private function validateContactStep(): bool
     {
-        // Skip contact validation for renewal-only orders or orders with no items requiring contacts
+
         if ($this->hasOnlyRenewals || ! $this->hasItemsRequiringContacts) {
             return true;
         }
@@ -585,6 +579,8 @@ final class CheckoutWizard extends Component
 
     /**
      * Convert cart items' prices to the target currency
+     *
+     * @throws Exception
      */
     private function convertCartItemsCurrency(CartCollection $cartItems, string $targetCurrency): CartCollection
     {

@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\Date;
 class Subscription extends Model
 {
     use HasFactory;
+
     use Notifiable;
 
     protected $guarded = [];

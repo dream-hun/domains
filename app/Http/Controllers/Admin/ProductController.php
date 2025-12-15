@@ -24,9 +24,7 @@ class ProductController extends Controller
 {
     public function domains(): Factory|View|RedirectResponse
     {
-        $user = auth()->user();
-        abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden') || $user->owner_id !== auth()->id() && ! auth()->user()->isAdmin();
-
+        abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $domains = Domain::with('owner')->get();
 
@@ -36,8 +34,7 @@ class ProductController extends Controller
     public function hosting(Request $request): Factory|View|RedirectResponse
     {
         $user = auth()->user();
-        abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden') || $user->owner_id !== $user->id && ! $user->isAdmin();
-
+        abort_if(Gate::denies('product_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $categorySlug = $request->string('category')->trim()->toString();
 
@@ -76,8 +73,6 @@ class ProductController extends Controller
     public function showSubscription(Request $request, Subscription $subscription): View|Factory
     {
         $user = $request->user();
-
-        // Users can only view their own subscriptions, admins can view all
         abort_if(! $user->isAdmin() && $subscription->user_id !== $user->id, 403, 'Unauthorized');
 
         $subscription->load(['plan', 'planPrice']);
@@ -99,7 +94,6 @@ class ProductController extends Controller
             return back()->with('error', 'This subscription cannot be renewed at this time.');
         }
 
-        // Get monthly plan price (renewals always use monthly pricing for calculation)
         $monthlyPlanPrice = HostingPlanPrice::query()
             ->where('hosting_plan_id', $subscription->hosting_plan_id)
             ->where('billing_cycle', 'monthly')
@@ -110,7 +104,6 @@ class ProductController extends Controller
             return back()->with('error', 'Unable to find monthly pricing information for this subscription plan.');
         }
 
-        // Get the original billing cycle plan price for display
         $originalBillingCycle = BillingCycle::tryFrom($subscription->billing_cycle) ?? BillingCycle::Monthly;
         $originalPlanPrice = HostingPlanPrice::query()
             ->where('hosting_plan_id', $subscription->hosting_plan_id)
@@ -118,10 +111,8 @@ class ProductController extends Controller
             ->where('status', 'active')
             ->first();
 
-        // Default quantity to the subscription's original billing cycle in months
         $defaultQuantity = $originalBillingCycle->toMonths();
 
-        // Allow optional quantity parameter from request
         $quantity = max(1, (int) $request->input('quantity', $defaultQuantity));
 
         $cartId = 'subscription-renewal-'.$subscription->id;
@@ -133,8 +124,7 @@ class ProductController extends Controller
         $userCurrency = CurrencyHelper::getUserCurrency();
         $monthlyRenewalPrice = $monthlyPlanPrice->getPriceInCurrency('renewal_price', $userCurrency);
 
-        // Calculate unit price for display based on original billing cycle
-        $displayUnitPrice = $monthlyRenewalPrice; // Default to monthly
+        $displayUnitPrice = $monthlyRenewalPrice;
         if ($originalPlanPrice && $originalBillingCycle === BillingCycle::Annually) {
             $displayUnitPrice = $originalPlanPrice->getPriceInCurrency('renewal_price', $userCurrency);
         }
@@ -152,13 +142,13 @@ class ProductController extends Controller
                 'subscription_uuid' => $subscription->uuid,
                 'domain' => $subscription->domain,
                 'domain_name' => $subscription->domain ?? 'N/A',
-                'billing_cycle' => $subscription->billing_cycle, // Store original billing cycle for reference
+                'billing_cycle' => $subscription->billing_cycle,
                 'hosting_plan_id' => $subscription->hosting_plan_id,
                 'hosting_plan_price_id' => $monthlyPlanPrice->id,
                 'current_expiry' => $subscription->expires_at->format('Y-m-d'),
                 'currency' => $userCurrency,
-                'unit_price' => $monthlyRenewalPrice, // Monthly price for calculations
-                'display_unit_price' => $displayUnitPrice, // Display price based on original billing cycle
+                'unit_price' => $monthlyRenewalPrice,
+                'display_unit_price' => $displayUnitPrice,
                 'total_price' => $totalPrice,
                 'duration_months' => $quantity,
                 'added_at' => now()->timestamp,

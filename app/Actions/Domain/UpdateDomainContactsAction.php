@@ -71,7 +71,6 @@ final readonly class UpdateDomainContactsAction
                 ];
             }
 
-            // Check if we have all required contact types
             $missingTypes = array_diff($requiredTypes, array_keys($contactInfo));
             if ($missingTypes !== []) {
                 return [

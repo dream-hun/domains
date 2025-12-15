@@ -47,7 +47,7 @@ final class Domain extends Model
      */
     public function contacts(): BelongsToMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->belongsToMany(Contact::class, 'domain_contacts', 'domain_id', 'contact_id')
             ->using(DomainContact::class)
             ->withPivot('type', 'user_id');
@@ -58,7 +58,7 @@ final class Domain extends Model
      */
     public function owner(): BelongsTo
     {
-        // @phpstan-ignore-next-line
+
         return $this->belongsTo(User::class, 'owner_id');
     }
 
@@ -67,7 +67,7 @@ final class Domain extends Model
      */
     public function nameservers(): BelongsToMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->belongsToMany(Nameserver::class, 'domain_nameservers', 'domain_id', 'nameserver_id');
     }
 
@@ -76,7 +76,7 @@ final class Domain extends Model
      */
     public function domainPrice(): BelongsTo
     {
-        // @phpstan-ignore-next-line
+
         return $this->belongsTo(DomainPrice::class);
     }
 
@@ -85,7 +85,7 @@ final class Domain extends Model
      */
     public function renewals(): HasMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->hasMany(DomainRenewal::class);
     }
 
@@ -98,11 +98,6 @@ final class Domain extends Model
     public function expiresAt(): ?string
     {
         return $this->expires_at ? $this->expires_at->format('d-m-Y') : null;
-    }
-
-    public function lastRenewedAt(): ?string
-    {
-        return $this->last_renewed_at ? $this->last_renewed_at->format('d-m-Y') : null;
     }
 
     public function getRouteKeyName(): string
