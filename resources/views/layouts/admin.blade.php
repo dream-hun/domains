@@ -29,14 +29,14 @@
 </head>
 
 <body class="hold-transition sidebar-mini">
-    <!--begin::App Wrapper-->
+
     <div class="wrapper">
         <livewire:navbar-component />
         @include('partials.menu')
         <div class="content-wrapper" style="min-height: 818px;">
             <section class="content">
                 @isset($slot)
-                    
+
                     {{ $slot }}
                 @else
                     @yield('content')
@@ -189,15 +189,15 @@
         // Global function to fetch contact details via API
         window.fetchContactDetails = async function(contactId) {
             if (!contactId) return null;
-            
+
             try {
                 const response = await fetch(`/api/contacts/${contactId}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.contact) {
                     return data.contact;
                 }
-                
+
                 return null;
             } catch (error) {
                 console.error('Error fetching contact details:', error);
