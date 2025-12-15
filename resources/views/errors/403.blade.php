@@ -26,7 +26,7 @@
     <nav class="main-header navbar navbar-expand-md navbar-light navbar-white">
         <div class="container">
             <a href="{{route('dashboard')}}" class="navbar-brand">
-                <img src="{{asset('logo.webp')}}" alt="AdminLTE Logo"
+                <img src="{{asset('logo.webp')}}" alt="{{config('app.name')}}"
                      class="brand-image img-circle elevation-3" style="opacity: .8">
                 <span class="brand-text font-weight-light">{{config('app.name')}}</span>
             </a>
@@ -50,76 +50,53 @@
         </div>
     </nav>
 
-    <div class="content-wrapper">
-
+    <div class="content-wrapper" style="min-height: 2838.8px;">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>404 Error Page</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item active">404 Error Page</li>
+                        </ol>
+                    </div>
+                </div>
+            </div><!-- /.container-fluid -->
+        </section>
 
         <!-- Main content -->
-        <div class="content">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Card title</h5>
+        <section class="content">
+            <div class="error-page">
+                <h2 class="headline text-warning"> 404</h2>
 
-                                <p class="card-text">
-                                    Some quick example text to build on the card title and make up the bulk of the
-                                    card's
-                                    content.
-                                </p>
+                <div class="error-content">
+                    <h3><i class="fas fa-exclamation-triangle text-warning"></i> Oops! Page not found.</h3>
 
-                                <a href="#" class="card-link">Card link</a>
-                                <a href="#" class="card-link">Another link</a>
+                    <p>
+                        We could not find the page you were looking for.
+                        Meanwhile, you may <a href="../../index.html">return to dashboard</a> or try using the search form.
+                    </p>
+
+                    <form class="search-form">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="Search">
+
+                            <div class="input-group-append">
+                                <button type="submit" name="submit" class="btn btn-warning"><i class="fas fa-search"></i>
+                                </button>
                             </div>
                         </div>
-
-                        <div class="card card-primary card-outline">
-                            <div class="card-body">
-                                <h5 class="card-title">Card title</h5>
-
-                                <p class="card-text">
-                                    Some quick example text to build on the card title and make up the bulk of the
-                                    card's
-                                    content.
-                                </p>
-                                <a href="#" class="card-link">Card link</a>
-                                <a href="#" class="card-link">Another link</a>
-                            </div>
-                        </div><!-- /.card -->
-                    </div>
-                    <!-- /.col-md-6 -->
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="card-title m-0">Featured</h5>
-                            </div>
-                            <div class="card-body">
-                                <h6 class="card-title">Special title treatment</h6>
-
-                                <p class="card-text">With supporting text below as a natural lead-in to additional
-                                    content.</p>
-                                <a href="#" class="btn btn-primary">Go somewhere</a>
-                            </div>
-                        </div>
-
-                        <div class="card card-primary card-outline">
-                            <div class="card-header">
-                                <h5 class="card-title m-0">Featured</h5>
-                            </div>
-                            <div class="card-body">
-                                <h6 class="card-title">Special title treatment</h6>
-
-                                <p class="card-text">With supporting text below as a natural lead-in to additional
-                                    content.</p>
-                                <a href="#" class="btn btn-primary">Go somewhere</a>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- /.col-md-6 -->
+                        <!-- /.input-group -->
+                    </form>
                 </div>
-                <!-- /.row -->
-            </div><!-- /.container-fluid -->
-        </div>
+                <!-- /.error-content -->
+            </div>
+            <!-- /.error-page -->
+        </section>
         <!-- /.content -->
     </div>
 
