@@ -14,14 +14,22 @@ final readonly class OrderItemFormatterService
     /**
      * Get display name for OrderItem or cart item
      */
-    public function getItemDisplayName(OrderItem $item): string
+    public function getItemDisplayName(object $item): string
     {
-        return $this->getOrderItemDisplayName($item);
+        if ($item instanceof OrderItem) {
+            return $this->getOrderItemDisplayName($item);
+        }
+
+        return $this->getCartItemDisplayName($item);
     }
 
-    public function getItemPeriod(OrderItem $item): string
+    public function getItemPeriod(object $item): string
     {
-        return $this->getOrderItemPeriod($item);
+        if ($item instanceof OrderItem) {
+            return $this->getOrderItemPeriod($item);
+        }
+
+        return $this->getCartItemPeriod($item);
     }
 
     /**
@@ -260,24 +268,25 @@ final readonly class OrderItemFormatterService
         }
 
         if ($itemType === 'hosting') {
-            $durationMonths = $metadata['duration_months'] ?? null;
-
-            if (! $durationMonths && $item->quantity) {
-                $durationMonths = $item->quantity;
-            }
-
-            if ($durationMonths) {
-                return $this->formatDurationLabel((int) $durationMonths);
-            }
-
             $billingCycle = $metadata['billing_cycle'] ?? null;
 
+            // Check billing_cycle first if present
             if ($billingCycle) {
                 $billingCycleEnum = BillingCycle::tryFrom($billingCycle);
 
                 if ($billingCycleEnum) {
                     return $this->formatBillingCycleLabel($billingCycleEnum);
                 }
+            }
+
+            $durationMonths = $metadata['duration_months'] ?? null;
+
+            if (! $durationMonths && $item->quantity && $item->quantity > 0) {
+                $durationMonths = $item->quantity;
+            }
+
+            if ($durationMonths) {
+                return $this->formatDurationLabel((int) $durationMonths);
             }
         }
 

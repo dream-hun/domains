@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Services\Domain;
 
 use App\Services\Domain\EppDomainService;
+use Illuminate\Support\Facades\Config;
 use ReflectionClass;
 use Tests\TestCase;
 
@@ -12,16 +13,52 @@ final class DomainSuggestionTest extends TestCase
 {
     private ?EppDomainService $service = null;
 
+    private string $tempCertificatePath;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Skip tests if EPP is not configured (e.g., in CI environment)
-        if (empty(config('services.epp.host'))) {
-            $this->markTestSkipped('EPP is not configured. These tests require a real EPP connection.');
+        // Set mock EPP config values since these tests only test string manipulation methods
+        // that don't require actual EPP connection
+        $tempDir = storage_path('app/public');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        $this->tempCertificatePath = $tempDir.'/test_certificate.pem';
+
+        // Create a dummy certificate file for testing
+        if (! file_exists($this->tempCertificatePath)) {
+            file_put_contents($this->tempCertificatePath, '-----BEGIN CERTIFICATE-----\nTEST\n-----END CERTIFICATE-----');
         }
 
-        $this->service = new EppDomainService();
+        Config::set('services.epp', [
+            'host' => 'test.epp.example.com',
+            'username' => 'test_user',
+            'password' => 'test_password',
+            'port' => 700,
+            'ssl' => true,
+            'certificate' => $this->tempCertificatePath,
+        ]);
+
+        // Create instance without calling constructor using reflection
+        $reflection = new ReflectionClass(EppDomainService::class);
+        $this->service = $reflection->newInstanceWithoutConstructor();
+
+        // Set the config property manually
+        $configProperty = $reflection->getProperty('config');
+        $configProperty->setAccessible(true);
+        $configProperty->setValue($this->service, Config::get('services.epp'));
+    }
+
+    protected function tearDown(): void
+    {
+        // Clean up temp certificate file
+        if (file_exists($this->tempCertificatePath)) {
+            @unlink($this->tempCertificatePath);
+        }
+
+        parent::tearDown();
     }
 
     public function test_domain_suggestion_generates_suggestions(): void

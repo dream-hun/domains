@@ -22,7 +22,7 @@ $testDomains = [
 ];
 
 // Create service instance
-$domainService = app(InternationalDomainService::class);
+$domainService = resolve(InternationalDomainService::class);
 
 echo "Testing domain availability checking...\n\n";
 

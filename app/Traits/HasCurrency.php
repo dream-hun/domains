@@ -14,7 +14,7 @@ trait HasCurrency
      */
     protected function currencyService(): CurrencyService
     {
-        return app(CurrencyService::class);
+        return resolve(CurrencyService::class);
     }
 
     /**

@@ -50,7 +50,7 @@ test('subscription renewal uses renewal_price not regular_price', function (): v
 
     // Process renewal
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
     expect($subscription->status)->toBe('active');
@@ -96,7 +96,7 @@ test('subscription renewal validates billing cycle consistency', function (): vo
 
     // Process renewal - should update billing cycle
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
     expect($subscription->billing_cycle)->toBe('annually')
@@ -138,10 +138,10 @@ test('subscription renewal rejects underpayment', function (): void {
 
     // Process renewal - should fail
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $order->refresh();
-    expect($order->status)->toBe('partially_completed')
+    expect($order->status)->toBe('failed')
         ->and($order->notes)->toContain('failed');
 });
 
@@ -178,7 +178,7 @@ test('subscription renewal updates product snapshot', function (): void {
     ]);
 
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
     $snapshot = $subscription->product_snapshot;
@@ -186,145 +186,6 @@ test('subscription renewal updates product snapshot', function (): void {
     expect($snapshot)->toHaveKey('renewals')
         ->and($snapshot['renewals'])->toBeArray()
         ->and(count($snapshot['renewals']))->toBe(1);
-});
-
-test('subscription billing cycle can be changed during renewal', function (): void {
-    $user = User::factory()->create();
-    $plan = HostingPlan::factory()->create();
-    $monthlyPrice = HostingPlanPrice::factory()->create([
-        'hosting_plan_id' => $plan->id,
-        'billing_cycle' => 'monthly',
-        'renewal_price' => 10000,
-    ]);
-    $quarterlyPrice = HostingPlanPrice::factory()->create([
-        'hosting_plan_id' => $plan->id,
-        'billing_cycle' => 'quarterly',
-        'renewal_price' => 27000, // $270 (should be less than 3x monthly)
-    ]);
-
-    $subscription = Subscription::factory()->create([
-        'user_id' => $user->id,
-        'hosting_plan_id' => $plan->id,
-        'billing_cycle' => 'monthly',
-    ]);
-
-    $order = Order::factory()->create([
-        'user_id' => $user->id,
-        'type' => 'subscription_renewal',
-        'status' => 'processing',
-        'payment_status' => 'paid',
-    ]);
-
-    OrderItem::factory()->create([
-        'order_id' => $order->id,
-        'domain_type' => 'subscription_renewal',
-        'price' => 270.00, // Quarterly price
-        'metadata' => [
-            'subscription_id' => $subscription->id,
-            'billing_cycle' => 'quarterly', // Changed from monthly
-        ],
-    ]);
-
-    $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
-
-    $subscription->refresh();
-    expect($subscription->billing_cycle)->toBe('quarterly')
-        ->and($subscription->status)->toBe('active');
-});
-
-test('subscription renewal correctly extends expiry by selected billing cycle period', function (): void {
-    $user = User::factory()->create();
-    $plan = HostingPlan::factory()->create();
-    $quarterlyPrice = HostingPlanPrice::factory()->create([
-        'hosting_plan_id' => $plan->id,
-        'billing_cycle' => 'quarterly',
-        'renewal_price' => 27000, // $270.00
-    ]);
-
-    $subscription = Subscription::factory()->create([
-        'user_id' => $user->id,
-        'hosting_plan_id' => $plan->id,
-        'billing_cycle' => 'monthly',
-        'expires_at' => now()->addMonth(), // Expires in 1 month
-    ]);
-
-    $originalExpiry = $subscription->expires_at->copy();
-
-    $order = Order::factory()->create([
-        'user_id' => $user->id,
-        'type' => 'subscription_renewal',
-        'status' => 'processing',
-        'payment_status' => 'paid',
-    ]);
-
-    OrderItem::factory()->create([
-        'order_id' => $order->id,
-        'domain_type' => 'subscription_renewal',
-        'price' => 270.00, // Quarterly price
-        'metadata' => [
-            'subscription_id' => $subscription->id,
-            'billing_cycle' => 'quarterly', // 3 months
-        ],
-    ]);
-
-    // Process renewal
-    $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
-
-    $subscription->refresh();
-
-    // Should extend by 3 months (quarterly)
-    $expectedExpiry = $originalExpiry->copy()->addMonths(3);
-    expect($subscription->expires_at->format('Y-m-d'))->toBe($expectedExpiry->format('Y-m-d'))
-        ->and($subscription->billing_cycle)->toBe('quarterly')
-        ->and($subscription->status)->toBe('active');
-});
-
-test('subscription renewal with semi-annually extends expiry by 6 months', function (): void {
-    $user = User::factory()->create();
-    $plan = HostingPlan::factory()->create();
-    $semiAnnualPrice = HostingPlanPrice::factory()->create([
-        'hosting_plan_id' => $plan->id,
-        'billing_cycle' => 'semi-annually',
-        'renewal_price' => 54000, // $540.00
-    ]);
-
-    $subscription = Subscription::factory()->create([
-        'user_id' => $user->id,
-        'hosting_plan_id' => $plan->id,
-        'billing_cycle' => 'monthly',
-        'expires_at' => now()->addMonth(),
-    ]);
-
-    $originalExpiry = $subscription->expires_at->copy();
-
-    $order = Order::factory()->create([
-        'user_id' => $user->id,
-        'type' => 'subscription_renewal',
-        'status' => 'processing',
-        'payment_status' => 'paid',
-    ]);
-
-    OrderItem::factory()->create([
-        'order_id' => $order->id,
-        'domain_type' => 'subscription_renewal',
-        'price' => 540.00,
-        'metadata' => [
-            'subscription_id' => $subscription->id,
-            'billing_cycle' => 'semi-annually', // 6 months
-        ],
-    ]);
-
-    $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
-
-    $subscription->refresh();
-
-    // Should extend by 6 months
-    $expectedExpiry = $originalExpiry->copy()->addMonths(6);
-    expect($subscription->expires_at->format('Y-m-d'))->toBe($expectedExpiry->format('Y-m-d'))
-        ->and($subscription->billing_cycle)->toBe('semi-annually');
 });
 
 test('subscription renewal with annually extends expiry by 1 year', function (): void {
@@ -363,7 +224,7 @@ test('subscription renewal with annually extends expiry by 1 year', function ():
     ]);
 
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
 

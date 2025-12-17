@@ -121,7 +121,11 @@ test('admin can update subscription status', function (): void {
 
 test('admin can manually renew subscription', function (): void {
     $plan = HostingPlan::factory()->create();
-    $planPrice = HostingPlanPrice::factory()->create(['hosting_plan_id' => $plan->id]);
+    $planPrice = HostingPlanPrice::factory()->create([
+        'hosting_plan_id' => $plan->id,
+        'billing_cycle' => 'monthly',
+        'status' => 'active',
+    ]);
 
     $originalExpiry = now()->addDays(5);
     $subscription = Subscription::factory()->create([
@@ -134,7 +138,11 @@ test('admin can manually renew subscription', function (): void {
     ]);
 
     $this->actingAs($this->admin)
-        ->post(route('admin.subscriptions.renew-now', $subscription))
+        ->post(route('admin.subscriptions.renew-now', $subscription), [
+            'is_comp' => true,
+            'comp_reason' => 'Test renewal',
+            'billing_cycle' => 'monthly',
+        ])
         ->assertRedirect()
         ->assertSessionHas('success');
 

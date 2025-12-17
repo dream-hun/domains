@@ -92,74 +92,111 @@ final readonly class SubscriptionRenewalService
             ]);
 
             try {
-                // Get the monthly plan price for validation
-                $monthlyPlanPrice = HostingPlanPrice::query()
-                    ->where('hosting_plan_id', $subscription->hosting_plan_id)
-                    ->where('billing_cycle', 'monthly')
-                    ->where('status', 'active')
-                    ->first();
+                // For annual renewals, use extendSubscription with billing cycle
+                // For other cycles, use extendSubscriptionByMonths with calculated months
+                if ($billingCycle === BillingCycle::Annually) {
+                    // Get the annual plan price for validation
+                    $annualPlanPrice = HostingPlanPrice::query()
+                        ->where('hosting_plan_id', $subscription->hosting_plan_id)
+                        ->where('billing_cycle', 'annually')
+                        ->where('status', 'active')
+                        ->first();
 
-                if (! $monthlyPlanPrice) {
-                    throw new Exception(
-                        sprintf('No active monthly pricing found for plan %s', $subscription->hosting_plan_id)
+                    if (! $annualPlanPrice) {
+                        throw new Exception(
+                            sprintf('No active annual pricing found for plan %s', $subscription->hosting_plan_id)
+                        );
+                    }
+
+                    $renewalSnapshot = [
+                        'id' => $annualPlanPrice->id,
+                        'regular_price' => $annualPlanPrice->regular_price,
+                        'renewal_price' => $annualPlanPrice->renewal_price,
+                        'billing_cycle' => $annualPlanPrice->billing_cycle,
+                    ];
+
+                    // Extend subscription by 1 year using extendSubscription
+                    $subscription->extendSubscription(
+                        $billingCycle,
+                        $paidAmount,
+                        validatePayment: true,
+                        isComp: false,
+                        renewalSnapshot: $renewalSnapshot
                     );
-                }
+                } else {
+                    // For non-annual cycles, get the plan price for the specific billing cycle
+                    $cyclePlanPrice = HostingPlanPrice::query()
+                        ->where('hosting_plan_id', $subscription->hosting_plan_id)
+                        ->where('billing_cycle', $billingCycleValue)
+                        ->where('status', 'active')
+                        ->first();
 
-                // Validate payment amount matches expected amount for the quantity of months
-                $expectedMonthlyPrice = $monthlyPlanPrice->getPriceInBaseCurrency('renewal_price');
-                $expectedTotalAmount = $expectedMonthlyPrice * $quantityMonths;
+                    if (! $cyclePlanPrice) {
+                        throw new Exception(
+                            sprintf('No active pricing found for plan %s with billing cycle %s', $subscription->hosting_plan_id, $billingCycleValue)
+                        );
+                    }
 
-                // Use a more lenient tolerance (0.50) to account for currency conversion rounding
-                // Currency conversions can introduce small rounding differences (typically 0.01-0.05)
-                $tolerance = 0.50;
-                $difference = abs($paidAmount - $expectedTotalAmount);
+                    // Calculate number of months based on billing cycle
+                    $monthsToAdd = $this->billingCycleToMonths($billingCycleValue, $quantityMonths);
 
-                if ($difference > $tolerance) {
-                    Log::error('Payment amount validation failed', [
-                        'subscription_id' => $subscription->id,
-                        'expected_total' => $expectedTotalAmount,
-                        'paid_amount' => $paidAmount,
-                        'difference' => $difference,
-                        'tolerance' => $tolerance,
-                        'monthly_price' => $expectedMonthlyPrice,
-                        'quantity_months' => $quantityMonths,
-                        'order_item_currency' => $orderItemCurrency,
-                    ]);
+                    // Validate payment amount against the cycle plan price
+                    $expectedPrice = $cyclePlanPrice->getPriceInBaseCurrency('renewal_price');
 
-                    throw new Exception(
-                        sprintf('Payment amount mismatch. Expected: %s (monthly price %s × %d months), Paid: %s (difference: %s)', $expectedTotalAmount, $expectedMonthlyPrice, $quantityMonths, $paidAmount, $difference)
+                    // Use a more lenient tolerance (0.50) to account for currency conversion rounding
+                    $tolerance = 0.50;
+                    $difference = abs($paidAmount - $expectedPrice);
+
+                    if ($difference > $tolerance) {
+                        Log::error('Payment amount validation failed', [
+                            'subscription_id' => $subscription->id,
+                            'expected_price' => $expectedPrice,
+                            'paid_amount' => $paidAmount,
+                            'difference' => $difference,
+                            'tolerance' => $tolerance,
+                            'billing_cycle' => $billingCycleValue,
+                            'order_item_currency' => $orderItemCurrency,
+                        ]);
+
+                        throw new Exception(
+                            sprintf('Payment amount mismatch. Expected: %s for billing cycle %s, Paid: %s (difference: %s)', $expectedPrice, $billingCycleValue, $paidAmount, $difference)
+                        );
+                    }
+
+                    // Log successful validation if there was a small difference within tolerance
+                    if ($difference > 0.01) {
+                        Log::info('Payment amount validation passed with small rounding difference', [
+                            'subscription_id' => $subscription->id,
+                            'expected_price' => $expectedPrice,
+                            'paid_amount' => $paidAmount,
+                            'difference' => $difference,
+                        ]);
+                    }
+
+                    $renewalSnapshot = [
+                        'id' => $cyclePlanPrice->id,
+                        'regular_price' => $cyclePlanPrice->regular_price,
+                        'renewal_price' => $cyclePlanPrice->renewal_price,
+                        'billing_cycle' => $cyclePlanPrice->billing_cycle,
+                    ];
+
+                    $subscription->extendSubscriptionByMonths(
+                        $monthsToAdd,
+                        paidAmount: null,
+                        renewalSnapshot: $renewalSnapshot
                     );
+
+                    $subscription->refresh();
+                    if ($subscription->billing_cycle !== $billingCycleValue) {
+                        $subscription->update(['billing_cycle' => $billingCycleValue]);
+                    }
                 }
-
-                // Log successful validation if there was a small difference within tolerance
-                if ($difference > 0.01) {
-                    Log::info('Payment amount validation passed with small rounding difference', [
-                        'subscription_id' => $subscription->id,
-                        'expected_total' => $expectedTotalAmount,
-                        'paid_amount' => $paidAmount,
-                        'difference' => $difference,
-                    ]);
-                }
-
-                $renewalSnapshot = [
-                    'id' => $monthlyPlanPrice->id,
-                    'regular_price' => $monthlyPlanPrice->regular_price,
-                    'renewal_price' => $monthlyPlanPrice->renewal_price,
-                    'billing_cycle' => $monthlyPlanPrice->billing_cycle,
-                ];
-
-                // Extend subscription by the quantity of months
-                $subscription->extendSubscriptionByMonths(
-                    $quantityMonths,
-                    $paidAmount,
-                    renewalSnapshot: $renewalSnapshot
-                );
 
                 $results['successful'][] = [
                     'subscription' => $subscription->domain ?? 'Subscription UUID: '.$subscription->uuid,
                     'subscription_id' => $subscription->id,
                     'subscription_uuid' => $subscription->uuid,
-                    'billing_cycle' => $billingCycle->value,
+                    'billing_cycle' => $billingCycleValue,
                     'new_expiry' => $subscription->expires_at->format('Y-m-d'),
                     'message' => 'Subscription renewed successfully',
                 ];
@@ -198,5 +235,21 @@ final readonly class SubscriptionRenewalService
         }
 
         return BillingCycle::Monthly;
+    }
+
+    /**
+     * Convert billing cycle string to number of months
+     */
+    private function billingCycleToMonths(string $billingCycle, int $defaultMonths): int
+    {
+
+        $billingCycle = mb_strtolower(mb_trim($billingCycle));
+
+        return match ($billingCycle) {
+            'monthly' => 1,
+            'annually' => 12,
+
+            default => $defaultMonths,
+        };
     }
 }

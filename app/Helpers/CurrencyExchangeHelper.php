@@ -35,6 +35,11 @@ final class ExchangeRateRequestCache
     {
         return isset(self::$rateCache[$cacheKey]);
     }
+
+    public static function reset(): void
+    {
+        self::$rateCache = [];
+    }
 }
 
 final readonly class CurrencyExchangeHelper
@@ -44,6 +49,14 @@ final readonly class CurrencyExchangeHelper
     public function __construct(
         private ExchangeRateClient $client
     ) {}
+
+    /**
+     * Reset the request-level cache (useful for testing)
+     */
+    public static function resetRequestCache(): void
+    {
+        ExchangeRateRequestCache::reset();
+    }
 
     /**
      * Get the current exchange rate between two currencies

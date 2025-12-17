@@ -49,7 +49,7 @@ final class ContactActionsTest extends TestCase
         ]);
 
         // Create the action with real EPP service
-        $action = new UpdateContactAction(app(EppDomainService::class));
+        $action = new UpdateContactAction(resolve(EppDomainService::class));
 
         $updateData = [
             'first_name' => 'Jane',
@@ -85,7 +85,7 @@ final class ContactActionsTest extends TestCase
         ]);
 
         // Create the action with real EPP service
-        $action = new UpdateContactAction(app(EppDomainService::class));
+        $action = new UpdateContactAction(resolve(EppDomainService::class));
 
         $updateData = [
             'first_name' => 'Jane',

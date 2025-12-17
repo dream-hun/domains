@@ -105,33 +105,29 @@ final readonly class OrderService
             $domainId = $item->attributes->domain_id ?? null;
             $metadata = $item->attributes->get('metadata');
 
+            // Get the original currency and price if available (set by CartPriceConverter)
+            $originalCurrency = $item->attributes->get('original_currency', $itemCurrency);
+            $originalPrice = (float) $item->attributes->get('original_price', $item->price);
+
             // Get original currency model for exchange rate
-            $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
-            $originalExchangeRate = $itemCurrencyModel ? $itemCurrencyModel->exchange_rate : 1.0;
+            $originalCurrencyModel = Currency::query()->where('code', $originalCurrency)->first();
+            $originalExchangeRate = $originalCurrencyModel ? $originalCurrencyModel->exchange_rate : 1.0;
 
             // Get order currency model for exchange rate
             $orderCurrencyModel = Currency::query()->where('code', $orderCurrency)->first();
             $orderExchangeRate = $orderCurrencyModel ? $orderCurrencyModel->exchange_rate : 1.0;
 
-            // Calculate exchange rate from item currency to order currency
+            // Calculate exchange rate from original currency to order currency
             $exchangeRate = $originalExchangeRate > 0 && $orderExchangeRate > 0
                 ? $orderExchangeRate / $originalExchangeRate
                 : 1.0;
 
-            // Convert item price to order currency
-            try {
-                $convertedItemPrice = $this->cartPriceConverter->convertItemPrice($item, $orderCurrency);
-                $convertedItemTotal = $this->cartPriceConverter->calculateItemTotal($item, $orderCurrency);
-            } catch (Exception $exception) {
-                Log::error('Failed to convert item price for OrderItem', [
-                    'item_id' => $item->id,
-                    'item_type' => $itemType,
-                    'item_currency' => $itemCurrency,
-                    'order_currency' => $orderCurrency,
-                    'error' => $exception->getMessage(),
-                ]);
-                throw $exception;
-            }
+            // Convert item price to order currency using CartPriceConverter
+            // This handles all item types correctly (regular, hosting, subscription_renewal)
+            $convertedItemPrice = $this->cartPriceConverter->convertItemPrice($item, $orderCurrency);
+
+            // Calculate total using the unified converter (handles all special cases)
+            $convertedItemTotal = $this->cartPriceConverter->calculateItemTotal($item, $orderCurrency);
 
             $subscriptionId = $item->attributes->subscription_id ?? null;
             $itemMetadata = $metadata ?? [];
@@ -184,8 +180,8 @@ final readonly class OrderService
                 'years' => $years,
                 'total_amount' => $convertedItemTotal,
                 'metadata' => array_merge($itemMetadata, [
-                    'original_currency' => $itemCurrency,
-                    'original_price' => $item->price,
+                    'original_currency' => $originalCurrency,
+                    'original_price' => $originalPrice,
                 ]),
             ]);
         }

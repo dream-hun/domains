@@ -214,7 +214,7 @@ final class CheckoutWizard extends Component
     #[Computed]
     public function orderTotal(): float
     {
-        $cartPriceConverter = app(CartPriceConverter::class);
+        $cartPriceConverter = resolve(CartPriceConverter::class);
         $subtotal = $cartPriceConverter->calculateCartSubtotal($this->cartItems, $this->userCurrencyCode);
 
         return max(0, $subtotal - $this->discountAmount);
@@ -226,7 +226,7 @@ final class CheckoutWizard extends Component
     #[Computed]
     public function orderSubtotal(): float
     {
-        $cartPriceConverter = app(CartPriceConverter::class);
+        $cartPriceConverter = resolve(CartPriceConverter::class);
 
         return $cartPriceConverter->calculateCartSubtotal($this->cartItems, $this->userCurrencyCode);
     }
@@ -244,7 +244,7 @@ final class CheckoutWizard extends Component
      */
     public function getItemPrice(object $item): string
     {
-        $cartPriceConverter = app(CartPriceConverter::class);
+        $cartPriceConverter = resolve(CartPriceConverter::class);
         $itemTotal = $cartPriceConverter->calculateItemTotal($item, $this->userCurrencyCode);
 
         return CurrencyHelper::formatMoney($itemTotal, $this->userCurrencyCode);
@@ -255,7 +255,7 @@ final class CheckoutWizard extends Component
      */
     public function getRegistrationPeriod(object $item): string
     {
-        $formatter = app(OrderItemFormatterService::class);
+        $formatter = resolve(OrderItemFormatterService::class);
 
         return $formatter->getCartItemPeriod($item);
     }
@@ -280,7 +280,7 @@ final class CheckoutWizard extends Component
      */
     public function getItemDisplayName(object $item): string
     {
-        $formatter = app(OrderItemFormatterService::class);
+        $formatter = resolve(OrderItemFormatterService::class);
 
         return $formatter->getCartItemDisplayName($item);
     }
@@ -395,7 +395,7 @@ final class CheckoutWizard extends Component
         $this->isProcessing = true;
 
         try {
-            $checkoutService = app(CheckoutService::class);
+            $checkoutService = resolve(CheckoutService::class);
 
             $billingContactId = $this->selectedBillingId;
             if ((! $this->hasItemsRequiringContacts || $this->hasOnlyRenewals) && ! $billingContactId) {
@@ -569,7 +569,7 @@ final class CheckoutWizard extends Component
 
         $subtotal = $this->orderSubtotal;
 
-        $couponService = app(CouponService::class);
+        $couponService = resolve(CouponService::class);
         $discountedTotal = $couponService->applyCoupon($this->appliedCoupon, $subtotal);
 
         $discount = $subtotal - $discountedTotal;
@@ -584,7 +584,7 @@ final class CheckoutWizard extends Component
      */
     private function convertCartItemsCurrency(CartCollection $cartItems, string $targetCurrency): CartCollection
     {
-        $cartPriceConverter = app(CartPriceConverter::class);
+        $cartPriceConverter = resolve(CartPriceConverter::class);
 
         try {
             return $cartPriceConverter->convertCartItemsToCurrency($cartItems, $targetCurrency);

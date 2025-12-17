@@ -146,8 +146,13 @@ describe('createSessionFromCart', function (): void {
         $cartItems = Cart::getContent();
 
         // Stripe API calls will fail with fake key, but we verify the method structure
+        // Note: Payment update happens after session creation, so it won't be called if session creation fails
         expect(fn () => $this->service->createSessionFromCart($order, $cartItems, $payment))
             ->toThrow(AuthenticationException::class);
+
+        // Verify payment was not updated since exception was thrown before update
+        $payment->refresh();
+        expect($payment->stripe_session_id)->toBeNull();
 
         Cart::clear();
     });

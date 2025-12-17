@@ -21,7 +21,6 @@
         "laravel/prompts": "^0.3.7",
         "laravel/tinker": "^2.10.1",
         "livewire/livewire": "^3.6.4",
-        "opcodesio/log-viewer": "^3.21.1",
         "spatie/laravel-activitylog": "^4.10.2",
         "stevebauman/location": "^7.6",
         "stripe/stripe-php": "^18.2"
@@ -50,10 +49,7 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        },
-        "files": [
-            "app/helpers.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

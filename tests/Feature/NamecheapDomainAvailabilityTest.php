@@ -16,7 +16,7 @@ final class NamecheapDomainAvailabilityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = app(NamecheapDomainService::class);
+        $this->service = resolve(NamecheapDomainService::class);
     }
 
     public function test_it_correctly_checks_domain_availability(): void

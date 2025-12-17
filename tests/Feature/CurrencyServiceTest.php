@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Currency;
+use App\Services\CurrencyRequestCache;
 use App\Services\CurrencyService;
 use Cknow\Money\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -53,7 +54,7 @@ it('uses CurrencyExchangeHelper for USD to RWF conversion', function (): void {
         ]),
     ]);
 
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $result = $service->convert(100.0, 'USD', 'RWF');
 
     expect($result)->toBe(135000.0);
@@ -69,7 +70,7 @@ it('uses CurrencyExchangeHelper for RWF to USD conversion', function (): void {
         ]),
     ]);
 
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $result = $service->convert(100000.0, 'RWF', 'USD');
 
     expect($result)->toBeGreaterThan(0);
@@ -77,7 +78,7 @@ it('uses CurrencyExchangeHelper for RWF to USD conversion', function (): void {
 });
 
 it('uses database conversion for non-USD/RWF pairs', function (): void {
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $result = $service->convert(100.0, 'USD', 'EUR');
 
     expect($result)->toBe(92.0); // 100 * 0.92
@@ -88,7 +89,7 @@ it('falls back to database when API fails for USD/RWF', function (): void {
         '*/pair/USD/RWF' => Http::response(null, 500),
     ]);
 
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $result = $service->convert(100.0, 'USD', 'RWF');
 
     // Should fall back to database rate
@@ -105,7 +106,7 @@ it('returns Money object from convertToMoney for USD/RWF', function (): void {
         ]),
     ]);
 
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $money = $service->convertToMoney(100.0, 'USD', 'RWF');
 
     expect($money)->toBeInstanceOf(Money::class);
@@ -113,7 +114,7 @@ it('returns Money object from convertToMoney for USD/RWF', function (): void {
 });
 
 it('returns Money object from convertToMoney for non-USD/RWF pairs', function (): void {
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $money = $service->convertToMoney(100.0, 'USD', 'EUR');
 
     expect($money)->toBeInstanceOf(Money::class);
@@ -131,7 +132,7 @@ it('formats as Money for USD', function (): void {
         ]),
     ]);
 
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $formatted = $service->formatAsMoney(100.50, 'USD');
 
     expect($formatted)->toContain('$');
@@ -148,7 +149,7 @@ it('formats as Money for RWF', function (): void {
         ]),
     ]);
 
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $formatted = $service->formatAsMoney(1350.0, 'RWF');
 
     expect($formatted)->toContain('FRW');
@@ -156,28 +157,30 @@ it('formats as Money for RWF', function (): void {
 });
 
 it('throws exception for negative amounts', function (): void {
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
 
     $service->convert(-100.0, 'USD', 'EUR');
 })->throws(Exception::class, 'negative');
 
 it('returns same amount when currencies are identical', function (): void {
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $result = $service->convert(100.0, 'USD', 'USD');
 
     expect($result)->toBe(100.0);
 });
 
 it('throws exception for non-existent currency', function (): void {
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
 
     $service->convert(100.0, 'USD', 'XXX');
 })->throws(Exception::class, 'not found');
 
 it('throws exception when currency is inactive', function (): void {
+    Cache::flush();
+    CurrencyRequestCache::clear();
     Currency::query()->where('code', 'EUR')->update(['is_active' => false]);
 
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
 
     $service->convert(100.0, 'USD', 'EUR');
 })->throws(Exception::class, 'inactive');
@@ -185,7 +188,7 @@ it('throws exception when currency is inactive', function (): void {
 it('gets user currency from session', function (): void {
     session(['selected_currency' => 'EUR']);
 
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $currency = $service->getUserCurrency();
 
     expect($currency)->toBeInstanceOf(Currency::class);
@@ -193,7 +196,7 @@ it('gets user currency from session', function (): void {
 });
 
 it('returns base currency when no session currency', function (): void {
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $currency = $service->getUserCurrency();
 
     expect($currency)->toBeInstanceOf(Currency::class);
@@ -202,7 +205,8 @@ it('returns base currency when no session currency', function (): void {
 });
 
 it('gets all active currencies', function (): void {
-    $service = app(CurrencyService::class);
+    Cache::flush();
+    $service = resolve(CurrencyService::class);
     $currencies = $service->getActiveCurrencies();
 
     expect($currencies)->toHaveCount(3);
@@ -210,14 +214,14 @@ it('gets all active currencies', function (): void {
 });
 
 it('formats currency with symbol', function (): void {
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
     $formatted = $service->format(100.50, 'USD');
 
     expect($formatted)->toBe('$100.50');
 });
 
 it('caches currency lookups', function (): void {
-    $service = app(CurrencyService::class);
+    $service = resolve(CurrencyService::class);
 
     // First call
     $currency1 = $service->getCurrency('USD');

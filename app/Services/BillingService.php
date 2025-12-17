@@ -119,7 +119,6 @@ final readonly class BillingService
             return $preparedCartData;
         }
 
-
         if (session()->has('cart')) {
             Log::info('Using cart data from session for order creation');
             $sessionCartData = [
@@ -137,7 +136,6 @@ final readonly class BillingService
 
             return $sessionCartData;
         }
-
 
         Log::info('Preparing cart data from Cart facade for order creation');
         $cartItems = Cart::getContent();
