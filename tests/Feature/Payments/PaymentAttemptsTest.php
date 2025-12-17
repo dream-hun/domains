@@ -2,15 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\PaymentController;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Role;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Config;
-
-use function Pest\Laravel\actingAs;
 
 beforeEach(function (): void {
     Config::set('services.payment.stripe.secret_key', 'sk_test_fake_key');

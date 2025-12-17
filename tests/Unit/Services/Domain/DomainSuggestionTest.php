@@ -25,6 +25,7 @@ final class DomainSuggestionTest extends TestCase
         if (! is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
+
         $this->tempCertificatePath = $tempDir.'/test_certificate.pem';
 
         // Create a dummy certificate file for testing
@@ -47,7 +48,6 @@ final class DomainSuggestionTest extends TestCase
 
         // Set the config property manually
         $configProperty = $reflection->getProperty('config');
-        $configProperty->setAccessible(true);
         $configProperty->setValue($this->service, Config::get('services.epp'));
     }
 
