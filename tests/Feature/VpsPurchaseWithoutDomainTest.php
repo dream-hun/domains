@@ -169,7 +169,7 @@ it('creates subscription for VPS without domain', function (): void {
         ],
     ]);
 
-    resolve(HostingSubscriptionService::class)->createSubscriptionsFromOrder($order->fresh('orderItems'));
+    app(HostingSubscriptionService::class)->createSubscriptionsFromOrder($order->fresh('orderItems'));
 
     $subscription = Subscription::query()->first();
 

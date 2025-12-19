@@ -53,6 +53,25 @@ it('displays correct period for subscription renewal with monthly billing cycle'
         ->assertSee('1 month renewal');
 });
 
+it('displays correct period for subscription renewal with quarterly billing cycle', function (): void {
+    Cart::add([
+        'id' => 'subscription-renewal-1',
+        'name' => 'example.com - Starter (Renewal)',
+        'price' => 30.00,
+        'quantity' => 3,
+        'attributes' => [
+            'type' => 'subscription_renewal',
+            'billing_cycle' => BillingCycle::Quarterly->value,
+            'subscription_id' => 1,
+            'currency' => 'USD',
+        ],
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test(CheckoutWizard::class)
+        ->assertSee('3 months renewal');
+});
+
 it('displays correct period for subscription renewal with annually billing cycle', function (): void {
     Cart::add([
         'id' => 'subscription-renewal-1',
@@ -160,4 +179,23 @@ it('falls back to quantity for subscription renewal when both billing_cycle and 
     Livewire::actingAs($this->user)
         ->test(CheckoutWizard::class)
         ->assertSee('1 year renewal');
+});
+
+it('handles subscription renewal with biennially billing cycle', function (): void {
+    Cart::add([
+        'id' => 'subscription-renewal-1',
+        'name' => 'example.com - Starter (Renewal)',
+        'price' => 200.00,
+        'quantity' => 24,
+        'attributes' => [
+            'type' => 'subscription_renewal',
+            'billing_cycle' => BillingCycle::Biennially->value,
+            'subscription_id' => 1,
+            'currency' => 'USD',
+        ],
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test(CheckoutWizard::class)
+        ->assertSee('2 years renewal');
 });

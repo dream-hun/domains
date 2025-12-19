@@ -47,21 +47,4 @@ final class CurrencyRequestCache
     {
         return self::$baseCurrencyCache instanceof Currency;
     }
-
-    /**
-     * Clear all cached currencies (useful for testing)
-     */
-    public static function clear(): void
-    {
-        self::$currencyCache = [];
-        self::$baseCurrencyCache = null;
-    }
-
-    /**
-     * Clear a specific currency from cache
-     */
-    public static function forgetCurrency(string $code): void
-    {
-        unset(self::$currencyCache[$code]);
-    }
 }

@@ -300,8 +300,8 @@ final readonly class RenewalService
     private function getDomainService(Domain $domain): DomainServiceInterface
     {
         return match (mb_strtolower($domain->registrar ?? 'epp')) {
-            'namecheap' => resolve(NamecheapDomainService::class),
-            default => resolve(EppDomainService::class),
+            'namecheap' => app(NamecheapDomainService::class),
+            default => app(EppDomainService::class),
         };
     }
 

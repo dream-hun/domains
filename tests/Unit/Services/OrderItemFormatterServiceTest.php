@@ -36,24 +36,36 @@ describe('formatBillingCycleLabel', function (): void {
         expect($result)->toBe('1 month');
     });
 
+    it('formats quarterly billing cycle correctly', function (): void {
+        $result = $this->formatter->formatBillingCycleLabel(BillingCycle::Quarterly);
+
+        expect($result)->toBe('3 months');
+    });
+
     it('formats annually billing cycle correctly', function (): void {
         $result = $this->formatter->formatBillingCycleLabel(BillingCycle::Annually);
 
         expect($result)->toBe('1 year');
     });
+
+    it('formats biennially billing cycle correctly', function (): void {
+        $result = $this->formatter->formatBillingCycleLabel(BillingCycle::Biennially);
+
+        expect($result)->toBe('2 years');
+    });
 });
 
 describe('formatDurationLabel', function (): void {
     it('formats months less than 12 correctly', function (): void {
-        expect($this->formatter->formatDurationLabel(1))->toBe('1 month')
-            ->and($this->formatter->formatDurationLabel(6))->toBe('6 months')
-            ->and($this->formatter->formatDurationLabel(11))->toBe('11 months');
+        expect($this->formatter->formatDurationLabel(1))->toBe('1 month');
+        expect($this->formatter->formatDurationLabel(6))->toBe('6 months');
+        expect($this->formatter->formatDurationLabel(11))->toBe('11 months');
     });
 
     it('formats years correctly', function (): void {
-        expect($this->formatter->formatDurationLabel(12))->toBe('1 year')
-            ->and($this->formatter->formatDurationLabel(24))->toBe('2 years')
-            ->and($this->formatter->formatDurationLabel(36))->toBe('3 years');
+        expect($this->formatter->formatDurationLabel(12))->toBe('1 year');
+        expect($this->formatter->formatDurationLabel(24))->toBe('2 years');
+        expect($this->formatter->formatDurationLabel(36))->toBe('3 years');
     });
 });
 
@@ -160,7 +172,6 @@ describe('getItemPeriod with OrderItem', function (): void {
     it('formats hosting period using billing_cycle', function (): void {
         $orderItem = OrderItem::factory()->create([
             'domain_type' => 'hosting',
-            'quantity' => 0,
             'metadata' => ['billing_cycle' => BillingCycle::Annually->value],
         ]);
 

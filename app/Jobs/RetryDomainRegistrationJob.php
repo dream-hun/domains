@@ -209,7 +209,7 @@ final class RetryDomainRegistrationJob implements ShouldQueue
      */
     private function notifyAbandoned(): void
     {
-        $notificationService = resolve(NotificationService::class);
+        $notificationService = app(NotificationService::class);
         $notificationService->notifyAdminOfAbandonedRegistration(
             $this->failedRegistration->order,
             $this->failedRegistration

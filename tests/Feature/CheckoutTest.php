@@ -58,7 +58,7 @@ it('displays checkout page with cart items', function (): void {
     $response = $this->actingAs($user)->get(route('checkout.index'));
 
     $response->assertStatus(200);
-    $response->assertSeeLivewire('checkout.checkout-wizard');
+    $response->assertSeeLivewire('checkout-process');
 });
 
 it('applies coupon successfully', function (): void {
@@ -95,9 +95,8 @@ it('applies coupon successfully', function (): void {
         ->assertDispatched('notify', fn ($eventName, $payload): bool => $payload[0]['type'] === 'success' && str_contains((string) $payload[0]['message'], 'applied'));
 
     $couponData = session('coupon');
-    expect($couponData['code'])->toBe('TEST10')
-        ->and((float) $couponData['discount_amount'])->toBe(10.0);
-    // 10% of $100
+    expect($couponData['code'])->toBe('TEST10');
+    expect((float) $couponData['discount_amount'])->toBe(10.0); // 10% of $100
 });
 
 it('rejects invalid coupon', function (): void {

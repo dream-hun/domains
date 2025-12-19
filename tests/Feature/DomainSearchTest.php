@@ -62,8 +62,8 @@ final class DomainSearchTest extends TestCase
     public function test_domain_search_helper_sanitizes_domain(): void
     {
         $helper = new DomainSearchHelper(
-            resolve(NamecheapDomainService::class),
-            resolve(EppDomainService::class)
+            app(NamecheapDomainService::class),
+            app(EppDomainService::class)
         );
 
         $reflection = new ReflectionClass($helper);
@@ -94,8 +94,8 @@ final class DomainSearchTest extends TestCase
         ]);
 
         $helper = new DomainSearchHelper(
-            resolve(NamecheapDomainService::class),
-            resolve(EppDomainService::class)
+            app(NamecheapDomainService::class),
+            app(EppDomainService::class)
         );
 
         // Test the main process with local domain to verify suggestions are created
@@ -133,8 +133,8 @@ final class DomainSearchTest extends TestCase
         ]);
 
         $helper = new DomainSearchHelper(
-            resolve(NamecheapDomainService::class),
-            resolve(EppDomainService::class)
+            app(NamecheapDomainService::class),
+            app(EppDomainService::class)
         );
 
         // Test with international domain to verify suggestions are created
@@ -176,8 +176,8 @@ final class DomainSearchTest extends TestCase
         ]);
 
         $helper = new DomainSearchHelper(
-            resolve(NamecheapDomainService::class),
-            resolve(EppDomainService::class)
+            app(NamecheapDomainService::class),
+            app(EppDomainService::class)
         );
 
         // Test the main search process with auto-detection
@@ -210,8 +210,8 @@ final class DomainSearchTest extends TestCase
     public function test_domain_search_helper_detects_domain_type(): void
     {
         $helper = new DomainSearchHelper(
-            resolve(NamecheapDomainService::class),
-            resolve(EppDomainService::class)
+            app(NamecheapDomainService::class),
+            app(EppDomainService::class)
         );
 
         $reflection = new ReflectionClass($helper);
@@ -225,8 +225,8 @@ final class DomainSearchTest extends TestCase
     public function test_domain_search_helper_validates_domain(): void
     {
         $helper = new DomainSearchHelper(
-            resolve(NamecheapDomainService::class),
-            resolve(EppDomainService::class)
+            app(NamecheapDomainService::class),
+            app(EppDomainService::class)
         );
 
         // Test valid domains
@@ -266,8 +266,8 @@ final class DomainSearchTest extends TestCase
         ]);
 
         $helper = new DomainSearchHelper(
-            resolve(NamecheapDomainService::class),
-            resolve(EppDomainService::class)
+            app(NamecheapDomainService::class),
+            app(EppDomainService::class)
         );
 
         // Test the helper methods directly
@@ -317,8 +317,8 @@ final class DomainSearchTest extends TestCase
         ]);
 
         $helper = new DomainSearchHelper(
-            resolve(NamecheapDomainService::class),
-            resolve(EppDomainService::class)
+            app(NamecheapDomainService::class),
+            app(EppDomainService::class)
         );
 
         // Test the searchInternationalDomains method directly
@@ -396,8 +396,8 @@ final class DomainSearchTest extends TestCase
 
         // Test the helper methods that process these TLDs
         $helper = new DomainSearchHelper(
-            resolve(NamecheapDomainService::class),
-            resolve(EppDomainService::class)
+            app(NamecheapDomainService::class),
+            app(EppDomainService::class)
         );
 
         $reflection = new ReflectionClass($helper);

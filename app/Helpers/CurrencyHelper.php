@@ -97,7 +97,7 @@ final class CurrencyHelper
         // Use CurrencyExchangeHelper for USD/RWF conversions
         if (self::isUsdRwfPair($fromCurrency, $targetCurrency)) {
             try {
-                $exchangeHelper = resolve(CurrencyExchangeHelper::class);
+                $exchangeHelper = app(CurrencyExchangeHelper::class);
                 $money = $exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
 
                 return (int) $money->getAmount() / 100; // Convert from minor units
@@ -137,7 +137,7 @@ final class CurrencyHelper
         // Use CurrencyExchangeHelper formatting for USD/RWF
         if (in_array($currency, ['USD', 'RWF'], true)) {
             try {
-                $exchangeHelper = resolve(CurrencyExchangeHelper::class);
+                $exchangeHelper = app(CurrencyExchangeHelper::class);
                 $money = $exchangeHelper->convertWithAmount($currency, $currency, $amount);
 
                 return $exchangeHelper->formatMoney($money);

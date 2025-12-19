@@ -17,6 +17,8 @@ test('can view contacts index page', function (): void {
 
     $response = $this->get(route('admin.contacts.index'));
 
+    dump($response->status(), $response->baseResponse::class, ($response->original ?? null)::class);
+
     $response->assertSuccessful()
         ->assertViewIs('admin.contacts.index')
         ->assertViewHas('contacts');

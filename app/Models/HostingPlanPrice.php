@@ -45,24 +45,24 @@ class HostingPlanPrice extends Model
 
         // If no target currency specified, use user's preferred currency
         if (in_array($targetCurrency, [null, '', '0'], true)) {
-            $targetCurrency = resolve(CurrencyService::class)->getUserCurrency()->code;
+            $targetCurrency = app(CurrencyService::class)->getUserCurrency()->code;
         }
 
         try {
             if ($targetCurrency !== $baseCurrency) {
-                $convertedAmount = resolve(CurrencyService::class)->convert(
+                $convertedAmount = app(CurrencyService::class)->convert(
                     $priceAmount,
                     $baseCurrency,
                     $targetCurrency
                 );
 
-                return resolve(CurrencyService::class)->format($convertedAmount, $targetCurrency);
+                return app(CurrencyService::class)->format($convertedAmount, $targetCurrency);
             }
 
-            return resolve(CurrencyService::class)->format($priceAmount, $baseCurrency);
+            return app(CurrencyService::class)->format($priceAmount, $baseCurrency);
         } catch (Exception) {
             // Fallback to base currency if conversion fails
-            return resolve(CurrencyService::class)->format($priceAmount, $baseCurrency);
+            return app(CurrencyService::class)->format($priceAmount, $baseCurrency);
         }
     }
 
@@ -79,7 +79,7 @@ class HostingPlanPrice extends Model
         }
 
         try {
-            return resolve(CurrencyService::class)->convert(
+            return app(CurrencyService::class)->convert(
                 $priceAmount,
                 $baseCurrency,
                 $targetCurrency

@@ -56,7 +56,7 @@ test('domain registration sets owner_id correctly with authenticated user', func
 
     app()->instance('namecheap_domain_service', $mockService);
 
-    $action = resolve(RegisterDomainAction::class);
+    $action = app(RegisterDomainAction::class);
 
     // Register domain without explicitly passing userId (should use authenticated user)
     $result = $action->handle(
@@ -123,7 +123,7 @@ test('domain registration sets owner_id correctly with explicit user id', functi
 
     app()->instance('namecheap_domain_service', $mockService);
 
-    $action = resolve(RegisterDomainAction::class);
+    $action = app(RegisterDomainAction::class);
 
     // Register domain with explicit userId (not authenticated)
     $result = $action->handle(
@@ -167,7 +167,7 @@ test('domain registration fails when no user id is provided and no authenticated
         'register_price' => 999,
     ]);
 
-    $action = resolve(RegisterDomainAction::class);
+    $action = app(RegisterDomainAction::class);
 
     // Try to register domain without authentication and without explicit userId
     $result = $action->handle(

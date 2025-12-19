@@ -111,7 +111,7 @@ it('creates a subscription from hosting order items', function (): void {
         ],
     ]);
 
-    resolve(HostingSubscriptionService::class)->createSubscriptionsFromOrder($order->fresh('orderItems'));
+    app(HostingSubscriptionService::class)->createSubscriptionsFromOrder($order->fresh('orderItems'));
 
     $subscription = Subscription::query()->first();
 

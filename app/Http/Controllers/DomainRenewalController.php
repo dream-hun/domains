@@ -20,7 +20,7 @@ final class DomainRenewalController extends Controller
      */
     public function show(Domain $domain): View
     {
-        $renewalService = resolve(RenewalService::class);
+        $renewalService = app(RenewalService::class);
 
         abort_if($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin(), 403, 'You do not have permission to renew this domain.');
 
@@ -45,7 +45,7 @@ final class DomainRenewalController extends Controller
      */
     public function addToCart(AddDomainRenewalToCartRequest $request, Domain $domain): RedirectResponse|JsonResponse
     {
-        $renewalService = resolve(RenewalService::class);
+        $renewalService = app(RenewalService::class);
 
         abort_if($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin(), 403, 'You do not have permission to renew this domain.');
 

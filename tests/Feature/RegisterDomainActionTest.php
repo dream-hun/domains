@@ -85,7 +85,7 @@ final class RegisterDomainActionTest extends TestCase
 
         app()->instance('namecheap_domain_service', $mockService);
 
-        $action = resolve(RegisterDomainAction::class);
+        $action = app(RegisterDomainAction::class);
 
         $result = $action->handle(
             'example.com',
@@ -141,7 +141,7 @@ final class RegisterDomainActionTest extends TestCase
 
         app()->instance('epp_domain_service', $mockService);
 
-        $action = resolve(RegisterDomainAction::class);
+        $action = app(RegisterDomainAction::class);
 
         $result = $action->handle(
             'example.rw',
@@ -185,7 +185,7 @@ final class RegisterDomainActionTest extends TestCase
 
         app()->instance('namecheap_domain_service', $mockService);
 
-        $action = resolve(RegisterDomainAction::class);
+        $action = app(RegisterDomainAction::class);
 
         // Pass empty nameservers array to trigger default nameservers
         $result = $action->handle(

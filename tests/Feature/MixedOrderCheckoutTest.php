@@ -47,7 +47,7 @@ it('only attempts to register domain items, not hosting items', function (): voi
             ->never();
     });
 
-    $notificationService = resolve(NotificationService::class);
+    $notificationService = app(NotificationService::class);
 
     $service = new DomainRegistrationService(
         $registerActionMock,

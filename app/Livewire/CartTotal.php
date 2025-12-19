@@ -84,7 +84,7 @@ final class CartTotal extends Component
         $cartItems = Cart::getContent();
 
         try {
-            $cartPriceConverter = resolve(CartPriceConverter::class);
+            $cartPriceConverter = app(CartPriceConverter::class);
             $subtotal = $cartPriceConverter->calculateCartSubtotal($cartItems, $this->selectedCurrency);
         } catch (Exception $exception) {
             Log::error('Failed to calculate cart total in CartTotal', [

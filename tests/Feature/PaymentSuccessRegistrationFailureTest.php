@@ -62,7 +62,7 @@ it('records failed domain registration and dispatches retry job when registratio
     $this->app->instance(RegisterDomainAction::class, $mockAction);
 
     // Process domain registration
-    $service = resolve(DomainRegistrationService::class);
+    $service = app(DomainRegistrationService::class);
     $contactIds = [
         'registrant' => $this->contact->id,
         'admin' => $this->contact->id,
@@ -239,7 +239,7 @@ it('handles payment success with multiple domains where some fail', function ():
     $this->app->instance(RegisterDomainAction::class, $mockAction);
 
     // Process domain registration
-    $service = resolve(DomainRegistrationService::class);
+    $service = app(DomainRegistrationService::class);
     $contactIds = [
         'registrant' => $this->contact->id,
         'admin' => $this->contact->id,
@@ -292,7 +292,7 @@ it('maintains payment integrity even when all registrations fail', function (): 
     $this->app->instance(RegisterDomainAction::class, $mockAction);
 
     // Process domain registration
-    $service = resolve(DomainRegistrationService::class);
+    $service = app(DomainRegistrationService::class);
     $contactIds = [
         'registrant' => $this->contact->id,
         'admin' => $this->contact->id,

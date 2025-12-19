@@ -164,7 +164,7 @@ it('clears all user carts when exchange rates are updated', function (): void {
     expect(unserialize(base64_decode((string) $session->payload, true)))->toHaveKey('cart');
 
     // Update exchange rates
-    $currencyService = resolve(CurrencyService::class);
+    $currencyService = app(CurrencyService::class);
     $currencyService->clearAllCarts();
 
     // Verify cart is cleared

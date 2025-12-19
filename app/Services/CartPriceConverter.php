@@ -17,6 +17,7 @@ final readonly class CartPriceConverter
     ) {}
 
     /**
+     *
      * @throws Exception|Throwable
      */
     public function convertItemPrice(object $item, string $targetCurrency): float
@@ -38,7 +39,7 @@ final readonly class CartPriceConverter
         }
 
         try {
-            return $this->currencyService->convert($itemPrice, $itemCurrency, $targetCurrency);
+            return CurrencyHelper::convert($itemPrice, $itemCurrency, $targetCurrency);
         } catch (Exception $exception) {
             Log::warning('Primary currency conversion failed in CartPriceConverter', [
                 'from' => $itemCurrency,
@@ -48,7 +49,7 @@ final readonly class CartPriceConverter
             ]);
 
             try {
-                return CurrencyHelper::convert($itemPrice, $itemCurrency, $targetCurrency);
+                return $this->currencyService->convert($itemPrice, $itemCurrency, $targetCurrency);
             } catch (Exception $fallbackException) {
                 Log::error('Currency conversion failed after fallback in CartPriceConverter', [
                     'from' => $itemCurrency,
@@ -100,13 +101,6 @@ final readonly class CartPriceConverter
 
             // Clone the item and update its price and currency
             $convertedItem = clone $item;
-
-            // Preserve original currency if not already set
-            if (! isset($convertedItem->attributes['original_currency'])) {
-                $convertedItem->attributes['original_currency'] = $item->attributes->currency ?? 'USD';
-                $convertedItem->attributes['original_price'] = $item->price;
-            }
-
             $convertedItem->price = $convertedPrice;
             $convertedItem->attributes->currency = $targetCurrency;
 
@@ -151,7 +145,7 @@ final readonly class CartPriceConverter
         }
 
         try {
-            return $this->currencyService->convert($monthlyPrice, $itemCurrency, $targetCurrency);
+            return CurrencyHelper::convert($monthlyPrice, $itemCurrency, $targetCurrency);
         } catch (Exception $exception) {
             Log::warning('Hosting item currency conversion failed', [
                 'from' => $itemCurrency,
@@ -161,7 +155,7 @@ final readonly class CartPriceConverter
             ]);
 
             try {
-                return CurrencyHelper::convert($monthlyPrice, $itemCurrency, $targetCurrency);
+                return $this->currencyService->convert($monthlyPrice, $itemCurrency, $targetCurrency);
             } catch (Exception $fallbackException) {
                 Log::error('Hosting item currency conversion failed after fallback', [
                     'from' => $itemCurrency,
@@ -206,7 +200,7 @@ final readonly class CartPriceConverter
         }
 
         try {
-            return $this->currencyService->convert($displayUnitPrice, $itemCurrency, $targetCurrency);
+            return CurrencyHelper::convert($displayUnitPrice, $itemCurrency, $targetCurrency);
         } catch (Exception $exception) {
             Log::warning('Subscription renewal item currency conversion failed', [
                 'from' => $itemCurrency,
@@ -216,7 +210,7 @@ final readonly class CartPriceConverter
             ]);
 
             try {
-                return CurrencyHelper::convert($displayUnitPrice, $itemCurrency, $targetCurrency);
+                return $this->currencyService->convert($displayUnitPrice, $itemCurrency, $targetCurrency);
             } catch (Exception $fallbackException) {
                 Log::error('Subscription renewal item currency conversion failed after fallback', [
                     'from' => $itemCurrency,
@@ -254,9 +248,11 @@ final readonly class CartPriceConverter
     private function getBillingCycleMonths(string $billingCycle): int
     {
         return match ($billingCycle) {
-            'monthly' => 1,
+            'quarterly' => 3,
+            'semi-annually' => 6,
             'annually' => 12,
-
+            'biennially' => 24,
+            'triennially' => 36,
             default => 1,
         };
     }

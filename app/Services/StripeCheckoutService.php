@@ -123,7 +123,7 @@ final readonly class StripeCheckoutService
     private function buildLineItemsFromCart(Collection $cartItems, string $currency): array
     {
         $lineItems = [];
-        $cartPriceConverter = resolve(CartPriceConverter::class);
+        $cartPriceConverter = app(CartPriceConverter::class);
 
         foreach ($cartItems as $item) {
             try {

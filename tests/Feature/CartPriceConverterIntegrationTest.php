@@ -6,28 +6,12 @@ use App\Livewire\CartComponent;
 use App\Models\Currency;
 use App\Models\User;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
-uses(RefreshDatabase::class);
-
 beforeEach(function (): void {
     Cart::clear();
-
-    // Mock HTTP requests for currency conversion API
-    Http::fake([
-        '*/latest/USD' => Http::response([
-            'result' => 'success',
-            'base' => 'USD',
-            'rates' => [
-                'EUR' => 0.92,
-                'RWF' => 1350.0,
-            ],
-        ]),
-    ]);
 
     Currency::query()->firstOrCreate(
         ['code' => 'USD'],
@@ -161,8 +145,7 @@ it('handles hosting items with monthly pricing correctly', function (): void {
     // Monthly price: 10 USD
     // Converted monthly: 10 * 0.92 = 9.2 EUR
     // Total: 9.2 * 12 = 110.4 EUR
-    $subtotal = $component->get('subtotalAmount');
-    expect(abs($subtotal - 110.4))->toBeLessThan(0.01);
+    expect($component->get('subtotalAmount'))->toBe(110.4);
 });
 
 it('handles subscription renewal items with annual billing', function (): void {
@@ -212,9 +195,7 @@ it('prepares cart for payment with converted prices', function (): void {
     ]);
 
     $component = Livewire::test(CartComponent::class);
-
-    // Test via direct method invocation on component instance
-    $paymentData = $component->instance()->prepareCartForPayment();
+    $paymentData = $component->call('prepareCartForPayment');
 
     expect($paymentData['items'])->toHaveCount(1);
     expect($paymentData['items'][0]['price'])->toBe(92.0); // Converted to EUR
@@ -242,10 +223,9 @@ it('formats item prices correctly in display currency', function (): void {
 
     $component = Livewire::test(CartComponent::class);
     $items = $component->get('items');
-    $componentInstance = $component->instance();
 
-    $formattedPrice = $componentInstance->getFormattedItemPrice($items->first());
-    $formattedTotal = $componentInstance->getFormattedItemTotal($items->first());
+    $formattedPrice = $component->call('getFormattedItemPrice', $items->first());
+    $formattedTotal = $component->call('getFormattedItemTotal', $items->first());
 
     // Should format in EUR
     expect($formattedPrice)->toContain('€');

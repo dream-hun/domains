@@ -106,7 +106,7 @@ final class ContactController extends Controller
         // Try to fetch EPP data if contact has a contact_id
         if ($contact->contact_id) {
             try {
-                $eppService = resolve(EppDomainService::class);
+                $eppService = app(EppDomainService::class);
                 $eppResult = $eppService->infoContact($contact->contact_id);
 
                 if ($eppResult && isset($eppResult['contact'])) {

@@ -45,32 +45,32 @@ final class EventServiceProvider extends ServiceProvider
                     return;
                 }
 
-                resolve(ActivityLogger::class)->logModelEvent($eloquentEvent, $model);
+                app(ActivityLogger::class)->logModelEvent($eloquentEvent, $model);
             });
         }
 
         Event::listen(Login::class, function (Login $event): void {
-            resolve(ActivityLogger::class)->logAuthEvent('login', $event->user, [
+            app(ActivityLogger::class)->logAuthEvent('login', $event->user, [
                 'guard' => $event->guard,
             ]);
         });
 
         Event::listen(Logout::class, function (Logout $event): void {
-            resolve(ActivityLogger::class)->logAuthEvent('logout', $event->user, [
+            app(ActivityLogger::class)->logAuthEvent('logout', $event->user, [
                 'guard' => $event->guard,
             ]);
         });
 
         Event::listen(Registered::class, function (Registered $event): void {
-            resolve(ActivityLogger::class)->logAuthEvent('registered', $event->user);
+            app(ActivityLogger::class)->logAuthEvent('registered', $event->user);
         });
 
         Event::listen(PasswordReset::class, function (PasswordReset $event): void {
-            resolve(ActivityLogger::class)->logAuthEvent('password_reset', $event->user);
+            app(ActivityLogger::class)->logAuthEvent('password_reset', $event->user);
         });
 
         Event::listen(Failed::class, function (Failed $event): void {
-            resolve(ActivityLogger::class)->logAuthEvent('login_failed', $event->user, [
+            app(ActivityLogger::class)->logAuthEvent('login_failed', $event->user, [
                 'guard' => $event->guard,
                 'email' => $event->credentials['email'] ?? null,
             ]);

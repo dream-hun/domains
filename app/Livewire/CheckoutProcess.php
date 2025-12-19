@@ -78,7 +78,7 @@ final class CheckoutProcess extends Component
         $cartContent = Cart::getContent();
 
         try {
-            $cartPriceConverter = resolve(CartPriceConverter::class);
+            $cartPriceConverter = app(CartPriceConverter::class);
             $subtotal = $cartPriceConverter->calculateCartSubtotal($cartContent, $this->currency);
 
             $this->subtotal = $subtotal;
@@ -318,7 +318,7 @@ final class CheckoutProcess extends Component
     {
         $cartItems = [];
         $cartContent = Cart::getContent();
-        $cartPriceConverter = resolve(CartPriceConverter::class);
+        $cartPriceConverter = app(CartPriceConverter::class);
 
         foreach ($cartContent as $item) {
             try {
@@ -417,7 +417,7 @@ final class CheckoutProcess extends Component
             ]);
 
             try {
-                $currencyService = resolve(CurrencyService::class);
+                $currencyService = app(CurrencyService::class);
 
                 return $currencyService->convert($amount, $fromCurrency, $toCurrency);
             } catch (Exception $fallbackException) {

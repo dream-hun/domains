@@ -48,7 +48,7 @@ final class OrderItem extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'total_amount' => 'decimal:2',
-        'exchange_rate' => 'float',
+        'exchange_rate' => 'decimal:6',
         'metadata' => 'array',
     ];
 
