@@ -34,6 +34,12 @@ final readonly class CheckoutService
                 'discount_amount' => $data['discount_amount'] ?? 0,
             ]);
 
+            // Skip payment processing for KPay - user needs to fill form first
+            if ($data['payment_method'] === 'kpay') {
+                // Order is created, payment will be processed when user submits KPay form
+                return $order;
+            }
+
             $paymentResult = $this->paymentService->processPayment(
                 $order,
                 $data['payment_method']

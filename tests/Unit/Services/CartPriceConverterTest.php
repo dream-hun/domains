@@ -49,7 +49,7 @@ describe('convertItemPrice', function (): void {
             'currency' => 'USD',
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $converted = $converter->convertItemPrice($item, 'EUR');
 
         expect($converted)->toBe(92.0); // 100 * 0.92
@@ -61,7 +61,7 @@ describe('convertItemPrice', function (): void {
             'currency' => 'USD',
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $converted = $converter->convertItemPrice($item, 'USD');
 
         expect($converted)->toBe(100.0);
@@ -75,7 +75,7 @@ describe('convertItemPrice', function (): void {
             'billing_cycle' => 'annually',
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $converted = $converter->convertItemPrice($item, 'EUR');
 
         // Should convert monthly price: 10 * 0.92 = 9.2
@@ -89,7 +89,7 @@ describe('convertItemPrice', function (): void {
             'billing_cycle' => 'annually', // 12 months
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $converted = $converter->convertItemPrice($item, 'EUR');
 
         // Monthly price = 120 / 12 = 10, converted = 10 * 0.92 = 9.2
@@ -104,7 +104,7 @@ describe('convertItemPrice', function (): void {
             'billing_cycle' => 'monthly',
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $converted = $converter->convertItemPrice($item, 'EUR');
 
         expect($converted)->toBe(27.6); // 30 * 0.92
@@ -118,7 +118,7 @@ describe('convertItemPrice', function (): void {
             'billing_cycle' => 'monthly',
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $converted = $converter->convertItemPrice($item, 'EUR');
 
         expect($converted)->toBe(27.6);
@@ -132,7 +132,7 @@ describe('calculateItemTotal', function (): void {
             'currency' => 'USD',
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $total = $converter->calculateItemTotal($item, 'EUR');
 
         // 100 * 0.92 * 2 = 184
@@ -147,7 +147,7 @@ describe('calculateItemTotal', function (): void {
             'billing_cycle' => 'annually',
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $total = $converter->calculateItemTotal($item, 'EUR');
 
         // Monthly price 10 * 0.92 = 9.2, total = 9.2 * 12 = 110.4
@@ -162,7 +162,7 @@ describe('calculateItemTotal', function (): void {
             'billing_cycle' => 'annually',
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $total = $converter->calculateItemTotal($item, 'EUR');
 
         // Convert annual price: 120 * 0.92 = 110.4
@@ -179,7 +179,7 @@ describe('calculateItemTotal', function (): void {
             'billing_cycle' => 'monthly',
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $total = $converter->calculateItemTotal($item, 'EUR');
 
         // Convert monthly price: 10 * 0.92 = 9.2
@@ -202,7 +202,7 @@ describe('calculateCartSubtotal', function (): void {
         ]);
 
         $cartCollection = new CartCollection($items);
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $subtotal = $converter->calculateCartSubtotal($cartCollection, 'EUR');
 
         // (100 * 0.92) + (50 * 0.92 * 2) = 92 + 92 = 184
@@ -212,7 +212,7 @@ describe('calculateCartSubtotal', function (): void {
     it('handles empty cart', function (): void {
         $items = collect([]);
         $cartCollection = new CartCollection($items);
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $subtotal = $converter->calculateCartSubtotal($cartCollection, 'EUR');
 
         expect($subtotal)->toBe(0.0);
@@ -233,7 +233,7 @@ describe('calculateCartSubtotal', function (): void {
         ]);
 
         $cartCollection = new CartCollection($items);
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $subtotal = $converter->calculateCartSubtotal($cartCollection, 'EUR');
 
         // Domain: 100 * 0.92 = 92
@@ -257,7 +257,7 @@ describe('convertCartItemsToCurrency', function (): void {
         ]);
 
         $cartCollection = new CartCollection($items);
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $converted = $converter->convertCartItemsToCurrency($cartCollection, 'EUR');
 
         expect($converted)->toHaveCount(2);
@@ -278,7 +278,7 @@ describe('convertCartItemsToCurrency', function (): void {
         ]);
 
         $cartCollection = new CartCollection($items);
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $converted = $converter->convertCartItemsToCurrency($cartCollection, 'EUR');
 
         $convertedItem = $converted->first();
@@ -301,7 +301,7 @@ describe('error handling', function (): void {
                 ->andThrow(new Exception('Conversion failed'));
         });
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
 
         expect(fn () => $converter->convertItemPrice($item, 'INVALID'))
             ->toThrow(Exception::class);
@@ -315,7 +315,7 @@ describe('error handling', function (): void {
             // monthly_unit_price not set
         ]);
 
-        $converter = app(CartPriceConverter::class);
+        $converter = resolve(CartPriceConverter::class);
         $converted = $converter->convertItemPrice($item, 'EUR');
 
         // Should calculate: 120 / 12 = 10, then convert: 10 * 0.92 = 9.2

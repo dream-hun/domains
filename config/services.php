@@ -78,7 +78,12 @@ return [
             'publishable_key' => env('STRIPE_KEY'),
             'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         ],
-        'mobile-money' => 'not-yet-available',
+        'kpay' => [
+            'base_url' => env('KPAY_BASE_URL'),
+            'username' => env('KPAY_USERNAME'),
+            'password' => env('KPAY_PASSWORD'),
+            'retailer_id' => env('KPAY_RETAILER_ID'),
+        ],
     ],
 
     /*

@@ -52,7 +52,7 @@ test('createOrderItemsFromJson creates OrderItem records with billing_cycle in m
     expect($order->orderItems()->count())->toBe(0);
 
     // Use reflection to call the private method
-    $controller = new CheckoutController(app(TransactionLogger::class));
+    $controller = new CheckoutController(resolve(TransactionLogger::class));
     $reflection = new ReflectionClass($controller);
     $method = $reflection->getMethod('createOrderItemsFromJson');
     $method->invoke($controller, $order);
@@ -104,7 +104,7 @@ test('createOrderItemsFromJson does not create duplicate OrderItems if they alre
     expect($order->orderItems()->count())->toBe(1);
 
     // Call the method - should not create duplicates
-    $controller = new CheckoutController(app(TransactionLogger::class));
+    $controller = new CheckoutController(resolve(TransactionLogger::class));
     $reflection = new ReflectionClass($controller);
     $method = $reflection->getMethod('createOrderItemsFromJson');
     $method->invoke($controller, $order);
@@ -151,7 +151,7 @@ test('createOrderItemsFromJson handles multiple billing cycles correctly', funct
 
     Currency::factory()->create(['code' => 'USD', 'exchange_rate' => 1.0]);
 
-    $controller = new CheckoutController(app(TransactionLogger::class));
+    $controller = new CheckoutController(resolve(TransactionLogger::class));
     $reflection = new ReflectionClass($controller);
     $method = $reflection->getMethod('createOrderItemsFromJson');
     $method->invoke($controller, $order);

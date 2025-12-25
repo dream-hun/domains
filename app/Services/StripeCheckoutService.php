@@ -16,6 +16,7 @@ use Stripe\Checkout\Session;
 use Stripe\Customer;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Stripe;
+use Throwable;
 
 final readonly class StripeCheckoutService
 {
@@ -29,6 +30,7 @@ final readonly class StripeCheckoutService
      * @param  Collection<int, object>  $cartItems
      *
      * @throws ApiErrorException
+     * @throws Exception
      */
     public function createSessionFromCart(Order $order, Collection $cartItems, Payment $payment, ?string $successUrl = null, ?string $cancelUrl = null): Session
     {
@@ -51,7 +53,7 @@ final readonly class StripeCheckoutService
     /**
      * Create Stripe Checkout Session from order items
      *
-     * @throws ApiErrorException
+     * @throws ApiErrorException|Throwable
      */
     public function createSessionFromOrder(Order $order, Payment $payment, array $validationResult, ?string $successUrl = null, ?string $cancelUrl = null): Session
     {
@@ -123,7 +125,7 @@ final readonly class StripeCheckoutService
     private function buildLineItemsFromCart(Collection $cartItems, string $currency): array
     {
         $lineItems = [];
-        $cartPriceConverter = app(CartPriceConverter::class);
+        $cartPriceConverter = resolve(CartPriceConverter::class);
 
         foreach ($cartItems as $item) {
             try {

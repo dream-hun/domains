@@ -189,7 +189,7 @@ it('updates checkout totals when currency changes', function (): void {
     // Change to EUR
     session(['selected_currency' => 'EUR']);
     $component->set('userCurrencyCode', 'EUR')
-        ->call('mount', app(CurrencyService::class));
+        ->call('mount', resolve(CurrencyService::class));
 
     expect($component->get('orderSubtotal'))->toBe(92.0);
 });

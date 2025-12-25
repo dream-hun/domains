@@ -71,7 +71,7 @@ it('creates order with prices converted to order currency', function (): void {
     ]);
 
     $cartItems = Cart::getContent();
-    $orderService = app(OrderService::class);
+    $orderService = resolve(OrderService::class);
 
     $order = $orderService->createOrder([
         'user_id' => $user->id,
@@ -131,7 +131,7 @@ it('creates order with multiple items in different currencies', function (): voi
     ]);
 
     $cartItems = Cart::getContent();
-    $orderService = app(OrderService::class);
+    $orderService = resolve(OrderService::class);
 
     $order = $orderService->createOrder([
         'user_id' => $user->id,
@@ -178,7 +178,7 @@ it('creates order with hosting items converted correctly', function (): void {
     ]);
 
     $cartItems = Cart::getContent();
-    $orderService = app(OrderService::class);
+    $orderService = resolve(OrderService::class);
 
     $order = $orderService->createOrder([
         'user_id' => $user->id,
@@ -226,7 +226,7 @@ it('creates order with subscription renewal items converted correctly', function
     ]);
 
     $cartItems = Cart::getContent();
-    $orderService = app(OrderService::class);
+    $orderService = resolve(OrderService::class);
 
     $order = $orderService->createOrder([
         'user_id' => $user->id,
@@ -273,7 +273,7 @@ it('applies discount after currency conversion', function (): void {
     ]);
 
     $cartItems = Cart::getContent();
-    $orderService = app(OrderService::class);
+    $orderService = resolve(OrderService::class);
 
     $order = $orderService->createOrder([
         'user_id' => $user->id,
@@ -316,7 +316,7 @@ it('stores exchange rate in order items', function (): void {
     ]);
 
     $cartItems = Cart::getContent();
-    $orderService = app(OrderService::class);
+    $orderService = resolve(OrderService::class);
 
     $order = $orderService->createOrder([
         'user_id' => $user->id,
@@ -356,7 +356,7 @@ it('handles order in same currency as items', function (): void {
     ]);
 
     $cartItems = Cart::getContent();
-    $orderService = app(OrderService::class);
+    $orderService = resolve(OrderService::class);
 
     $order = $orderService->createOrder([
         'user_id' => $user->id,

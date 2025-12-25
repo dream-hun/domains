@@ -100,7 +100,7 @@ final class CartComponent extends Component
         $this->items = $cartContent->sortBy(fn ($item) => $item->attributes->get('added_at', 0));
 
         try {
-            $cartPriceConverter = app(CartPriceConverter::class);
+            $cartPriceConverter = resolve(CartPriceConverter::class);
 
             foreach ($this->items as $item) {
                 $itemType = $item->attributes->get('type', 'registration');
@@ -236,7 +236,7 @@ final class CartComponent extends Component
     public function getFormattedItemPrice(object $item): string
     {
         try {
-            $cartPriceConverter = app(CartPriceConverter::class);
+            $cartPriceConverter = resolve(CartPriceConverter::class);
             $convertedPrice = $cartPriceConverter->convertItemPrice($item, $this->currency);
 
             return CurrencyHelper::formatMoney($convertedPrice, $this->currency);
@@ -262,7 +262,7 @@ final class CartComponent extends Component
     public function getFormattedItemTotal(object $item): string
     {
         try {
-            $cartPriceConverter = app(CartPriceConverter::class);
+            $cartPriceConverter = resolve(CartPriceConverter::class);
             $total = $cartPriceConverter->calculateItemTotal($item, $this->currency);
 
             return CurrencyHelper::formatMoney($total, $this->currency);
@@ -489,7 +489,7 @@ final class CartComponent extends Component
                 return;
             }
 
-            $renewalService = app(RenewalService::class);
+            $renewalService = resolve(RenewalService::class);
 
             $domainPrice = $renewalService->resolveDomainPrice($domain);
 
@@ -725,7 +725,7 @@ final class CartComponent extends Component
 
             $this->dispatch('refreshCart');
 
-            $formatter = app(OrderItemFormatterService::class);
+            $formatter = resolve(OrderItemFormatterService::class);
             $durationLabel = $formatter->formatDurationLabel($durationMonths);
             $this->dispatch('notify', [
                 'type' => 'success',
@@ -818,7 +818,7 @@ final class CartComponent extends Component
             }
 
             // Validate coupon using CouponService
-            $couponService = app(CouponService::class);
+            $couponService = resolve(CouponService::class);
             $this->appliedCoupon = $couponService->validateCoupon($this->couponCode);
             $this->isCouponApplied = true;
 
@@ -885,7 +885,7 @@ final class CartComponent extends Component
     public function prepareCartForPayment(): array
     {
         $cartItems = [];
-        $cartPriceConverter = app(CartPriceConverter::class);
+        $cartPriceConverter = resolve(CartPriceConverter::class);
 
         foreach ($this->items as $item) {
             $itemType = $item->attributes->get('type', 'registration');
@@ -1018,7 +1018,7 @@ final class CartComponent extends Component
             return '1 Year';
         }
 
-        $formatter = app(OrderItemFormatterService::class);
+        $formatter = resolve(OrderItemFormatterService::class);
         $months = $this->getBillingCycleMonths($billingCycle);
 
         return $formatter->formatDurationLabel($months);
@@ -1029,7 +1029,7 @@ final class CartComponent extends Component
      */
     public function formatDurationLabel(int $months): string
     {
-        $formatter = app(OrderItemFormatterService::class);
+        $formatter = resolve(OrderItemFormatterService::class);
 
         return $formatter->formatDurationLabel($months);
     }
@@ -1072,7 +1072,7 @@ final class CartComponent extends Component
             ]);
 
             try {
-                $currencyService = app(CurrencyService::class);
+                $currencyService = resolve(CurrencyService::class);
 
                 return $currencyService->convert($amount, $fromCurrency, $toCurrency);
             } catch (Exception $fallbackException) {
@@ -1098,7 +1098,7 @@ final class CartComponent extends Component
 
         $subtotal = $this->subtotalAmount;
 
-        $couponService = app(CouponService::class);
+        $couponService = resolve(CouponService::class);
         $discountedTotal = $couponService->applyCoupon($this->appliedCoupon, $subtotal);
 
         $discount = $subtotal - $discountedTotal;

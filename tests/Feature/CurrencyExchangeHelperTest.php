@@ -27,7 +27,7 @@ it('fetches and caches USD to RWF exchange rate', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $rate = $helper->getExchangeRate('USD', 'RWF');
 
     expect($rate)->toBe(1350.0);
@@ -48,7 +48,7 @@ it('fetches and caches RWF to USD exchange rate', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $rate = $helper->getExchangeRate('RWF', 'USD');
 
     expect($rate)->toBe(0.00074074);
@@ -65,7 +65,7 @@ it('converts USD to RWF correctly', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $money = $helper->convertUsdToRwf(100.0);
 
     expect($money)->toBeInstanceOf(Money::class);
@@ -83,7 +83,7 @@ it('converts RWF to USD correctly', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $money = $helper->convertRwfToUsd(100000.0);
 
     expect($money)->toBeInstanceOf(Money::class);
@@ -101,7 +101,7 @@ it('uses cached rates on subsequent requests', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
 
     // First call hits API
     $rate1 = $helper->getExchangeRate('USD', 'RWF');
@@ -114,13 +114,13 @@ it('uses cached rates on subsequent requests', function (): void {
 });
 
 it('throws exception for unsupported currency codes', function (): void {
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
 
     $helper->getExchangeRate('USD', 'EUR');
 })->throws(CurrencyExchangeException::class, "Currency code 'EUR' is not supported");
 
 it('throws exception for negative amounts', function (): void {
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
 
     $helper->convertUsdToRwf(-100.0);
 })->throws(CurrencyExchangeException::class, 'Amount must be positive');
@@ -133,7 +133,7 @@ it('handles invalid API key error', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
 
     $helper->getExchangeRate('USD', 'RWF');
 })->throws(CurrencyExchangeException::class, 'invalid');
@@ -146,7 +146,7 @@ it('handles quota reached error', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
 
     $helper->getExchangeRate('USD', 'RWF');
 })->throws(CurrencyExchangeException::class, 'quota');
@@ -159,7 +159,7 @@ it('uses fallback rate when API fails', function (): void {
     config(['currency_exchange.error_handling.use_fallback_on_error' => true]);
     config(['currency_exchange.fallback_rates.USD_TO_RWF' => 1350.0]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $rate = $helper->getExchangeRate('USD', 'RWF');
 
     expect($rate)->toBe(1350.0);
@@ -168,7 +168,7 @@ it('uses fallback rate when API fails', function (): void {
 it('formats Money objects correctly for USD', function (): void {
     $money = Money::USD(10050); // $100.50
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $formatted = $helper->formatMoney($money);
 
     expect($formatted)->toBe('$100.50');
@@ -177,7 +177,7 @@ it('formats Money objects correctly for USD', function (): void {
 it('formats Money objects correctly for RWF', function (): void {
     $money = Money::RWF(135000); // 1,350 RWF
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $formatted = $helper->formatMoney($money);
 
     expect($formatted)->toBe('FRW1,350');
@@ -193,7 +193,7 @@ it('returns rate metadata', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $helper->getExchangeRate('USD', 'RWF');
 
     $metadata = $helper->getRateMetadata('USD', 'RWF');
@@ -215,7 +215,7 @@ it('clears cache for specific currency pair', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $helper->getExchangeRate('USD', 'RWF');
 
     expect(Cache::has('exchange_rate:USD:RWF'))->toBeTrue();
@@ -235,7 +235,7 @@ it('converts with generic convertWithAmount method', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $money = $helper->convertWithAmount('USD', 'RWF', 50.0);
 
     expect($money)->toBeInstanceOf(Money::class);
@@ -244,7 +244,7 @@ it('converts with generic convertWithAmount method', function (): void {
 });
 
 it('returns same amount when converting to same currency', function (): void {
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
     $rate = $helper->getExchangeRate('USD', 'USD');
 
     expect($rate)->toBe(1.0);
@@ -258,7 +258,7 @@ it('handles malformed request error', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
 
     $helper->getExchangeRate('USD', 'RWF');
 })->throws(CurrencyExchangeException::class, 'malformed');
@@ -271,7 +271,7 @@ it('handles inactive account error', function (): void {
         ]),
     ]);
 
-    $helper = app(CurrencyExchangeHelper::class);
+    $helper = resolve(CurrencyExchangeHelper::class);
 
     $helper->getExchangeRate('USD', 'RWF');
 })->throws(CurrencyExchangeException::class, 'inactive');

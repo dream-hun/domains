@@ -7,7 +7,7 @@ parameters:
         - database
         - routes
 
-    level: 5
+    level: 6
 
     # Disable parallel processing to avoid memory issues with worker processes
     parallel:

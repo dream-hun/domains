@@ -13,7 +13,7 @@
         @else
             <div class="payment-methods">
                 @foreach($paymentMethods as $method)
-                    <div class="payment-method-option mb-3" 
+                    <div class="payment-method-option mb-3"
                          wire:click="selectPaymentMethod('{{ $method['id'] }}')"
                          role="button"
                          tabindex="0"
@@ -22,9 +22,9 @@
                         <div class="card {{ $selectedPaymentMethod === $method['id'] ? 'border-primary' : '' }}">
                             <div class="card-body">
                                 <div class="custom-control custom-radio">
-                                    <input type="radio" 
-                                           id="payment_{{ $method['id'] }}" 
-                                           name="payment_method" 
+                                    <input type="radio"
+                                           id="payment_{{ $method['id'] }}"
+                                           name="payment_method"
                                            class="custom-control-input"
                                            {{ $selectedPaymentMethod === $method['id'] ? 'checked' : '' }}
                                            wire:model="selectedPaymentMethod"
@@ -42,6 +42,8 @@
                                                 <i class="fab fa-cc-stripe fa-2x text-primary"></i>
                                             @elseif($method['id'] === 'paypal')
                                                 <i class="fab fa-paypal fa-2x text-primary"></i>
+                                            @elseif($method['id'] === 'kpay')
+                                                <i class="bi bi-phone fa-2x text-success"></i>
                                             @elseif($method['id'] === 'account_credit')
                                                 <i class="fas fa-wallet fa-2x text-success"></i>
                                             @endif
@@ -61,7 +63,7 @@
             Back
         </button>
         @if(!empty($paymentMethods))
-            <button wire:click="completeOrder" 
+            <button wire:click="completeOrder"
                     class="btn btn-success btn-lg float-right"
                     {{ $isProcessing ? 'disabled' : '' }}>
                 @if($isProcessing)
@@ -75,4 +77,3 @@
         @endif
     </div>
 </div>
-

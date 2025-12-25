@@ -104,7 +104,7 @@
         {{-- Security Badge --}}
         <div class="text-center mt-4 pt-3 border-top">
             <small class="text-muted">
-                <i class="fas fa-lock"></i> Secure checkout with SSL encryption
+                <i class="bi bi-lock"></i> Secure checkout with SSL encryption
             </small>
         </div>
     </div>

@@ -39,24 +39,24 @@ final class DomainPrice extends Model
 
         // If no target currency specified, use user's preferred currency
         if (in_array($targetCurrency, [null, '', '0'], true)) {
-            $targetCurrency = app(CurrencyService::class)->getUserCurrency()->code;
+            $targetCurrency = resolve(CurrencyService::class)->getUserCurrency()->code;
         }
 
         try {
             if ($targetCurrency !== $baseCurrency) {
-                $convertedAmount = app(CurrencyService::class)->convert(
+                $convertedAmount = resolve(CurrencyService::class)->convert(
                     $priceAmount,
                     $baseCurrency,
                     $targetCurrency
                 );
 
-                return app(CurrencyService::class)->format($convertedAmount, $targetCurrency);
+                return resolve(CurrencyService::class)->format($convertedAmount, $targetCurrency);
             }
 
-            return app(CurrencyService::class)->format($priceAmount, $baseCurrency);
+            return resolve(CurrencyService::class)->format($priceAmount, $baseCurrency);
         } catch (Exception) {
             // Fallback to base currency if conversion fails
-            return app(CurrencyService::class)->format($priceAmount, $baseCurrency);
+            return resolve(CurrencyService::class)->format($priceAmount, $baseCurrency);
         }
     }
 
@@ -73,7 +73,7 @@ final class DomainPrice extends Model
         }
 
         try {
-            return app(CurrencyService::class)->convert(
+            return resolve(CurrencyService::class)->convert(
                 $priceAmount,
                 $baseCurrency,
                 $targetCurrency

@@ -78,7 +78,7 @@ it('creates order from cart using billing service', function (): void {
         ],
     ]);
 
-    $billingService = app(BillingService::class);
+    $billingService = resolve(BillingService::class);
 
     $billingData = [
         'billing_name' => 'John Doe',
@@ -164,7 +164,7 @@ it('uses selected contact for domain registration', function (): void {
         ],
     ]);
 
-    $billingService = app(BillingService::class);
+    $billingService = resolve(BillingService::class);
 
     $order = $billingService->createOrderFromCart(
         $this->user,
@@ -189,7 +189,7 @@ it('stores exchange rate on order items when creating order', function (): void 
         ],
     ]);
 
-    $billingService = app(BillingService::class);
+    $billingService = resolve(BillingService::class);
 
     $billingData = [
         'billing_name' => 'John Doe',

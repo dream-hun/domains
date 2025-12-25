@@ -19,8 +19,8 @@ final readonly class RenewDomainAction
 
     public function __construct()
     {
-        $this->eppDomainService = app('epp_domain_service');
-        $this->namecheapDomainService = app('namecheap_domain_service');
+        $this->eppDomainService = resolve('epp_domain_service');
+        $this->namecheapDomainService = resolve('namecheap_domain_service');
     }
 
     /**

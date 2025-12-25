@@ -50,7 +50,7 @@ test('subscription renewal uses renewal_price not regular_price', function (): v
 
     // Process renewal
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
     expect($subscription->status)->toBe('active');
@@ -96,7 +96,7 @@ test('subscription renewal validates billing cycle consistency', function (): vo
 
     // Process renewal - should update billing cycle
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
     expect($subscription->billing_cycle)->toBe('annually')
@@ -138,7 +138,7 @@ test('subscription renewal rejects underpayment', function (): void {
 
     // Process renewal - should fail
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $order->refresh();
     expect($order->status)->toBe('partially_completed')
@@ -178,7 +178,7 @@ test('subscription renewal updates product snapshot', function (): void {
     ]);
 
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
     $snapshot = $subscription->product_snapshot;
@@ -226,7 +226,7 @@ test('subscription billing cycle can be changed during renewal', function (): vo
     ]);
 
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
     expect($subscription->billing_cycle)->toBe('quarterly')
@@ -270,7 +270,7 @@ test('subscription renewal correctly extends expiry by selected billing cycle pe
 
     // Process renewal
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
 
@@ -317,7 +317,7 @@ test('subscription renewal with semi-annually extends expiry by 6 months', funct
     ]);
 
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
 
@@ -363,7 +363,7 @@ test('subscription renewal with annually extends expiry by 1 year', function ():
     ]);
 
     $job = new ProcessSubscriptionRenewalJob($order);
-    $job->handle(app(SubscriptionRenewalService::class));
+    $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
 

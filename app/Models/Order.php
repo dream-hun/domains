@@ -39,7 +39,7 @@ final class Order extends Model
      */
     public function user(): BelongsTo
     {
-        // @phpstan-ignore-next-line
+
         return $this->belongsTo(User::class);
     }
 
@@ -48,7 +48,6 @@ final class Order extends Model
      */
     public function domainRenewals(): HasMany
     {
-        // @phpstan-ignore-next-line
         return $this->hasMany(DomainRenewal::class);
     }
 
@@ -57,7 +56,7 @@ final class Order extends Model
      */
     public function orderItems(): HasMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->hasMany(OrderItem::class);
     }
 
@@ -66,7 +65,7 @@ final class Order extends Model
      */
     public function failedDomainRegistrations(): HasMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->hasMany(FailedDomainRegistration::class);
     }
 
@@ -75,7 +74,7 @@ final class Order extends Model
      */
     public function payments(): HasMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->hasMany(Payment::class);
     }
 

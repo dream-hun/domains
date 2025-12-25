@@ -9,6 +9,7 @@ use App\Models\Currency;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class ProcessExchangeRatesAction
 {
@@ -16,6 +17,8 @@ final class ProcessExchangeRatesAction
      * Process and save exchange rates
      *
      * @param  array<string, float>  $rates
+     *
+     * @throws Throwable
      */
     public function handle(array $rates): bool
     {
@@ -55,10 +58,9 @@ final class ProcessExchangeRatesAction
                     continue;
                 }
 
-                $newRate = (float) $rate;
+                $newRate = $rate;
                 $oldRate = (float) $currency->exchange_rate;
 
-                // Skip if rate hasn't changed significantly
                 if (! $this->hasSignificantChange($oldRate, $newRate)) {
                     $skippedCount++;
                     Log::debug(sprintf('Rate change for %s too small, skipping', $currencyCode), [
@@ -98,13 +100,10 @@ final class ProcessExchangeRatesAction
                 return false;
             }
 
-            // Clear caches
             $this->clearCaches();
 
-            // Dispatch event for side effects
             event(new ExchangeRatesUpdated($updatedCount, $updatedCurrencies));
 
-            // Log results
             $this->logResults($rates, $updatedCount, $updatedCurrencies, $now);
 
             return true;

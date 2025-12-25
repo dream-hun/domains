@@ -17,7 +17,6 @@ final readonly class CartPriceConverter
     ) {}
 
     /**
-     *
      * @throws Exception|Throwable
      */
     public function convertItemPrice(object $item, string $targetCurrency): float

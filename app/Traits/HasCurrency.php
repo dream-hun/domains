@@ -6,6 +6,7 @@ namespace App\Traits;
 
 use App\Models\Currency;
 use App\Services\CurrencyService;
+use Throwable;
 
 trait HasCurrency
 {
@@ -14,7 +15,7 @@ trait HasCurrency
      */
     protected function currencyService(): CurrencyService
     {
-        return app(CurrencyService::class);
+        return resolve(CurrencyService::class);
     }
 
     /**
@@ -27,6 +28,8 @@ trait HasCurrency
 
     /**
      * Convert amount between currencies
+     *
+     * @throws Throwable
      */
     protected function convertCurrency(float $amount, string $from, string $to): float
     {
@@ -45,6 +48,8 @@ trait HasCurrency
      * Convert amount from USD (database storage) to user's selected currency
      * All prices in the database are stored in USD.
      * This method converts them to the user's preferred currency (e.g., RWF for Rwandan users)
+     *
+     * @throws Throwable
      */
     protected function convertFromUSD(float $amountInUSD): float
     {
@@ -59,6 +64,8 @@ trait HasCurrency
 
     /**
      * Convert and format amount from USD to user's selected currency
+     *
+     * @throws Throwable
      */
     protected function formatFromUSD(float $amountInUSD): string
     {
