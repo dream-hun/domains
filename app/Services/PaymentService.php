@@ -41,25 +41,16 @@ final readonly class PaymentService
                 ];
             }
 
-            // Validate required KPay fields
             $msisdn = mb_trim((string) ($paymentData['msisdn'] ?? ''));
-            if (empty($msisdn)) {
+            if ($msisdn === '' || $msisdn === '0') {
                 return [
                     'success' => false,
                     'error' => 'Phone number (MSISDN) is required for KPay payment.',
                 ];
             }
 
-            if (empty($paymentData['pmethod'])) {
-                return [
-                    'success' => false,
-                    'error' => 'Payment method type is required.',
-                ];
-            }
-
             $paymentAttempt = $this->createPaymentAttempt($order, 'kpay');
 
-            // Convert currency to RWF if needed (KPay primarily uses RWF)
             $amount = (float) $order->total_amount;
             $currency = mb_strtoupper($order->currency);
             $kpayCurrency = 'RWF';
@@ -69,31 +60,34 @@ final readonly class PaymentService
                     $amount = CurrencyHelper::convert($amount, $currency, $kpayCurrency);
                     $currency = $kpayCurrency;
                 } catch (Exception $e) {
-                    Log::warning('Currency conversion to RWF failed, using original currency', [
+                    Log::error('Currency conversion to RWF failed for KPay payment', [
                         'order_id' => $order->id,
                         'original_currency' => $currency,
                         'original_amount' => $order->total_amount,
                         'error' => $e->getMessage(),
                     ]);
+
+                    return [
+                        'success' => false,
+                        'error' => 'Unable to convert currency to RWF for KPay payment. Please try again or contact support.',
+                    ];
                 }
             }
 
             // Generate reference ID (order number + payment attempt number)
             $refId = $order->order_number.'-'.$paymentAttempt->attempt_number;
 
-            // Prepare payment data for KPay
-            // Ensure all required fields are present and not empty
             $kpayPaymentData = [
-                'msisdn' => mb_trim((string) $msisdn),
+                'msisdn' => mb_trim($msisdn),
                 'email' => mb_trim((string) ($order->billing_email ?? $order->user->email ?? '')),
                 'details' => 'Order '.$order->order_number,
-                'refid' => mb_trim((string) $refId), // Use 'refid' not 'ref_id' for KPay API
-                'amount' => (int) round($amount), // KPay expects integer amount
-                'currency' => mb_strtoupper(mb_trim((string) $currency)),
+                'refid' => mb_trim($refId),
+                'amount' => (int) round($amount),
+                'currency' => mb_strtoupper(mb_trim($currency)),
                 'cname' => mb_trim((string) ($order->billing_name ?? $order->user->name ?? '')),
-                'cnumber' => mb_trim((string) $msisdn), // Use MSISDN as contact number
-                'pmethod' => mb_trim((string) ($paymentData['pmethod'] ?? 'mobile_money')),
-                'returl' => route('payment.kpay.success', $order),
+                'cnumber' => mb_trim($msisdn),
+                'pmethod' => mb_trim((string) ($paymentData['pmethod'] ?? 'momo')),
+                'returl' => route('payment.kpay.webhook'),
                 'redirecturl' => route('payment.kpay.success', $order),
             ];
 
@@ -102,12 +96,12 @@ final readonly class PaymentService
             $missingFields = [];
             foreach ($requiredFields as $field) {
                 $value = $kpayPaymentData[$field] ?? null;
-                if (empty($value) && $value !== 0 && $value !== '0') {
+                if (($value === 0 || ($value === '' || $value === '0')) && $value !== 0 && $value !== '0') {
                     $missingFields[] = $field;
                 }
             }
 
-            if (! empty($missingFields)) {
+            if ($missingFields !== []) {
                 throw new Exception('Missing required KPay fields: '.implode(', ', $missingFields));
             }
 
@@ -146,8 +140,26 @@ final readonly class PaymentService
                 ]),
             ]);
 
-            // Check if KPay returns a redirect URL
-            $redirectUrl = $responseData['redirecturl'] ?? $responseData['redirect_url'] ?? null;
+            // Check if payment was auto-processed (immediate success)
+            $autoProcessed = $kpayResponse['auto_processed'] ?? false;
+            if ($autoProcessed) {
+                $paymentAttempt->update([
+                    'status' => 'succeeded',
+                    'paid_at' => now(),
+                ]);
+
+                return [
+                    'success' => true,
+                    'payment_id' => $paymentAttempt->id,
+                    'transaction_id' => $transactionId,
+                    'ref_id' => $refId,
+                ];
+            }
+
+            // Check if KPay returns a redirect/checkout URL
+            // API returns 'url' field for checkout page
+            $redirectUrl = $responseData['url'] ?? $responseData['redirecturl'] ?? $responseData['redirect_url'] ?? null;
+            $redirectUrl = in_array(mb_trim((string) $redirectUrl), ['', '0'], true) ? null : mb_trim((string) $redirectUrl);
 
             if ($redirectUrl) {
                 return [
@@ -158,31 +170,6 @@ final readonly class PaymentService
                     'transaction_id' => $transactionId,
                     'ref_id' => $refId,
                 ];
-            }
-
-            // If no redirect URL, payment might be processed synchronously
-            // Check status immediately
-            if ($transactionId) {
-                $statusResponse = $this->kPayService->checkPaymentStatus($transactionId, $refId);
-
-                if ($statusResponse['success']) {
-                    $statusData = $statusResponse['data'] ?? [];
-                    $paymentStatus = $statusData['status'] ?? $statusData['payment_status'] ?? 'pending';
-
-                    if ($paymentStatus === 'success' || $paymentStatus === 'completed') {
-                        $paymentAttempt->update([
-                            'status' => 'succeeded',
-                            'paid_at' => now(),
-                        ]);
-
-                        return [
-                            'success' => true,
-                            'payment_id' => $paymentAttempt->id,
-                            'transaction_id' => $transactionId,
-                            'ref_id' => $refId,
-                        ];
-                    }
-                }
             }
 
             // Payment is pending - return status check endpoint
@@ -239,16 +226,36 @@ final readonly class PaymentService
             }
 
             $statusData = $statusResponse['data'] ?? [];
-            $paymentStatus = $statusData['status'] ?? $statusData['payment_status'] ?? 'pending';
+            $actualStatusData = $statusData['response'] ?? $statusData;
+            $statusid = $actualStatusData['statusid'] ?? $statusData['statusid'] ?? null;
+            $statusdesc = $actualStatusData['statusdesc'] ?? $statusData['statusdesc'] ?? '';
 
-            // Update payment status based on KPay response
-            if ($paymentStatus === 'success' || $paymentStatus === 'completed') {
+            // Keep pending instead of failing when transaction not found
+            if (($statusResponse['transaction_not_found'] ?? false) === true) {
+                Log::info('KPay transaction not found during status check', [
+                    'payment_id' => $payment->id,
+                    'tid' => $payment->kpay_transaction_id,
+                    'refid' => $payment->kpay_ref_id,
+                    'statusdesc' => $statusdesc,
+                ]);
+
+                return [
+                    'success' => false,
+                    'status' => 'pending',
+                    'statusid' => $statusid,
+                    'error' => 'Transaction not found. Payment may still be processing.',
+                    'transaction_not_found' => true,
+                ];
+            }
+
+            if ($statusid === '01' || $statusid === 1) {
                 if (! $payment->isSuccessful()) {
                     $payment->update([
                         'status' => 'succeeded',
                         'paid_at' => now(),
                         'metadata' => array_merge($payment->metadata ?? [], [
-                            'kpay_status_response' => $statusData,
+                            'kpay_status_response' => $actualStatusData,
+                            'kpay_momtransactionid' => $actualStatusData['momtransactionid'] ?? $statusData['momtransactionid'] ?? null,
                         ]),
                     ]);
                 }
@@ -257,25 +264,27 @@ final readonly class PaymentService
                     'success' => true,
                     'status' => 'succeeded',
                     'payment_id' => $payment->id,
+                    'statusid' => $statusid,
                 ];
             }
 
-            if ($paymentStatus === 'failed' || $paymentStatus === 'error') {
+            if ($statusid === '02' || $statusid === 2) {
                 if ($payment->isPending()) {
-                    $this->markPaymentFailed($payment, $statusData['statusdesc'] ?? 'Payment failed');
+                    $this->markPaymentFailed($payment, $statusdesc ?: 'Payment failed');
                 }
 
                 return [
                     'success' => false,
                     'status' => 'failed',
-                    'error' => $statusData['statusdesc'] ?? 'Payment failed',
+                    'statusid' => $statusid,
+                    'error' => $statusdesc ?: 'Payment failed',
                 ];
             }
 
-            // Still pending
             return [
                 'success' => true,
                 'status' => 'pending',
+                'statusid' => $statusid,
                 'payment_id' => $payment->id,
             ];
 
@@ -339,7 +348,7 @@ final readonly class PaymentService
                 'success' => false,
                 'error' => 'Failed to initialize payment. Please try again or contact support.',
             ];
-        } catch (Throwable $e) {
+        } catch (Throwable) {
         }
     }
 

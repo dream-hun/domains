@@ -36,7 +36,7 @@ final readonly class DomainRegistrationService
 
         // Process each order item (domain)
         foreach ($order->orderItems as $orderItem) {
-            // Skip hosting and renewal items
+
             if (in_array($orderItem->domain_type, ['hosting', 'renewal'], true)) {
                 continue;
             }
@@ -50,10 +50,8 @@ final readonly class DomainRegistrationService
             }
         }
 
-        // Update order status based on results
         $this->updateOrderStatus($order, $results);
 
-        // Send notifications
         $this->sendNotifications($order, $results);
 
         return $results;
@@ -74,13 +72,13 @@ final readonly class DomainRegistrationService
                 $orderItem->domain_name,
                 $contactIds,
                 $orderItem->years,
-                [], // Use default nameservers
-                true, // Use single contact
+                [],
+                true,
                 $order->user_id
             );
 
             if ($result['success']) {
-                // Update order item with domain ID if available
+
                 if (isset($result['domain_id'])) {
                     $orderItem->update(['domain_id' => $result['domain_id']]);
                 }
@@ -99,7 +97,6 @@ final readonly class DomainRegistrationService
                 ];
             }
 
-            // Registration failed - record failure and dispatch retry job
             $failedRegistration = $this->recordFailedRegistration(
                 $order,
                 $orderItem,
@@ -107,7 +104,6 @@ final readonly class DomainRegistrationService
                 $contactIds
             );
 
-            // Dispatch retry job with delay
             $this->dispatchRetryJob($failedRegistration);
 
             Log::error('Domain registration failed', [
@@ -124,7 +120,7 @@ final readonly class DomainRegistrationService
             ];
 
         } catch (Exception $exception) {
-            // Exception during registration - record failure and dispatch retry job
+
             $failedRegistration = $this->recordFailedRegistration(
                 $order,
                 $orderItem,
@@ -132,7 +128,6 @@ final readonly class DomainRegistrationService
                 $contactIds
             );
 
-            // Dispatch retry job with delay
             $this->dispatchRetryJob($failedRegistration);
 
             Log::error('Domain registration exception', [
@@ -216,7 +211,7 @@ final readonly class DomainRegistrationService
     private function sendNotifications(Order $order, array $results): void
     {
         if (! empty($results['failed'])) {
-            // Notify admin only
+
             $this->notificationService->notifyAdminOfFailedRegistration($order, $results);
         }
     }

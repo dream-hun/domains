@@ -9,9 +9,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $order_number
  * @property int $user_id
  * @property string $payment_status
@@ -160,17 +162,21 @@ final class Order extends Model
         return $this->status === 'partially_completed';
     }
 
-    /**
-     * Get all order items - from relationship or fallback to JSON items
-     */
-    public function getAllOrderItems()
+    public function getRouteKeyName(): string
     {
-        // First try to get from the relationship
-        $orderItems = $this->orderItems;
+        return 'uuid';
 
-        // If no order items in relationship, return empty collection
-        // The items JSON field is just a snapshot and doesn't have the same structure
-        return $orderItems;
+    }
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        self::creating(function ($order): void {
+            if (empty($order->uuid)) {
+                $order->uuid = (string) Str::uuid();
+            }
+        });
     }
 
     protected function casts(): array
@@ -182,6 +188,7 @@ final class Order extends Model
             'discount_amount' => 'decimal:2',
             'items' => 'array',
             'billing_address' => 'array',
+            'metadata' => 'array',
             'processed_at' => 'datetime',
         ];
     }

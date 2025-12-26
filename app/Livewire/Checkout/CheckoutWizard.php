@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Livewire\Checkout;
 
+use App\Actions\Order\CreateOrderFromCartAction;
+use App\Actions\Payment\CreateStripeCheckoutSessionAction;
 use App\Helpers\CurrencyHelper;
 use App\Models\Contact;
 use App\Models\Coupon;
 use App\Services\CartPriceConverter;
-use App\Services\CheckoutService;
 use App\Services\Coupon\CouponService;
 use App\Services\CurrencyService;
 use App\Services\OrderItemFormatterService;
+use App\Services\PaymentService;
 use Darryldecode\Cart\CartCollection;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -395,8 +397,6 @@ final class CheckoutWizard extends Component
         $this->isProcessing = true;
 
         try {
-            $checkoutService = resolve(CheckoutService::class);
-
             $billingContactId = $this->selectedBillingId;
             if ((! $this->hasItemsRequiringContacts || $this->hasOnlyRenewals) && ! $billingContactId) {
                 /** @var Contact|null $primaryContact */
@@ -407,30 +407,83 @@ final class CheckoutWizard extends Component
             $orderCurrency = $this->userCurrencyCode;
             $convertedCartItems = $this->convertCartItemsCurrency($this->cartItems, $orderCurrency);
 
-            $order = $checkoutService->processCheckout([
-                'user_id' => auth()->id(),
-                'contact_ids' => [
-                    'registrant' => $this->selectedRegistrantId,
-                    'admin' => $this->selectedAdminId,
-                    'tech' => $this->selectedTechId,
-                    'billing' => $billingContactId,
-                ],
-                'payment_method' => $this->selectedPaymentMethod,
-                'currency' => $orderCurrency,
-                'cart_items' => $convertedCartItems,
-                'coupon' => $this->appliedCoupon,
-                'discount_amount' => $this->discountAmount,
-            ]);
+            $contactIds = [
+                'registrant' => $this->selectedRegistrantId,
+                'admin' => $this->selectedAdminId,
+                'tech' => $this->selectedTechId,
+                'billing' => $billingContactId,
+            ];
 
-            if ($this->selectedPaymentMethod === 'stripe' && $order->stripe_session_id) {
-                return to_route('checkout.stripe.redirect', ['order' => $order->order_number]);
+            if ($this->selectedPaymentMethod === 'stripe') {
+                $createStripeCheckoutAction = resolve(CreateStripeCheckoutSessionAction::class);
+                $result = $createStripeCheckoutAction->handle(
+                    auth()->user(),
+                    $convertedCartItems,
+                    $orderCurrency,
+                    $contactIds,
+                    null,
+                    $this->appliedCoupon instanceof Coupon ? [
+                        'code' => $this->appliedCoupon->code,
+                        'type' => ['value' => $this->appliedCoupon->type->value],
+                    ] : null,
+                    $this->discountAmount
+                );
+
+                $this->clearCheckoutState();
+
+                return redirect()->away($result['url']);
             }
 
+            $createOrderAction = resolve(CreateOrderFromCartAction::class);
             if ($this->selectedPaymentMethod === 'kpay') {
-                // Store order in session for KPay payment page
+                $order = $createOrderAction->handle(
+                    auth()->user(),
+                    $convertedCartItems,
+                    $orderCurrency,
+                    'kpay',
+                    $contactIds,
+                    null,
+                    $this->appliedCoupon instanceof Coupon ? [
+                        'code' => $this->appliedCoupon->code,
+                        'type' => ['value' => $this->appliedCoupon->type->value],
+                    ] : null,
+                    $this->discountAmount
+                );
+
                 session(['kpay_order_number' => $order->order_number]);
 
+                $this->clearCheckoutState();
+
                 return to_route('payment.kpay.show');
+            }
+
+            $order = $createOrderAction->handle(
+                auth()->user(),
+                $convertedCartItems,
+                $orderCurrency,
+                $this->selectedPaymentMethod,
+                $contactIds,
+                null,
+                $this->appliedCoupon instanceof Coupon ? [
+                    'code' => $this->appliedCoupon->code,
+                    'type' => ['value' => $this->appliedCoupon->type->value],
+                ] : null,
+                $this->discountAmount
+            );
+
+            $paymentService = resolve(PaymentService::class);
+            $paymentResult = $paymentService->processPayment($order, $this->selectedPaymentMethod);
+
+            if (! $paymentResult['success']) {
+                $this->errorMessage = $paymentResult['error'] ?? 'Payment processing failed. Please try again.';
+
+                return null;
+            }
+
+            if (isset($paymentResult['checkout_url'])) {
+                $this->clearCheckoutState();
+
+                return redirect($paymentResult['checkout_url']);
             }
 
             $this->orderNumber = $order->order_number;
@@ -564,6 +617,7 @@ final class CheckoutWizard extends Component
                 'name' => 'PayPal',
             ];
         }
+
         if (config('services.payment.kpay.base_url') &&
             config('services.payment.kpay.username') &&
             config('services.payment.kpay.password') &&

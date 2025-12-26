@@ -34,8 +34,6 @@ final class HostingSubscriptionService
         $planId = (int) ($metadata['hosting_plan_id'] ?? 0);
         $planPriceId = (int) ($metadata['hosting_plan_price_id'] ?? 0);
         $billingCycle = (string) ($metadata['billing_cycle'] ?? '');
-        // Check if linked_domain key exists in metadata - if it does, use that value (even if null)
-        // Otherwise fall back to domain_name from order item
         $linkedDomain = array_key_exists('linked_domain', $metadata)
             ? $metadata['linked_domain']
             : ($orderItem->domain_name ?? null);
@@ -63,8 +61,6 @@ final class HostingSubscriptionService
             return;
         }
 
-        // Prevent duplicates if we already created a subscription for this user/domain combo
-        // For VPS with no domain, we skip duplicate checking since each VPS is independent
         if ($linkedDomain !== null) {
             $alreadyExists = Subscription::query()
                 ->where('user_id', $order->user_id)

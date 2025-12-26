@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Services\KPayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 
@@ -135,7 +136,7 @@ describe('initiatePayment', function (): void {
             ->and($result['success'])->toBeTrue();
 
         // Verify the normalized MSISDN was sent (check HTTP request)
-        Http::assertSent(function ($request) {
+        Http::assertSent(function ($request): bool {
             $body = $request->body();
             $data = json_decode($body, true);
 
@@ -180,8 +181,8 @@ describe('checkPaymentStatus', function (): void {
 
     it('handles connection errors during status check', function (): void {
         Http::fake([
-            'api.kpay.test' => function () {
-                throw new Illuminate\Http\Client\ConnectionException('Connection timeout');
+            'api.kpay.test' => function (): void {
+                throw new ConnectionException('Connection timeout');
             },
         ]);
 

@@ -13,9 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('payments', function (Blueprint $table): void {
-            $table->string('kpay_transaction_id')->nullable()->after('stripe_charge_id');
-            $table->string('kpay_ref_id')->nullable()->after('kpay_transaction_id');
+        Schema::table('orders', function (Blueprint $table): void {
+            $table->json('metadata')->nullable()->after('notes');
         });
     }
 
@@ -24,8 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('payments', function (Blueprint $table): void {
-            $table->dropColumn(['kpay_transaction_id', 'kpay_ref_id']);
+        Schema::table('orders', function (Blueprint $table): void {
+            $table->dropColumn('metadata');
         });
     }
 };

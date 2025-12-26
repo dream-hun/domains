@@ -9,129 +9,54 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-final readonly class KPayService
+class KPayService
 {
-    private string $baseUrl;
+    private readonly string $baseUrl;
 
-    private string $username;
+    private readonly string $username;
 
-    private string $password;
+    private readonly string $password;
 
-    private string $retailerId;
+    private readonly string $retailerId;
 
-    /**
-     * Create a new class instance.
-     */
     public function __construct()
     {
-        $this->baseUrl = config('services.payment.kpay.base_url') ?? '';
-        $this->username = config('services.payment.kpay.username') ?? '';
-        $this->password = config('services.payment.kpay.password') ?? '';
-        $this->retailerId = config('services.payment.kpay.retailer_id') ?? '';
+        $this->baseUrl = mb_rtrim(config('services.payment.kpay.base_url', 'https://pay.esicia.com'), '/');
+        $this->username = config('services.payment.kpay.username');
+        $this->password = config('services.payment.kpay.password');
+        $this->retailerId = config('services.payment.kpay.retailer_id');
     }
 
     /**
-     * @throws Exception
+     * Initiate a payment request
+     *
+     * @param  array<string, mixed>  $paymentData
+     * @return array<string, mixed>
      */
     public function initiatePayment(array $paymentData): array
     {
-        $msisdn = $this->normalizeMsisdn($paymentData['msisdn']);
-
-        // Ensure refid is not empty
-        $refid = mb_trim((string) ($paymentData['ref_id'] ?? $paymentData['refid'] ?? ''));
-        if (empty($refid)) {
-            throw new Exception('Reference ID (refid) is required for KPay payment');
-        }
-
-        // Ensure retailer ID is not empty
-        if (empty($this->retailerId)) {
-            throw new Exception('Retailer ID is not configured for KPay');
-        }
-
-        // Validate amount is greater than 0
-        $amount = (int) round((float) ($paymentData['amount'] ?? 0));
-        if ($amount <= 0) {
-            throw new Exception('Payment amount must be greater than 0');
-        }
-
-        // Ensure all values are properly formatted strings and not empty
         $payload = [
             'action' => 'pay',
-            'msisdn' => mb_trim($msisdn),
-            'email' => mb_trim((string) ($paymentData['email'] ?? '')),
-            'details' => mb_trim((string) ($paymentData['details'] ?? '')),
-            'refid' => mb_trim($refid),
-            'amount' => (string) $amount,
-            'currency' => mb_strtoupper(mb_trim((string) ($paymentData['currency'] ?? 'RWF'))),
-            'cname' => mb_trim((string) ($paymentData['cname'] ?? '')),
-            'cnumber' => mb_trim((string) ($paymentData['cnumber'] ?? $msisdn)),
-            'pmethod' => mb_trim((string) ($paymentData['pmethod'] ?? 'mobile_money')),
-            'retailerid' => mb_trim((string) $this->retailerId),
-            'returl' => mb_trim((string) ($paymentData['returl'] ?? '')),
-            'redirecturl' => mb_trim((string) ($paymentData['redirecturl'] ?? $paymentData['returl'] ?? '')),
+            'msisdn' => $this->normalizeMsisdn($paymentData['msisdn']),
+            'email' => $paymentData['email'],
+            'details' => $paymentData['details'],
+            'refid' => $paymentData['refid'],
+            'amount' => (int) $paymentData['amount'],
+            'currency' => $paymentData['currency'] ?? 'RWF',
+            'cname' => $paymentData['cname'],
+            'cnumber' => $paymentData['cnumber'],
+            'pmethod' => $paymentData['pmethod'],
+            'retailerid' => $this->retailerId,
+            'returl' => $paymentData['returl'],
+            'redirecturl' => $paymentData['redirecturl'],
         ];
 
+        // Add optional logourl if provided
         if (isset($paymentData['logourl'])) {
             $payload['logourl'] = $paymentData['logourl'];
         }
 
-        // Log the payload for debugging (without sensitive data)
-        Log::debug('K-Pay Payment Payload', [
-            'action' => $payload['action'],
-            'msisdn' => $msisdn,
-            'msisdn_length' => mb_strlen($payload['msisdn']),
-            'email' => mb_substr($payload['email'], 0, 20).'...',
-            'email_length' => mb_strlen($payload['email']),
-            'details' => $payload['details'],
-            'details_length' => mb_strlen($payload['details']),
-            'refid' => $payload['refid'],
-            'refid_length' => mb_strlen($payload['refid']),
-            'amount' => $payload['amount'],
-            'amount_type' => gettype($payload['amount']),
-            'currency' => $payload['currency'],
-            'cname' => $payload['cname'],
-            'cname_length' => mb_strlen($payload['cname']),
-            'cnumber' => $payload['cnumber'],
-            'pmethod' => $payload['pmethod'],
-            'retailerid' => $payload['retailerid'],
-            'retailerid_length' => mb_strlen($payload['retailerid']),
-            'returl' => $payload['returl'],
-            'redirecturl' => $payload['redirecturl'],
-            'has_retailerid' => ! empty($payload['retailerid']),
-            'all_payload_keys' => array_keys($payload),
-            'payload_count' => count($payload),
-        ]);
-
         try {
-            // Validate all required fields are present and not empty
-            $requiredFields = ['msisdn', 'email', 'details', 'refid', 'amount', 'cname', 'pmethod', 'retailerid', 'returl'];
-            $missingFields = [];
-            foreach ($requiredFields as $field) {
-                $value = $payload[$field] ?? null;
-                if (empty($value) && $value !== '0' && $value !== 0) {
-                    $missingFields[] = $field.' (value: "'.($value ?? 'null').'")';
-                }
-            }
-
-            if (! empty($missingFields)) {
-                Log::error('K-Pay Missing Required Fields', [
-                    'missing_fields' => $missingFields,
-                    'payload_keys' => array_keys($payload),
-                    'payload_values' => array_map(fn ($v) => is_string($v) ? mb_substr($v, 0, 50) : $v, $payload),
-                ]);
-                throw new Exception('Missing required fields: '.implode(', ', $missingFields));
-            }
-
-            // Use JSON format (most APIs expect this)
-            // Log the exact payload being sent
-            Log::info('K-Pay Sending Request', [
-                'url' => $this->baseUrl,
-                'payload' => $payload,
-                'payload_json' => json_encode($payload, JSON_UNESCAPED_SLASHES),
-                'username_set' => ! empty($this->username),
-                'password_set' => ! empty($this->password),
-            ]);
-
             $response = Http::timeout(30)
                 ->withHeaders([
                     'Content-Type' => 'application/json',
@@ -140,33 +65,16 @@ final readonly class KPayService
                 ->withBasicAuth($this->username, $this->password)
                 ->post($this->baseUrl, $payload);
 
-            // Log the raw response
-            Log::debug('K-Pay Raw Response', [
-                'status_code' => $response->status(),
-                'headers' => $response->headers(),
-                'body' => $response->body(),
-            ]);
             $responseData = $response->json();
             $statusCode = $response->status();
 
-            // Log full request and response for debugging
             Log::info('K-Pay Payment Initiated', [
-                'ref_id' => $refid,
+                'refid' => $paymentData['refid'],
                 'status_code' => $statusCode,
                 'response' => $responseData,
-                'payload_keys' => array_keys($payload),
-                'retailerid_set' => ! empty($payload['retailerid']),
-                'refid_set' => ! empty($payload['refid']),
             ]);
 
-            // Check if response indicates success (some APIs return 200 but with success:0)
-            $isSuccess = $response->successful() &&
-                        (($responseData['success'] ?? $responseData['retcode'] ?? null) === 1 ||
-                         ($responseData['success'] ?? null) === true ||
-                         ($responseData['retcode'] ?? null) === '000' ||
-                         ($responseData['retcode'] ?? null) === 0);
-
-            if ($isSuccess) {
+            if ($response->successful()) {
                 return [
                     'success' => true,
                     'data' => $responseData,
@@ -174,21 +82,15 @@ final readonly class KPayService
                 ];
             }
 
-            // Extract error message from response
-            $errorMessage = $responseData['reply'] ??
-                          $responseData['statusdesc'] ??
-                          $responseData['message'] ??
-                          ($responseData['retcode'] ? 'Error code: '.$responseData['retcode'] : 'Payment initiation failed');
-
             return [
                 'success' => false,
                 'data' => $responseData,
                 'status_code' => $statusCode,
-                'error' => $errorMessage,
+                'error' => $responseData['statusdesc'] ?? $responseData['retcode'] ?? 'Payment initiation failed',
             ];
         } catch (ConnectionException $e) {
             Log::error('K-Pay Connection Error', [
-                'ref_id' => $paymentData['ref_id'] ?? null,
+                'refid' => $paymentData['refid'],
                 'error' => $e->getMessage(),
             ]);
 
@@ -198,7 +100,7 @@ final readonly class KPayService
             ];
         } catch (Exception $e) {
             Log::error('K-Pay Payment Error', [
-                'ref_id' => $paymentData['ref_id'] ?? null,
+                'refid' => $paymentData['refid'],
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -210,6 +112,13 @@ final readonly class KPayService
         }
     }
 
+    /**
+     * Check payment status
+     *
+     * @param  string  $tid  Transaction ID
+     * @param  string  $refid  Reference ID
+     * @return array<string, mixed>
+     */
     public function checkPaymentStatus(string $tid, string $refid): array
     {
         $payload = [
@@ -276,9 +185,6 @@ final readonly class KPayService
         }
     }
 
-    /**
-     * Normalize MSISDN format - Remove + sign as per API requirements
-     */
     private function normalizeMsisdn(string $msisdn): string
     {
 
@@ -287,7 +193,6 @@ final readonly class KPayService
         if (str_starts_with((string) $msisdn, '0')) {
             $msisdn = '250'.mb_substr((string) $msisdn, 1);
         } elseif (! str_starts_with((string) $msisdn, '250')) {
-
             $msisdn = '250'.$msisdn;
         }
 

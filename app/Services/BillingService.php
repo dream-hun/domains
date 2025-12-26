@@ -49,6 +49,10 @@ final readonly class BillingService
                 $discountAmount = $coupon['discount_amount'];
             }
 
+            // Store contact ID in metadata for webhook processing
+            $selectedContactId = $checkoutData['selected_contact_id'] ?? null;
+            $metadata = $selectedContactId ? ['selected_contact_id' => $selectedContactId] : [];
+
             // Create the order
             $order = Order::query()->create([
                 'user_id' => $user->id,
@@ -71,6 +75,7 @@ final readonly class BillingService
                 'billing_country' => $billingData['billing_country'] ?? '',
                 'billing_postal_code' => $billingData['billing_postal_code'] ?? '',
                 'notes' => $notes,
+                'metadata' => $metadata,
             ]);
 
             foreach ($items as $item) {

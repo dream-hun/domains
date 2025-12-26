@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Order\ProcessOrderAfterPaymentAction;
 use App\Enums\Hosting\BillingCycle;
 use App\Models\Currency;
 use App\Models\HostingPlanPrice;
@@ -12,9 +13,6 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Notifications\SubscriptionAutoRenewalFailedNotification;
-use App\Services\HostingSubscriptionService;
-use App\Services\OrderProcessingService;
-use App\Services\OrderService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -26,12 +24,9 @@ use Throwable;
 
 final class StripeWebhookController extends Controller
 {
-    public function __construct(
-        private readonly OrderService $orderService,
-        private readonly OrderProcessingService $orderProcessingService,
-        private readonly HostingSubscriptionService $hostingSubscriptionService
-    ) {
-        Stripe::setApiKey(config('services.stripe.secret'));
+    public function __construct()
+    {
+        Stripe::setApiKey(config('services.payment.stripe.secret_key'));
     }
 
     /**
@@ -41,7 +36,7 @@ final class StripeWebhookController extends Controller
     {
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
-        $webhookSecret = config('services.stripe.webhook_secret');
+        $webhookSecret = config('services.payment.stripe.webhook_secret');
 
         if (! $webhookSecret) {
             Log::error('Stripe webhook secret not configured');
@@ -64,6 +59,7 @@ final class StripeWebhookController extends Controller
 
             // Handle the event
             match ($event->type) {
+                'checkout.session.completed' => $this->handleCheckoutSessionCompleted($event->data->object),
                 'payment_intent.succeeded' => $this->handlePaymentIntentSucceeded($event->data->object),
                 'payment_intent.payment_failed' => $this->handlePaymentIntentFailed($event->data->object),
                 'charge.refunded' => $this->handleChargeRefunded($event->data->object),
@@ -138,15 +134,25 @@ final class StripeWebhookController extends Controller
                     'processed_at' => now(),
                 ]);
 
-                // Create OrderItem records from order's items JSON if they don't exist
-                $this->orderProcessingService->createOrderItemsFromJson($order);
+                $primaryContact = $order->user->contacts()->where('is_primary', true)->first();
+                $contactIds = [];
+                if ($primaryContact) {
+                    $contactIds = [
+                        'registrant' => $primaryContact->id,
+                        'admin' => $primaryContact->id,
+                        'tech' => $primaryContact->id,
+                        'billing' => $primaryContact->id,
+                    ];
+                }
 
-                // Create hosting subscriptions from order items
-                $this->hostingSubscriptionService->createSubscriptionsFromOrder($order);
-
-                // Dispatch appropriate renewal jobs based on order items
-                if (in_array($order->type, ['renewal', 'subscription_renewal'], true)) {
-                    $this->orderProcessingService->dispatchRenewalJobs($order);
+                try {
+                    $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
+                    $processOrderAction->handle($order, $contactIds, false);
+                } catch (Exception $e) {
+                    Log::warning('Order processing failed in webhook handler', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
                 }
             }
 
@@ -311,9 +317,10 @@ final class StripeWebhookController extends Controller
                 $invoice->id
             );
 
-            $this->orderService->processDomainRegistrations($order);
+            $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
+            $processOrderAction->handle($order, [], false);
 
-            Log::info('Subscription renewal order created and processed via Stripe webhook', [
+            Log::info('Subscription renewal order created and job dispatched via Stripe webhook', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'subscription_id' => $subscription->id,
@@ -327,6 +334,8 @@ final class StripeWebhookController extends Controller
                 'error' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),
             ]);
+        } catch (Throwable $e) {
+            $e->getMessage();
         }
     }
 
@@ -510,6 +519,178 @@ final class StripeWebhookController extends Controller
         }
 
         return BillingCycle::Monthly;
+    }
+
+    /**
+     * Handle checkout session completed webhook
+     */
+    private function handleCheckoutSessionCompleted(object $session): void
+    {
+        try {
+            Log::info('Processing checkout.session.completed', [
+                'session_id' => $session->id,
+                'payment_intent_id' => $session->payment_intent ?? null,
+                'metadata' => (array) ($session->metadata ?? []),
+            ]);
+
+            // Method 1: Find by stripe_session_id (most direct)
+            $order = Order::query()->where('stripe_session_id', $session->id)->first();
+
+            // Method 2: Find by metadata order_id
+            if (! $order && isset($session->metadata->order_id)) {
+                $order = Order::query()->find($session->metadata->order_id);
+            }
+
+            // Method 3: Find by payment intent via Payment model
+            if (! $order && isset($session->payment_intent)) {
+                $payment = Payment::query()
+                    ->where('stripe_payment_intent_id', $session->payment_intent)
+                    ->orWhere('stripe_session_id', $session->id)
+                    ->first();
+                $order = $payment?->order;
+            }
+
+            // Method 4: Find by payment intent directly on order
+            if (! $order && isset($session->payment_intent)) {
+                $order = Order::query()
+                    ->where('stripe_payment_intent_id', $session->payment_intent)
+                    ->first();
+            }
+
+            if (! $order) {
+                Log::error('Order not found for checkout session', [
+                    'session_id' => $session->id,
+                    'payment_intent_id' => $session->payment_intent ?? null,
+                    'metadata_order_id' => $session->metadata->order_id ?? null,
+                    'metadata_payment_id' => $session->metadata->payment_id ?? null,
+                ]);
+
+                return;
+            }
+
+            Log::info('Order found for checkout session', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'session_id' => $session->id,
+            ]);
+
+            // Update order with Stripe information
+            $updateData = [];
+            $shouldUpdatePaymentStatus = false;
+
+            // If payment is pending, mark it as paid
+            if ($order->payment_status === 'pending') {
+                $updateData['payment_status'] = 'paid';
+                $updateData['status'] = $order->status === 'pending' ? 'processing' : $order->status;
+                $updateData['processed_at'] = now();
+                $shouldUpdatePaymentStatus = true;
+            }
+
+            // Ensure stripe_session_id is set (even if already paid)
+            if (! $order->stripe_session_id) {
+                $updateData['stripe_session_id'] = $session->id;
+            }
+
+            // Update payment intent ID if available and not already set
+            if (isset($session->payment_intent) && ! $order->stripe_payment_intent_id) {
+                $updateData['stripe_payment_intent_id'] = $session->payment_intent;
+            }
+
+            // Update order if there are changes
+            if (! empty($updateData)) {
+                $order->update($updateData);
+            }
+
+            // Update associated payment record if it exists (always check, even if order wasn't updated)
+            $payment = null;
+            if (isset($session->metadata->payment_id)) {
+                $payment = Payment::query()->find($session->metadata->payment_id);
+            }
+
+            if (! $payment && isset($session->payment_intent)) {
+                $payment = Payment::query()
+                    ->where('stripe_payment_intent_id', $session->payment_intent)
+                    ->orWhere('stripe_session_id', $session->id)
+                    ->first();
+            }
+
+            if (! $payment) {
+                $payment = $order->payments()
+                    ->where('payment_method', 'stripe')
+                    ->orderByDesc('attempt_number')
+                    ->orderByDesc('id')
+                    ->first();
+            }
+
+            if ($payment) {
+                $paymentUpdateData = [];
+
+                // Update payment status if it's not successful
+                if (! $payment->isSuccessful() && $shouldUpdatePaymentStatus) {
+                    $paymentUpdateData['status'] = 'succeeded';
+                    $paymentUpdateData['paid_at'] = now();
+                    $paymentUpdateData['last_attempted_at'] = now();
+                }
+
+                // Ensure stripe_session_id is set (even if already successful)
+                if (! $payment->stripe_session_id) {
+                    $paymentUpdateData['stripe_session_id'] = $session->id;
+                }
+
+                // Update payment intent ID if available and not already set
+                if (isset($session->payment_intent) && ! $payment->stripe_payment_intent_id) {
+                    $paymentUpdateData['stripe_payment_intent_id'] = $session->payment_intent;
+                }
+
+                if (! empty($paymentUpdateData)) {
+                    $payment->update($paymentUpdateData);
+
+                    Log::info('Payment record updated via webhook', [
+                        'payment_id' => $payment->id,
+                        'order_id' => $order->id,
+                        'status' => $paymentUpdateData['status'] ?? $payment->status,
+                    ]);
+                }
+            }
+
+            Log::info('Order payment status updated via webhook', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'payment_status' => $order->payment_status,
+                'stripe_session_id' => $order->stripe_session_id,
+                'stripe_payment_intent_id' => $order->stripe_payment_intent_id,
+                'payment_updated' => $payment !== null,
+                'payment_status_changed' => $shouldUpdatePaymentStatus,
+            ]);
+
+            $primaryContact = $order->user->contacts()->where('is_primary', true)->first();
+            $contactIds = [];
+            if ($primaryContact) {
+                $contactIds = [
+                    'registrant' => $primaryContact->id,
+                    'admin' => $primaryContact->id,
+                    'tech' => $primaryContact->id,
+                    'billing' => $primaryContact->id,
+                ];
+            }
+
+            try {
+                $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
+                $processOrderAction->handle($order, $contactIds, false);
+            } catch (Exception $e) {
+                Log::warning('Order processing failed in checkout session webhook handler', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+        } catch (Exception $exception) {
+            Log::error('Error handling checkout.session.completed webhook', [
+                'session_id' => $session->id ?? 'unknown',
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+        }
     }
 
     private function findPaymentForIntent(object $paymentIntent): ?Payment

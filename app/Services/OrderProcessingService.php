@@ -109,6 +109,18 @@ final readonly class OrderProcessingService
                 if (isset($attributes['billing_cycle'])) {
                     $itemMetadata['billing_cycle'] = $attributes['billing_cycle'];
                 }
+
+                if (isset($attributes['hosting_plan_id'])) {
+                    $itemMetadata['hosting_plan_id'] = $attributes['hosting_plan_id'];
+                }
+
+                if (isset($attributes['hosting_plan_price_id'])) {
+                    $itemMetadata['hosting_plan_price_id'] = $attributes['hosting_plan_price_id'];
+                }
+
+                if (isset($attributes['linked_domain'])) {
+                    $itemMetadata['linked_domain'] = $attributes['linked_domain'];
+                }
             }
 
             // For domain renewals, include years in metadata if present

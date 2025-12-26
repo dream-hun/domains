@@ -2,10 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Actions\RegisterDomainAction;
+use App\Enums\Hosting\HostingPlanPriceStatus;
+use App\Enums\Hosting\HostingPlanStatus;
+use App\Models\Contact;
 use App\Models\Currency;
+use App\Models\Domain;
+use App\Models\HostingPlan;
+use App\Models\HostingPlanPrice;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Role;
+use App\Models\Subscription;
 use App\Models\User;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -294,5 +302,336 @@ describe('KPay Payment Flow', function (): void {
         $order->refresh();
         expect($order->payment_status)->toBe('paid')
             ->and($order->status)->toBe('processing');
+    });
+
+    it('processes domain registrations after successful KPay payment via webhook', function (): void {
+        $user = User::factory()->create();
+        $contact = Contact::factory()->create([
+            'user_id' => $user->id,
+            'is_primary' => true,
+        ]);
+
+        $order = Order::factory()->for($user)->create([
+            'payment_method' => 'kpay',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'type' => 'registration',
+            'metadata' => ['selected_contact_id' => $contact->id],
+            'items' => [
+                [
+                    'id' => 'example.com',
+                    'name' => 'example.com',
+                    'price' => 12.99,
+                    'quantity' => 1,
+                    'attributes' => [
+                        'type' => 'registration',
+                        'domain_name' => 'example.com',
+                        'years' => 1,
+                        'currency' => 'USD',
+                    ],
+                ],
+            ],
+        ]);
+
+        $payment = Payment::query()->create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'payment_method' => 'kpay',
+            'amount' => $order->total_amount,
+            'currency' => $order->currency,
+            'attempt_number' => 1,
+            'kpay_transaction_id' => 'TXN123456',
+            'kpay_ref_id' => $order->order_number.'-1',
+            'stripe_payment_intent_id' => Payment::generatePendingIntentId($order, 1),
+            'last_attempted_at' => now(),
+        ]);
+
+        // Mock successful domain registration
+        $domain = Domain::factory()->create(['owner_id' => $user->id]);
+        $mockAction = mock(RegisterDomainAction::class);
+        $mockAction->shouldReceive('handle')
+            ->once()
+            ->andReturn([
+                'success' => true,
+                'domain_id' => $domain->id,
+                'message' => 'Domain registered successfully',
+            ]);
+
+        $this->app->instance(RegisterDomainAction::class, $mockAction);
+
+        // Simulate webhook postback with successful payment status
+        $this->postJson(route('payment.kpay.webhook'), [
+            'tid' => 'TXN123456',
+            'refid' => $order->order_number.'-1',
+            'statusid' => '01',
+            'statusdesc' => 'Payment successful',
+        ])
+            ->assertSuccessful()
+            ->assertJson(['reply' => 'OK']);
+
+        // Verify order was updated
+        $order->refresh();
+        expect($order->payment_status)->toBe('paid');
+        // Order status will be 'completed' if domain registration succeeds, or 'processing' if pending
+        expect($order->status)->toBeIn(['processing', 'completed']);
+
+        // Verify payment was updated
+        $payment->refresh();
+        expect($payment->status)->toBe('succeeded');
+
+        // Verify order items were created
+        expect($order->orderItems)->toHaveCount(1);
+
+        // Verify domain registration was attempted (mocked action was called)
+        $mockAction->shouldHaveReceived('handle');
+    });
+
+    it('processes domain registrations after successful KPay payment via success handler', function (): void {
+        $user = User::factory()->create();
+        $contact = Contact::factory()->create([
+            'user_id' => $user->id,
+            'is_primary' => true,
+        ]);
+
+        $order = Order::factory()->for($user)->create([
+            'payment_method' => 'kpay',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'type' => 'registration',
+            'metadata' => ['selected_contact_id' => $contact->id],
+            'items' => [
+                [
+                    'id' => 'example.com',
+                    'name' => 'example.com',
+                    'price' => 12.99,
+                    'quantity' => 1,
+                    'attributes' => [
+                        'type' => 'registration',
+                        'domain_name' => 'example.com',
+                        'years' => 1,
+                        'currency' => 'USD',
+                    ],
+                ],
+            ],
+        ]);
+
+        $payment = Payment::query()->create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'payment_method' => 'kpay',
+            'amount' => $order->total_amount,
+            'currency' => $order->currency,
+            'attempt_number' => 1,
+            'kpay_transaction_id' => 'TXN123456',
+            'kpay_ref_id' => $order->order_number.'-1',
+            'stripe_payment_intent_id' => Payment::generatePendingIntentId($order, 1),
+            'last_attempted_at' => now(),
+        ]);
+
+        // Mock successful status check
+        Http::fake([
+            'api.kpay.test' => Http::response([
+                'status' => 'success',
+                'payment_status' => 'completed',
+                'tid' => 'TXN123456',
+                'refid' => $order->order_number.'-1',
+                'statusid' => '01',
+            ], 200),
+        ]);
+
+        // Mock successful domain registration
+        $domain = Domain::factory()->create(['owner_id' => $user->id]);
+        $mockAction = mock(RegisterDomainAction::class);
+        $mockAction->shouldReceive('handle')
+            ->once()
+            ->andReturn([
+                'success' => true,
+                'domain_id' => $domain->id,
+                'message' => 'Domain registered successfully',
+            ]);
+
+        $this->app->instance(RegisterDomainAction::class, $mockAction);
+
+        // Set checkout session with contact ID
+        session(['checkout' => ['selected_contact_id' => $contact->id]]);
+
+        actingAs($user)
+            ->get(route('payment.kpay.success', $order))
+            ->assertRedirect();
+
+        // Verify order was updated
+        $order->refresh();
+        expect($order->payment_status)->toBe('paid');
+
+        // Verify payment was updated
+        $payment->refresh();
+        expect($payment->status)->toBe('succeeded');
+
+        // Verify order items were created
+        expect($order->orderItems)->toHaveCount(1);
+
+        // Verify domain registration was attempted (mocked action was called)
+        $mockAction->shouldHaveReceived('handle');
+    });
+
+    it('creates hosting subscriptions after successful KPay payment', function (): void {
+        $user = User::factory()->create();
+
+        $hostingPlan = HostingPlan::factory()->create([
+            'status' => HostingPlanStatus::Active->value,
+        ]);
+
+        $planPrice = HostingPlanPrice::factory()->create([
+            'hosting_plan_id' => $hostingPlan->id,
+            'billing_cycle' => 'monthly',
+            'regular_price' => 2500,
+            'status' => HostingPlanPriceStatus::Active->value,
+        ]);
+
+        $order = Order::factory()->for($user)->create([
+            'payment_method' => 'kpay',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'type' => 'hosting',
+            'items' => [
+                [
+                    'id' => 'hosting-1',
+                    'name' => $hostingPlan->name,
+                    'price' => 25.00,
+                    'quantity' => 1,
+                    'attributes' => [
+                        'type' => 'hosting',
+                        'domain_name' => $hostingPlan->name,
+                        'hosting_plan_id' => $hostingPlan->id,
+                        'hosting_plan_price_id' => $planPrice->id,
+                        'billing_cycle' => 'monthly',
+                        'linked_domain' => 'example.com',
+                        'currency' => 'USD',
+                    ],
+                ],
+            ],
+        ]);
+
+        $payment = Payment::query()->create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'payment_method' => 'kpay',
+            'amount' => $order->total_amount,
+            'currency' => $order->currency,
+            'attempt_number' => 1,
+            'kpay_transaction_id' => 'TXN123456',
+            'kpay_ref_id' => $order->order_number.'-1',
+            'stripe_payment_intent_id' => Payment::generatePendingIntentId($order, 1),
+            'last_attempted_at' => now(),
+        ]);
+
+        // Mock successful status check
+        Http::fake([
+            'api.kpay.test' => Http::response([
+                'status' => 'success',
+                'payment_status' => 'completed',
+                'tid' => 'TXN123456',
+                'refid' => $order->order_number.'-1',
+                'statusid' => '01',
+            ], 200),
+        ]);
+
+        actingAs($user)
+            ->get(route('payment.kpay.success', $order))
+            ->assertRedirect();
+
+        // Verify order was updated
+        $order->refresh();
+        expect($order->payment_status)->toBe('paid');
+
+        // Verify payment was updated
+        $payment->refresh();
+        expect($payment->status)->toBe('succeeded');
+
+        // Verify order items were created
+        $order->refresh();
+        expect($order->orderItems)->toHaveCount(1);
+
+        // Verify the order item has correct metadata
+        $orderItem = $order->orderItems->first();
+        expect($orderItem->domain_type)->toBe('hosting')
+            ->and($orderItem->metadata)->toHaveKey('hosting_plan_id')
+            ->and($orderItem->metadata['hosting_plan_id'])->toBe($hostingPlan->id);
+
+        // Verify subscription was created
+        $subscription = Subscription::query()
+            ->where('user_id', $user->id)
+            ->where('hosting_plan_id', $hostingPlan->id)
+            ->first();
+        expect($subscription)->not->toBeNull()
+            ->and($subscription->hosting_plan_id)->toBe($hostingPlan->id)
+            ->and($subscription->hosting_plan_price_id)->toBe($planPrice->id)
+            ->and($subscription->billing_cycle)->toBe('monthly')
+            ->and($subscription->status)->toBe('active');
+    });
+
+    it('does not process domain registrations for renewal orders via webhook', function (): void {
+        $user = User::factory()->create();
+
+        $order = Order::factory()->for($user)->create([
+            'payment_method' => 'kpay',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'type' => 'renewal',
+            'items' => [
+                [
+                    'id' => 'renewal-1',
+                    'name' => 'example.com',
+                    'price' => 12.99,
+                    'quantity' => 1,
+                    'attributes' => [
+                        'type' => 'renewal',
+                        'domain_name' => 'example.com',
+                        'years' => 1,
+                        'currency' => 'USD',
+                    ],
+                ],
+            ],
+        ]);
+
+        $payment = Payment::query()->create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'payment_method' => 'kpay',
+            'amount' => $order->total_amount,
+            'currency' => $order->currency,
+            'attempt_number' => 1,
+            'kpay_transaction_id' => 'TXN123456',
+            'kpay_ref_id' => $order->order_number.'-1',
+            'stripe_payment_intent_id' => Payment::generatePendingIntentId($order, 1),
+            'last_attempted_at' => now(),
+        ]);
+
+        // Mock domain registration action - should NOT be called for renewals
+        $mockAction = mock(RegisterDomainAction::class);
+        $mockAction->shouldNotReceive('handle');
+
+        $this->app->instance(RegisterDomainAction::class, $mockAction);
+
+        // Simulate webhook postback with successful payment status
+        $this->postJson(route('payment.kpay.webhook'), [
+            'tid' => 'TXN123456',
+            'refid' => $order->order_number.'-1',
+            'statusid' => '01',
+            'statusdesc' => 'Payment successful',
+        ])
+            ->assertSuccessful()
+            ->assertJson(['reply' => 'OK']);
+
+        // Verify order was updated
+        $order->refresh();
+        expect($order->payment_status)->toBe('paid');
+
+        // Verify domain registration was NOT attempted
+        $mockAction->shouldNotHaveReceived('handle');
     });
 });

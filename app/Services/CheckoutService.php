@@ -22,7 +22,7 @@ final readonly class CheckoutService
      */
     public function processCheckout(array $data): Order
     {
-        // Transaction 1: Create order and process payment
+
         $order = DB::transaction(function () use ($data): Order {
             $order = $this->orderService->createOrder([
                 'user_id' => $data['user_id'],
@@ -34,9 +34,7 @@ final readonly class CheckoutService
                 'discount_amount' => $data['discount_amount'] ?? 0,
             ]);
 
-            // Skip payment processing for KPay - user needs to fill form first
             if ($data['payment_method'] === 'kpay') {
-                // Order is created, payment will be processed when user submits KPay form
                 return $order;
             }
 
@@ -67,7 +65,6 @@ final readonly class CheckoutService
             throw new Exception($paymentResult['error'] ?? 'Payment processing failed');
         });
 
-        // Payment is now committed - process order items outside transaction
         if ($order->isPaid()) {
             try {
                 $this->orderService->processDomainRegistrations($order, $data['contact_ids']);

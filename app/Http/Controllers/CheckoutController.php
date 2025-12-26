@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Order\ProcessOrderAfterPaymentAction;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Services\HostingSubscriptionService;
 use App\Services\OrderProcessingService;
 use App\Services\StripeCheckoutService;
 use App\Services\TransactionLogger;
@@ -27,8 +27,7 @@ final class CheckoutController extends Controller
     public function __construct(
         private readonly TransactionLogger $transactionLogger,
         private readonly StripeCheckoutService $stripeCheckoutService,
-        private readonly OrderProcessingService $orderProcessingService,
-        private readonly HostingSubscriptionService $hostingSubscriptionService
+        private readonly OrderProcessingService $orderProcessingService
     ) {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
     }
@@ -163,16 +162,9 @@ final class CheckoutController extends Controller
 
                 DB::commit();
 
-                Cart::clear();
-
-                // Create OrderItem records from order's items JSON if they don't exist
-                $this->orderProcessingService->createOrderItemsFromJson($order);
-
-                // Create hosting subscriptions from order items
-                $this->hostingSubscriptionService->createSubscriptionsFromOrder($order);
-
-                // Dispatch appropriate renewal jobs based on order items
-                $this->orderProcessingService->dispatchRenewalJobs($order);
+                // Process order after payment (idempotent)
+                $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
+                $processOrderAction->handle($order, [], true);
 
                 $order->refresh();
                 $paymentAttempt?->refresh();
