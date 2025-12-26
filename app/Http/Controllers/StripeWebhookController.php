@@ -114,6 +114,45 @@ final class StripeWebhookController extends Controller
                         ->first();
                 }
 
+                // Last resort: Try to find session from Stripe API
+                if (! $payment instanceof Payment) {
+                    try {
+                        $sessions = \Stripe\Checkout\Session::all([
+                            'payment_intent' => $paymentIntent->id,
+                            'limit' => 1,
+                        ]);
+
+                        if (! empty($sessions->data)) {
+                            $session = $sessions->data[0];
+                            $sessionId = $session->id;
+
+                            // Try to find payment by session ID
+                            $payment = Payment::query()
+                                ->where('stripe_session_id', $sessionId)
+                                ->orderByDesc('attempt_number')
+                                ->orderByDesc('id')
+                                ->first();
+
+                            // If still not found, try to find via order
+                            if (! $payment instanceof Payment) {
+                                $order = Order::query()->where('stripe_session_id', $sessionId)->first();
+                                if ($order) {
+                                    $payment = $order->payments()
+                                        ->where('payment_method', 'stripe')
+                                        ->orderByDesc('attempt_number')
+                                        ->orderByDesc('id')
+                                        ->first();
+                                }
+                            }
+                        }
+                    } catch (Exception $e) {
+                        Log::debug('Could not retrieve session from Stripe for payment intent', [
+                            'payment_intent_id' => $paymentIntent->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
                 if (! $payment instanceof Payment) {
                     Log::warning('Payment intent succeeded without matching payment record', [
                         'payment_intent_id' => $paymentIntent->id,
@@ -836,9 +875,16 @@ final class StripeWebhookController extends Controller
                     $paymentUpdateData['stripe_session_id'] = $session->id;
                 }
 
-                // Update payment intent ID if available and not already set
-                if (isset($session->payment_intent) && ! $payment->stripe_payment_intent_id) {
-                    $paymentUpdateData['stripe_payment_intent_id'] = $session->payment_intent;
+                // Update payment intent ID if available (always update to ensure we have the real Stripe ID)
+                if (isset($session->payment_intent)) {
+                    // Check if current payment intent ID is a placeholder (starts with "pending-")
+                    $currentIntentId = $payment->stripe_payment_intent_id;
+                    $isPlaceholder = $currentIntentId && str_starts_with($currentIntentId, 'pending-');
+
+                    // Always update if it's a placeholder or if not set
+                    if ($isPlaceholder || ! $currentIntentId) {
+                        $paymentUpdateData['stripe_payment_intent_id'] = $session->payment_intent;
+                    }
                 }
 
                 if (! empty($paymentUpdateData)) {
@@ -848,6 +894,7 @@ final class StripeWebhookController extends Controller
                         'payment_id' => $payment->id,
                         'order_id' => $order->id,
                         'status' => $paymentUpdateData['status'] ?? $payment->status,
+                        'payment_intent_updated' => isset($paymentUpdateData['stripe_payment_intent_id']),
                     ]);
                 }
             }
@@ -946,6 +993,55 @@ final class StripeWebhookController extends Controller
 
             if ($chargeId) {
                 $payment = Payment::query()->where('stripe_charge_id', $chargeId)->first();
+                if ($payment) {
+                    return $payment;
+                }
+            }
+        }
+
+        // Try to find by session ID from payment intent metadata or by looking up the session
+        $sessionId = $paymentIntent->metadata->session_id ?? null;
+        if (! $sessionId) {
+            // Try to get session ID from the payment intent's invoice or checkout session
+            // Payment intents created by checkout sessions have a 'invoice' field
+            // We can also try to retrieve the session that created this payment intent
+            try {
+                if (isset($paymentIntent->invoice)) {
+                    $invoiceId = is_string($paymentIntent->invoice)
+                        ? $paymentIntent->invoice
+                        : ($paymentIntent->invoice->id ?? null);
+                    if ($invoiceId) {
+                        $invoice = \Stripe\Invoice::retrieve($invoiceId);
+                        $sessionId = $invoice->subscription ?? null;
+                    }
+                }
+            } catch (Exception $e) {
+                Log::debug('Could not retrieve invoice for payment intent', [
+                    'payment_intent_id' => $paymentIntent->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($sessionId) {
+            $payment = Payment::query()
+                ->where('stripe_session_id', $sessionId)
+                ->where('payment_method', 'stripe')
+                ->orderByDesc('attempt_number')
+                ->orderByDesc('id')
+                ->first();
+            if ($payment) {
+                return $payment;
+            }
+
+            // Also try to find via order's session ID
+            $order = Order::query()->where('stripe_session_id', $sessionId)->first();
+            if ($order) {
+                $payment = $order->payments()
+                    ->where('payment_method', 'stripe')
+                    ->orderByDesc('attempt_number')
+                    ->orderByDesc('id')
+                    ->first();
                 if ($payment) {
                     return $payment;
                 }

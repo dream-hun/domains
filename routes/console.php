@@ -12,3 +12,6 @@ Artisan::command('inspire', function (): void {
 
 // Schedule subscription expiration checks
 Schedule::command('subscriptions:check-expiring --days=7')->daily()->at('09:00');
+
+// Schedule pending jobs processing (every 15 minutes)
+Schedule::command('app:process-pending-jobs --limit=50 --older-than=30')->everyFifteenMinutes();
