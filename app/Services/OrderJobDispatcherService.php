@@ -51,20 +51,23 @@ final readonly class OrderJobDispatcherService
 
     /**
      * Dispatch renewal jobs based on order type
+     * Renewal jobs are processed synchronously to ensure immediate processing after payment
      */
     private function dispatchRenewalJobs(Order $order): void
     {
         if ($order->type === 'renewal') {
-            dispatch(new ProcessDomainRenewalJob($order));
-            Log::info('Dispatched domain renewal job', [
+            // Process renewal jobs synchronously to ensure immediate processing
+            dispatch_sync(new ProcessDomainRenewalJob($order));
+            Log::info('Processed domain renewal job synchronously', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
             ]);
         }
 
         if ($order->type === 'subscription_renewal') {
-            dispatch(new ProcessSubscriptionRenewalJob($order));
-            Log::info('Dispatched subscription renewal job', [
+            // Process subscription renewal jobs synchronously to ensure immediate processing
+            dispatch_sync(new ProcessSubscriptionRenewalJob($order));
+            Log::info('Processed subscription renewal job synchronously', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
             ]);

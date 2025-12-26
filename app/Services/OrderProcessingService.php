@@ -177,19 +177,19 @@ final readonly class OrderProcessingService
         }
 
         if ($hasDomainRenewals) {
-            Log::info('Dispatching ProcessDomainRenewalJob', [
+            Log::info('Processing ProcessDomainRenewalJob synchronously', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
             ]);
-            dispatch(new ProcessDomainRenewalJob($order));
+            dispatch_sync(new ProcessDomainRenewalJob($order));
         }
 
         if ($hasSubscriptionRenewals) {
-            Log::info('Dispatching ProcessSubscriptionRenewalJob', [
+            Log::info('Processing ProcessSubscriptionRenewalJob synchronously', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
             ]);
-            dispatch(new ProcessSubscriptionRenewalJob($order));
+            dispatch_sync(new ProcessSubscriptionRenewalJob($order));
         }
 
         if (! $hasDomainRenewals && ! $hasSubscriptionRenewals) {
