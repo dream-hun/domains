@@ -63,6 +63,8 @@ final class StripeWebhookController extends Controller
                 'payment_intent.succeeded' => $this->handlePaymentIntentSucceeded($event->data->object),
                 'payment_intent.payment_failed' => $this->handlePaymentIntentFailed($event->data->object),
                 'charge.refunded' => $this->handleChargeRefunded($event->data->object),
+                'charge.succeeded' => $this->handleChargeSucceeded($event->data->object),
+                'charge.updated' => $this->handleChargeUpdated($event->data->object),
                 'invoice.payment_succeeded' => $this->handleInvoicePaymentSucceeded($event->data->object),
                 'invoice.payment_failed' => $this->handleInvoicePaymentFailed($event->data->object),
                 'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event->data->object),
@@ -103,13 +105,27 @@ final class StripeWebhookController extends Controller
             $payment = $this->findPaymentForIntent($paymentIntent);
 
             if (! $payment instanceof Payment) {
-                Log::info('Payment intent succeeded without matching payment record', [
-                    'payment_intent_id' => $paymentIntent->id,
-                    'metadata_payment_id' => $paymentIntent->metadata->payment_id ?? null,
-                    'metadata_order_id' => $paymentIntent->metadata->order_id ?? null,
-                ]);
+                // Try to find by session ID if available (from metadata or expanded session)
+                if (isset($paymentIntent->metadata->session_id)) {
+                    $payment = Payment::query()
+                        ->where('stripe_session_id', $paymentIntent->metadata->session_id)
+                        ->orderByDesc('attempt_number')
+                        ->orderByDesc('id')
+                        ->first();
+                }
 
-                return;
+                if (! $payment instanceof Payment) {
+                    Log::warning('Payment intent succeeded without matching payment record', [
+                        'payment_intent_id' => $paymentIntent->id,
+                        'metadata_payment_id' => $paymentIntent->metadata->payment_id ?? null,
+                        'metadata_order_id' => $paymentIntent->metadata->order_id ?? null,
+                        'metadata_session_id' => $paymentIntent->metadata->session_id ?? null,
+                        'latest_charge' => $paymentIntent->latest_charge ?? null,
+                        'charges_count' => is_array($paymentIntent->charges->data ?? null) ? count($paymentIntent->charges->data) : null,
+                    ]);
+
+                    return;
+                }
             }
 
             if (! $payment->isSuccessful()) {
@@ -252,6 +268,189 @@ final class StripeWebhookController extends Controller
             Log::error('Error handling charge.refunded webhook', [
                 'charge_id' => $charge->id ?? 'unknown',
                 'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Handle charge succeeded
+     */
+    private function handleChargeSucceeded(object $charge): void
+    {
+        try {
+            Log::info('Charge succeeded', [
+                'charge_id' => $charge->id,
+                'amount' => $charge->amount ?? null,
+                'currency' => $charge->currency ?? null,
+            ]);
+
+            // Find payment by charge ID
+            $payment = Payment::query()->where('stripe_charge_id', $charge->id)->first();
+
+            if (! $payment) {
+                Log::info('Payment not found for charge succeeded', [
+                    'charge_id' => $charge->id,
+                    'payment_intent_id' => $charge->payment_intent ?? null,
+                ]);
+
+                return;
+            }
+
+            if (! $payment->isSuccessful()) {
+                $payment->update([
+                    'status' => 'succeeded',
+                    'stripe_charge_id' => $charge->id,
+                    'paid_at' => now(),
+                    'last_attempted_at' => now(),
+                    'metadata' => array_merge($payment->metadata ?? [], [
+                        'charge_status' => 'succeeded',
+                        'charge_succeeded_at' => now()->toDateTimeString(),
+                    ]),
+                ]);
+
+                Log::info('Payment marked as succeeded via charge.succeeded webhook', [
+                    'payment_id' => $payment->id,
+                    'charge_id' => $charge->id,
+                ]);
+            }
+
+            // Update order status if exists and is pending
+            $order = $payment->order;
+
+            if ($order !== null && $order->payment_status === 'pending') {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => $order->status === 'pending' ? 'processing' : $order->status,
+                    'stripe_payment_intent_id' => $charge->payment_intent ?? $order->stripe_payment_intent_id,
+                    'processed_at' => now(),
+                ]);
+
+                $primaryContact = $order->user->contacts()->where('is_primary', true)->first();
+                $contactIds = [];
+                if ($primaryContact) {
+                    $contactIds = [
+                        'registrant' => $primaryContact->id,
+                        'admin' => $primaryContact->id,
+                        'tech' => $primaryContact->id,
+                        'billing' => $primaryContact->id,
+                    ];
+                }
+
+                try {
+                    $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
+                    $processOrderAction->handle($order, $contactIds, false);
+                } catch (Exception $e) {
+                    Log::warning('Order processing failed in charge.succeeded webhook handler', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+
+                Log::info('Order payment status updated via charge.succeeded webhook', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                ]);
+            }
+
+        } catch (Exception $exception) {
+            Log::error('Error handling charge.succeeded webhook', [
+                'charge_id' => $charge->id ?? 'unknown',
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+        }
+    }
+
+    /**
+     * Handle charge updated
+     */
+    private function handleChargeUpdated(object $charge): void
+    {
+        try {
+            Log::info('Charge updated', [
+                'charge_id' => $charge->id,
+                'status' => $charge->status ?? null,
+                'amount_refunded' => $charge->amount_refunded ?? 0,
+            ]);
+
+            // Find payment by charge ID
+            $payment = Payment::query()->where('stripe_charge_id', $charge->id)->first();
+
+            if (! $payment) {
+                Log::info('Payment not found for charge update', [
+                    'charge_id' => $charge->id,
+                ]);
+
+                return;
+            }
+
+            $updateData = [];
+            $metadataUpdates = array_merge($payment->metadata ?? [], [
+                'charge_status' => $charge->status ?? null,
+                'charge_updated_at' => now()->toDateTimeString(),
+            ]);
+
+            // Handle refunded status
+            if (isset($charge->amount_refunded) && $charge->amount_refunded > 0) {
+                if (! isset($metadataUpdates['refund_amount'])) {
+                    $metadataUpdates['refund_amount'] = $charge->amount_refunded;
+                    $metadataUpdates['refunded_at'] = now()->toDateTimeString();
+                }
+
+                if ($payment->status !== 'refunded') {
+                    $updateData['status'] = 'refunded';
+                }
+            } else {
+                // Map Stripe charge status to payment status
+                $chargeStatus = $charge->status ?? null;
+                $newPaymentStatus = match ($chargeStatus) {
+                    'succeeded' => 'succeeded',
+                    'pending' => 'pending',
+                    'failed' => 'failed',
+                    default => null,
+                };
+
+                if ($newPaymentStatus !== null && $payment->status !== $newPaymentStatus) {
+                    $updateData['status'] = $newPaymentStatus;
+
+                    if ($newPaymentStatus === 'succeeded' && ! $payment->paid_at) {
+                        $updateData['paid_at'] = now();
+                        $updateData['last_attempted_at'] = now();
+                    }
+                }
+            }
+
+            $updateData['metadata'] = $metadataUpdates;
+
+            if (! empty($updateData)) {
+                $payment->update($updateData);
+
+                // Update order status if payment status changed and order exists
+                if (isset($updateData['status']) && $payment->order !== null) {
+                    $orderStatusUpdate = match ($updateData['status']) {
+                        'succeeded' => ['payment_status' => 'paid', 'status' => $payment->order->status === 'pending' ? 'processing' : $payment->order->status],
+                        'failed' => ['payment_status' => 'failed', 'status' => 'failed'],
+                        'refunded' => ['payment_status' => 'refunded', 'status' => 'refunded'],
+                        default => [],
+                    };
+
+                    if (! empty($orderStatusUpdate)) {
+                        $payment->order->update($orderStatusUpdate);
+                    }
+                }
+
+                Log::info('Payment updated via charge.updated webhook', [
+                    'payment_id' => $payment->id,
+                    'order_id' => $payment->order->id ?? null,
+                    'new_status' => $updateData['status'] ?? $payment->status,
+                ]);
+            }
+
+        } catch (Exception $exception) {
+            Log::error('Error handling charge.updated webhook', [
+                'charge_id' => $charge->id ?? 'unknown',
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
         }
     }
@@ -704,6 +903,55 @@ final class StripeWebhookController extends Controller
             }
         }
 
-        return Payment::query()->where('stripe_payment_intent_id', $paymentIntent->id)->first();
+        // Try to find by exact payment intent ID match
+        $payment = Payment::query()->where('stripe_payment_intent_id', $paymentIntent->id)->first();
+        if ($payment) {
+            return $payment;
+        }
+
+        // Try to find by order's payment intent ID and get the latest payment attempt
+        $metadataOrderId = $paymentIntent->metadata->order_id ?? null;
+        if ($metadataOrderId) {
+            $order = Order::query()->find($metadataOrderId);
+            if ($order) {
+                $payment = $order->payments()
+                    ->where('payment_method', 'stripe')
+                    ->orderByDesc('attempt_number')
+                    ->orderByDesc('id')
+                    ->first();
+                if ($payment) {
+                    return $payment;
+                }
+            }
+        }
+
+        // Try to find order by payment intent ID
+        $order = Order::query()->where('stripe_payment_intent_id', $paymentIntent->id)->first();
+        if ($order) {
+            $payment = $order->payments()
+                ->where('payment_method', 'stripe')
+                ->orderByDesc('attempt_number')
+                ->orderByDesc('id')
+                ->first();
+            if ($payment) {
+                return $payment;
+            }
+        }
+
+        // Try to find by charge ID if payment intent has charges
+        if (isset($paymentIntent->latest_charge)) {
+            $chargeId = is_string($paymentIntent->latest_charge)
+                ? $paymentIntent->latest_charge
+                : ($paymentIntent->latest_charge->id ?? null);
+
+            if ($chargeId) {
+                $payment = Payment::query()->where('stripe_charge_id', $chargeId)->first();
+                if ($payment) {
+                    return $payment;
+                }
+            }
+        }
+
+        return null;
     }
 }
