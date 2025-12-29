@@ -9,15 +9,15 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class KPayService
+readonly class KPayService
 {
-    private readonly string $baseUrl;
+    private string $baseUrl;
 
-    private readonly string $username;
+    private string $username;
 
-    private readonly string $password;
+    private string $password;
 
-    private readonly string $retailerId;
+    private string $retailerId;
 
     public function __construct()
     {
@@ -187,7 +187,6 @@ class KPayService
 
     private function normalizeMsisdn(string $msisdn): string
     {
-
         $msisdn = preg_replace('/[\s\-+]/', '', $msisdn);
 
         if (str_starts_with((string) $msisdn, '0')) {

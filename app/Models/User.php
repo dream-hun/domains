@@ -46,11 +46,6 @@ final class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-    }
-
     /**
      * @throws Exception
      */

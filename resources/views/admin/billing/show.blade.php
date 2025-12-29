@@ -93,6 +93,32 @@
                             </div>
                         </div>
 
+                        @php
+                            // Use eager-loaded payments collection to avoid N+1 queries
+                            $payment = null;
+                            if ($order->relationLoaded('payments') && $order->payments->isNotEmpty()) {
+                                $payment = $order->payments->sortByDesc(function ($p) {
+                                    return ($p->attempt_number ?? 0) * 1000000 + ($p->id ?? 0);
+                                })->first();
+                            } else {
+                                $payment = $order->latestPaymentAttempt();
+                            }
+                            $kpayTransactionId = null;
+                            if ($payment && $order->payment_method === 'kpay') {
+                                $kpayTransactionId = $payment->kpay_transaction_id;
+                            }
+                        @endphp
+                        @if ($kpayTransactionId)
+                            <div class="row mb-3">
+                                <div class="col-sm-4">
+                                    <strong>KPay Transaction ID:</strong>
+                                </div>
+                                <div class="col-sm-8">
+                                    <code>{{ $kpayTransactionId }}</code>
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="row mb-3">
                             <div class="col-sm-4">
                                 <strong>Total Amount:</strong>

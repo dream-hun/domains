@@ -17,6 +17,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 
@@ -178,7 +179,7 @@ describe('KPay Payment Flow', function (): void {
                 'billing_name' => 'Test User',
                 'billing_email' => 'test@example.com',
             ])
-            ->assertSessionHasErrors();
+            ->assertSessionHas('error'); // Flash error message on failure
 
         // Verify payment attempt was marked as failed
         $order = Order::query()->where('user_id', $user->id)->latest()->first();
@@ -211,19 +212,20 @@ describe('KPay Payment Flow', function (): void {
             'last_attempted_at' => now(),
         ]);
 
-        // Mock successful status check
+        // Mock successful status check - statusid '01' indicates success
         Http::fake([
             'api.kpay.test' => Http::response([
-                'status' => 'success',
-                'payment_status' => 'completed',
+                'statusid' => '01',
+                'statusdesc' => 'Payment successful',
                 'tid' => 'TXN123456',
                 'refid' => 'ORD-TEST-1',
+                'momtransactionid' => 'MOM123456',
             ], 200),
         ]);
 
         actingAs($user)
             ->get(route('payment.kpay.status', $payment))
-            ->assertSuccessful();
+            ->assertRedirect(); // Should redirect to success page
 
         $payment->refresh();
         expect($payment->status)->toBe('succeeded')
@@ -388,6 +390,9 @@ describe('KPay Payment Flow', function (): void {
     });
 
     it('processes domain registrations after successful KPay payment via success handler', function (): void {
+        // Use Bus::fake to verify job dispatch
+        Bus::fake();
+
         $user = User::factory()->create();
         $contact = Contact::factory()->create([
             'user_id' => $user->id,
@@ -430,29 +435,16 @@ describe('KPay Payment Flow', function (): void {
             'last_attempted_at' => now(),
         ]);
 
-        // Mock successful status check
+        // Mock successful status check with proper statusid
         Http::fake([
             'api.kpay.test' => Http::response([
-                'status' => 'success',
-                'payment_status' => 'completed',
+                'statusid' => '01',
+                'statusdesc' => 'Payment successful',
                 'tid' => 'TXN123456',
                 'refid' => $order->order_number.'-1',
-                'statusid' => '01',
+                'momtransactionid' => 'MOM123456',
             ], 200),
         ]);
-
-        // Mock successful domain registration
-        $domain = Domain::factory()->create(['owner_id' => $user->id]);
-        $mockAction = mock(RegisterDomainAction::class);
-        $mockAction->shouldReceive('handle')
-            ->once()
-            ->andReturn([
-                'success' => true,
-                'domain_id' => $domain->id,
-                'message' => 'Domain registered successfully',
-            ]);
-
-        $this->app->instance(RegisterDomainAction::class, $mockAction);
 
         // Set checkout session with contact ID
         session(['checkout' => ['selected_contact_id' => $contact->id]]);
@@ -472,8 +464,10 @@ describe('KPay Payment Flow', function (): void {
         // Verify order items were created
         expect($order->orderItems)->toHaveCount(1);
 
-        // Verify domain registration was attempted (mocked action was called)
-        $mockAction->shouldHaveReceived('handle');
+        // Verify domain registration job was dispatched
+        Bus::assertDispatched(App\Jobs\ProcessDomainRegistrationJob::class, function ($job) use ($order) {
+            return $job->order->id === $order->id;
+        });
     });
 
     it('creates hosting subscriptions after successful KPay payment', function (): void {

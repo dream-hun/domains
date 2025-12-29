@@ -55,11 +55,20 @@
                                 To
                                 <address>
                                     <strong>{{$order->billing_name}}</strong><br>
-                                    @foreach($order['billing_address'] as $address)
-                                        {{$address}}
-
-                                    @endforeach
-
+                                    @if ($order->billing_address)
+                                        @if (is_array($order->billing_address))
+                                            {{ $order->billing_address['address_one'] ?? '' }}<br>
+                                            @if (!empty($order->billing_address['address_two']))
+                                                {{ $order->billing_address['address_two'] }}<br>
+                                            @endif
+                                            {{ $order->billing_address['city'] ?? '' }},
+                                            {{ $order->billing_address['state_province'] ?? '' }}
+                                            {{ $order->billing_address['postal_code'] ?? '' }}<br>
+                                            {{ $order->billing_address['country_code'] ?? '' }}<br>
+                                        @elseif (is_string($order->billing_address))
+                                            {{ $order->billing_address }}<br>
+                                        @endif
+                                    @endif
                                     Phone: (555) 539-1037<br>
                                     Email: {{$order->billing_email}}
                                 </address>

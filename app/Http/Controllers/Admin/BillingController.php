@@ -20,7 +20,7 @@ final class BillingController extends Controller
         $user->loadMissing('roles');
 
         $orders = Order::query()
-            ->with(['orderItems', 'user.roles'])
+            ->with(['orderItems', 'user.roles', 'payments'])
             ->unless($user->isAdmin(), function ($query) use ($user): void {
                 $query->where('user_id', $user->id);
             })->latest()
@@ -37,7 +37,7 @@ final class BillingController extends Controller
 
         abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
-        $order->load(['orderItems', 'user']);
+        $order->load(['orderItems', 'user', 'payments']);
 
         return view('admin.billing.show', ['order' => $order]);
     }
@@ -51,7 +51,7 @@ final class BillingController extends Controller
         // Check authorization: either admin or order owner
         abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
-        $order->load(['orderItems', 'user']);
+        $order->load(['orderItems', 'user', 'payments']);
 
         return view('admin.billing.invoice', ['order' => $order]);
     }
@@ -65,7 +65,7 @@ final class BillingController extends Controller
         // Check authorization: either admin or order owner
         abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
-        $order->load(['orderItems', 'user']);
+        $order->load(['orderItems', 'user', 'payments']);
 
         $pdf = Pdf::loadView('admin.billing.invoice-pdf', ['order' => $order]);
 
@@ -80,7 +80,7 @@ final class BillingController extends Controller
 
         abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
 
-        $order->load(['orderItems', 'user']);
+        $order->load(['orderItems', 'user', 'payments']);
 
         $pdf = Pdf::loadView('admin.billing.invoice-pdf', ['order' => $order]);
 

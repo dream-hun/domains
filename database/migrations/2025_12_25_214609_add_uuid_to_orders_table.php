@@ -35,9 +35,10 @@ return new class extends Migration
                     ->update(['uuid' => (string) Str::uuid()]);
             });
 
-        // Check if unique index already exists before adding it
-        $indexes = DB::select("SHOW INDEXES FROM orders WHERE Column_name = 'uuid' AND Non_unique = 0");
-        if (empty($indexes)) {
+        // Check if unique index already exists before adding it using database-agnostic approach
+        $hasUniqueIndex = $this->hasUniqueIndexOnColumn('orders', 'uuid');
+
+        if (! $hasUniqueIndex) {
             Schema::table('orders', function (Blueprint $table): void {
                 $table->uuid('uuid')->nullable(false)->unique()->change();
             });
@@ -57,5 +58,39 @@ return new class extends Migration
         Schema::table('orders', function (Blueprint $table): void {
             $table->dropColumn('uuid');
         });
+    }
+
+    /**
+     * Check if a unique index exists on a column (database-agnostic)
+     */
+    private function hasUniqueIndexOnColumn(string $table, string $column): bool
+    {
+        $connection = Schema::getConnection();
+        $driver = $connection->getDriverName();
+
+        if ($driver === 'sqlite') {
+            // SQLite: Check pragma index_list for unique indexes
+            $indexes = $connection->select("PRAGMA index_list({$table})");
+            foreach ($indexes as $index) {
+                if ($index->unique) {
+                    $columns = $connection->select("PRAGMA index_info({$index->name})");
+                    foreach ($columns as $col) {
+                        if ($col->name === $column) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        // MySQL/MariaDB
+        $indexes = $connection->select(
+            "SHOW INDEXES FROM {$table} WHERE Column_name = ? AND Non_unique = 0",
+            [$column]
+        );
+
+        return ! empty($indexes);
     }
 };

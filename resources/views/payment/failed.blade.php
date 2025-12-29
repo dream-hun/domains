@@ -1,18 +1,5 @@
-<x-user-layout>
-    <div class="rts-hosting-banner rts-hosting-banner-bg">
-        <div class="container">
-            <div class="row">
-                <div class="banner-area">
-                    <div class="rts-hosting-banner rts-hosting-banner__content about__banner">
-                        <h1 class="banner-title sal-animate" data-sal="slide-down" data-sal-delay="200"
-                            data-sal-duration="800">
-                            Payment Failed
-                        </h1>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<x-admin-layout>
+
 
     <div class="container my-5">
         <div class="row justify-content-center">
@@ -90,11 +77,11 @@
                         <!-- Action Buttons -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <a href="{{ route('payment.index') }}"
+                                {{--<a href="{{ route('payment.index') }}"
                                     class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
                                     <i class="bi bi-arrow-clockwise me-2"></i>
                                     Try Again
-                                </a>
+                                </a>--}}
                             </div>
 
                             <div class="col-md-4">
@@ -126,4 +113,4 @@
             </div>
         </div>
     </div>
-</x-user-layout>
+</x-admin-layout>

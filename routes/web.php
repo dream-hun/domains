@@ -146,17 +146,17 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/api/contacts/{id}', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('api.contacts.details');
 
     // Payment routes
-
-    Route::get('/payment/kpay', [PaymentController::class, 'showKPayPaymentPage'])->name('payment.kpay.show');
     Route::post('/payment/stripe', [PaymentController::class, 'stripeCheckout'])->name('payment.stripe');
-    Route::post('/payment/kpay', [PaymentController::class, 'processKPayPayment'])->name('payment.kpay');
-    Route::get('/payment/kpay/status/{payment}', [PaymentController::class, 'checkKPayStatus'])->name('payment.kpay.status');
-    Route::get('/payment/kpay/success/{order}', [PaymentController::class, 'handleKPaySuccess'])->name('payment.kpay.success');
-    Route::get('/payment/kpay/cancel/{order}', [PaymentController::class, 'handleKPayCancel'])->name('payment.kpay.cancel');
     Route::get('/payment/success/{order}', [PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/cancel/{order}', [PaymentController::class, 'handlePaymentCancel'])->name('payment.cancel');
     Route::get('/payment/failed/{order}', [PaymentController::class, 'showPaymentFailed'])->name('payment.failed');
 
+    // KPay Payment Routes
+    Route::get('/payment/kpay', [App\Http\Controllers\KpayPaymentController::class, 'show'])->name('payment.kpay.show');
+    Route::post('/payment/kpay', [App\Http\Controllers\KpayPaymentController::class, 'process'])->name('payment.kpay');
+    Route::get('/payment/kpay/success/{order}', [App\Http\Controllers\KpayPaymentController::class, 'success'])->name('payment.kpay.success');
+    Route::get('/payment/kpay/cancel/{order}', [App\Http\Controllers\KpayPaymentController::class, 'cancel'])->name('payment.kpay.cancel');
+    Route::get('/payment/kpay/status/{payment}', [App\Http\Controllers\KpayPaymentController::class, 'status'])->name('payment.kpay.status');
 });
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');

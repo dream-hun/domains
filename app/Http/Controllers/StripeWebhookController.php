@@ -17,7 +17,9 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Stripe\Checkout\Session;
 use Stripe\Exception\SignatureVerificationException;
+use Stripe\Invoice;
 use Stripe\Stripe;
 use Stripe\Webhook;
 use Throwable;
@@ -117,8 +119,8 @@ final class StripeWebhookController extends Controller
                 // Last resort: Try to find session from Stripe API
                 if (! $payment instanceof Payment) {
                     try {
-                        $sessions = \Stripe\Checkout\Session::all([
-                            'payment_intent' => $paymentIntent->id,
+                        $sessions = Session::all([
+                            'payment_intent' => (string) $paymentIntent->id,
                             'limit' => 1,
                         ]);
 
@@ -1003,7 +1005,7 @@ final class StripeWebhookController extends Controller
         $sessionId = $paymentIntent->metadata->session_id ?? null;
         if (! $sessionId) {
             // Try to get session ID from the payment intent's invoice or checkout session
-            // Payment intents created by checkout sessions have a 'invoice' field
+            // Payment intents created by checkout sessions have an 'invoice' field
             // We can also try to retrieve the session that created this payment intent
             try {
                 if (isset($paymentIntent->invoice)) {
@@ -1011,7 +1013,7 @@ final class StripeWebhookController extends Controller
                         ? $paymentIntent->invoice
                         : ($paymentIntent->invoice->id ?? null);
                     if ($invoiceId) {
-                        $invoice = \Stripe\Invoice::retrieve($invoiceId);
+                        $invoice = Invoice::retrieve($invoiceId);
                         $sessionId = $invoice->subscription ?? null;
                     }
                 }

@@ -154,20 +154,20 @@ describe('calculateItemTotal', function (): void {
         expect($total)->toBe(110.4);
     });
 
-    it('calculates total for subscription_renewal with annual billing', function (): void {
-        $item = new CartItem('test-sub', 'Subscription', 120.0, 12, [
+    it('calculates total for subscription_renewal with annual billing using monthly unit price', function (): void {
+        $item = new CartItem('test-sub', 'Subscription', 10.0, 12, [
             'type' => 'subscription_renewal',
             'currency' => 'USD',
-            'display_unit_price' => 120.0, // Annual price
+            'unit_price' => 10.0, // Monthly price
+            'display_unit_price' => 120.0, // Annual price (for display only)
             'billing_cycle' => 'annually',
         ]);
 
         $converter = resolve(CartPriceConverter::class);
         $total = $converter->calculateItemTotal($item, 'EUR');
 
-        // Convert annual price: 120 * 0.92 = 110.4
-        // Years = 12 / 12 = 1
-        // Total = 110.4 * 1 = 110.4
+        // Convert monthly price: 10 * 0.92 = 9.2
+        // Total = 9.2 * 12 = 110.4 (monthly price × quantity in months)
         expect($total)->toBe(110.4);
     });
 

@@ -206,6 +206,12 @@ final readonly class PaymentService
     public function checkKPayPaymentStatus(Payment $payment): array
     {
         if (empty($payment->kpay_transaction_id) || empty($payment->kpay_ref_id)) {
+            Log::warning('KPay status check: Missing transaction details', [
+                'payment_id' => $payment->id,
+                'kpay_transaction_id' => $payment->kpay_transaction_id,
+                'kpay_ref_id' => $payment->kpay_ref_id,
+            ]);
+
             return [
                 'success' => false,
                 'error' => 'Payment transaction details not found.',
@@ -218,6 +224,13 @@ final readonly class PaymentService
                 $payment->kpay_ref_id
             );
 
+            Log::info('KPay status check raw response', [
+                'payment_id' => $payment->id,
+                'tid' => $payment->kpay_transaction_id,
+                'refid' => $payment->kpay_ref_id,
+                'response' => $statusResponse,
+            ]);
+
             if (! $statusResponse['success']) {
                 return [
                     'success' => false,
@@ -227,8 +240,29 @@ final readonly class PaymentService
 
             $statusData = $statusResponse['data'] ?? [];
             $actualStatusData = $statusData['response'] ?? $statusData;
-            $statusid = $actualStatusData['statusid'] ?? $statusData['statusid'] ?? null;
-            $statusdesc = $actualStatusData['statusdesc'] ?? $statusData['statusdesc'] ?? '';
+
+            // Try multiple possible status field names
+            $statusid = $actualStatusData['statusid']
+                ?? $statusData['statusid']
+                ?? $actualStatusData['reply']
+                ?? $statusData['reply']
+                ?? $actualStatusData['status']
+                ?? $statusData['status']
+                ?? null;
+
+            $statusdesc = $actualStatusData['statusdesc']
+                ?? $statusData['statusdesc']
+                ?? $actualStatusData['message']
+                ?? $statusData['message']
+                ?? '';
+
+            Log::info('KPay status check parsed data', [
+                'payment_id' => $payment->id,
+                'statusData' => $statusData,
+                'actualStatusData' => $actualStatusData,
+                'statusid' => $statusid,
+                'statusdesc' => $statusdesc,
+            ]);
 
             // Keep pending instead of failing when transaction not found
             if (($statusResponse['transaction_not_found'] ?? false) === true) {
@@ -248,7 +282,15 @@ final readonly class PaymentService
                 ];
             }
 
-            if ($statusid === '01' || $statusid === 1) {
+            // Check for successful status - KPay may return different values
+            $successStatuses = ['01', '1', 1, 'SUCCESS', 'SUCCESSFUL', 'OK', 'COMPLETED', 'APPROVED'];
+            if (in_array($statusid, $successStatuses, false)) {
+                Log::info('KPay status check: Payment successful', [
+                    'payment_id' => $payment->id,
+                    'statusid' => $statusid,
+                    'current_status' => $payment->status,
+                ]);
+
                 if (! $payment->isSuccessful()) {
                     $payment->update([
                         'status' => 'succeeded',
@@ -257,6 +299,10 @@ final readonly class PaymentService
                             'kpay_status_response' => $actualStatusData,
                             'kpay_momtransactionid' => $actualStatusData['momtransactionid'] ?? $statusData['momtransactionid'] ?? null,
                         ]),
+                    ]);
+
+                    Log::info('KPay status check: Payment status updated to succeeded', [
+                        'payment_id' => $payment->id,
                     ]);
                 }
 
@@ -268,7 +314,15 @@ final readonly class PaymentService
                 ];
             }
 
-            if ($statusid === '02' || $statusid === 2) {
+            // Check for failed status - KPay may return different values
+            $failedStatuses = ['02', '2', 2, 'FAILED', 'FAILURE', 'ERROR', 'DECLINED', 'REJECTED'];
+            if (in_array($statusid, $failedStatuses, false)) {
+                Log::info('KPay status check: Payment failed', [
+                    'payment_id' => $payment->id,
+                    'statusid' => $statusid,
+                    'statusdesc' => $statusdesc,
+                ]);
+
                 if ($payment->isPending()) {
                     $this->markPaymentFailed($payment, $statusdesc ?: 'Payment failed');
                 }
@@ -280,6 +334,11 @@ final readonly class PaymentService
                     'error' => $statusdesc ?: 'Payment failed',
                 ];
             }
+
+            Log::info('KPay status check: Payment still pending', [
+                'payment_id' => $payment->id,
+                'statusid' => $statusid,
+            ]);
 
             return [
                 'success' => true,
@@ -426,8 +485,7 @@ final readonly class PaymentService
     {
         $nextAttemptNumber = (int) ($order->payments()->max('attempt_number') ?? 0) + 1;
 
-        /** @var Payment */
-        return $order->payments()->create([
+        $paymentData = [
             'user_id' => $order->user_id,
             'status' => 'pending',
             'payment_method' => $method,
@@ -437,9 +495,16 @@ final readonly class PaymentService
                 'attempt_identifier' => Str::uuid()->toString(),
             ],
             'attempt_number' => $nextAttemptNumber,
-            'stripe_payment_intent_id' => Payment::generatePendingIntentId($order, $nextAttemptNumber),
             'last_attempted_at' => now(),
-        ]);
+        ];
+
+        // Only set stripe_payment_intent_id for Stripe payments
+        if ($method === 'stripe') {
+            $paymentData['stripe_payment_intent_id'] = Payment::generatePendingIntentId($order, $nextAttemptNumber);
+        }
+
+        /** @var Payment */
+        return $order->payments()->create($paymentData);
     }
 
     private function markPaymentFailed(?Payment $payment, string $message, int|string|null $code = null): void

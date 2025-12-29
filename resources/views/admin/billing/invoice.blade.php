@@ -73,6 +73,24 @@
                                 @elseif ($order->isCancelled())
                                     <span class="badge bg-secondary fs-6">CANCELLED</span>
                                 @endif
+                                @php
+                                    // Use eager-loaded payments collection to avoid N+1 queries
+                                    $payment = null;
+                                    if ($order->relationLoaded('payments') && $order->payments->isNotEmpty()) {
+                                        $payment = $order->payments->sortByDesc(function ($p) {
+                                            return ($p->attempt_number ?? 0) * 1000000 + ($p->id ?? 0);
+                                        })->first();
+                                    } else {
+                                        $payment = $order->latestPaymentAttempt();
+                                    }
+                                    $kpayTransactionId = null;
+                                    if ($payment && $order->payment_method === 'kpay') {
+                                        $kpayTransactionId = $payment->kpay_transaction_id;
+                                    }
+                                @endphp
+                                @if ($kpayTransactionId)
+                                    <p class="mt-2 mb-0"><strong>KPay Transaction ID:</strong><br><code>{{ $kpayTransactionId }}</code></p>
+                                @endif
                             </div>
                         </div>
 

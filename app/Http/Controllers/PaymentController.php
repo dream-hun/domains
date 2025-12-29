@@ -6,19 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Actions\Order\ProcessOrderAfterPaymentAction;
 use App\Actions\Payment\CreateStripeCheckoutSessionAction;
-use App\Actions\Payment\ProcessKPayPaymentAction;
-use App\Http\Requests\KPayPaymentRequest;
-use App\Livewire\CartComponent;
 use App\Models\Order;
-use App\Models\Payment;
 use App\Services\GeolocationService;
-use App\Services\OrderProcessingService;
-use App\Services\PaymentService;
-use App\Services\TransactionLogger;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\Factory;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,10 +25,9 @@ use Throwable;
 final class PaymentController extends Controller
 {
     public function __construct(
-        private readonly OrderProcessingService $orderProcessingService,
-        private readonly PaymentService $paymentService,
-        private readonly TransactionLogger $transactionLogger,
-        private readonly GeolocationService $geolocationService
+
+        private readonly GeolocationService $geolocationService,
+
     ) {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
     }
@@ -114,36 +105,151 @@ final class PaymentController extends Controller
     }
 
     /**
-     * Show KPay payment form
+     * Handle successful payment
      *
-     * @throws Exception
+     * @throws ApiErrorException
      */
-    public function showKPayPaymentPage(): View|RedirectResponse
+    public function success(Request $request, Order $order): Factory|\Illuminate\Contracts\View\View|View|RedirectResponse
     {
-        $cartData = $this->getCartData();
+        // Verify order belongs to current user
+        abort_if($order->user_id !== auth()->id(), 403);
 
-        if (empty($cartData['items'])) {
-            return to_route('cart.index')->with('error', 'Your cart is empty.');
+        $sessionId = $request->query('session_id');
+
+        // If session_id is provided, verify payment status and process order
+        if ($sessionId) {
+            try {
+                $session = Session::retrieve($sessionId);
+
+                // Verify the session belongs to this order
+                // Both the stored session_id and metadata order_id must match
+                $sessionIdMismatch = $order->stripe_session_id && $order->stripe_session_id !== $sessionId;
+                $orderIdMismatch = ! isset($session->metadata->order_id) || $session->metadata->order_id !== (string) $order->id;
+
+                if ($sessionIdMismatch || $orderIdMismatch) {
+                    Log::warning('Session verification failed - security check', [
+                        'order_id' => $order->id,
+                        'order_session_id' => $order->stripe_session_id,
+                        'provided_session_id' => $sessionId,
+                        'session_order_id' => $session->metadata->order_id ?? null,
+                        'session_id_mismatch' => $sessionIdMismatch,
+                        'order_id_mismatch' => $orderIdMismatch,
+                    ]);
+
+                    return to_route('dashboard')
+                        ->with('error', 'Invalid payment session. Please contact support if you believe this is an error.');
+                }
+
+                // If payment is not paid, show error
+                if ($session->payment_status !== 'paid') {
+                    Log::warning('Payment not successful on success page', [
+                        'order_id' => $order->id,
+                        'session_id' => $sessionId,
+                        'payment_status' => $session->payment_status,
+                    ]);
+
+                    return to_route('payment.failed', $order)
+                        ->with('error', 'Payment was not successful.');
+                }
+
+                // Only process if order is still pending payment
+                if ($order->payment_status === 'pending') {
+                    DB::beginTransaction();
+
+                    try {
+                        $order->update([
+                            'payment_status' => 'paid',
+                            'status' => $order->status === 'pending' ? 'processing' : $order->status,
+                            'processed_at' => now(),
+                            'stripe_payment_intent_id' => $session->payment_intent ?? $order->stripe_payment_intent_id,
+                            'stripe_session_id' => $sessionId,
+                        ]);
+
+                        // Update payment record
+                        $payment = $order->payments()
+                            ->where('payment_method', 'stripe')
+                            ->where(function ($query) use ($sessionId, $session): void {
+                                $query->where('stripe_session_id', $sessionId);
+
+                                if (! empty($session->payment_intent)) {
+                                    $query->orWhere('stripe_payment_intent_id', $session->payment_intent);
+                                }
+                            })
+                            ->orderByDesc('attempt_number')
+                            ->orderByDesc('id')
+                            ->first();
+
+                        if ($payment && ! $payment->isSuccessful()) {
+                            $payment->update([
+                                'status' => 'succeeded',
+                                'stripe_payment_intent_id' => $session->payment_intent ?? $payment->stripe_payment_intent_id,
+                                'stripe_session_id' => $sessionId,
+                                'paid_at' => now(),
+                                'last_attempted_at' => now(),
+                                'metadata' => array_merge($payment->metadata ?? [], [
+                                    'stripe_payment_status' => $session->payment_status,
+                                ]),
+                            ]);
+                        }
+
+                        DB::commit();
+
+                        // Process order after payment (idempotent - safe to call multiple times)
+                        try {
+                            $primaryContact = $order->user->contacts()->where('is_primary', true)->first();
+                            $contactIds = [];
+                            if ($primaryContact) {
+                                $contactIds = [
+                                    'registrant' => $primaryContact->id,
+                                    'admin' => $primaryContact->id,
+                                    'tech' => $primaryContact->id,
+                                    'billing' => $primaryContact->id,
+                                ];
+                            }
+
+                            $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
+                            $processOrderAction->handle($order, $contactIds, false);
+
+                            Log::info('Order processed successfully on success page', [
+                                'order_id' => $order->id,
+                                'order_number' => $order->order_number,
+                            ]);
+                        } catch (Exception $e) {
+                            Log::warning('Order processing failed on success page', [
+                                'order_id' => $order->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                            // Don't fail the page load if processing fails - webhook will handle it
+                        }
+
+                        $order->refresh();
+                    } catch (Exception $e) {
+                        DB::rollBack();
+                        Log::error('Failed to update order on success page', [
+                            'order_id' => $order->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                        // Continue to show success page even if update fails
+                    }
+                }
+            } catch (ApiErrorException $e) {
+                Log::error('Failed to retrieve Stripe session on success page', [
+                    'order_id' => $order->id,
+                    'session_id' => $sessionId,
+                    'error' => $e->getMessage(),
+                ]);
+                // Continue to show success page even if session retrieval fails
+            } catch (Exception $e) {
+                Log::error('Error processing payment success', [
+                    'order_id' => $order->id,
+                    'session_id' => $sessionId,
+                    'error' => $e->getMessage(),
+                ]);
+                // Continue to show success page
+            }
         }
 
-        return view('payment.kpay', [
-            'cartItems' => $cartData['items'],
-            'totalAmount' => $cartData['total'],
-            'subtotal' => $cartData['subtotal'],
-            'currency' => $cartData['currency'],
-            'user' => Auth::user(),
-        ]);
-    }
-
-    /**
-     * Handle successful payment
-     */
-    public function success(Request $request, Order $order): Factory|\Illuminate\Contracts\View\View|View
-    {
-        $sessionId = $request->get('session_id');
-        $session = Session::retrieve($sessionId);
-
-        return view('payment.success', ['order' => $order, 'session' => $session]);
+        return view('payment.success', ['order' => $order->fresh()]);
     }
 
     /**
@@ -179,329 +285,5 @@ final class PaymentController extends Controller
     public function showPaymentFailed(Order $order): View
     {
         return view('payment.failed', ['order' => $order]);
-    }
-
-    /**
-     * Process KPay payment
-     */
-    public function processKPayPayment(KPayPaymentRequest $request): RedirectResponse
-    {
-        $user = Auth::user();
-
-        try {
-            $cartItems = Cart::getContent();
-            $currency = session('selected_currency', 'USD');
-            $billingData = $request->only(['billing_name', 'billing_email', 'billing_address', 'billing_city', 'billing_country', 'billing_postal_code']);
-
-            $primaryContact = $user->contacts()->where('is_primary', true)->first();
-            $contactIds = [];
-            if ($primaryContact) {
-                $contactIds = [
-                    'registrant' => $primaryContact->id,
-                    'admin' => $primaryContact->id,
-                    'tech' => $primaryContact->id,
-                    'billing' => $primaryContact->id,
-                ];
-            }
-
-            $processKPayAction = resolve(ProcessKPayPaymentAction::class);
-            $result = $processKPayAction->handle(
-                $user,
-                mb_trim((string) $request->input('msisdn', '')),
-                $request->input('pmethod'),
-                $cartItems,
-                $currency,
-                $contactIds,
-                $billingData
-            );
-
-            if (! $result['success']) {
-                return back()->with('error', $result['error'] ?? 'Payment processing failed. Please try again.');
-            }
-
-            if (isset($result['redirect_url'])) {
-                return redirect($result['redirect_url']);
-            }
-
-            if (isset($result['payment_id'])) {
-                return to_route('payment.kpay.status', $result['payment_id'])
-                    ->with('payment_id', $result['payment_id']);
-            }
-
-            if (isset($result['order'])) {
-                return to_route('payment.kpay.success', $result['order']);
-            }
-
-            return to_route('payment.kpay.show');
-
-        } catch (Exception $exception) {
-            Log::error('KPay payment processing error: '.$exception->getMessage());
-
-            return back()->with('error', 'An error occurred while processing your payment.');
-        }
-    }
-
-    /**
-     * Check KPay payment status
-     */
-    public function checkKPayStatus(Payment $payment): JsonResponse|RedirectResponse
-    {
-        try {
-            $statusResult = $this->paymentService->checkKPayPaymentStatus($payment);
-
-            // If request expects JSON (AJAX), return JSON
-            if (request()->expectsJson() || request()->wantsJson()) {
-                return response()->json($statusResult);
-            }
-
-            // Otherwise redirect based on status
-            if ($statusResult['success'] && ($statusResult['status'] ?? '') === 'succeeded') {
-                return to_route('payment.kpay.success', $payment->order)
-                    ->with('success', 'Payment successful!');
-            }
-
-            if (($statusResult['status'] ?? '') === 'failed') {
-                return to_route('payment.failed', $payment->order)
-                    ->with('error', $statusResult['error'] ?? 'Payment failed.');
-            }
-
-            // Still pending - return to status check page
-            return back()->with('info', 'Payment is still being processed. Please wait...');
-
-        } catch (Exception $exception) {
-            Log::error('KPay status check error: '.$exception->getMessage());
-
-            if (request()->expectsJson() || request()->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'An error occurred while checking payment status.',
-                ], 500);
-            }
-
-            return back()->with('error', 'An error occurred while checking payment status.');
-        }
-    }
-
-    /**
-     * Handle successful KPay payment
-     */
-    public function handleKPaySuccess(Order $order): View|RedirectResponse
-    {
-        $paymentAttempt = $order->payments()
-            ->where('payment_method', 'kpay')
-            ->orderByDesc('attempt_number')
-            ->orderByDesc('id')
-            ->first();
-
-        if (! $paymentAttempt) {
-            return to_route('payment.failed', $order)->with('error', 'Payment record not found.');
-        }
-
-        if ($order->payment_status === 'paid' && $order->status !== 'pending') {
-            try {
-                $this->dispatchOrderProcessingJobs($order);
-
-                // Clear cart
-                Cart::clear();
-                session()->forget(['cart', 'checkout', 'kpay_order_number']);
-            } catch (Exception $e) {
-                Log::error('Failed to dispatch order processing jobs in KPay success handler', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
-            $redirectUrl = $this->orderProcessingService->getServiceDetailsRedirectUrl($order);
-
-            return redirect($redirectUrl)
-                ->with('success', $this->getSuccessMessage());
-        }
-
-        $statusResult = $this->paymentService->checkKPayPaymentStatus($paymentAttempt);
-        $paymentAttempt->refresh();
-
-        $isPaymentSucceeded = $paymentAttempt->isSuccessful();
-        $statusid = $statusResult['statusid'] ?? null;
-        $paymentConfirmed = ($statusResult['success'] && ($statusResult['status'] ?? '') === 'succeeded') ||
-            ($statusid === '01' || $statusid === 1) ||
-            $isPaymentSucceeded;
-
-        if ($paymentConfirmed) {
-            try {
-                DB::beginTransaction();
-
-                if ($order->payment_status !== 'paid') {
-                    $order->update([
-                        'payment_status' => 'paid',
-                        'status' => 'processing',
-                        'payment_method' => 'kpay',
-                        'processed_at' => now(),
-                    ]);
-                }
-
-                if (! $paymentAttempt->isSuccessful()) {
-                    $paymentAttempt->update([
-                        'status' => 'succeeded',
-                        'paid_at' => $paymentAttempt->paid_at ?? now(),
-                    ]);
-                }
-
-                DB::commit();
-
-                $order->refresh();
-
-                try {
-                    $this->dispatchOrderProcessingJobs($order);
-                } catch (Exception $e) {
-                    Log::error('Failed to dispatch order processing jobs after KPay payment', [
-                        'order_id' => $order->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-
-                // Log success
-                $this->transactionLogger->logSuccess(
-                    order: $order,
-                    method: 'kpay',
-                    transactionId: $paymentAttempt->kpay_transaction_id ?? '',
-                    amount: (float) $paymentAttempt->amount,
-                    payment: $paymentAttempt
-                );
-
-                $message = $this->getSuccessMessage();
-                $redirectUrl = $this->orderProcessingService->getServiceDetailsRedirectUrl($order);
-
-                return redirect($redirectUrl)
-                    ->with('success', $message);
-
-            } catch (Exception $e) {
-                DB::rollBack();
-                Log::error('KPay payment success processing error: '.$e->getMessage());
-
-                // Always clear cart even if transaction failed
-                Cart::clear();
-                session()->forget(['cart', 'checkout', 'kpay_order_number']);
-
-                return to_route('payment.failed', $order)->with('error', 'Failed to process payment. Please contact support.');
-            } catch (Throwable) {
-            }
-        }
-
-        // Payment not yet confirmed - show pending message
-        return view('payment.kpay-pending', [
-            'order' => $order,
-            'payment' => $paymentAttempt,
-        ]);
-    }
-
-    /**
-     * Handle canceled KPay payment
-     */
-    public function handleKPayCancel(Order $order): RedirectResponse
-    {
-        $order->update([
-            'payment_status' => 'cancelled',
-            'status' => 'cancelled',
-        ]);
-
-        $pendingPayment = $order->payments()
-            ->where('payment_method', 'kpay')
-            ->where('status', 'pending')
-            ->orderByDesc('attempt_number')
-            ->orderByDesc('id')
-            ->first();
-
-        $pendingPayment?->update([
-            'status' => 'cancelled',
-            'failure_details' => array_merge($pendingPayment->failure_details ?? [], [
-                'message' => 'Payment cancelled by user',
-            ]),
-            'last_attempted_at' => now(),
-        ]);
-
-        return to_route('cart.index')->with('error', 'Payment was cancelled.');
-    }
-
-    /**
-     * Dispatch jobs to process order after payment
-     */
-    private function dispatchOrderProcessingJobs(Order $order): void
-    {
-        // Get contact IDs
-        $checkoutData = session('checkout', []);
-        $contactId = $checkoutData['selected_contact_id']
-            ?? $order->metadata['selected_contact_id']
-            ?? $order->metadata['contact_ids']['registrant'] ?? null
-            ?? $order->user->contacts()->where('is_primary', true)->first()?->id;
-
-        $contactIds = [];
-        if ($contactId) {
-            $contactIds = [
-                'registrant' => $contactId,
-                'admin' => $contactId,
-                'tech' => $contactId,
-                'billing' => $contactId,
-            ];
-        }
-
-        // Use ProcessOrderAfterPaymentAction to handle job dispatching
-        $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
-        $processOrderAction->handle($order, $contactIds, true);
-    }
-
-    private function getSuccessMessage(): string
-    {
-        return 'Payment successful! Your order is being processed.';
-    }
-
-    /**
-     * Get cart data from Cart facade or session
-     *
-     * @throws Exception
-     */
-    private function getCartData(): array
-    {
-        if (session()->has('cart') && session()->has('cart_total')) {
-            return [
-                'items' => session('cart', []),
-                'subtotal' => (float) session('cart_subtotal', 0),
-                'total' => (float) session('cart_total', 0),
-                'currency' => session('selected_currency', 'USD'),
-            ];
-        }
-
-        $cartItems = Cart::getContent();
-
-        if ($cartItems->isEmpty()) {
-            $orderNumber = session('kpay_order_number');
-            if ($orderNumber) {
-                $order = Order::query()
-                    ->where('order_number', $orderNumber)
-                    ->where('user_id', Auth::id())
-                    ->first();
-
-                if ($order) {
-                    return [
-                        'items' => $order->items ?? [],
-                        'subtotal' => (float) $order->subtotal,
-                        'total' => (float) $order->total_amount,
-                        'currency' => $order->currency ?? 'USD',
-                    ];
-                }
-            }
-
-            return [
-                'items' => [],
-                'subtotal' => 0,
-                'total' => 0,
-                'currency' => session('selected_currency', 'USD'),
-            ];
-        }
-
-        // Use CartComponent to prepare cart data with proper currency conversion
-        $cartComponent = new CartComponent;
-        $cartComponent->mount();
-
-        return $cartComponent->prepareCartForPayment();
     }
 }

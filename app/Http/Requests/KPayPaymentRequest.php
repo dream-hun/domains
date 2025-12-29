@@ -24,11 +24,10 @@ final class KPayPaymentRequest extends FormRequest
      */
     public function rules(): array
     {
-        $pmethod = $this->input('pmethod');
 
-        $rules = [
+        return [
             'msisdn' => ['required', 'string', 'max:20', 'min:10'],
-            'pmethod' => ['required', 'string', 'in:momo,cc,spenn'],
+            'pmethod' => ['required', 'string'],
             'billing_name' => ['required', 'string', 'max:255'],
             'billing_email' => ['required', 'email', 'max:255'],
             'billing_address' => ['nullable', 'string', 'max:255'],
@@ -36,16 +35,6 @@ final class KPayPaymentRequest extends FormRequest
             'billing_country' => ['nullable', 'string', 'max:255'],
             'billing_postal_code' => ['nullable', 'string', 'max:20'],
         ];
-
-        // Card fields are required when payment method is 'cc'
-        if ($pmethod === 'cc') {
-            $rules['card_number'] = ['required', 'string', 'regex:/^[\d\s]{13,19}$/'];
-            $rules['card_expiry'] = ['required', 'string', 'regex:/^\d{2}\/\d{2}$/'];
-            $rules['card_cvv'] = ['required', 'string', 'regex:/^\d{3,4}$/'];
-            $rules['cardholder_name'] = ['required', 'string', 'max:255'];
-        }
-
-        return $rules;
     }
 
     /**

@@ -27,7 +27,6 @@ final readonly class ProcessKPayPaymentAction
      *
      * @param  array<string, int|null>  $contactIds
      * @param  array<string, mixed>|null  $billingData
-     * @param  array<string, mixed>|null  $coupon
      * @return array{success: bool, order?: Order, redirect_url?: string, payment_id?: int, error?: string}
      *
      * @throws Throwable
@@ -39,9 +38,7 @@ final readonly class ProcessKPayPaymentAction
         ?CartCollection $cartItems = null,
         string $currency = 'USD',
         array $contactIds = [],
-        ?array $billingData = null,
-        ?array $coupon = null,
-        float $discountAmount = 0.0
+        ?array $billingData = null
     ): array {
         if ($msisdn === '' || $msisdn === '0') {
             return [

@@ -228,17 +228,42 @@ final readonly class CartPriceConverter
      */
     private function calculateSubscriptionRenewalItemTotal(object $item, string $targetCurrency): float
     {
-        $billingCycle = $item->attributes->get('billing_cycle', 'monthly');
-        $displayUnitPrice = $this->convertSubscriptionRenewalItemPrice($item, $targetCurrency);
+        // Always use monthly unit price for calculations, regardless of billing cycle
+        // This ensures consistency with validation logic that expects monthly price × quantity
+        $itemCurrency = $item->attributes->currency ?? 'USD';
+        $monthlyUnitPrice = $item->attributes->get('unit_price', $item->price);
 
-        if ($billingCycle === 'annually') {
-            $years = $item->quantity / 12;
+        if ($itemCurrency === $targetCurrency) {
+            $convertedMonthlyPrice = $monthlyUnitPrice;
+        } else {
+            try {
+                $convertedMonthlyPrice = CurrencyHelper::convert($monthlyUnitPrice, $itemCurrency, $targetCurrency);
+            } catch (Exception $exception) {
+                Log::warning('Subscription renewal monthly unit price currency conversion failed', [
+                    'from' => $itemCurrency,
+                    'to' => $targetCurrency,
+                    'amount' => $monthlyUnitPrice,
+                    'error' => $exception->getMessage(),
+                ]);
 
-            return $displayUnitPrice * $years;
+                try {
+                    $convertedMonthlyPrice = $this->currencyService->convert($monthlyUnitPrice, $itemCurrency, $targetCurrency);
+                } catch (Exception $fallbackException) {
+                    Log::error('Subscription renewal monthly unit price currency conversion failed after fallback', [
+                        'from' => $itemCurrency,
+                        'to' => $targetCurrency,
+                        'amount' => $monthlyUnitPrice,
+                        'error' => $fallbackException->getMessage(),
+                    ]);
+
+                    throw new Exception('Unable to convert subscription renewal monthly unit price currency.', $exception->getCode(), $exception);
+                }
+            }
         }
 
-        // For monthly, use monthly price × quantity (in months)
-        return $displayUnitPrice * $item->quantity;
+        // Always calculate as monthly price × quantity (in months)
+        // This matches the validation logic in SubscriptionRenewalService
+        return $convertedMonthlyPrice * $item->quantity;
     }
 
     /**

@@ -26,7 +26,7 @@ final class ProcessPendingJobs extends Command
      *
      * @var string
      */
-    protected $description = 'Process orders that are paid but haven\'t been fully processed yet';
+    protected $description = "Process orders that are paid but haven't been fully processed yet";
 
     /**
      * Execute the console command.
@@ -51,8 +51,7 @@ final class ProcessPendingJobs extends Command
             ->where(function ($query) use ($cutoffTime): void {
                 $query->whereNull('processed_at')
                     ->orWhere('processed_at', '<=', $cutoffTime);
-            })
-            ->orderBy('created_at', 'asc')
+            })->oldest()
             ->limit($limit)
             ->get();
 

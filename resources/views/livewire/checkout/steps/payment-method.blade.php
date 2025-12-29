@@ -11,44 +11,42 @@
                 No payment methods are currently available. Please contact support.
             </div>
         @else
-            <div class="payment-methods">
+            <div class="row g-3">
                 @foreach($paymentMethods as $method)
-                    <div class="payment-method-option mb-3"
-                         wire:click="selectPaymentMethod('{{ $method['id'] }}')"
-                         role="button"
-                         tabindex="0"
-                         aria-label="Select payment method {{ $method['name'] }}"
-                         style="cursor: pointer;">
-                        <div class="card {{ $selectedPaymentMethod === $method['id'] ? 'border-primary' : '' }}">
-                            <div class="card-body">
-                                <div class="custom-control custom-radio">
+                    <div class="col-md-4 col-sm-6">
+                        <div class="payment-method-option h-100"
+                             wire:click="selectPaymentMethod('{{ $method['id'] }}')"
+                             role="button"
+                             tabindex="0"
+                             aria-label="Select payment method {{ $method['name'] }}"
+                             style="cursor: pointer;">
+                            <div class="card h-100 {{ $selectedPaymentMethod === $method['id'] ? 'border-primary shadow-sm' : 'border' }}"
+                                 style="transition: all 0.2s;">
+                                <div class="card-body d-flex align-items-center justify-content-center"
+                                     style="min-height: 100px;">
                                     <input type="radio"
                                            id="payment_{{ $method['id'] }}"
                                            name="payment_method"
-                                           class="custom-control-input"
+                                           class="position-absolute"
+                                           style="opacity: 0; pointer-events: none;"
                                            {{ $selectedPaymentMethod === $method['id'] ? 'checked' : '' }}
                                            wire:model="selectedPaymentMethod"
                                            value="{{ $method['id'] }}">
-                                    <label class="custom-control-label" for="payment_{{ $method['id'] }}">
-                                        <div class="d-flex justify-content-between align-items-center w-100">
-                                            <div>
-                                                <strong>{{ $method['name'] }}</strong>
-                                                @if(isset($method['balance']))
-                                                    <br>
-                                                    <small class="text-muted">Balance: {{ $method['balance'] }}</small>
-                                                @endif
-                                            </div>
-                                            @if($method['id'] === 'stripe')
-                                                <i class="fab fa-cc-stripe fa-2x text-primary"></i>
-                                            @elseif($method['id'] === 'paypal')
-                                                <i class="fab fa-paypal fa-2x text-primary"></i>
-                                            @elseif($method['id'] === 'kpay')
-                                                <i class="bi bi-phone fa-2x text-success"></i>
-                                            @elseif($method['id'] === 'account_credit')
-                                                <i class="fas fa-wallet fa-2x text-success"></i>
-                                            @endif
-                                        </div>
-                                    </label>
+                                    @if($method['id'] === 'stripe')
+                                        <img src="{{ asset('Stripe_Logo,_revised_2016.svg.png') }}"
+                                             alt="Stripe"
+                                             class="img-fluid"
+                                             style="max-height: 50px; max-width: 150px;">
+                                    @elseif($method['id'] === 'paypal')
+                                        <i class="fab fa-paypal fa-3x text-primary"></i>
+                                    @elseif($method['id'] === 'kpay')
+                                        <img src="{{ asset('MomoAirtel.png') }}"
+                                             alt="Momo Airtel"
+                                             class="img-fluid"
+                                             style="max-height: 50px; max-width: 150px;">
+                                    @elseif($method['id'] === 'account_credit')
+                                        <i class="fas fa-wallet fa-3x text-success"></i>
+                                    @endif
                                 </div>
                             </div>
                         </div>

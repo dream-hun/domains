@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\Order\ProcessOrderAfterPaymentAction;
-use App\Models\Order;
+use App\Models\Payment;
+use App\Services\KPayPaymentStatusService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 final class KPayWebhookController extends Controller
 {
+    public function __construct(
+        private readonly KPayPaymentStatusService $kPayPaymentStatusService
+    ) {}
+
     public function handlePostback(Request $request): Response|JsonResponse
     {
         try {
@@ -37,25 +40,10 @@ final class KPayWebhookController extends Controller
                 return response()->json(['reply' => 'ERROR', 'message' => 'Missing transaction identifiers'], 400);
             }
 
-            $payment = null;
-            if ($refid) {
-                $parts = explode('-', (string) $refid);
-                if (count($parts) >= 2) {
-                    $orderNumber = implode('-', array_slice($parts, 0, -1));
-                    $order = Order::query()->where('order_number', $orderNumber)->first();
+            // Find payment by transaction identifiers
+            $payment = $this->kPayPaymentStatusService->findPaymentByTransactionIds($tid, $refid);
 
-                    if ($order) {
-                        $payment = $order->payments()
-                            ->where('kpay_ref_id', $refid)
-                            ->orWhere('kpay_transaction_id', $tid)
-                            ->orderByDesc('attempt_number')
-                            ->orderByDesc('id')
-                            ->first();
-                    }
-                }
-            }
-
-            if (! $payment) {
+            if (! $payment instanceof Payment) {
                 Log::warning('KPay postback payment not found', [
                     'tid' => $tid,
                     'refid' => $refid,
@@ -77,56 +65,14 @@ final class KPayWebhookController extends Controller
                 return response()->json(['reply' => 'ERROR', 'message' => 'Order not found'], 404);
             }
 
-            if ($statusid === '01' || $statusid === 1) {
-                DB::transaction(function () use ($payment, $order, $data): void {
-                    if (! $payment->isSuccessful()) {
-                        $payment->update([
-                            'status' => 'succeeded',
-                            'paid_at' => now(),
-                            'metadata' => array_merge($payment->metadata ?? [], [
-                                'kpay_postback' => $data,
-                                'kpay_momtransactionid' => $data['momtransactionid'] ?? null,
-                            ]),
-                        ]);
-                    }
+            if ($this->kPayPaymentStatusService->isSuccessfulStatus($statusid)) {
+                // Refresh payment and order to get latest state before processing
+                $payment->refresh();
+                $order->refresh();
 
-                    if ($order->payment_status !== 'paid') {
-                        $order->update([
-                            'payment_status' => 'paid',
-                            'status' => 'processing',
-                            'payment_method' => 'kpay',
-                            'processed_at' => now(),
-                        ]);
-                    }
-                });
-
-                try {
-                    $orderMetadata = $order->metadata ?? [];
-                    $contactId = $orderMetadata['selected_contact_id']
-                        ?? $orderMetadata['contact_ids']['registrant'] ?? null
-                        ?? $order->user->contacts()->where('is_primary', true)->first()?->id;
-
-                    $contactIds = [];
-                    if ($contactId) {
-                        $contactIds = [
-                            'registrant' => $contactId,
-                            'admin' => $contactId,
-                            'tech' => $contactId,
-                            'billing' => $contactId,
-                        ];
-                    }
-
-                    $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
-                    try {
-                        $processOrderAction->handle($order, $contactIds, false);
-                    } catch (Exception $e) {
-                        Log::warning('Order processing failed in KPay webhook handler, will be retried by success handler', [
-                            'order_id' => $order->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-
-                    Log::info('KPay postback processed successfully', [
+                // Prevent duplicate processing if payment is already successful
+                if ($this->kPayPaymentStatusService->isPaymentAlreadyProcessed($payment, $order)) {
+                    Log::info('KPay postback: Payment already processed', [
                         'payment_id' => $payment->id,
                         'order_id' => $order->id,
                         'order_number' => $order->order_number,
@@ -134,43 +80,74 @@ final class KPayWebhookController extends Controller
                         'refid' => $refid,
                     ]);
 
+                    return response()->json([
+                        'tid' => $tid ?? '',
+                        'refid' => $refid ?? '',
+                        'reply' => 'OK',
+                    ]);
+                }
+
+                // Update payment and order status
+                $this->kPayPaymentStatusService->updatePaymentStatus(
+                    $payment,
+                    $order,
+                    $statusid,
+                    $data
+                );
+
+                // Process successful payment (dispatch jobs in background)
+                try {
+                    $this->kPayPaymentStatusService->processSuccessfulPayment($payment, $order, false);
+
+                    Log::info('KPay postback processed successfully - order updated', [
+                        'payment_id' => $payment->id,
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'order_status' => $order->status,
+                        'payment_status' => $order->payment_status,
+                        'tid' => $tid,
+                        'refid' => $refid,
+                    ]);
                 } catch (Exception $e) {
                     Log::error('KPay postback order processing failed', [
                         'payment_id' => $payment->id,
                         'order_id' => $order->id,
+                        'order_number' => $order->order_number,
                         'error' => $e->getMessage(),
                     ]);
                 }
 
                 return response()->json([
-                    'tid' => $tid,
-                    'refid' => $refid,
+                    'tid' => $tid ?? '',
+                    'refid' => $refid ?? '',
                     'reply' => 'OK',
                 ]);
-
             }
 
-            if ($statusid === '02' || $statusid === 2) {
-                if ($payment->isPending()) {
-                    $payment->update([
-                        'status' => 'failed',
-                        'failure_details' => array_merge($payment->failure_details ?? [], [
-                            'message' => $statusdesc ?: 'Payment failed',
-                            'kpay_postback' => $data,
-                        ]),
-                        'last_attempted_at' => now(),
-                    ]);
-                }
+            if ($this->kPayPaymentStatusService->isFailedStatus($statusid)) {
+                // Update payment and order status
+                $this->kPayPaymentStatusService->updatePaymentStatus(
+                    $payment,
+                    $order,
+                    $statusid,
+                    $data
+                );
 
-                Log::info('KPay postback payment failed', [
+                $order->refresh();
+                $payment->refresh();
+
+                Log::info('KPay postback payment failed - order updated', [
                     'payment_id' => $payment->id,
                     'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'order_status' => $order->status,
+                    'payment_status' => $order->payment_status,
                     'statusdesc' => $statusdesc,
                 ]);
 
                 return response()->json([
-                    'tid' => $tid,
-                    'refid' => $refid,
+                    'tid' => $tid ?? '',
+                    'refid' => $refid ?? '',
                     'reply' => 'OK',
                 ]);
             }

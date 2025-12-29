@@ -14,7 +14,7 @@ class InitiatePaymentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -31,7 +31,6 @@ class InitiatePaymentRequest extends FormRequest
             'customer_number' => ['required', 'string', 'max:255'],
             'payment_method' => ['required', 'string', 'in:momo,cc,spenn'],
         ];
-
     }
 
     /**
