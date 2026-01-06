@@ -19,7 +19,7 @@ class HostingPlanFeatureSeeder extends Seeder
     {
         $planFeatures = [];
 
-        // Get all plans by slug for easy lookup
+        // Get all plans by slug for an easy lookup
         $plans = HostingPlan::query()->get()->keyBy('slug');
 
         // Get all features by slug for easy lookup

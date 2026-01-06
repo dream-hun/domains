@@ -85,7 +85,7 @@ class KPayCurrencyConversionTest extends TestCase
             $this->fail('Payment failed: '.($result['error'] ?? 'Unknown error'));
         }
 
-        Http::assertSent(function ($request) {
+        Http::assertSent(function ($request): bool {
             $data = $request->data();
             file_put_contents('php://stderr', print_r($data, true));
 

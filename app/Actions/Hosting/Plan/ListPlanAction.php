@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Actions\Hosting\Plan;
 
 use App\Models\HostingPlan;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 final class ListPlanAction
 {
-    public function handle(int $perPage = 10, ?int $categoryId = null): LengthAwarePaginator
+    public function handle(?int $categoryId = null): Collection
     {
         return HostingPlan::query()
             ->select([
@@ -29,6 +29,6 @@ final class ListPlanAction
             ->when($categoryId !== null, fn ($query) => $query->where('category_id', $categoryId))
             ->orderBy('sort_order')
             ->orderByDesc('created_at')
-            ->paginate($perPage);
+            ->get();
     }
 }

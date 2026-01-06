@@ -55,9 +55,11 @@ readonly class KPayService
         if (isset($paymentData['card_number'])) {
             $payload['card_number'] = $paymentData['card_number'];
         }
+
         if (isset($paymentData['expiry_date'])) {
             $payload['expiry_date'] = $paymentData['expiry_date'];
         }
+
         if (isset($paymentData['cvv'])) {
             $payload['cvv'] = $paymentData['cvv'];
         }

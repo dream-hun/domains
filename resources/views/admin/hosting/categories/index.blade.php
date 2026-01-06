@@ -110,6 +110,9 @@
                 $('.datatable').DataTable({
                     order: [[6, 'asc']],
                     pageLength: 25,
+                    paging: true,
+                    searching: true,
+                    info: true,
                 });
             });
         </script>

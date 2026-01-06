@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -80,10 +82,10 @@ final class KPayPaymentRequest extends FormRequest
      *
      * @return array<string, mixed>
      */
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator): void
+    protected function failedValidation(Validator $validator): void
     {
         if ($this->expectsJson()) {
-            throw new \Illuminate\Validation\ValidationException(
+            throw new ValidationException(
                 $validator,
                 response()->json([
                     'success' => false,

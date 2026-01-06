@@ -5,12 +5,19 @@ declare(strict_types=1);
 namespace App\Actions\Prices;
 
 use App\Models\DomainPrice;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 final class ListDomainPriceAction
 {
-    public function handle(int $perPage = 10): LengthAwarePaginator
+    /**
+     * @return Collection<int, DomainPrice>
+     */
+    public function handle(): Collection
     {
-        return DomainPrice::query()->select(['uuid', 'tld', 'type', 'register_price', 'renewal_price', 'transfer_price', 'redemption_price'])->orderBy('id', 'desc')->latest()->paginate($perPage);
+        return DomainPrice::query()
+            ->select(['uuid', 'tld', 'type', 'register_price', 'renewal_price', 'transfer_price', 'redemption_price'])
+            ->orderBy('id', 'desc')
+            ->latest()
+            ->get();
     }
 }

@@ -33,6 +33,11 @@
                         <form method="GET" action="{{ route('admin.hosting-plan-prices.index') }}"
                             class="d-flex align-items-center">
                             <div class="form-group mb-0 mr-2">
+                                <label for="search" class="sr-only">Search</label>
+                                <input type="text" name="search" id="search" class="form-control"
+                                    placeholder="Search..." value="{{ $search }}">
+                            </div>
+                            <div class="form-group mb-0 mr-2">
                                 <label for="category_id" class="sr-only">Filter by Category</label>
                                 <select name="category_id" id="category_id" class="form-control">
                                     <option value="">All Categories</option>
@@ -56,11 +61,18 @@
                                     @endforeach
                                 </select>
                             </div>
-                            @if ($selectedCategoryUuid || $selectedPlanUuid)
+                            @if ($selectedCategoryUuid || $selectedPlanUuid || $search)
                                 <a href="{{ route('admin.hosting-plan-prices.index') }}"
                                     class="btn btn-secondary btn-sm">
                                     <i class="bi bi-x-lg"></i> Clear Filter
                                 </a>
+                                <button type="submit" class="btn btn-primary btn-sm ml-2">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            @else
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-search"></i>
+                                </button>
                             @endif
                         </form>
                     </div>
@@ -153,9 +165,7 @@
                         </div>
 
                     </div>
-                    <div class="d-flex justify-content-center mt-3 float-right">
-                        {{ $prices->appends(request()->query())->links('vendor.pagination.adminlte') }}
-                    </div>
+
                 </div>
 
             </div>
@@ -201,13 +211,13 @@
                             searchable: false
                         }
                     ],
-                    paging: false, // Disable DataTable pagination to use Laravel pagination
-                    searching: true, // Enable search
-                    ordering: true, // Enable sorting
-                    info: false, // Disable "Showing X to Y of Z entries" info
-                    lengthChange: false, // Disable "Show X entries" dropdown
-                    dom: 'Bfrtip', // B=buttons, f=filter(search), r=processing, t=table, i=info, p=pagination
-                    autoWidth: false, // Disable auto width calculation
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    info: false,
+                    lengthChange: false,
+                    dom: 'Brtip',
+                    autoWidth: false,
                     language: {
                         search: "Search:",
                         searchPlaceholder: "Search hosting plan prices..."

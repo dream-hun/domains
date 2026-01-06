@@ -63,15 +63,15 @@ final class KpayPaymentController extends Controller
             $currency = $order->currency;
         } else {
             $cartContent = Cart::getContent();
-            $cartItems = $cartContent->map(fn ($item): array => [
+            $cartItems = $cartContent->map(fn (object $item): array => [
                 'domain_name' => $item->attributes->get('domain_name', $item->name),
                 'domain_type' => $item->attributes->get('type', 'registration'),
-                'price' => (float) $this->cartPriceConverter->convertItemPrice($item, $currency),
+                'price' => $this->cartPriceConverter->convertItemPrice($item, $currency),
                 'quantity' => $item->quantity,
                 'years' => $item->attributes->get('years', $item->quantity),
                 'currency' => $currency,
             ])->toArray();
-            $totalAmount = (float) $this->cartPriceConverter->calculateCartSubtotal($cartContent, $currency);
+            $totalAmount = $this->cartPriceConverter->calculateCartSubtotal($cartContent, $currency);
             $subtotal = $totalAmount;
         }
 

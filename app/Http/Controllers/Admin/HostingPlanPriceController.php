@@ -28,7 +28,10 @@ final class HostingPlanPriceController extends Controller
         $planUuid = request()->input('plan_id');
         $planUuid = ($planUuid !== null && $planUuid !== '') ? (string) $planUuid : null;
 
-        $prices = $action->handle(10, $categoryUuid, $planUuid);
+        $search = request()->input('search');
+        $search = ($search !== null && $search !== '') ? (string) $search : null;
+
+        $prices = $action->handle(10, $categoryUuid, $planUuid, $search);
         $categories = HostingCategory::query()->select(['uuid', 'name'])->orderBy('name')->get();
 
         $plansQuery = HostingPlan::query()->select(['uuid', 'name', 'category_id'])->orderBy('name');
@@ -46,6 +49,7 @@ final class HostingPlanPriceController extends Controller
             'plans' => $plans,
             'selectedCategoryUuid' => $categoryUuid,
             'selectedPlanUuid' => $planUuid,
+            'search' => $search,
         ]);
     }
 

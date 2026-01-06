@@ -41,7 +41,7 @@ final class FailedDomainRegistrationController extends Controller
             $query->where('status', $request->status);
         }
 
-        $failedRegistrations = $query->paginate(20);
+        $failedRegistrations = $query->get();
 
         return view('admin.failed-registrations.index', [
             'failedRegistrations' => $failedRegistrations,

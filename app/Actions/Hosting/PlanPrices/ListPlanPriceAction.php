@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Actions\Hosting\PlanPrices;
 
 use App\Models\HostingPlanPrice;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class ListPlanPriceAction
 {
-    public function handle(int $perPage = 10, ?string $categoryUuid = null, ?string $planUuid = null): LengthAwarePaginator
+    public function handle(int $perPage = 15, ?string $categoryUuid = null, ?string $planUuid = null, ?string $search = null): LengthAwarePaginator
     {
         $query = HostingPlanPrice::query()
             ->with(['plan.category'])
@@ -24,6 +24,18 @@ final class ListPlanPriceAction
         if ($planUuid !== null) {
             $query->whereHas('plan', function ($q) use ($planUuid): void {
                 $q->where('uuid', $planUuid);
+            });
+        }
+
+        if ($search !== null) {
+            $query->where(function ($q) use ($search): void {
+                $q->where('billing_cycle', 'like', sprintf('%%%s%%', $search))
+                    ->orWhereHas('plan', function ($q) use ($search): void {
+                        $q->where('name', 'like', sprintf('%%%s%%', $search))
+                            ->orWhereHas('category', function ($q) use ($search): void {
+                                $q->where('name', 'like', sprintf('%%%s%%', $search));
+                            });
+                    });
             });
         }
 

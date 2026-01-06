@@ -124,9 +124,6 @@
                     </tbody>
                 </table>
             </div>
-            <div class="d-flex justify-content-center mt-3 float-right">
-                {{ $failedRegistrations->links('vendor.pagination.adminlte') }}
-            </div>
         </div>
     </div>
 
@@ -153,10 +150,11 @@
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
                 let table = $('.datatable-FailedRegistration:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,
-                    paging: false,
+                    paging: true,
+                    pageLength: 10,
                     searching: true,
                     ordering: true,
-                    info: false,
+                    info: true,
                     lengthChange: false,
                     dom: 'Bfrtip',
                     autoWidth: false,

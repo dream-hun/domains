@@ -117,9 +117,6 @@
                         </div>
 
                     </div>
-                    <div class="d-flex justify-content-center mt-3 float-right">
-                        {{ $prices->links('vendor.pagination.adminlte') }}
-                    </div>
                 </div>
 
             </div>
@@ -206,13 +203,14 @@
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
                 let table = $('.datatable-DomainPrice:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,
-                    paging: false, // Disable DataTable pagination to use Laravel pagination
-                    searching: true, // Enable search
-                    ordering: true, // Enable sorting
-                    info: false, // Disable "Showing X to Y of Z entries" info
-                    lengthChange: false, // Disable "Show X entries" dropdown
-                    dom: 'Bfrtip', // B=buttons, f=filter(search), r=processing, t=table, i=info, p=pagination
-                    autoWidth: false, // Disable auto width calculation
+                    paging: true,
+                    pageLength: 10,
+                    searching: true,
+                    ordering: true,
+                    info: false,
+                    lengthChange: false,
+                    dom: 'Bfrtip',
+                    autoWidth: false,
                     language: {
                         search: "Search:",
                         searchPlaceholder: "Search domain prices..."
