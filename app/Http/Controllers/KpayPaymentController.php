@@ -61,6 +61,9 @@ final class KpayPaymentController extends Controller
             $totalAmount = (float) $order->total_amount;
             $subtotal = (float) $order->subtotal;
             $currency = $order->currency;
+
+            // Ensure the session currency matches the order currency for header consistency
+            session(['selected_currency' => $currency]);
         } else {
             $cartContent = Cart::getContent();
             $cartItems = $cartContent->map(fn (object $item): array => [

@@ -375,7 +375,7 @@
                 });
             });
 
-            // Trigger change on load to set initial state
+            // Trigger change on a load to set the initial state
             const checkedRadio = document.querySelector('.payment-method-radio:checked');
             if (checkedRadio) {
                 checkedRadio.dispatchEvent(new Event('change'));
@@ -401,7 +401,7 @@
                 // Show modal
                 paymentModal.show();
 
-                // Prepare form data
+                // Prepare for data
                 const formData = new FormData(form);
 
                 // Send AJAX request
@@ -456,7 +456,7 @@
                         const pmethod = pmethodInput.value;
 
                         if (pmethod === 'cc' && data.redirect_url) {
-                            // For card payment, redirect to checkout page
+                            // For card payment, redirect to check out page
                             document.getElementById('modal-submessage').textContent = 'Redirecting to secure payment page...';
                             setTimeout(() => {
                                 window.location.href = data.redirect_url;
@@ -536,7 +536,7 @@
                 document.getElementById('modal-content-error').classList.remove('d-none');
                 document.getElementById('error-message').textContent = message;
 
-                // Show close button
+                // Show the close button
                 document.getElementById('modal-footer-actions').style.setProperty('display', 'flex', 'important');
 
                 // Re-enable submit button

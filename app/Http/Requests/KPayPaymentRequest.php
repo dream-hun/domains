@@ -36,6 +36,9 @@ final class KPayPaymentRequest extends FormRequest
             'billing_city' => ['nullable', 'string', 'max:255'],
             'billing_country' => ['nullable', 'string', 'max:255'],
             'billing_postal_code' => ['nullable', 'string', 'max:20'],
+            'card_number' => ['required_if:pmethod,cc', 'nullable', 'string', 'max:19'],
+            'expiry_date' => ['required_if:pmethod,cc', 'nullable', 'string', 'max:7'],
+            'cvv' => ['required_if:pmethod,cc', 'nullable', 'string', 'max:4'],
         ];
     }
 
