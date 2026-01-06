@@ -70,10 +70,10 @@ return new class extends Migration
 
         if ($driver === 'sqlite') {
             // SQLite: Check pragma index_list for unique indexes
-            $indexes = $connection->select("PRAGMA index_list({$table})");
+            $indexes = $connection->select(sprintf('PRAGMA index_list(%s)', $table));
             foreach ($indexes as $index) {
                 if ($index->unique) {
-                    $columns = $connection->select("PRAGMA index_info({$index->name})");
+                    $columns = $connection->select(sprintf('PRAGMA index_info(%s)', $index->name));
                     foreach ($columns as $col) {
                         if ($col->name === $column) {
                             return true;
@@ -87,7 +87,7 @@ return new class extends Migration
 
         // MySQL/MariaDB
         $indexes = $connection->select(
-            "SHOW INDEXES FROM {$table} WHERE Column_name = ? AND Non_unique = 0",
+            sprintf('SHOW INDEXES FROM %s WHERE Column_name = ? AND Non_unique = 0', $table),
             [$column]
         );
 

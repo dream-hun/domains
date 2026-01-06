@@ -1,59 +1,63 @@
-<x-user-layout>
-    <div class="rts-hosting-banner rts-hosting-banner-bg">
-        <div class="container">
-            <div class="row">
-                <div class="banner-area">
-                    <div class="rts-hosting-banner rts-hosting-banner__content about__banner">
-                        <h1 class="banner-title sal-animate" data-sal="slide-down" data-sal-delay="200"
-                            data-sal-duration="800">
-                            Payment Processing
-                        </h1>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<x-admin-layout>
+
 
     <div class="container my-5">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center py-5">
+            <div class="col-lg-6">
+                <div class="card shadow-lg border-0">
+                    <div class="card-body text-center p-5">
                         <div class="mb-4">
-                            <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
-                                <span class="visually-hidden">Loading...</span>
+                            <div class="position-relative d-inline-block">
+                                <i class="bi bi-phone text-primary" style="font-size: 5rem;"></i>
+                                <div class="spinner-border text-primary position-absolute"
+                                     style="top: 15px; right: -15px; width: 2rem; height: 2rem;"
+                                     role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
                             </div>
                         </div>
-                        <h3 class="mb-3">Processing Your Payment</h3>
+                        <h3 class="mb-3 font-weight-bold">Awaiting Payment</h3>
                         <p class="text-muted mb-4">
-                            Your KPay payment is being processed. Please wait while we verify your payment status.
-                        </p>
-                        <p class="text-muted small">
-                            Order Number: <strong>{{ $order->order_number }}</strong>
+                            We are waiting for confirmation of your KPay payment. Please complete the authorization on your mobile device.
                         </p>
 
-                        <div class="mt-4">
-                            <a href="{{ route('payment.kpay.status', $payment) }}"
-                               class="btn btn-primary"
-                               id="check-status-btn">
-                                <i class="bi bi-arrow-clockwise me-2"></i>
-                                Check Payment Status
-                            </a>
+                        <div class="alert alert-light border mb-4 text-left">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Order Number:</span>
+                                <span class="font-weight-bold">{{ $order->order_number }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Amount:</span>
+                                <span class="font-weight-bold">{{ $order->currency }} {{ number_format($order->total_amount, 2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Status:</span>
+                                <span class="badge badge-warning">Pending Confirmation</span>
+                            </div>
                         </div>
 
-                        <div class="mt-3">
-                            <a href="{{ route('billing.show', $order) }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-receipt me-2"></i>
-                                View Order Details
+                        <div class="mt-4 d-grid gap-2">
+                            <a href="{{ route('payment.kpay.status', $payment) }}"
+                               class="btn btn-primary btn-lg w-100 mb-3"
+                               id="check-status-btn">
+                                <i class="bi bi-arrow-clockwise mr-2"></i>
+                                Check Status Now
+                            </a>
+                            <a href="{{ route('payment.kpay.show') }}" class="btn btn-link text-muted">
+                                <i class="bi bi-arrow-left mr-2"></i>
+                                Back to Payment Method
                             </a>
                         </div>
                     </div>
                 </div>
 
-                <div class="alert alert-info mt-4">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>Note:</strong> If your payment was successful, you will be redirected automatically.
-                    If you don't see any updates, please check your payment status or contact support.
+                <div class="alert alert-info mt-4 shadow-sm border-0">
+                    <div class="d-flex">
+                        <i class="bi bi-info-circle-fill mr-3" style="font-size: 1.5rem;"></i>
+                        <div>
+                            <strong>Automatic Update:</strong> This page will automatically update once your payment is confirmed. Please keep this window open.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -81,7 +85,7 @@
                         window.location.href = '{{ route('payment.kpay.success', $order) }}';
                     } else if (data.status === 'failed') {
                         clearInterval(checkInterval);
-                        window.location.href = '{{ route('payment.failed', $order) }}';
+                        window.location.href = '{{ route('payment.kpay.show') }}';
                     }
                 })
                 .catch(error => {
@@ -96,4 +100,4 @@
         });
     </script>
     @endpush
-</x-user-layout>
+</x-admin-layout>

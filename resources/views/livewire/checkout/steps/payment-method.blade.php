@@ -45,7 +45,7 @@
                                              class="img-fluid"
                                              style="max-height: 50px; max-width: 150px;">
                                     @elseif($method['id'] === 'account_credit')
-                                        <i class="fas fa-wallet fa-3x text-success"></i>
+                                        <i class="bi bi-wallet fa-3x text-success"></i>
                                     @endif
                                 </div>
                             </div>

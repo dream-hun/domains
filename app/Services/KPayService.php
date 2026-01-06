@@ -44,12 +44,23 @@ readonly class KPayService
             'amount' => (int) $paymentData['amount'],
             'currency' => $paymentData['currency'] ?? 'RWF',
             'cname' => $paymentData['cname'],
-            'cnumber' => $paymentData['cnumber'],
+            'cnumber' => $paymentData['cnumber'] ?? $this->normalizeMsisdn($paymentData['msisdn']),
             'pmethod' => $paymentData['pmethod'],
             'retailerid' => $this->retailerId,
             'returl' => $paymentData['returl'],
             'redirecturl' => $paymentData['redirecturl'],
         ];
+
+        // Add card details if provided
+        if (isset($paymentData['card_number'])) {
+            $payload['card_number'] = $paymentData['card_number'];
+        }
+        if (isset($paymentData['expiry_date'])) {
+            $payload['expiry_date'] = $paymentData['expiry_date'];
+        }
+        if (isset($paymentData['cvv'])) {
+            $payload['cvv'] = $paymentData['cvv'];
+        }
 
         // Add optional logourl if provided
         if (isset($paymentData['logourl'])) {

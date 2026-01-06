@@ -45,9 +45,9 @@ final readonly class KPayPaymentStatusService
             return false;
         }
 
-        $successStatuses = ['01', '1', 'SUCCESS', 'SUCCESSFUL', 'OK', 'COMPLETED', 'APPROVED'];
+        $successStatuses = ['01', '1', 'SUCCESS', 'SUCCESSFUL', 'OK', 'COMPLETED', 'APPROVED', '0'];
 
-        return in_array($statusid, $successStatuses, true) || $statusid === 1;
+        return in_array($statusid, $successStatuses, true) || $statusid === 1 || $statusid === 0;
     }
 
     /**

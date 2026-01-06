@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\RegisterDomainAction;
 use App\Enums\Hosting\HostingPlanPriceStatus;
 use App\Enums\Hosting\HostingPlanStatus;
+use App\Jobs\ProcessDomainRegistrationJob;
 use App\Models\Contact;
 use App\Models\Currency;
 use App\Models\Domain;
@@ -61,7 +62,7 @@ describe('KPay Payment Flow', function (): void {
     it('processes KPay payment successfully', function (): void {
         $user = User::factory()->create();
 
-        // Add items to cart
+        // Add items to the cart
         Cart::add([
             'id' => 'test-domain',
             'name' => 'example.com',
@@ -94,7 +95,7 @@ describe('KPay Payment Flow', function (): void {
         actingAs($user)
             ->post(route('payment.kpay'), [
                 'msisdn' => '250788123456',
-                'pmethod' => 'mobile_money',
+                'pmethod' => 'momo',
                 'billing_name' => 'Test User',
                 'billing_email' => 'test@example.com',
                 'billing_address' => '123 Test St',
@@ -109,7 +110,7 @@ describe('KPay Payment Flow', function (): void {
         expect($order)->not->toBeNull()
             ->and($order->payment_method)->toBe('kpay');
 
-        // Verify payment attempt was created
+        // Verify a payment attempt was created
         $payment = Payment::query()->where('order_id', $order->id)->first();
         expect($payment)->not->toBeNull()
             ->and($payment->payment_method)->toBe('kpay')
@@ -144,6 +145,92 @@ describe('KPay Payment Flow', function (): void {
             ->assertSessionHasErrors(['msisdn', 'pmethod']);
     });
 
+    it('validates card details when pmethod is cc', function (): void {
+        $user = User::factory()->create();
+
+        Cart::add([
+            'id' => 'test-domain',
+            'name' => 'example.com',
+            'price' => 10.00,
+            'quantity' => 1,
+            'attributes' => [
+                'type' => 'registration',
+                'currency' => 'USD',
+            ],
+        ]);
+
+        session(['checkout' => [
+            'cart_items' => Cart::getContent()->toArray(),
+            'total' => 10.00,
+        ]]);
+
+        actingAs($user)
+            ->post(route('payment.kpay'), [
+                'msisdn' => '250788123456',
+                'pmethod' => 'cc',
+                'billing_name' => 'Test User',
+                'billing_email' => 'test@example.com',
+            ])
+            ->assertSessionHasErrors(['card_number', 'expiry_date', 'cvv']);
+    });
+
+    it('processes KPay card payment successfully with details', function (): void {
+        $user = User::factory()->create();
+
+        // Add items to the cart
+        Cart::add([
+            'id' => 'test-domain',
+            'name' => 'example.com',
+            'price' => 10.00,
+            'quantity' => 1,
+            'attributes' => [
+                'type' => 'registration',
+                'currency' => 'USD',
+            ],
+        ]);
+
+        session(['checkout' => [
+            'cart_items' => Cart::getContent()->toArray(),
+            'total' => 10.00,
+            'subtotal' => 10.00,
+            'tax' => 0.00,
+        ]]);
+
+        // Mock KPay API response
+        Http::fake([
+            'api.kpay.test' => Http::response([
+                'status' => 'success',
+                'tid' => 'TXN789012',
+                'refid' => 'ORD-TEST-CARD-1',
+                'statusdesc' => 'Payment initiated successfully',
+                'redirecturl' => 'https://kpay.test/payment/TXN789012',
+            ], 200),
+        ]);
+
+        actingAs($user)
+            ->post(route('payment.kpay'), [
+                'msisdn' => '250788123456',
+                'pmethod' => 'cc',
+                'billing_name' => 'Test User',
+                'billing_email' => 'test@example.com',
+                'card_number' => '4111 1111 1111 1111',
+                'expiry_date' => '12/25',
+                'cvv' => '123',
+            ])
+            ->assertRedirect();
+
+        // Verify order was created
+        $order = Order::query()->where('user_id', $user->id)->latest()->first();
+        expect($order)->not->toBeNull()
+            ->and($order->payment_method)->toBe('kpay');
+
+        // Verify payment attempt was created
+        $payment = Payment::query()->where('order_id', $order->id)->first();
+        expect($payment)->not->toBeNull()
+            ->and($payment->payment_method)->toBe('kpay')
+            ->and($payment->kpay_transaction_id)->toBe('TXN789012');
+    });
+
     it('handles KPay payment initiation failure', function (): void {
         $user = User::factory()->create();
 
@@ -175,7 +262,7 @@ describe('KPay Payment Flow', function (): void {
         actingAs($user)
             ->post(route('payment.kpay'), [
                 'msisdn' => '250788123456',
-                'pmethod' => 'mobile_money',
+                'pmethod' => 'momo',
                 'billing_name' => 'Test User',
                 'billing_email' => 'test@example.com',
             ])
@@ -255,7 +342,7 @@ describe('KPay Payment Flow', function (): void {
 
         actingAs($user)
             ->get(route('payment.kpay.cancel', $order))
-            ->assertRedirect(route('cart.index'));
+            ->assertRedirect(route('payment.kpay.show'));
 
         $order->refresh();
         $payment->refresh();
@@ -465,9 +552,7 @@ describe('KPay Payment Flow', function (): void {
         expect($order->orderItems)->toHaveCount(1);
 
         // Verify domain registration job was dispatched
-        Bus::assertDispatched(App\Jobs\ProcessDomainRegistrationJob::class, function ($job) use ($order) {
-            return $job->order->id === $order->id;
-        });
+        Bus::assertDispatched(ProcessDomainRegistrationJob::class, fn ($job): bool => $job->order->id === $order->id);
     });
 
     it('creates hosting subscriptions after successful KPay payment', function (): void {

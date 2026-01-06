@@ -16,6 +16,7 @@
     <link href="{{ asset('css/custom.css') }}" rel="stylesheet" />
     <link href="{{ asset('font/web/inter.css') }}" rel="stylesheet">
     @yield('styles')
+    @stack('styles')
     <style>
         body {
             font-family: "Inter", sans-serif !important;
@@ -207,6 +208,7 @@
     </script>
 
     @yield('scripts')
+    @stack('scripts')
 </body>
 
 </html>

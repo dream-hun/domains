@@ -253,7 +253,7 @@ final class CheckoutWizard extends Component
     }
 
     /**
-     * Get formatted registration period for display
+     * Get a formatted registration period for display
      */
     public function getRegistrationPeriod(object $item): string
     {
@@ -624,8 +624,8 @@ final class CheckoutWizard extends Component
             config('services.payment.kpay.retailer_id')) {
             $this->paymentMethods[] = [
                 'id' => 'kpay',
-                'name' => 'KPay Mobile Money',
-                'icon' => 'mobile-alt',
+                'name' => 'KPay (Mobile Money & Card)',
+                'icon' => 'credit-card',
             ];
         }
 

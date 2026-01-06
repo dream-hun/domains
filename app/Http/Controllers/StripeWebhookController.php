@@ -881,7 +881,7 @@ final class StripeWebhookController extends Controller
                 if (isset($session->payment_intent)) {
                     // Check if current payment intent ID is a placeholder (starts with "pending-")
                     $currentIntentId = $payment->stripe_payment_intent_id;
-                    $isPlaceholder = $currentIntentId && str_starts_with($currentIntentId, 'pending-');
+                    $isPlaceholder = $currentIntentId && str_starts_with((string) $currentIntentId, 'pending-');
 
                     // Always update if it's a placeholder or if not set
                     if ($isPlaceholder || ! $currentIntentId) {

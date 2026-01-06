@@ -51,13 +51,21 @@
                 </div>
             </div>
 
-            {{-- Loading Overlay --}}
+            {{-- Loading Overlay Modal --}}
             @if($isProcessing)
-                <div class="checkout-loading-overlay" role="alert" aria-live="assertive" aria-busy="true">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Processing...</span>
+                <div class="modal fade show" style="display: block; z-index: 9999;" role="alert" aria-live="assertive" aria-busy="true">
+                    <div class="modal-backdrop fade show" style="background-color: rgba(0, 0, 0, 0.7);"></div>
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg">
+                            <div class="modal-body text-center p-5">
+                                <div class="spinner-border text-primary mb-4" style="width: 3.5rem; height: 3.5rem;" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                <h4 class="mb-3 font-weight-bold">Processing Your Order</h4>
+                                <p class="text-muted mb-0">Please wait while we set everything up for you. This may take a moment.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="mt-3">Processing your order...</p>
                 </div>
             @endif
         </div>

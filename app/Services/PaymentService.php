@@ -87,6 +87,9 @@ final readonly class PaymentService
                 'cname' => mb_trim((string) ($order->billing_name ?? $order->user->name ?? '')),
                 'cnumber' => mb_trim($msisdn),
                 'pmethod' => mb_trim((string) ($paymentData['pmethod'] ?? 'momo')),
+                'card_number' => $paymentData['card_number'] ?? null,
+                'expiry_date' => $paymentData['expiry_date'] ?? null,
+                'cvv' => $paymentData['cvv'] ?? null,
                 'returl' => route('payment.kpay.webhook'),
                 'redirecturl' => route('payment.kpay.success', $order),
             ];
@@ -284,7 +287,7 @@ final readonly class PaymentService
 
             // Check for successful status - KPay may return different values
             $successStatuses = ['01', '1', 1, 'SUCCESS', 'SUCCESSFUL', 'OK', 'COMPLETED', 'APPROVED'];
-            if (in_array($statusid, $successStatuses, false)) {
+            if (in_array($statusid, $successStatuses, false) || $statusid === '0' || $statusid === 0) {
                 Log::info('KPay status check: Payment successful', [
                     'payment_id' => $payment->id,
                     'statusid' => $statusid,
@@ -407,7 +410,13 @@ final readonly class PaymentService
                 'success' => false,
                 'error' => 'Failed to initialize payment. Please try again or contact support.',
             ];
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->markPaymentFailed($paymentAttempt, $exception->getMessage(), $exception->getCode());
+
+            return [
+                'success' => false,
+                'error' => 'An unexpected error occurred. Please try again or contact support.',
+            ];
         }
     }
 

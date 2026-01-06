@@ -31,8 +31,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
+use Throwable;
 
-class EppDomainService implements DomainRegistrationServiceInterface, DomainServiceInterface
+class EppDomainService implements DomainRegistrationServiceInterface
 {
     private ?EPPClient $client = null;
 
@@ -44,7 +45,6 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
 
     private int $retryDelay = 1; // seconds
 
-    // Common TLDs for domain suggestions - these will be dynamically loaded from database
     private array $commonTlds = [];
 
     // Domain suggestion patterns
@@ -55,7 +55,7 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
     ];
 
     /**
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     public function __construct()
     {
@@ -1075,7 +1075,7 @@ class EppDomainService implements DomainRegistrationServiceInterface, DomainServ
                 'error' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),
             ]);
-            // Try to reconnect on next request
+            // Try to reconnect on the next request
             $this->connected = false;
             throw $exception;
         }

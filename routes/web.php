@@ -29,6 +29,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryShowController;
 use App\Http\Controllers\CheckoutController as RenewalCheckoutController;
 use App\Http\Controllers\DomainRenewalController;
+use App\Http\Controllers\KpayPaymentController;
 use App\Http\Controllers\KPayWebhookController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentController;
@@ -152,11 +153,11 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/payment/failed/{order}', [PaymentController::class, 'showPaymentFailed'])->name('payment.failed');
 
     // KPay Payment Routes
-    Route::get('/payment/kpay', [App\Http\Controllers\KpayPaymentController::class, 'show'])->name('payment.kpay.show');
-    Route::post('/payment/kpay', [App\Http\Controllers\KpayPaymentController::class, 'process'])->name('payment.kpay');
-    Route::get('/payment/kpay/success/{order}', [App\Http\Controllers\KpayPaymentController::class, 'success'])->name('payment.kpay.success');
-    Route::get('/payment/kpay/cancel/{order}', [App\Http\Controllers\KpayPaymentController::class, 'cancel'])->name('payment.kpay.cancel');
-    Route::get('/payment/kpay/status/{payment}', [App\Http\Controllers\KpayPaymentController::class, 'status'])->name('payment.kpay.status');
+    Route::get('/payment/kpay', [KpayPaymentController::class, 'show'])->name('payment.kpay.show');
+    Route::post('/payment/kpay', [KpayPaymentController::class, 'process'])->name('payment.kpay');
+    Route::get('/payment/kpay/success/{order}', [KpayPaymentController::class, 'success'])->name('payment.kpay.success');
+    Route::get('/payment/kpay/cancel/{order}', [KpayPaymentController::class, 'cancel'])->name('payment.kpay.cancel');
+    Route::get('/payment/kpay/status/{payment}', [KpayPaymentController::class, 'status'])->name('payment.kpay.status');
 });
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
