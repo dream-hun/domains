@@ -180,9 +180,6 @@ final class KpayPaymentController extends Controller
             $paymentResult = $this->paymentService->processKPayPayment($order, [
                 'msisdn' => $validated['msisdn'],
                 'pmethod' => $validated['pmethod'] ?? 'momo',
-                'card_number' => $validated['card_number'] ?? null,
-                'expiry_date' => $validated['expiry_date'] ?? null,
-                'cvv' => $validated['cvv'] ?? null,
             ]);
 
             if (! $paymentResult['success']) {

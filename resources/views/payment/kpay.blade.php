@@ -194,61 +194,6 @@
                                         </small>
                                     </div>
                                 </div>
-
-                                <!-- Card Payment Form (Shown only when CC is selected) -->
-                                <div id="cc-info-section" class="mb-4 d-none">
-                                    <div class="card bg-light border-0 shadow-sm">
-                                        <div class="card-body">
-                                            <h5 class="card-title mb-4">
-                                                <i class="bi bi-credit-card-2-front mr-2"></i>Card Details
-                                            </h5>
-                                            <div class="row g-3">
-                                                <div class="col-12">
-                                                    <label for="card_number" class="form-label">Card Number</label>
-                                                    <div class="input-group">
-                                                        <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
-                                                        <input type="text"
-                                                               id="card_number"
-                                                               name="card_number"
-                                                               class="form-control"
-                                                               placeholder="0000 0000 0000 0000"
-                                                               maxlength="19">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="expiry_date" class="form-label">Expiry Date (MM/YY)</label>
-                                                    <div class="input-group">
-                                                        <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                                                        <input type="text"
-                                                               id="expiry_date"
-                                                               name="expiry_date"
-                                                               class="form-control"
-                                                               placeholder="MM/YY"
-                                                               maxlength="5">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="cvv" class="form-label">CVV</label>
-                                                    <div class="input-group">
-                                                        <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
-                                                        <input type="text"
-                                                               id="cvv"
-                                                               name="cvv"
-                                                               class="form-control"
-                                                               placeholder="123"
-                                                               maxlength="4">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="alert alert-info mt-3 mb-0 small">
-                                                <i class="bi bi-info-circle mr-1"></i>
-                                                Securely processed via KPay.
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-
                                 <!-- Security Notice -->
                                 <div class="alert alert-info mt-4 mb-4">
                                     <i class="bi bi-shield-check mr-2"></i>
@@ -272,45 +217,7 @@
                                     </button>
                                 </div>
 
-                                <!-- Test Cards Information (only in sandbox/local) -->
-                                @if(config('app.env') !== 'production' || str_contains(config('services.payment.kpay.base_url'), 'esicia.com'))
-                                    <div class="mt-5 border-top pt-4">
-                                        <h5 class="mb-3 text-muted"><i class="bi bi-info-circle mr-2"></i>Test Card Information</h5>
-                                        <div class="table-responsive">
-                                            <table class="table table-sm table-bordered text-muted small">
-                                                <thead class="bg-light">
-                                                    <tr>
-                                                        <th>Card Type</th>
-                                                        <th>Card Number</th>
-                                                        <th>CVV/Details</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>Visa Consumer</td>
-                                                        <td><code>4111 1111 1111 1111</code></td>
-                                                        <td>Any CVV</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>MasterCard</td>
-                                                        <td><code>6771 7980 2500 0004</code></td>
-                                                        <td>Any CVV</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Amex</td>
-                                                        <td><code>3782 822463 10005</code></td>
-                                                        <td>CVV (4 digits)</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div class="alert alert-warning small mt-2">
-                                            <i class="bi bi-exclamation-triangle mr-1"></i>
-                                            For <strong>Mobile Money</strong> testing, use any Rwandan phone number (e.g., 0783300000).
-                                        </div>
-                                    </div>
-                                @endif
-                            </form>
+                               </form>
                         </div>
                     </div>
                 </div>
@@ -450,34 +357,7 @@
             const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
             const submitBtn = document.getElementById('submit-btn');
 
-            // Format card number with spaces
-            const cardNumberInput = document.getElementById('card_number');
-            if (cardNumberInput) {
-                cardNumberInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    let formattedValue = '';
-                    for (let i = 0; i < value.length; i++) {
-                        if (i > 0 && i % 4 === 0) {
-                            formattedValue += ' ';
-                        }
-                        formattedValue += value[i];
-                    }
-                    e.target.value = formattedValue;
-                });
-            }
 
-            // Format expiry date (MM/YY)
-            const expiryDateInput = document.getElementById('expiry_date');
-            if (expiryDateInput) {
-                expiryDateInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    if (value.length > 2) {
-                        e.target.value = value.substring(0, 2) + '/' + value.substring(2, 4);
-                    } else {
-                        e.target.value = value;
-                    }
-                });
-            }
 
             // Update hidden field when payment method changes
             document.querySelectorAll('.payment-method-radio').forEach(radio => {
@@ -485,15 +365,11 @@
                     const method = this.value;
                     pmethodInput.value = method;
 
-                    // Toggle CC info section
-                    const ccInfo = document.getElementById('cc-info-section');
                     const msisdnHelp = document.getElementById('msisdn-help');
 
                     if (method === 'cc') {
-                        ccInfo.classList.remove('d-none');
                         msisdnHelp.textContent = 'Enter your phone number for transaction notifications (required).';
                     } else {
-                        ccInfo.classList.add('d-none');
                         msisdnHelp.textContent = 'Enter your phone number (required for payment).';
                     }
                 });
@@ -509,25 +385,7 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                // Basic validation for card details if selected
-                if (pmethodInput.value === 'cc') {
-                    const cardNumber = document.getElementById('card_number').value.replace(/\s/g, '');
-                    const expiryDate = document.getElementById('expiry_date').value;
-                    const cvv = document.getElementById('cvv').value;
 
-                    if (!cardNumber || cardNumber.length < 13) {
-                        alert('Please enter a valid card number.');
-                        return;
-                    }
-                    if (!expiryDate || !expiryDate.includes('/')) {
-                        alert('Please enter a valid expiry date (MM/YY).');
-                        return;
-                    }
-                    if (!cvv || cvv.length < 3) {
-                        alert('Please enter a valid CVV.');
-                        return;
-                    }
-                }
 
                 // Disable submit button
                 submitBtn.disabled = true;
@@ -604,7 +462,7 @@
                                 window.location.href = data.redirect_url;
                             }, 1500);
                         } else if (data.check_status_url) {
-                            // For mobile money, show prompt message and check status
+                            // For mobile money, show a prompt message and check status
                             document.getElementById('modal-message').textContent = 'Payment Pending';
                             document.getElementById('modal-submessage').innerHTML = 'You will get a prompt on your mobile<br>or dial *182*7*1#';
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\ValidationException;
 
 final class KPayPaymentRequest extends FormRequest
 {
@@ -36,9 +36,6 @@ final class KPayPaymentRequest extends FormRequest
             'billing_city' => ['nullable', 'string', 'max:255'],
             'billing_country' => ['nullable', 'string', 'max:255'],
             'billing_postal_code' => ['nullable', 'string', 'max:20'],
-            'card_number' => ['required_if:pmethod,cc', 'nullable', 'string', 'max:20'],
-            'expiry_date' => ['required_if:pmethod,cc', 'nullable', 'string', 'regex:/^(0[1-9]|1[0-2])\/?([0-9]{2})$/'],
-            'cvv' => ['required_if:pmethod,cc', 'nullable', 'string', 'min:3', 'max:4'],
         ];
     }
 
@@ -56,11 +53,6 @@ final class KPayPaymentRequest extends FormRequest
             'billing_name.required' => 'Billing name is required.',
             'billing_email.required' => 'Billing email is required.',
             'billing_email.email' => 'Please provide a valid email address.',
-            'card_number.required_if' => 'Card number is required for card payments.',
-            'expiry_date.required_if' => 'Expiry date is required for card payments.',
-            'expiry_date.regex' => 'Expiry date must be in MM/YY format.',
-            'cvv.required_if' => 'CVV is required for card payments.',
-            'cvv.min' => 'CVV must be at least 3 digits.',
         ];
     }
 
