@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ScopedBy(DomainPriceScope::class)]
 final class DomainPrice extends Model
@@ -111,6 +112,11 @@ final class DomainPrice extends Model
     public function getBaseCurrency(): string
     {
         return $this->type === DomainType::Local ? 'RWF' : 'USD';
+    }
+
+    public function domains(): HasMany
+    {
+        return $this->hasMany(Domain::class);
     }
 
     public function getRouteKeyName(): string

@@ -10,6 +10,7 @@ use App\Http\Requests\KPayPaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\CartPriceConverter;
+use App\Services\GeolocationService;
 use App\Services\PaymentService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -25,7 +26,8 @@ final class KpayPaymentController extends Controller
     public function __construct(
         private readonly PaymentService $paymentService,
         private readonly CreateOrderFromCartAction $createOrderAction,
-        private readonly CartPriceConverter $cartPriceConverter
+        private readonly CartPriceConverter $cartPriceConverter,
+        private readonly GeolocationService $geolocationService
     ) {}
 
     /**
@@ -53,7 +55,7 @@ final class KpayPaymentController extends Controller
         }
 
         $user = Auth::user();
-        $currency = session('selected_currency', 'USD');
+        $currency = $this->getLocationBasedCurrency();
 
         // Use order items if we have an order, otherwise use cart
         if ($order) {
@@ -124,7 +126,7 @@ final class KpayPaymentController extends Controller
             }
 
             try {
-                $currency = session('selected_currency', 'USD');
+                $currency = $this->getLocationBasedCurrency();
 
                 // Get contact IDs from the checkout session if available
                 $checkoutState = session('checkout_state', []);
@@ -590,5 +592,21 @@ final class KpayPaymentController extends Controller
         }
 
         return [];
+    }
+
+    /**
+     * Get currency based on user location, with session persistence
+     */
+    private function getLocationBasedCurrency(): string
+    {
+        $currency = session('selected_currency');
+
+        if (! $currency) {
+            $isFromRwanda = $this->geolocationService->isUserFromRwanda();
+            $currency = $isFromRwanda ? 'RWF' : 'USD';
+            session(['selected_currency' => $currency]);
+        }
+
+        return $currency;
     }
 }

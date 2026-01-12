@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\DomainPrice;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 final class UpdateDomainPriceRequest extends FormRequest
 {
@@ -16,14 +18,14 @@ final class UpdateDomainPriceRequest extends FormRequest
 
     public function rules(): array
     {
-        $uuid = $this->route('uuid') ?? $this->route('domain-price') ?? null;
-
-        $tldRules = ['required', 'string'];
-
-        $tldRules[] = $uuid ? 'unique:domain_prices,tld,'.$uuid.',uuid' : 'unique:domain_prices,tld';
+        $domainPrice = $this->route('price');
 
         return [
-            'tld' => $tldRules,
+            'tld' => [
+                'required',
+                'string',
+                Rule::unique('domain_prices', 'tld')->ignore($domainPrice),
+            ],
             'type' => ['required', 'string', 'in:local,international'],
             'register_price' => ['required', 'integer', 'min:0'],
             'renewal_price' => ['required', 'integer', 'min:0'],
