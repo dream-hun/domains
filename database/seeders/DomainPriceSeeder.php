@@ -20,7 +20,7 @@ final class DomainPriceSeeder extends Seeder
             // --- Local (.rw) TLDs ---
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'rw',
+                'tld' => '.rw',
                 'type' => 'local',
                 'register_price' => 12.00,
                 'renewal_price' => 12.00,
@@ -33,7 +33,7 @@ final class DomainPriceSeeder extends Seeder
             ],
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'co.rw',
+                'tld' => '.co.rw',
                 'type' => 'local',
                 'register_price' => 12.00,
                 'renewal_price' => 12.00,
@@ -46,7 +46,7 @@ final class DomainPriceSeeder extends Seeder
             ],
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'org.rw',
+                'tld' => '.org.rw',
                 'type' => 'local',
                 'register_price' => 12.00,
                 'renewal_price' => 12.00,
@@ -59,7 +59,7 @@ final class DomainPriceSeeder extends Seeder
             ],
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'ac.rw',
+                'tld' => '.ac.rw',
                 'type' => 'local',
                 'register_price' => 12.00,
                 'renewal_price' => 12.00,
@@ -72,7 +72,7 @@ final class DomainPriceSeeder extends Seeder
             ],
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'gov.rw',
+                'tld' => '.gov.rw',
                 'type' => 'local',
                 'register_price' => 12.00,
                 'renewal_price' => 12.00,
@@ -85,7 +85,7 @@ final class DomainPriceSeeder extends Seeder
             ],
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'mil.rw',
+                'tld' => '.mil.rw',
                 'type' => 'local',
                 'register_price' => 12.00,
                 'renewal_price' => 12.00,
@@ -98,7 +98,7 @@ final class DomainPriceSeeder extends Seeder
             ],
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'net.rw',
+                'tld' => '.net.rw',
                 'type' => 'local',
                 'register_price' => 12.00,
                 'renewal_price' => 12.00,
@@ -113,7 +113,7 @@ final class DomainPriceSeeder extends Seeder
             // --- International TLDs ---
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'com',
+                'tld' => '.com',
                 'type' => 'international',
                 'register_price' => 15.00,
                 'renewal_price' => 15.00,
@@ -126,7 +126,7 @@ final class DomainPriceSeeder extends Seeder
             ],
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'net',
+                'tld' => '.net',
                 'type' => 'international',
                 'register_price' => 17.00,
                 'renewal_price' => 17.00,
@@ -139,7 +139,7 @@ final class DomainPriceSeeder extends Seeder
             ],
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'org',
+                'tld' => '.org',
                 'type' => 'international',
                 'register_price' => 16.00,
                 'renewal_price' => 16.00,
@@ -152,7 +152,7 @@ final class DomainPriceSeeder extends Seeder
             ],
             [
                 'uuid' => Str::uuid(),
-                'tld' => 'info',
+                'tld' => '.info',
                 'type' => 'international',
                 'register_price' => 19.00,
                 'renewal_price' => 19.00,
