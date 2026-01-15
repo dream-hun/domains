@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use App\Helpers\CurrencyHelper;
+use App\Services\CartPriceConverter;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -43,24 +45,17 @@ final class CartSummary extends Component
     public function formattedTotal(): string
     {
         $cartItems = Cart::getContent();
-        $subtotal = 0;
 
-        foreach ($cartItems as $item) {
-            $itemCurrency = $item->attributes->currency ?? 'USD';
-            if ($itemCurrency !== $this->currency) {
-                try {
-                    $convertedPrice = CurrencyHelper::convert(
-                        $item->price,
-                        $itemCurrency,
-                        $this->currency
-                    );
-                    $subtotal += $convertedPrice * $item->quantity;
-                } catch (Exception) {
-                    $subtotal += $item->price * $item->quantity;
-                }
-            } else {
-                $subtotal += $item->price * $item->quantity;
-            }
+        try {
+            $cartPriceConverter = resolve(CartPriceConverter::class);
+            $subtotal = $cartPriceConverter->calculateCartSubtotal($cartItems, $this->currency);
+        } catch (Exception $exception) {
+            Log::error('Failed to calculate cart total in CartSummary', [
+                'currency' => $this->currency,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $subtotal = 0;
         }
 
         // Apply discount from session if coupon is applied

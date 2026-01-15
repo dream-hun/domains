@@ -30,7 +30,8 @@
                         <div class="card-body">
                             @if ($errors->any())
                                 <div class="alert alert-danger alert-dismissible fade show">
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"></button>
                                     <ul class="mb-0">
                                         @foreach ($errors->all() as $error)
                                             <li>{{ $error }}</li>
@@ -41,12 +42,14 @@
 
                             @if (session('error'))
                                 <div class="alert alert-danger alert-dismissible fade show">
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"></button>
                                     {{ session('error') }}
                                 </div>
                             @endif
 
-                            <form method="POST" action="{{ route('payment.kpay') }}" id="payment-form" autocomplete="off">
+                            <form method="POST" action="{{ route('payment.kpay') }}" id="payment-form"
+                                  autocomplete="off">
                                 @csrf
                                 <input type="hidden" name="pmethod" id="pmethod" value="{{ old('pmethod', 'momo') }}">
 
@@ -58,10 +61,12 @@
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <div class="payment-method-card" data-method="momo">
-                                                <input type="radio" name="pmethod_radio" id="method_momo" value="momo" class="payment-method-radio" {{ old('pmethod', 'momo') === 'momo' ? 'checked' : '' }}>
+                                                <input type="radio" name="pmethod_radio" id="method_momo" value="momo"
+                                                       class="payment-method-radio" {{ old('pmethod', 'momo') === 'momo' ? 'checked' : '' }}>
                                                 <label for="method_momo" class="payment-method-label">
                                                     <div class="d-flex align-items-center">
-                                                        <img src="{{ asset('MomoAirtel.png') }}" alt="Mobile Money" class="payment-icon mr-2" style="height: 40px;">
+                                                        <img src="{{ asset('MomoAirtel.png') }}" alt="Mobile Money"
+                                                             class="payment-icon mr-2" style="height: 40px;">
                                                         <div>
                                                             <div class="font-weight-bold">Mobile Money</div>
                                                             <small class="text-muted">MTN/Airtel</small>
@@ -72,7 +77,8 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="payment-method-card" data-method="cc">
-                                                <input type="radio" name="pmethod_radio" id="method_cc" value="cc" class="payment-method-radio" {{ old('pmethod') === 'cc' ? 'checked' : '' }}>
+                                                <input type="radio" name="pmethod_radio" id="method_cc" value="cc"
+                                                       class="payment-method-radio" {{ old('pmethod') === 'cc' ? 'checked' : '' }}>
                                                 <label for="method_cc" class="payment-method-label">
                                                     <div class="d-flex align-items-center">
                                                         <i class="bi bi-credit-card mr-2" style="font-size: 2rem;"></i>
@@ -111,7 +117,7 @@
                                             <input type="email"
                                                    name="billing_email"
                                                    id="billing_email"
-                                                   value="{{ old('billing_email', $user->email) }}"
+                                                   value="{{ old('billing_email', $user->address->email) }}"
                                                    required
                                                    class="form-control @error('billing_email') is-invalid @enderror">
                                             @error('billing_email')
@@ -123,7 +129,7 @@
                                             <input type="text"
                                                    name="billing_address"
                                                    id="billing_address"
-                                                   value="{{ old('billing_address') }}"
+                                                   value="{{ old('billing_address',$user->address->address_line_one ?? '') }}"
                                                    class="form-control @error('billing_address') is-invalid @enderror">
                                             @error('billing_address')
                                             <div class="text-danger small mt-1">{{ $message }}</div>
@@ -145,7 +151,7 @@
                                             <input type="text"
                                                    name="billing_city"
                                                    id="billing_city"
-                                                   value="{{ old('billing_city') }}"
+                                                   value="{{ old('billing_city', $user->address->city ?? '') }}"
                                                    class="form-control @error('billing_city') is-invalid @enderror">
                                             @error('billing_city')
                                             <div class="text-danger small mt-1">{{ $message }}</div>
@@ -157,7 +163,7 @@
                                             <input type="text"
                                                    name="billing_postal_code"
                                                    id="billing_postal_code"
-                                                   value="{{ old('billing_postal_code') }}"
+                                                   value="{{ old('billing_postal_code', $user->address->postal_code ?? '') }}"
                                                    class="form-control @error('billing_postal_code') is-invalid @enderror">
                                             @error('billing_postal_code')
                                             <div class="text-danger small mt-1">{{ $message }}</div>
@@ -181,7 +187,7 @@
                                             <input type="tel"
                                                    id="msisdn"
                                                    name="msisdn"
-                                                   value="{{ old('msisdn', $user->phone ?? '') }}"
+                                                   value="{{ old('msisdn', $user->address->phone_number ?? '') }}"
                                                    required
                                                    class="form-control @error('msisdn') is-invalid @enderror"
                                                    placeholder="250788123456">
@@ -217,7 +223,7 @@
                                     </button>
                                 </div>
 
-                               </form>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -288,7 +294,8 @@
                 </div>
             </div>
             <!-- Payment Processing Modal -->
-            <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel"
+                 aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content text-center">
                         <div class="modal-header border-0">
@@ -296,7 +303,8 @@
                         </div>
                         <div class="modal-body py-5">
                             <div id="modal-content-processing">
-                                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                <div class="spinner-border text-primary mb-3" role="status"
+                                     style="width: 3rem; height: 3rem;">
                                     <span class="sr-only">Loading...</span>
                                 </div>
                                 <p class="mb-2" id="modal-message">Initializing payment...</p>
@@ -307,7 +315,8 @@
                                 <p class="text-danger mb-0" id="error-message">Payment failed</p>
                             </div>
                         </div>
-                        <div class="modal-footer border-0 justify-content-center" id="modal-footer-actions" style="display: none !important;">
+                        <div class="modal-footer border-0 justify-content-center" id="modal-footer-actions"
+                             style="display: none !important;">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
@@ -317,36 +326,36 @@
     </div>
 
     @push('styles')
-    <style>
-        .payment-method-card {
-            position: relative;
-            cursor: pointer;
-        }
+        <style>
+            .payment-method-card {
+                position: relative;
+                cursor: pointer;
+            }
 
-        .payment-method-radio {
-            position: absolute;
-            opacity: 0;
-        }
+            .payment-method-radio {
+                position: absolute;
+                opacity: 0;
+            }
 
-        .payment-method-label {
-            display: block;
-            padding: 1rem;
-            border: 2px solid #dee2e6;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 0;
-        }
+            .payment-method-label {
+                display: block;
+                padding: 1rem;
+                border: 2px solid #dee2e6;
+                border-radius: 0.5rem;
+                cursor: pointer;
+                transition: all 0.3s;
+                margin-bottom: 0;
+            }
 
-        .payment-method-radio:checked + .payment-method-label {
-            border-color: #007bff;
-            background-color: #f0f8ff;
-        }
+            .payment-method-radio:checked + .payment-method-label {
+                border-color: #007bff;
+                background-color: #f0f8ff;
+            }
 
-        .payment-method-label:hover {
-            border-color: #007bff;
-        }
-    </style>
+            .payment-method-label:hover {
+                border-color: #007bff;
+            }
+        </style>
     @endpush
 
     @push('scripts')

@@ -11,10 +11,12 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
+use Throwable;
 
 /**
  * @property-read Collection<int, Domain> $domains
@@ -47,7 +49,7 @@ final class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     public static function generateCustomerNumber(): string
     {
@@ -71,7 +73,7 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function domains(): HasMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->hasMany(Domain::class);
     }
 
@@ -80,7 +82,7 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function contacts(): HasMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->hasMany(Contact::class);
     }
 
@@ -89,7 +91,7 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function orders(): HasMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->hasMany(Order::class);
     }
 
@@ -98,7 +100,7 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function subscriptions(): HasMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->hasMany(Subscription::class);
     }
 
@@ -116,8 +118,14 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function roles(): BelongsToMany
     {
-        // @phpstan-ignore-next-line
+
         return $this->belongsToMany(Role::class);
+    }
+
+    public function address(): HasOne
+    {
+        return $this->hasOne(Address::class);
+
     }
 
     protected static function booted(): void

@@ -37,7 +37,8 @@
                             @if (session('success'))
                                 <div class="alert alert-success alert-dismissible">
                                     <button type="button" class="close" data-dismiss="alert"
-                                        aria-hidden="true">×</button>
+                                            aria-hidden="true">×
+                                    </button>
                                     <h5><i class="icon fas fa-check"></i> Success!</h5>
                                     {{ session('success') }}
                                 </div>
@@ -53,65 +54,64 @@
                                     <table
                                         class="table table-bordered table-striped table-hover datatable-DomainPrice w-100">
                                         <thead>
-                                            <tr>
-                                                <th style="width: 10%">TLD</th>
-                                                <th style="width: 12%">Type</th>
-                                                <th style="width: 15%">Register</th>
-                                                <th style="width: 15%">Renewal</th>
-                                                <th style="width: 15%">Transfer</th>
-                                                <th style="width: 15%">Redemption</th>
-                                                <th style="width: 18%">Actions</th>
-                                            </tr>
+                                        <tr>
+                                            <th style="width: 10%">TLD</th>
+                                            <th style="width: 12%">Type</th>
+                                            <th style="width: 15%">Register</th>
+                                            <th style="width: 15%">Renewal</th>
+                                            <th style="width: 15%">Transfer</th>
+                                            <th style="width: 15%">Redemption</th>
+                                            <th style="width: 18%">Actions</th>
+                                        </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach ($prices as $price)
-                                                <tr>
-                                                    <td>{{ $price->tld }}</td>
-                                                    <td>
-                                                        @if (isset($price->type) && method_exists($price->type, 'label'))
-                                                            <span
-                                                                class="badge {{ $price->type->color() }}">{{ $price->type->label() }}</span>
-                                                        @else
-                                                            <span
-                                                                class="badge badge-secondary">{{ ucfirst((string) $price->type) }}</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $price->getFormattedPrice('register_price') }}</td>
-                                                    <td>{{ $price->getFormattedPrice('renewal_price') }}</td>
-                                                    <td>{{ $price->getFormattedPrice('transfer_price') }}</td>
-                                                    <td>
-                                                        @if (!is_null($price->redemption_price))
-                                                            {{ $price->getFormattedPrice('redemption_price') }}
-                                                        @else
-                                                            <span class="text-muted">—</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        <div class="btn-group">
-                                                            <a href="{{ route('admin.prices.edit', $price->uuid) }}"
-                                                                class="btn btn-warning btn-sm" title="Edit">
-                                                                <i class="bi bi-pencil"></i> Edit
-                                                            </a>
+                                        @foreach ($prices as $price)
+                                            <tr>
+                                                <td>{{ $price->tld }}</td>
+                                                <td>
+                                                    @if (isset($price->type) && method_exists($price->type, 'label'))
+                                                        <span
+                                                            class="badge {{ $price->type->color() }}">{{ $price->type->label() }}</span>
+                                                    @else
+                                                        <span
+                                                            class="badge badge-secondary">{{ ucfirst((string) $price->type) }}</span>
+                                                    @endif
+                                                </td>
+                                                <td>{{ $price->formatRegistrationPrice() }}</td>
+                                                <td>{{ $price->formatRenewalPrice() }}</td>
+                                                <td>{{ $price->formatTransferPrice() }}</td>
+                                                <td>
+                                                    @if (!is_null($price->redemption_price))
+                                                        {{ $price->formatRedemptionPrice() }}
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>
 
-                                                            <form
-                                                                action="{{ route('admin.prices.destroy', $price->uuid) }}"
-                                                                method="POST" style="display:inline-block;">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit" class="btn btn-danger btn-sm"
-                                                                    onclick="return confirm('Are you sure you want to delete this price?');"
-                                                                    title="Delete">
-                                                                    <span class="bi bi-trash"></span> Delete
-                                                                </button>
-                                                            </form>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
+                                                    <a href="{{ route('admin.prices.edit', $price->uuid) }}"
+                                                       class="btn btn-warning btn-sm" title="Edit">
+                                                        <i class="bi bi-pencil"></i> Edit
+                                                    </a>
+
+                                                    <form
+                                                        action="{{ route('admin.prices.destroy', $price->uuid) }}"
+                                                        method="POST" style="display:inline-block;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                                onclick="return confirm('Are you sure you want to delete this price?');"
+                                                                title="Delete">
+                                                            <span class="bi bi-trash"></span> Delete
+                                                        </button>
+                                                    </form>
+
+                                                </td>
+                                            </tr>
+                                        @endforeach
                                         </tbody>
                                     </table>
                                 </div>
-
 
                             @endif
                         </div>
@@ -199,7 +199,7 @@
     @section('scripts')
         @parent
         <script>
-            $(function() {
+            $(function () {
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
                 let table = $('.datatable-DomainPrice:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,
@@ -217,7 +217,7 @@
                     }
                 })
 
-                $('a[data-toggle="tab"]').on('shown.bs.tab click', function(e) {
+                $('a[data-toggle="tab"]').on('shown.bs.tab click', function (e) {
                     $($.fn.dataTable.tables(true)).DataTable()
                         .columns.adjust();
                 });

@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\DomainType;
 use App\Models\Scopes\DomainPriceScope;
 use App\Services\CurrencyService;
+use Cknow\Money\Money;
 use Exception;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -151,5 +152,23 @@ final class DomainPrice extends Model
         }
 
         return $currency === 'RWF';
+    }
+
+    public function formatRegistrationPrice():Money
+    {
+        return Money::USD($this->register_price);
+    }
+    public function formatRenewalPrice():Money
+    {
+        return Money::USD($this->renewal_price);
+    }
+
+    public function formatTransferPrice():Money
+    {
+        return Money::USD($this->transfer_price);
+    }
+    public function formatRedemptionPrice():Money
+    {
+        return Money::USD($this->redemption_price);
     }
 }

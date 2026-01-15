@@ -41,7 +41,6 @@ final class KPayPaymentRequest extends FormRequest
 
     /**
      * Get custom error messages for validation rules.
-     * @return array
      */
     public function messages(): array
     {
@@ -72,9 +71,6 @@ final class KPayPaymentRequest extends FormRequest
 
     /**
      * Get the error messages for the defined validation rules.
-     *
-     * @param Validator $validator
-     * @return void
      */
     protected function failedValidation(Validator $validator): void
     {

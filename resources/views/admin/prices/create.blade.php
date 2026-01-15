@@ -1,3 +1,4 @@
+@php use App\Enums\DomainType; @endphp
 <x-admin-layout>
     @section('page-title')
         Domain Prices
@@ -44,7 +45,7 @@
                                     id="type"
                                     class="form-control @error('type') is-invalid @enderror"
                                     required>
-                                @foreach(\App\Enums\DomainType::cases() as $type)
+                                @foreach(DomainType::cases() as $type)
                                     <option
                                         value="{{ $type->value }}" {{ old('type') === $type->value ? 'selected' : '' }}>
                                         {{ $type->label() }}
@@ -74,8 +75,7 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <label for="register_price">Register Price (cents) <span
-                                    class="text-danger">*</span></label>
+                            <label for="register_price" class="form-label required">Register Price </label>
                             <input type="number"
                                    name="register_price"
                                    id="register_price"

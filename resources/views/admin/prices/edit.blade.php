@@ -1,3 +1,4 @@
+@php use App\Enums\DomainType; @endphp
 <x-admin-layout>
     @section('page-title')
         Domain Prices
@@ -56,7 +57,7 @@
                                                     id="type"
                                                     class="form-control @error('type') is-invalid @enderror"
                                                     required>
-                                                @foreach(\App\Enums\DomainType::cases() as $type)
+                                                @foreach(DomainType::cases() as $type)
                                                     <option
                                                         value="{{ $type->value }}" {{ old('type', $price->type?->value) === $type->value ? 'selected' : '' }}>
                                                         {{ $type->label() }}
@@ -94,14 +95,12 @@
                                 <div class="row">
                                     <div class="col-md-3">
                                         <div class="form-group">
-                                            <label for="register_price">Register Price (cents) <span
-                                                    class="text-danger">*</span></label>
+                                            <label for="register_price" class="form-label required">Register Price </label>
                                             <input type="number"
                                                    name="register_price"
                                                    id="register_price"
                                                    class="form-control @error('register_price') is-invalid @enderror"
-                                                   value="{{ old('register_price', $price->register_price) }}"
-                                                   required>
+                                                   value="{{ old('register_price', $price->register_price) }}">
                                             @error('register_price')
                                             <span class="invalid-feedback">{{ $message }}</span>
                                             @enderror
