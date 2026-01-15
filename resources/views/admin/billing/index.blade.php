@@ -55,16 +55,9 @@
                                                 </td>
                                                 <td>
                                                     @php
-
-                                                        $payment = null;
-                                                        if ($order->relationLoaded('payments') && $order->payments->isNotEmpty()) {
-
-                                                            $payment = $order->payments->sortByDesc(function ($p) {
-                                                                return ($p->attempt_number ?? 0) * 1000000 + ($p->id ?? 0);
-                                                            })->first();
-                                                        } else {
-                                                            $payment = $order->latestPaymentAttempt();
-                                                        }
+                                                        $payment = $order->payments->sortByDesc(function ($p) {
+                                                            return ($p->attempt_number ?? 0) * 1000000 + ($p->id ?? 0);
+                                                        })->first();
                                                         $paymentRef = null;
                                                         if ($payment) {
                                                             if ($order->payment_method === 'kpay' && $payment->kpay_transaction_id) {

@@ -125,6 +125,26 @@ final class DomainPrice extends Model
         return 'uuid';
     }
 
+    public function formatRegistrationPrice(): Money
+    {
+        return Money::USD($this->register_price);
+    }
+
+    public function formatRenewalPrice(): Money
+    {
+        return Money::USD($this->renewal_price);
+    }
+
+    public function formatTransferPrice(): Money
+    {
+        return Money::USD($this->transfer_price);
+    }
+
+    public function formatRedemptionPrice(): Money
+    {
+        return Money::USD($this->redemption_price);
+    }
+
     protected static function booted(): void
     {
         self::created(function (DomainPrice $domainPrice): void {
@@ -152,23 +172,5 @@ final class DomainPrice extends Model
         }
 
         return $currency === 'RWF';
-    }
-
-    public function formatRegistrationPrice():Money
-    {
-        return Money::USD($this->register_price);
-    }
-    public function formatRenewalPrice():Money
-    {
-        return Money::USD($this->renewal_price);
-    }
-
-    public function formatTransferPrice():Money
-    {
-        return Money::USD($this->transfer_price);
-    }
-    public function formatRedemptionPrice():Money
-    {
-        return Money::USD($this->redemption_price);
     }
 }

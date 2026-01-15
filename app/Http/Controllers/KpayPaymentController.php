@@ -56,7 +56,7 @@ final class KpayPaymentController extends Controller
         }
 
         $user = Auth::user();
-        $currency = $this->getSelectedCurrency();
+        $currency = $this->currencyService->getUserCurrency()->code;
 
         if ($order) {
             $cartItems = $this->prepareCartItemsForDisplay($order);
@@ -123,7 +123,7 @@ final class KpayPaymentController extends Controller
             }
 
             try {
-                $currency = $this->getSelectedCurrency();
+                $currency = $this->currencyService->getUserCurrency()->code;
 
                 $checkoutState = session('checkout_state', []);
                 $contactIds = [
@@ -577,13 +577,5 @@ final class KpayPaymentController extends Controller
         }
 
         return [];
-    }
-
-    /**
-     * Get currency using the centralized CurrencyService for consistency
-     */
-    private function getSelectedCurrency(): string
-    {
-        return $this->currencyService->getUserCurrency()->code;
     }
 }

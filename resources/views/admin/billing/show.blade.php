@@ -94,15 +94,9 @@
                         </div>
 
                         @php
-                            // Use eager-loaded payments collection to avoid N+1 queries
-                            $payment = null;
-                            if ($order->relationLoaded('payments') && $order->payments->isNotEmpty()) {
-                                $payment = $order->payments->sortByDesc(function ($p) {
-                                    return ($p->attempt_number ?? 0) * 1000000 + ($p->id ?? 0);
-                                })->first();
-                            } else {
-                                $payment = $order->latestPaymentAttempt();
-                            }
+                            $payment = $order->payments->sortByDesc(function ($p) {
+                                return ($p->attempt_number ?? 0) * 1000000 + ($p->id ?? 0);
+                            })->first();
                             $kpayTransactionId = null;
                             if ($payment && $order->payment_method === 'kpay') {
                                 $kpayTransactionId = $payment->kpay_transaction_id;
@@ -183,21 +177,21 @@
                                                             $subscriptionId = $metadata['subscription_id'] ?? null;
                                                             $planName = null;
 
-                                                            // Try to get plan name from subscription
-                                                            if ($subscriptionId) {
-                                                                $subscription = \App\Models\Subscription::query()->find($subscriptionId);
-                                                                if ($subscription && $subscription->product_snapshot) {
+                                                            // Use preloaded subscription to avoid N+1 queries
+                                                            $subscription = $item->getAttribute('_preloaded_subscription');
+                                                            if ($subscription) {
+                                                                if ($subscription->product_snapshot) {
                                                                     $planName = $subscription->product_snapshot['plan']['name'] ?? null;
                                                                 }
                                                                 // Fallback: try to get from plan relationship
-                                                                if (!$planName && $subscription && $subscription->plan) {
+                                                                if (!$planName && $subscription->plan) {
                                                                     $planName = $subscription->plan->name;
                                                                 }
                                                             }
 
-                                                            // Fallback: try to get from hosting_plan_id in metadata
-                                                            if (!$planName && isset($metadata['hosting_plan_id'])) {
-                                                                $plan = \App\Models\HostingPlan::query()->find($metadata['hosting_plan_id']);
+                                                            // Fallback: try to get from preloaded hosting plan
+                                                            if (!$planName) {
+                                                                $plan = $item->getAttribute('_preloaded_plan');
                                                                 if ($plan) {
                                                                     $planName = $plan->name;
                                                                 }

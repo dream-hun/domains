@@ -21,16 +21,16 @@ final class UpdateBillingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'full_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255',
-            'company' => 'nullable|string|max:255',
-            'phone_number' => 'required|string|max:255',
-            'address_line_one' => 'required|string|max:255',
-            'address_line_two' => 'nullable|string|max:255',
-            'city' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
-            'postal_code' => 'nullable|string|max:255',
-            'country_code' => 'required|string|max:255',
+            'full_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'company' => ['nullable', 'string', 'max:255'],
+            'phone_number' => ['required', 'string', 'max:255'],
+            'address_line_one' => ['required', 'string', 'max:255'],
+            'address_line_two' => ['nullable', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:255'],
+            'state' => ['required', 'string', 'max:255'],
+            'postal_code' => ['nullable', 'string', 'max:255'],
+            'country_code' => ['required', 'string', 'max:255'],
 
         ];
     }

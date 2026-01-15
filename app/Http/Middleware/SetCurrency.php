@@ -10,10 +10,10 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-final class SetCurrency
+final readonly class SetCurrency
 {
     public function __construct(
-        private readonly GeolocationService $geolocationService
+        private GeolocationService $geolocationService
     ) {}
 
     /**

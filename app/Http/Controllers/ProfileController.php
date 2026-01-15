@@ -82,7 +82,7 @@ final class ProfileController extends Controller
             );
 
             return to_route('profile.edit')->with('billing_status', 'success')->with('billing_message', $request->user()->first_name.', your billing information has been updated successfully.');
-        } catch (Exception $e) {
+        } catch (Exception) {
             return to_route('profile.edit')->with('billing_status', 'error')->with('billing_message', 'Failed to update billing information. Please try again.');
         }
     }
