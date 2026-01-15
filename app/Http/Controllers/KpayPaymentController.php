@@ -10,7 +10,7 @@ use App\Http\Requests\KPayPaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\CartPriceConverter;
-use App\Services\GeolocationService;
+use App\Services\CurrencyService;
 use App\Services\PaymentService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -27,11 +27,13 @@ final class KpayPaymentController extends Controller
         private readonly PaymentService $paymentService,
         private readonly CreateOrderFromCartAction $createOrderAction,
         private readonly CartPriceConverter $cartPriceConverter,
-        private readonly GeolocationService $geolocationService
+        private readonly CurrencyService $currencyService
     ) {}
 
     /**
      * Show the KPay payment form
+     *
+     * @throws Throwable
      */
     public function show(): View|RedirectResponse
     {
@@ -47,7 +49,6 @@ final class KpayPaymentController extends Controller
                 ->first();
         }
 
-        // If no order in session but the cart has items, we'll create an order on the form submitted
         if (! $order && Cart::isEmpty()) {
             session()->forget('kpay_order_number');
 
@@ -55,16 +56,14 @@ final class KpayPaymentController extends Controller
         }
 
         $user = Auth::user();
-        $currency = $this->getLocationBasedCurrency();
+        $currency = $this->getSelectedCurrency();
 
-        // Use order items if we have an order, otherwise use cart
         if ($order) {
             $cartItems = $this->prepareCartItemsForDisplay($order);
             $totalAmount = (float) $order->total_amount;
             $subtotal = (float) $order->subtotal;
             $currency = $order->currency;
 
-            // Ensure the session currency matches the order currency for header consistency
             session(['selected_currency' => $currency]);
         } else {
             $cartContent = Cart::getContent();
@@ -100,7 +99,6 @@ final class KpayPaymentController extends Controller
         $validated = $request->validated();
         $user = Auth::user();
 
-        // Try to find existing order from session
         $orderNumber = session('kpay_order_number');
         $order = null;
 
@@ -113,7 +111,6 @@ final class KpayPaymentController extends Controller
                 ->first();
         }
 
-        // If no order exists, create one from the cart
         if (! $order) {
             $cartItems = Cart::getContent();
 
@@ -126,9 +123,8 @@ final class KpayPaymentController extends Controller
             }
 
             try {
-                $currency = $this->getLocationBasedCurrency();
+                $currency = $this->getSelectedCurrency();
 
-                // Get contact IDs from the checkout session if available
                 $checkoutState = session('checkout_state', []);
                 $contactIds = [
                     'registrant' => $checkoutState['selected_registrant_id'] ?? null,
@@ -170,7 +166,7 @@ final class KpayPaymentController extends Controller
                 return back()->with('error', 'Failed to create order. Please try again.');
             }
         } else {
-            // Update existing order billing information
+
             $order->update([
                 'billing_name' => $validated['billing_name'],
                 'billing_email' => $validated['billing_email'],
@@ -201,11 +197,9 @@ final class KpayPaymentController extends Controller
                 return back()->with('error', $paymentResult['error'] ?? 'Payment initiation failed. Please try again.');
             }
 
-            // Clear the session order number since payment is now in progress
             session()->forget('kpay_order_number');
 
-            // DO NOT Clear the cart here - we'll clear it on success confirmation
-            // Cart::clear();
+            Cart::clear();
 
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
@@ -221,12 +215,10 @@ final class KpayPaymentController extends Controller
                 ]);
             }
 
-            // If there's a redirect URL (for card checkout page), redirect there
             if (isset($paymentResult['redirect_url'])) {
                 return redirect()->away($paymentResult['redirect_url']);
             }
 
-            // If payment requires action (pending confirmation), show the pending page
             if (isset($paymentResult['requires_action']) && $paymentResult['requires_action']) {
                 $payment = Payment::query()->find($paymentResult['payment_id']);
 
@@ -236,7 +228,6 @@ final class KpayPaymentController extends Controller
                 }
             }
 
-            // Payment was auto-processed successfully
             return to_route('payment.kpay.success', $order)
                 ->with('success', 'Payment completed successfully!');
 
@@ -260,7 +251,7 @@ final class KpayPaymentController extends Controller
      */
     public function success(Order $order): RedirectResponse
     {
-        // Verify the order belongs to the current user
+
         if ($order->user_id !== Auth::id()) {
             return to_route('dashboard')->with('error', 'Order not found.');
         }
@@ -275,7 +266,6 @@ final class KpayPaymentController extends Controller
             'payment_status' => $latestPayment?->status,
         ]);
 
-        // If payment is already successful, process the order if not yet done
         if ($latestPayment && $latestPayment->isSuccessful()) {
             $this->processSuccessfulPayment($order->fresh(), $latestPayment->fresh());
 
@@ -283,9 +273,8 @@ final class KpayPaymentController extends Controller
                 ->with('success', 'Payment completed successfully!');
         }
 
-        // Check if payment is pending and verify with KPay
         if ($latestPayment && $latestPayment->isPending()) {
-            // Check the actual status from KPay - this may update the payment internally
+
             $statusResult = $this->paymentService->checkKPayPaymentStatus($latestPayment);
 
             Log::info('KPay status check result in success handler', [
@@ -294,12 +283,11 @@ final class KpayPaymentController extends Controller
                 'status_result' => $statusResult,
             ]);
 
-            // Refresh the payment and order to get updated values
             $latestPayment->refresh();
             $order->refresh();
 
             if ($statusResult['success'] && $statusResult['status'] === 'succeeded') {
-                // Payment confirmed - process the order with fresh instances
+
                 $this->processSuccessfulPayment($order, $latestPayment);
 
                 return to_route('payment.success', $order)
@@ -307,7 +295,7 @@ final class KpayPaymentController extends Controller
             }
 
             if (isset($statusResult['status']) && $statusResult['status'] === 'pending') {
-                // Still pending, redirect to the status page
+
                 return to_route('payment.kpay.status', $latestPayment)
                     ->with('info', 'Payment is still being processed. Please wait.');
             }
@@ -320,13 +308,11 @@ final class KpayPaymentController extends Controller
             }
         }
 
-        // If the order is already paid
         if ($order->isPaid()) {
             return to_route('payment.success', $order)
                 ->with('success', 'Payment completed successfully!');
         }
 
-        // Default redirect back to payment form if not paid
         session(['kpay_order_number' => $order->order_number]);
 
         return to_route('payment.kpay.show');
@@ -466,7 +452,6 @@ final class KpayPaymentController extends Controller
             }
         }
 
-        // Still pending
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
@@ -595,18 +580,10 @@ final class KpayPaymentController extends Controller
     }
 
     /**
-     * Get currency based on user location, with session persistence
+     * Get currency using the centralized CurrencyService for consistency
      */
-    private function getLocationBasedCurrency(): string
+    private function getSelectedCurrency(): string
     {
-        $currency = session('selected_currency');
-
-        if (! $currency) {
-            $isFromRwanda = $this->geolocationService->isUserFromRwanda();
-            $currency = $isFromRwanda ? 'RWF' : 'USD';
-            session(['selected_currency' => $currency]);
-        }
-
-        return $currency;
+        return $this->currencyService->getUserCurrency()->code;
     }
 }

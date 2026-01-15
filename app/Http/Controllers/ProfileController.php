@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\UpdateBillingRequest;
 use App\Http\Requests\ProfileUpdateRequest;
-use App\Models\Currency;
+use App\Models\Country;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,10 +21,10 @@ final class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $currencies = Currency::query()->select(['code', 'name'])->get();
+        $countries = Country::query()->select(['iso_code', 'name'])->get();
 
         return view('profile.edit', [
-            'user' => $request->user(), 'currencies' => $currencies,
+            'user' => $request->user(), 'countries' => $countries,
         ]);
     }
 
@@ -64,6 +66,25 @@ final class ProfileController extends Controller
         $request->user()->save();
 
         return to_route('profile.edit')->with('profile_status', $request->user()->first_name.' your profile has been updated.');
+    }
+
+    /**
+     * Update Billing Information
+     */
+    public function updateAddress(UpdateBillingRequest $request): RedirectResponse
+    {
+        try {
+            $validated = $request->validated();
+
+            Auth::user()->address()->updateOrCreate(
+                ['user_id' => Auth::id()],
+                $validated
+            );
+
+            return to_route('profile.edit')->with('billing_status', 'success')->with('billing_message', $request->user()->first_name.', your billing information has been updated successfully.');
+        } catch (Exception $e) {
+            return to_route('profile.edit')->with('billing_status', 'error')->with('billing_message', 'Failed to update billing information. Please try again.');
+        }
     }
 
     /**

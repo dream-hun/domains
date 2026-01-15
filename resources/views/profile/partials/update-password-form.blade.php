@@ -109,9 +109,6 @@
     <div class="password-card">
         <div class="form-section">
             <h2 class="form-title">{{ __('Update Password') }}</h2>
-            <p style="text-align: left; margin-bottom: 20px;">
-                {{ __('Ensure your account is using a long, random password to stay secure.') }}
-            </p>
 
             <!-- Session Status -->
             @if (session('status'))

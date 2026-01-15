@@ -22,13 +22,20 @@ final class CurrencySwitcher extends Component
     {
 
         if (session()->has('selected_currency')) {
-            $this->selectedCurrency = session('selected_currency');
+            $sessionCurrency = session('selected_currency');
 
-            Log::info('Using existing session currency', [
-                'currency' => $this->selectedCurrency,
-            ]);
+            if (is_string($sessionCurrency)) {
+                $this->selectedCurrency = $sessionCurrency;
 
-            return;
+                Log::info('Using existing session currency', [
+                    'currency' => $this->selectedCurrency,
+                ]);
+
+                return;
+            }
+
+            // Session contains invalid data, clear it and continue to geolocation
+            session()->forget('selected_currency');
         }
 
         // No session currency, initialize from geolocation

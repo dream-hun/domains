@@ -65,6 +65,18 @@ final class Currency extends Model
         return Cache::remember('active_currencies', 3600, fn () => self::query()->where('is_active', true)->orderBy('code')->get());
     }
 
+    public function formattedBaseRate(): Money
+    {
+        return Money::USD($this->exchange_rate);
+
+    }
+
+    public function formattedRate(): Money
+    {
+        return Money::RWF($this->exchange_rate);
+
+    }
+
     /**
      * Convert amount from this currency to target currency
      */
