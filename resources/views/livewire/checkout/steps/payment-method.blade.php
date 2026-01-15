@@ -20,8 +20,9 @@
                              tabindex="0"
                              aria-label="Select payment method {{ $method['name'] }}"
                              style="cursor: pointer;">
-                            <div class="card h-100 {{ $selectedPaymentMethod === $method['id'] ? 'border-primary shadow-sm' : 'border' }}"
-                                 style="transition: all 0.2s;">
+                            <div
+                                class="card h-100 {{ $selectedPaymentMethod === $method['id'] ? 'border-primary shadow-sm' : 'border' }}"
+                                style="transition: all 0.2s;">
                                 <div class="card-body d-flex align-items-center justify-content-center"
                                      style="min-height: 100px;">
                                     <input type="radio"
@@ -33,19 +34,17 @@
                                            wire:model="selectedPaymentMethod"
                                            value="{{ $method['id'] }}">
                                     @if($method['id'] === 'stripe')
-                                        <img src="{{ asset('Stripe_Logo,_revised_2016.svg.png') }}"
-                                             alt="Stripe"
+                                        <img src="{{ asset('credit-card.png') }}"
+                                             alt="Credit card"
                                              class="img-fluid"
-                                             style="max-height: 50px; max-width: 150px;">
-                                    @elseif($method['id'] === 'paypal')
-                                        <i class="fab fa-paypal fa-3x text-primary"></i>
-                                    @elseif($method['id'] === 'kpay')
-                                        <img src="{{ asset('MomoAirtel.png') }}"
+                                             style="max-height: 5rem;">
+
+                                    @else($method['id'] === 'kpay')
+                                        <img src="{{ asset('Momo.png') }}"
                                              alt="Momo Airtel"
                                              class="img-fluid"
-                                             style="max-height: 50px; max-width: 150px;">
-                                    @elseif($method['id'] === 'account_credit')
-                                        <i class="bi bi-wallet fa-3x text-success"></i>
+                                             style="max-height: 5rem;">
+
                                     @endif
                                 </div>
                             </div>
@@ -63,7 +62,7 @@
         @if(!empty($paymentMethods))
             <button wire:click="completeOrder"
                     class="btn btn-success btn-lg float-right"
-                    {{ $isProcessing ? 'disabled' : '' }}>
+                {{ $isProcessing ? 'disabled' : '' }}>
                 @if($isProcessing)
                     <span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
                     Processing...

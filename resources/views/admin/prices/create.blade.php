@@ -80,7 +80,7 @@
                                    name="register_price"
                                    id="register_price"
                                    class="form-control @error('register_price') is-invalid @enderror"
-                                   value="{{ old('register_price') }}" step="0.01" min="0"
+                                   value="{{ old('register_price') }}"
                                    required>
                             @error('register_price')
                             <span class="invalid-feedback">{{ $message }}</span>

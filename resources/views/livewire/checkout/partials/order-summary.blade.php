@@ -58,50 +58,6 @@
             @endif
         </div>
 
-        {{-- Contact Information (Step 2+) --}}
-        @if($currentStep >= 2 && ($this->selectedRegistrant || $this->selectedAdmin || $this->selectedTech || $this->selectedBilling))
-            <hr class="my-3">
-            <div class="contact-info">
-                <h6 class="mb-2">
-                    <i class="fas fa-user mr-2"></i>Contact Information
-                </h6>
-                @if($this->selectedRegistrant)
-                    <p class="small mb-1">
-                        <strong class="text-primary">Registrant:</strong> {{ $this->selectedRegistrant->full_name }}
-                    </p>
-                @endif
-                @if($this->selectedBilling && $this->selectedBilling->id !== $this->selectedRegistrant?->id)
-                    <p class="small mb-1">
-                        <strong class="text-success">Billing:</strong> {{ $this->selectedBilling->full_name }}
-                    </p>
-                @endif
-                @if(($this->selectedAdmin && $this->selectedAdmin->id !== $this->selectedRegistrant?->id) ||
-                    ($this->selectedTech && $this->selectedTech->id !== $this->selectedRegistrant?->id))
-                    <p class="small mb-0 text-muted">
-                        + Admin & Technical contacts
-                    </p>
-                @endif
-            </div>
-        @endif
-
-        {{-- Payment Method (Step 3+) --}}
-        @if($currentStep >= 3 && $selectedPaymentMethod)
-            <hr class="my-3">
-            <div class="payment-info">
-                <h6 class="mb-2">
-                    <i class="fas fa-credit-card mr-2"></i>Payment Method
-                </h6>
-                <p class="small mb-0">
-                    @foreach($paymentMethods as $method)
-                        @if($method['id'] === $selectedPaymentMethod)
-                            <strong>{{ $method['name'] }}</strong>
-                        @endif
-                    @endforeach
-                </p>
-            </div>
-        @endif
-
-        {{-- Security Badge --}}
         <div class="text-center mt-4 pt-3 border-top">
             <small class="text-muted">
                 <i class="bi bi-lock"></i> Secure checkout with SSL encryption
