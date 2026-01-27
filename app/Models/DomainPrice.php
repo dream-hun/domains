@@ -81,7 +81,7 @@ final class DomainPrice extends Model
                 $targetCurrency
             );
         } catch (Exception) {
-            return $priceAmount; // Fallback to base price
+            return $priceAmount;
         }
     }
 
@@ -172,5 +172,10 @@ final class DomainPrice extends Model
         }
 
         return $currency === 'RWF';
+    }
+
+    public function domainPriceHistories(): HasMany
+    {
+        return $this->hasMany(DomainPriceHistory::class);
     }
 }
