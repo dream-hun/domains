@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('domain_price_histories', function (Blueprint $table) {
+        Schema::create('domain_price_histories', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('domain_price_id')->constrained('domain_prices');
             $table->integer('register_price');

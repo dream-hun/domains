@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Throwable;
 
 #[ScopedBy(DomainPriceScope::class)]
 final class DomainPrice extends Model
@@ -20,17 +21,6 @@ final class DomainPrice extends Model
     use HasFactory;
 
     protected $guarded = [];
-
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'register_price' => 'integer',
-        'renewal_price' => 'integer',
-        'transfer_price' => 'integer',
-        'redemption_price' => 'integer',
-        'grace_period' => 'integer',
-        'type' => DomainType::class,
-    ];
 
     private ?int $pendingDomainId = null;
 
@@ -59,6 +49,8 @@ final class DomainPrice extends Model
         } catch (Exception) {
             // Fallback to base currency if conversion fails
             return resolve(CurrencyService::class)->format($priceAmount, $baseCurrency);
+        } catch (Throwable) {
+            return resolve(CurrencyService::class)->format($priceAmount, $baseCurrency);
         }
     }
 
@@ -80,39 +72,9 @@ final class DomainPrice extends Model
                 $baseCurrency,
                 $targetCurrency
             );
-        } catch (Exception) {
+        } catch (Throwable) {
             return $priceAmount;
         }
-    }
-
-    /**
-     * Get price in the base currency (properly converted from cents)
-     */
-    public function getPriceInBaseCurrency(string $priceType = 'register_price'): float
-    {
-        $rawPrice = $this->{$priceType};
-
-        if ($rawPrice === null) {
-            return 0.0;
-        }
-
-        $baseCurrency = $this->getBaseCurrency();
-
-        if ($this->usesZeroDecimalCurrency($baseCurrency)) {
-            return (float) $rawPrice;
-        }
-
-        // Convert from cents to the main currency unit
-        return (float) $rawPrice / 100;
-    }
-
-    /**
-     * Get the base currency for prices stored in database.
-     * Local domains are stored in RWF (zero-decimal), international in USD (cents).
-     */
-    public function getBaseCurrency(): string
-    {
-        return $this->type === DomainType::Local ? 'RWF' : 'USD';
     }
 
     public function domains(): HasMany
@@ -127,22 +89,56 @@ final class DomainPrice extends Model
 
     public function formatRegistrationPrice(): Money
     {
-        return Money::USD($this->register_price);
+        $currency = $this->getBaseCurrency();
+
+        return match ($currency) {
+            'RWF' => Money::RWF($this->register_price),
+            default => Money::USD($this->register_price),
+        };
     }
 
     public function formatRenewalPrice(): Money
     {
-        return Money::USD($this->renewal_price);
+        $currency = $this->getBaseCurrency();
+
+        return match ($currency) {
+            'RWF' => Money::RWF($this->renewal_price),
+            default => Money::USD($this->renewal_price),
+        };
     }
 
     public function formatTransferPrice(): Money
     {
-        return Money::USD($this->transfer_price);
+        $currency = $this->getBaseCurrency();
+
+        return match ($currency) {
+            'RWF' => Money::RWF($this->transfer_price),
+            default => Money::USD($this->transfer_price),
+        };
     }
 
     public function formatRedemptionPrice(): Money
     {
-        return Money::USD($this->redemption_price);
+        $currency = $this->getBaseCurrency();
+
+        return match ($currency) {
+            'RWF' => Money::RWF($this->redemption_price),
+            default => Money::USD($this->redemption_price),
+        };
+    }
+
+    /**
+     * Get the base currency for prices stored in database.
+     * Local domains are stored in RWF (zero-decimal), international in USD (cents).
+     */
+    public function getBaseCurrency(): string
+    {
+        return $this->type === DomainType::Local ? 'RWF' : 'USD';
+    }
+
+    public function domainPriceHistories(): HasMany
+    {
+        return $this->hasMany(DomainPriceHistory::class);
     }
 
     protected static function booted(): void
@@ -156,26 +152,20 @@ final class DomainPrice extends Model
                 ->whereKey($domainPrice->pendingDomainId)
                 ->update(['domain_price_id' => $domainPrice->id]);
         });
+
     }
 
-    protected function setDomainIdAttribute(int|string|null $value): void
+    protected function casts(): array
     {
-        $this->pendingDomainId = $value !== null ? (int) $value : null;
-    }
-
-    private function usesZeroDecimalCurrency(string $currency): bool
-    {
-        $currency = mb_strtoupper($currency);
-
-        if ($currency === 'FRW') {
-            $currency = 'RWF';
-        }
-
-        return $currency === 'RWF';
-    }
-
-    public function domainPriceHistories(): HasMany
-    {
-        return $this->hasMany(DomainPriceHistory::class);
+        return [
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'register_price' => 'integer',
+            'renewal_price' => 'integer',
+            'transfer_price' => 'integer',
+            'redemption_price' => 'integer',
+            'grace_period' => 'integer',
+            'type' => DomainType::class,
+        ];
     }
 }

@@ -39,7 +39,15 @@ final class DomainPriceController extends Controller
 
     public function edit(DomainPrice $price): View|Factory
     {
-        return view('admin.prices.edit', ['price' => $price]);
+        $histories = $price->domainPriceHistories()
+            ->with('changedBy')
+            ->latest('created_at')
+            ->get();
+
+        return view('admin.prices.edit', [
+            'price' => $price,
+            'histories' => $histories,
+        ]);
     }
 
     public function update(UpdateDomainPriceRequest $request, DomainPrice $price, UpdateDomainPriceAction $action): RedirectResponse
