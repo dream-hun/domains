@@ -77,6 +77,28 @@ final class DomainPrice extends Model
         }
     }
 
+    /**
+     * Get price in the base currency (properly converted from cents)
+     */
+    public function getPriceInBaseCurrency(string $priceType = 'register_price'): float
+    {
+        $rawPrice = $this->{$priceType};
+
+        if ($rawPrice === null) {
+            return 0.0;
+        }
+
+        $baseCurrency = $this->getBaseCurrency();
+
+        // RWF uses zero-decimal (stored as whole units), USD uses cents
+        if ($baseCurrency === 'RWF') {
+            return (float) $rawPrice;
+        }
+
+        // Convert from cents to the main currency unit for USD
+        return (float) $rawPrice / 100;
+    }
+
     public function domains(): HasMany
     {
         return $this->hasMany(Domain::class);
