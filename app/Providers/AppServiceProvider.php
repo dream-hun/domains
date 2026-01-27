@@ -13,10 +13,8 @@ use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use App\Services\ExchangeRateClient;
 use Exception;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Laravel\Nightwatch\Facades\Nightwatch;
 
 final class AppServiceProvider extends ServiceProvider
 {
@@ -47,7 +45,6 @@ final class AppServiceProvider extends ServiceProvider
         } catch (Exception) {
             View::share('hostings', []);
         }
-
 
     }
 
