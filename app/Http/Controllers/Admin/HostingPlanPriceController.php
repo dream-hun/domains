@@ -78,12 +78,18 @@ final class HostingPlanPriceController extends Controller
     {
         $categories = HostingCategory::query()->select(['id', 'name'])->orderBy('name')->get();
         $plans = HostingPlan::query()->select(['id', 'name', 'category_id'])->orderBy('name')->get();
-        $hostingPlanPrice->load('plan');
+        $hostingPlanPrice->load('plan.category');
+
+        $histories = $hostingPlanPrice->hostingPlanPriceHistories()
+            ->with('changedBy')
+            ->latest('created_at')
+            ->get();
 
         return view('admin.hosting-plan-prices.edit', [
             'price' => $hostingPlanPrice,
             'categories' => $categories,
             'plans' => $plans,
+            'histories' => $histories,
         ]);
     }
 
