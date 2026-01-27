@@ -7,8 +7,10 @@ namespace App\Providers;
 use App\Helpers\DomainSearchHelper;
 use App\Models\DomainPrice;
 use App\Models\HostingCategory;
+use App\Models\HostingPlanPrice;
 use App\Models\Setting;
 use App\Observers\DomainPriceObserver;
+use App\Observers\HostingPlanPriceHistoryObserver;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
@@ -36,6 +38,7 @@ final class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         DomainPrice::observe(DomainPriceObserver::class);
+        HostingPlanPrice::observe(HostingPlanPriceHistoryObserver::class);
         try {
             View::share('settings', Setting::query()->first());
         } catch (Exception) {

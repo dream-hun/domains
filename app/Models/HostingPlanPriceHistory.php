@@ -8,15 +8,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-final class DomainPriceHistory extends Model
+class HostingPlanPriceHistory extends Model
 {
     use HasFactory;
 
     protected $guarded = [];
 
-    public function domainPrice(): BelongsTo
+    public function hostingPlanPrice(): BelongsTo
     {
-        return $this->belongsTo(DomainPrice::class);
+        return $this->belongsTo(HostingPlanPrice::class);
     }
 
     public function changedBy(): BelongsTo
@@ -27,15 +27,14 @@ final class DomainPriceHistory extends Model
     protected function casts(): array
     {
         return [
-            'domain_price_id' => 'integer',
+            'hosting_plan_price_id' => 'integer',
             'changed_by' => 'integer',
             'reason' => 'string',
-            'register_price' => 'integer',
+            'regular_price' => 'integer',
             'renewal_price' => 'integer',
-            'transfer_price' => 'integer',
-            'redemption_price' => 'integer',
             'changes' => 'array',
             'old_values' => 'array',
+            'ip_address' => 'string',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

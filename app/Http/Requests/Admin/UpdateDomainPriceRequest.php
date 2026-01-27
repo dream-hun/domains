@@ -28,7 +28,7 @@ final class UpdateDomainPriceRequest extends FormRequest
             // Handle nullable redemption_price comparison
             if ($field === 'redemption_price') {
                 $inputValue = $inputValue === '' || $inputValue === null ? null : (int) $inputValue;
-                $currentValue = $currentValue ?? null;
+                $currentValue ??= null;
             } else {
                 $inputValue = (int) $inputValue;
             }

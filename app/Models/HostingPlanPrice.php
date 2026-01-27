@@ -11,6 +11,8 @@ use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Throwable;
 
 class HostingPlanPrice extends Model
 {
@@ -62,6 +64,8 @@ class HostingPlanPrice extends Model
             return resolve(CurrencyService::class)->format($priceAmount, $baseCurrency);
         } catch (Exception) {
             // Fallback to base currency if conversion fails
+            return resolve(CurrencyService::class)->format($priceAmount, $baseCurrency);
+        } catch (Throwable) {
             return resolve(CurrencyService::class)->format($priceAmount, $baseCurrency);
         }
     }
@@ -117,6 +121,11 @@ class HostingPlanPrice extends Model
     public function getBaseCurrency(): string
     {
         return 'USD';
+    }
+
+    public function hostingPlanPriceHistories(): HasMany|self
+    {
+        return $this->hasMany(HostingPlanPriceHistory::class);
     }
 
     /**

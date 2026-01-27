@@ -18,6 +18,24 @@ final class UpdatePlanPriceRequest extends FormRequest
 
     public function rules(): array
     {
+        $hostingPlanPrice = $this->route('hostingPlanPrice');
+        $priceFields = ['regular_price', 'renewal_price'];
+        $hasPriceChange = false;
+
+        if ($hostingPlanPrice !== null) {
+            foreach ($priceFields as $field) {
+                $inputValue = $this->input($field);
+                $currentValue = $hostingPlanPrice->{$field};
+
+                $inputValue = (int) $inputValue;
+
+                if ($inputValue !== $currentValue) {
+                    $hasPriceChange = true;
+                    break;
+                }
+            }
+        }
+
         return [
             'hosting_category_id' => ['required', 'integer', 'exists:hosting_categories,id'],
             'hosting_plan_id' => [
@@ -31,6 +49,16 @@ final class UpdatePlanPriceRequest extends FormRequest
             'regular_price' => ['required', 'integer', 'min:0'],
             'renewal_price' => ['required', 'integer', 'min:0'],
             'status' => ['nullable', 'string', 'in:active,inactive'],
+            'reason' => $hasPriceChange ? ['required', 'string', 'min:3', 'max:1000'] : ['nullable', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'reason.required' => 'Please provide a reason for the price change.',
+            'reason.min' => 'The reason must be at least :min characters.',
+            'reason.max' => 'The reason must not exceed :max characters.',
         ];
     }
 }
