@@ -18,6 +18,26 @@ final class UpdateDomainPriceRequest extends FormRequest
     public function rules(): array
     {
         $domainPrice = $this->route('price');
+        $priceFields = ['register_price', 'renewal_price', 'transfer_price', 'redemption_price'];
+        $hasPriceChange = false;
+
+        foreach ($priceFields as $field) {
+            $inputValue = $this->input($field);
+            $currentValue = $domainPrice->{$field};
+
+            // Handle nullable redemption_price comparison
+            if ($field === 'redemption_price') {
+                $inputValue = $inputValue === '' || $inputValue === null ? null : (int) $inputValue;
+                $currentValue = $currentValue ?? null;
+            } else {
+                $inputValue = (int) $inputValue;
+            }
+
+            if ($inputValue !== $currentValue) {
+                $hasPriceChange = true;
+                break;
+            }
+        }
 
         return [
             'tld' => [
@@ -34,6 +54,16 @@ final class UpdateDomainPriceRequest extends FormRequest
             'max_years' => ['nullable', 'integer', 'min:1'],
             'status' => ['nullable', 'string', 'in:active,inactive'],
             'description' => ['nullable', 'string'],
+            'reason' => $hasPriceChange ? ['required', 'string', 'min:3', 'max:1000'] : ['nullable', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'reason.required' => 'Please provide a reason for the price change.',
+            'reason.min' => 'The reason must be at least :min characters.',
+            'reason.max' => 'The reason must not exceed :max characters.',
         ];
     }
 }
