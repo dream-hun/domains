@@ -31,7 +31,6 @@
         <div class="container-fluid">
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <h5><i class="icon fas fa-check"></i> Success!</h5>
                     {{ session('success') }}
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -41,7 +40,6 @@
 
             @if(session('error'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <h5><i class="icon fas fa-ban"></i> Error!</h5>
                     {{ session('error') }}
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -51,7 +49,6 @@
 
             @if(session('info'))
                 <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    <h5><i class="icon fas fa-info"></i> Information</h5>
                     {{ session('info') }}
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -61,156 +58,114 @@
 
             <div class="row">
                 <div class="col-md-12">
-                    <div class="card card-primary card-outline">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <i class="fas fa-info-circle"></i> Subscription Information
-                            </h3>
-                            <div class="card-tools">
-                                @php
-                                    $statusBadgeClass = match($subscription->status) {
-                                        'active' => 'badge-success',
-                                        'expired' => 'badge-danger',
-                                        'cancelled' => 'badge-secondary',
-                                        'suspended' => 'badge-warning',
-                                        default => 'badge-info'
-                                    };
-                                @endphp
-                                <span class="badge {{ $statusBadgeClass }} badge-lg">
-                                    {{ ucfirst($subscription->status) }}
-                                </span>
-                            </div>
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="card-title">Subscription Details</h3>
+                            @php
+                                $statusBadgeClass = match($subscription->status) {
+                                    'active' => 'badge-success',
+                                    'expired' => 'badge-danger',
+                                    'cancelled' => 'badge-secondary',
+                                    'suspended' => 'badge-warning',
+                                    default => 'badge-info'
+                                };
+                            @endphp
+                            <span class="badge {{ $statusBadgeClass }}">
+                                {{ ucfirst($subscription->status) }}
+                            </span>
                         </div>
                         <div class="card-body">
                             @if($subscription->isExpiringSoon())
-                                <div class="alert alert-warning alert-dismissible">
-                                    <h5><i class="icon fas fa-exclamation-triangle"></i> Expiring Soon!</h5>
-                                    This subscription will expire on <strong>{{ $subscription->expires_at->format('F d, Y') }}</strong>.
+                                <div class="alert alert-warning">
+                                    <strong>Expiring Soon!</strong> This subscription will expire on {{ $subscription->expires_at->format('F d, Y') }}.
                                     Please renew to avoid service interruption.
                                 </div>
                             @endif
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="card card-outline card-info">
-                                        <div class="card-header">
-                                            <h3 class="card-title">
-                                                <i class="fas fa-box"></i> Plan Information
-                                            </h3>
-                                        </div>
-                                        <div class="card-body p-0">
-                                            <table class="table table-striped">
-                                                <tbody>
-                                                    <tr>
-                                                        <th width="40%"><i class="fas fa-tag"></i> Plan Name:</th>
-                                                        <td><strong>{{ $subscription->plan?->name ?? 'N/A' }}</strong></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th><i class="fas fa-sync-alt"></i> Billing Cycle:</th>
-                                                        <td>
-                                                            <span class="badge badge-info">
-                                                                {{ ucfirst(str_replace('_', ' ', $subscription->billing_cycle)) }}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th><i class="fas fa-globe"></i> Linked Domain:</th>
-                                                        <td>
-                                                            @if($subscription->domain)
-                                                                <code>{{ $subscription->domain }}</code>
-                                                            @else
-                                                                <span class="text-muted">N/A</span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                    @if($subscription->planPrice)
-                                                        <tr>
-                                                            <th><i class="fas fa-dollar-sign"></i> Regular Price:</th>
-                                                            <td><strong class="text-success">{{ $subscription->planPrice->getFormattedPrice('regular_price') }}</strong></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th><i class="fas fa-redo"></i> Renewal Price:</th>
-                                                            <td><strong class="text-primary">{{ $subscription->planPrice->getFormattedPrice('renewal_price') }}</strong></td>
-                                                        </tr>
-                                                    @endif
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                                    <h5 class="mb-3">Plan Information</h5>
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th width="40%">Plan Name:</th>
+                                                <td>{{ $subscription->plan?->name ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Billing Cycle:</th>
+                                                <td>{{ ucfirst(str_replace('_', ' ', $subscription->billing_cycle)) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Linked Domain:</th>
+                                                <td>{{ $subscription->domain ?? 'N/A' }}</td>
+                                            </tr>
+                                            @if($subscription->planPrice)
+                                                <tr>
+                                                    <th>Regular Price:</th>
+                                                    <td>{{ $subscription->planPrice->getFormattedPrice('regular_price') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Renewal Price:</th>
+                                                    <td>{{ $subscription->planPrice->getFormattedPrice('renewal_price') }}</td>
+                                                </tr>
+                                            @endif
+                                        </tbody>
+                                    </table>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <div class="card card-outline card-success">
-                                        <div class="card-header">
-                                            <h3 class="card-title">
-                                                <i class="fas fa-calendar-alt"></i> Subscription Status
-                                            </h3>
-                                        </div>
-                                        <div class="card-body p-0">
-                                            <table class="table table-striped">
-                                                <tbody>
-                                                    <tr>
-                                                        <th width="40%"><i class="fas fa-play-circle"></i> Start Date:</th>
-                                                        <td>{{ $subscription->starts_at?->format('F d, Y') ?? 'N/A' }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th><i class="fas fa-stop-circle"></i> Expiry Date:</th>
-                                                        <td>
-                                                            {{ $subscription->expires_at?->format('F d, Y') ?? 'N/A' }}
-                                                            @if($subscription->expires_at)
-                                                                <br>
-                                                                <small class="text-muted">
-                                                                    <i class="far fa-clock"></i> {{ $subscription->expires_at->diffForHumans() }}
-                                                                </small>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                    @if($subscription->next_renewal_at)
-                                                        <tr>
-                                                            <th><i class="fas fa-calendar-check"></i> Next Renewal:</th>
-                                                            <td>{{ $subscription->next_renewal_at->format('F d, Y') }}</td>
-                                                        </tr>
+                                    <h5 class="mb-3">Subscription Status</h5>
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th width="40%">Start Date:</th>
+                                                <td>{{ $subscription->starts_at?->format('F d, Y') ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Expiry Date:</th>
+                                                <td>
+                                                    {{ $subscription->expires_at?->format('F d, Y') ?? 'N/A' }}
+                                                    @if($subscription->expires_at)
+                                                        <br>
+                                                        <small class="text-muted">{{ $subscription->expires_at->diffForHumans() }}</small>
                                                     @endif
-                                                    <tr>
-                                                        <th><i class="fas fa-sync"></i> Auto Renewal:</th>
-                                                        <td>
-                                                            @if($subscription->auto_renew)
-                                                                <span class="badge badge-success badge-lg">
-                                                                    <i class="fas fa-check-circle"></i> Enabled
-                                                                </span>
-                                                            @else
-                                                                <span class="badge badge-secondary badge-lg">
-                                                                    <i class="fas fa-times-circle"></i> Disabled
-                                                                </span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                    @if($subscription->provider_resource_id)
-                                                        <tr>
-                                                            <th><i class="fas fa-key"></i> Provider Reference:</th>
-                                                            <td>
-                                                                <code class="text-primary">{{ $subscription->provider_resource_id }}</code>
-                                                            </td>
-                                                        </tr>
+                                                </td>
+                                            </tr>
+                                            @if($subscription->next_renewal_at)
+                                                <tr>
+                                                    <th>Next Renewal:</th>
+                                                    <td>{{ $subscription->next_renewal_at->format('F d, Y') }}</td>
+                                                </tr>
+                                            @endif
+                                            <tr>
+                                                <th>Auto Renewal:</th>
+                                                <td>
+                                                    @if($subscription->auto_renew)
+                                                        <span class="badge badge-success">Enabled</span>
+                                                    @else
+                                                        <span class="badge badge-secondary">Disabled</span>
                                                     @endif
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                                                </td>
+                                            </tr>
+                                            @if($subscription->provider_resource_id)
+                                                <tr>
+                                                    <th>Provider Reference:</th>
+                                                    <td><code>{{ $subscription->provider_resource_id }}</code></td>
+                                                </tr>
+                                            @endif
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                        </div>
-                        <div class="card-footer">
+
+                            <hr class="my-4">
+
                             <div class="d-flex justify-content-between align-items-center">
-                                <a href="{{ route('admin.products.hosting') }}" class="btn btn-secondary">
-                                    <i class="fas fa-arrow-left"></i> Back to My Hosting
-                                </a>
+                                <a href="{{ route('admin.products.hosting') }}" class="btn btn-secondary">Back to My Hosting</a>
                                 @if($subscription->canBeRenewed())
                                     <form action="{{ route('admin.products.subscription.renew', $subscription) }}" method="POST" class="d-inline">
                                         @csrf
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-shopping-cart"></i> Add Renewal to Cart
-                                        </button>
+                                        <button type="submit" class="btn btn-success">Add Renewal to Cart</button>
                                     </form>
                                 @endif
                             </div>
@@ -218,27 +173,13 @@
                     </div>
 
                     @if($subscription->product_snapshot)
-                        <div class="card card-outline card-warning">
+                        <div class="card mt-3">
                             <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="fas fa-file-invoice"></i> Order Information
-                                </h3>
+                                <h3 class="card-title">Order Information</h3>
                             </div>
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <p class="mb-2">
-                                            <strong><i class="fas fa-box"></i> Original Plan:</strong>
-                                            <span class="text-muted">{{ $subscription->product_snapshot['plan']['name'] ?? 'N/A' }}</span>
-                                        </p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p class="mb-2">
-                                            <strong><i class="fas fa-sync-alt"></i> Original Billing Cycle:</strong>
-                                            <span class="text-muted">{{ ucfirst($subscription->product_snapshot['price']['billing_cycle'] ?? 'N/A') }}</span>
-                                        </p>
-                                    </div>
-                                </div>
+                                <p class="mb-2"><strong>Original Plan:</strong> {{ $subscription->product_snapshot['plan']['name'] ?? 'N/A' }}</p>
+                                <p class="mb-2"><strong>Original Billing Cycle:</strong> {{ ucfirst($subscription->product_snapshot['price']['billing_cycle'] ?? 'N/A') }}</p>
                             </div>
                         </div>
                     @endif

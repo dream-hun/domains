@@ -73,109 +73,74 @@
                 @endforeach
             </div>
 
-            <div class="card card-primary card-outline">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-list"></i> Subscription Monitor
-                    </h3>
-                    <div class="card-tools">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">Subscription Monitor</h3>
+                    <div>
                         @can('subscription_create')
                             <a href="{{ route('admin.subscriptions.create') }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus"></i> Create Custom Subscription
+                                Create Custom Subscription
                             </a>
                         @endcan
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <div class="card card-outline card-info">
-                                <div class="card-header">
-                                    <h3 class="card-title">
-                                        <i class="fas fa-filter"></i> Filters
-                                    </h3>
-                                    <div class="card-tools">
-                                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <form method="GET" action="{{ route('admin.subscriptions.index') }}" id="filters-form">
-                                        <div class="row">
-                                            <div class="form-group col-md-3">
-                                                <label for="search">
-                                                    <i class="fas fa-search"></i> Search
-                                                </label>
-                                                <div class="input-group">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                                    </div>
-                                                    <input type="text" 
-                                                           id="search" 
-                                                           name="search" 
-                                                           class="form-control realtime-filter"
-                                                           placeholder="Customer or provider reference"
-                                                           value="{{ $filters['search'] }}">
-                                                </div>
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label for="status">
-                                                    <i class="fas fa-tag"></i> Status
-                                                </label>
-                                                <select id="status" name="status" class="form-control realtime-filter">
-                                                    <option value="">All statuses</option>
-                                                    @foreach ($statusOptions as $status)
-                                                        <option value="{{ $status }}" @selected($filters['status'] === $status)>
-                                                            {{ ucfirst(str_replace('_', ' ', $status)) }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label for="billing_cycle">
-                                                    <i class="fas fa-sync-alt"></i> Billing Cycle
-                                                </label>
-                                                <select id="billing_cycle" name="billing_cycle" class="form-control realtime-filter">
-                                                    <option value="">All cycles</option>
-                                                    @foreach ($billingCycleOptions as $cycle)
-                                                        <option value="{{ $cycle }}" @selected($filters['billing_cycle'] === $cycle)>
-                                                            {{ ucfirst(str_replace('_', ' ', $cycle)) }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label for="starts_from">
-                                                    <i class="fas fa-calendar-alt"></i> Start Date (From)
-                                                </label>
-                                                <input type="date" 
-                                                       id="starts_from" 
-                                                       name="starts_from" 
-                                                       class="form-control realtime-filter"
-                                                       value="{{ $filters['starts_from'] }}">
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label for="starts_to">
-                                                    <i class="fas fa-calendar-alt"></i> Start Date (To)
-                                                </label>
-                                                <input type="date" 
-                                                       id="starts_to" 
-                                                       name="starts_to" 
-                                                       class="form-control realtime-filter"
-                                                       value="{{ $filters['starts_to'] }}">
-                                            </div>
-                                            <div class="form-group col-md-1 d-flex align-items-end">
-                                                <a href="{{ route('admin.subscriptions.index') }}" class="btn btn-secondary btn-block">
-                                                    <i class="fas fa-redo"></i> Reset
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
+                    <form method="GET" action="{{ route('admin.subscriptions.index') }}" class="mb-4" id="filters-form">
+                        <div class="row">
+                            <div class="form-group col-md-3">
+                                <label for="search">Search</label>
+                                <input type="text" 
+                                       id="search" 
+                                       name="search" 
+                                       class="form-control realtime-filter"
+                                       placeholder="Customer or provider reference"
+                                       value="{{ $filters['search'] }}">
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="status">Status</label>
+                                <select id="status" name="status" class="form-control realtime-filter">
+                                    <option value="">All statuses</option>
+                                    @foreach ($statusOptions as $status)
+                                        <option value="{{ $status }}" @selected($filters['status'] === $status)>
+                                            {{ ucfirst(str_replace('_', ' ', $status)) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="billing_cycle">Billing Cycle</label>
+                                <select id="billing_cycle" name="billing_cycle" class="form-control realtime-filter">
+                                    <option value="">All cycles</option>
+                                    @foreach ($billingCycleOptions as $cycle)
+                                        <option value="{{ $cycle }}" @selected($filters['billing_cycle'] === $cycle)>
+                                            {{ ucfirst(str_replace('_', ' ', $cycle)) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="starts_from">Start Date (From)</label>
+                                <input type="date" 
+                                       id="starts_from" 
+                                       name="starts_from" 
+                                       class="form-control realtime-filter"
+                                       value="{{ $filters['starts_from'] }}">
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="starts_to">Start Date (To)</label>
+                                <input type="date" 
+                                       id="starts_to" 
+                                       name="starts_to" 
+                                       class="form-control realtime-filter"
+                                       value="{{ $filters['starts_to'] }}">
+                            </div>
+                            <div class="form-group col-md-1 d-flex align-items-end">
+                                <a href="{{ route('admin.subscriptions.index') }}" class="btn btn-secondary btn-block">
+                                    Reset
+                                </a>
                             </div>
                         </div>
-                    </div>
+                    </form>
 
                     @php
                         $statusColors = [
@@ -189,23 +154,23 @@
 
                     @if ($subscriptions->isEmpty())
                         <div class="alert alert-info">
-                            <h5><i class="icon fas fa-info"></i> No subscriptions found</h5>
+                            <h5>No subscriptions found</h5>
                             Try adjusting your filters or check back later.
                         </div>
                     @else
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-hover">
-                                <thead class="thead-light">
+                                <thead>
                                     <tr>
-                                        <th><i class="fas fa-user"></i> Customer Name</th>
-                                        <th><i class="fas fa-box"></i> Plan Name</th>
-                                        <th><i class="fas fa-dollar-sign"></i> Regular Price</th>
-                                        <th><i class="fas fa-redo"></i> Renewal Price</th>
-                                        <th><i class="fas fa-sync-alt"></i> Billing Cycle</th>
-                                        <th><i class="fas fa-tag"></i> Status</th>
-                                        <th><i class="fas fa-calendar-check"></i> Start Date</th>
-                                        <th><i class="fas fa-calendar-times"></i> Expires At</th>
-                                        <th><i class="fas fa-cog"></i> Actions</th>
+                                        <th>Customer Name</th>
+                                        <th>Plan Name</th>
+                                        <th>Regular Price</th>
+                                        <th>Renewal Price</th>
+                                        <th>Billing Cycle</th>
+                                        <th>Status</th>
+                                        <th>Start Date</th>
+                                        <th>Expires At</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -219,39 +184,33 @@
                                                 );
                                             @endphp
                                             <td class="align-middle">
-                                                <strong>{{ $customerName !== '' ? $customerName : 'N/A' }}</strong>
+                                                {{ $customerName !== '' ? $customerName : 'N/A' }}
                                             </td>
                                             <td class="align-middle">
                                                 {{ $subscription->plan?->name ?? 'N/A' }}
                                             </td>
                                             <td class="align-middle">
                                                 @if ($subscription->is_custom_price && $subscription->custom_price !== null)
-                                                    <span class="badge badge-info" title="Custom Price">
-                                                        <i class="fas fa-star"></i> Custom
-                                                    </span>
-                                                    <br>
-                                                    <strong>{{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}</strong>
+                                                    <span class="badge badge-info" title="Custom Price">Custom</span>
+                                                    {{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}
                                                 @elseif ($subscription->planPrice)
                                                     {{ $subscription->planPrice->getFormattedPrice('regular_price') }}
                                                 @else
-                                                    <span class="text-muted">—</span>
+                                                    —
                                                 @endif
                                             </td>
                                             <td class="align-middle">
                                                 @if ($subscription->is_custom_price && $subscription->custom_price !== null)
-                                                    <span class="badge badge-info" title="Custom Price">
-                                                        <i class="fas fa-star"></i> Custom
-                                                    </span>
-                                                    <br>
-                                                    <strong>{{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}</strong>
+                                                    <span class="badge badge-info" title="Custom Price">Custom</span>
+                                                    {{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}
                                                 @elseif ($subscription->planPrice)
-                                                    <strong class="text-primary">{{ $subscription->planPrice->getFormattedPrice('renewal_price') }}</strong>
+                                                    {{ $subscription->planPrice->getFormattedPrice('renewal_price') }}
                                                 @else
-                                                    <span class="text-muted">—</span>
+                                                    —
                                                 @endif
                                             </td>
                                             <td class="align-middle">
-                                                <span class="badge badge-light badge-lg">
+                                                <span class="badge badge-light">
                                                     {{ ucfirst(str_replace('_', ' ', $subscription->billing_cycle ?? '—')) }}
                                                 </span>
                                             </td>
@@ -259,31 +218,27 @@
                                                 @php
                                                     $status = $subscription->status ?? 'unknown';
                                                 @endphp
-                                                <span class="badge {{ $statusColors[$status] ?? 'badge-dark' }} badge-lg">
+                                                <span class="badge {{ $statusColors[$status] ?? 'badge-dark' }}">
                                                     {{ ucfirst(str_replace('_', ' ', $status)) }}
                                                 </span>
                                             </td>
                                             <td class="align-middle">
-                                                <i class="far fa-calendar"></i> {{ $subscription->starts_at?->format('M d, Y') ?? '—' }}
+                                                {{ $subscription->starts_at?->format('M d, Y') ?? '—' }}
                                             </td>
                                             <td class="align-middle">
-                                                <i class="far fa-calendar"></i> {{ $subscription->expires_at?->format('M d, Y') ?? '—' }}
+                                                {{ $subscription->expires_at?->format('M d, Y') ?? '—' }}
                                             </td>
                                             <td class="align-middle">
                                                 <div class="btn-group" role="group">
                                                     @can('subscription_show')
                                                         <a href="{{ route('admin.subscriptions.show', $subscription) }}"
                                                            class="btn btn-sm btn-info"
-                                                           title="View Details">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
+                                                           title="View Details">View</a>
                                                     @endcan
                                                     @can('subscription_edit')
                                                         <a href="{{ route('admin.subscriptions.edit', $subscription) }}"
                                                            class="btn btn-sm btn-primary"
-                                                           title="Edit">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
+                                                           title="Edit">Edit</a>
                                                     @endcan
                                                     <form action="{{ route('admin.products.subscription.renew', $subscription) }}"
                                                           method="POST"
@@ -291,9 +246,7 @@
                                                         @csrf
                                                         <button type="submit"
                                                                 class="btn btn-sm btn-success"
-                                                                title="Add Renewal to Cart">
-                                                            <i class="fas fa-shopping-cart"></i>
-                                                        </button>
+                                                                title="Add Renewal to Cart">Renew</button>
                                                     </form>
                                                 </div>
                                             </td>
@@ -303,19 +256,11 @@
                             </table>
                         </div>
 
-                        <div class="row mt-3">
-                            <div class="col-md-6">
-                                <div class="info-box">
-                                    <span class="info-box-icon bg-info"><i class="fas fa-info-circle"></i></span>
-                                    <div class="info-box-content">
-                                        <span class="info-box-text">Showing</span>
-                                        <span class="info-box-number">
-                                            {{ $subscriptions->firstItem() ?? 0 }} - {{ $subscriptions->lastItem() ?? 0 }} of {{ $subscriptions->total() }} results
-                                        </span>
-                                    </div>
-                                </div>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
+                            <div class="text-muted small mb-2">
+                                Showing {{ $subscriptions->firstItem() ?? 0 }} - {{ $subscriptions->lastItem() ?? 0 }} of {{ $subscriptions->total() }} results
                             </div>
-                            <div class="col-md-6 d-flex justify-content-end align-items-center">
+                            <div>
                                 {{ $subscriptions->links() }}
                             </div>
                         </div>
