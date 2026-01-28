@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Subscription\CreateCustomSubscriptionAction;
 use App\Enums\Hosting\BillingCycle;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\CreateCustomSubscriptionRequest;
 use App\Http\Requests\Admin\UpdateSubscriptionRequest;
+use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
+use App\Models\User;
+use App\Services\CurrencyService;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -22,6 +27,54 @@ use Throwable;
 
 final class SubscriptionController extends Controller
 {
+    public function __construct(
+        private readonly CurrencyService $currencyService
+    ) {}
+
+    public function create(): View|Factory
+    {
+        abort_if(Gate::denies('subscription_create'), 403);
+
+        $users = User::query()
+            ->select('id', 'first_name', 'last_name', 'email')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
+
+        $hostingPlans = HostingPlan::query()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        $currencies = $this->currencyService->getActiveCurrencies();
+
+        return view('admin.subscriptions.create', [
+            'users' => $users,
+            'hostingPlans' => $hostingPlans,
+            'currencies' => $currencies,
+        ]);
+    }
+
+    public function store(CreateCustomSubscriptionRequest $request, CreateCustomSubscriptionAction $action): RedirectResponse
+    {
+        try {
+            $subscription = $action->handle($request->validated(), auth()->id());
+
+            return to_route('admin.subscriptions.show', $subscription)
+                ->with('success', 'Custom subscription created successfully.');
+        } catch (Exception $exception) {
+            Log::error('Failed to create custom subscription', [
+                'admin_user_id' => auth()->id(),
+                'error' => $exception->getMessage(),
+                'data' => $request->validated(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create custom subscription: '.$exception->getMessage());
+        }
+    }
+
     public function index(Request $request): View|Factory
     {
         abort_if(Gate::denies('subscription_access'), 403);
@@ -42,6 +95,7 @@ final class SubscriptionController extends Controller
                 'user:id,first_name,last_name,email',
                 'plan:id,name',
                 'planPrice:id,hosting_plan_id,billing_cycle,regular_price,renewal_price',
+                'createdByAdmin:id,first_name,last_name',
             ]);
 
         if ($filters['status'] !== '') {
@@ -123,7 +177,7 @@ final class SubscriptionController extends Controller
     {
         abort_if(Gate::denies('subscription_show'), 403);
 
-        $subscription->load(['user', 'plan', 'planPrice']);
+        $subscription->load(['user', 'plan', 'planPrice', 'createdByAdmin']);
 
         return view('admin.subscriptions.show', [
             'subscription' => $subscription,

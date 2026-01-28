@@ -77,7 +77,14 @@
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap"
                     style="gap: 0.75rem;">
                     <h3 class="card-title mb-0">Subscription Monitor</h3>
-                    <span class="text-muted small">Tracking {{ $subscriptions->total() }} records</span>
+                    <div class="d-flex align-items-center" style="gap: 0.75rem;">
+                        @can('subscription_create')
+                            <a href="{{ route('admin.subscriptions.create') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Create Custom Subscription
+                            </a>
+                        @endcan
+                        <span class="text-muted small">Tracking {{ $subscriptions->total() }} records</span>
+                    </div>
                 </div>
                 <div class="card-body">
                     <form method="GET" action="{{ route('admin.subscriptions.index') }}" class="mb-4" id="filters-form">
@@ -176,14 +183,20 @@
                                                 {{ $subscription->plan?->name ?? 'N/A' }}
                                             </td>
                                             <td class="align-middle">
-                                                @if ($subscription->planPrice)
+                                                @if ($subscription->is_custom_price && $subscription->custom_price !== null)
+                                                    <span class="badge badge-info" title="Custom Price">Custom</span>
+                                                    {{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}
+                                                @elseif ($subscription->planPrice)
                                                     {{ $subscription->planPrice->getFormattedPrice('regular_price') }}
                                                 @else
                                                     —
                                                 @endif
                                             </td>
                                             <td class="align-middle">
-                                                @if ($subscription->planPrice)
+                                                @if ($subscription->is_custom_price && $subscription->custom_price !== null)
+                                                    <span class="badge badge-info" title="Custom Price">Custom</span>
+                                                    {{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}
+                                                @elseif ($subscription->planPrice)
                                                     {{ $subscription->planPrice->getFormattedPrice('renewal_price') }}
                                                 @else
                                                     —

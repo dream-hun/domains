@@ -92,7 +92,27 @@
                                         <th>Linked Domain:</th>
                                         <td>{{ $subscription->domain ?? 'N/A' }}</td>
                                     </tr>
-                                    @if($subscription->planPrice)
+                                    @if($subscription->is_custom_price && $subscription->custom_price !== null)
+                                        <tr>
+                                            <th>Custom Price:</th>
+                                            <td>
+                                                <span class="badge badge-info">Custom</span>
+                                                {{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}
+                                            </td>
+                                        </tr>
+                                        @if($subscription->custom_price_notes)
+                                            <tr>
+                                                <th>Custom Price Notes:</th>
+                                                <td>{{ $subscription->custom_price_notes }}</td>
+                                            </tr>
+                                        @endif
+                                        @if($subscription->createdByAdmin)
+                                            <tr>
+                                                <th>Created By Admin:</th>
+                                                <td>{{ $subscription->createdByAdmin->name }}</td>
+                                            </tr>
+                                        @endif
+                                    @elseif($subscription->planPrice)
                                         <tr>
                                             <th>Regular Price:</th>
                                             <td>{{ $subscription->planPrice->getFormattedPrice('regular_price') }}</td>
@@ -158,6 +178,18 @@
                                         <tr>
                                             <th>Last Renewal Attempt:</th>
                                             <td>{{ $subscription->last_renewal_attempt_at->format('F d, Y g:i A') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if($subscription->last_invoice_generated_at)
+                                        <tr>
+                                            <th>Last Invoice Generated:</th>
+                                            <td>{{ $subscription->last_invoice_generated_at->format('F d, Y g:i A') }}</td>
+                                        </tr>
+                                    @endif
+                                    @if($subscription->next_invoice_due_at)
+                                        <tr>
+                                            <th>Next Invoice Due:</th>
+                                            <td>{{ $subscription->next_invoice_due_at->format('F d, Y g:i A') }}</td>
                                         </tr>
                                     @endif
                                     @if($subscription->cancelled_at)

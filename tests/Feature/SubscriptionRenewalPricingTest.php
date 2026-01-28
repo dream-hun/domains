@@ -27,6 +27,7 @@ test('subscription renewal uses renewal_price not regular_price', function (): v
     $subscription = Subscription::factory()->create([
         'user_id' => $user->id,
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $planPrice->id,
         'billing_cycle' => 'monthly',
     ]);
 
@@ -42,6 +43,7 @@ test('subscription renewal uses renewal_price not regular_price', function (): v
         'order_id' => $order->id,
         'domain_type' => 'subscription_renewal',
         'price' => 100.00, // renewal_price, not regular_price
+        'total_amount' => 100.00,
         'metadata' => [
             'subscription_id' => $subscription->id,
             'billing_cycle' => 'monthly',
@@ -73,6 +75,7 @@ test('subscription renewal validates billing cycle consistency', function (): vo
     $subscription = Subscription::factory()->create([
         'user_id' => $user->id,
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $monthlyPrice->id,
         'billing_cycle' => 'monthly',
     ]);
 
@@ -87,12 +90,16 @@ test('subscription renewal validates billing cycle consistency', function (): vo
     OrderItem::factory()->create([
         'order_id' => $order->id,
         'domain_type' => 'subscription_renewal',
-        'price' => 1200.00, // $100/month × 12 months = $1200
+        'price' => 100.00, // Monthly price
+        'quantity' => 12, // 12 months for annual
+        'total_amount' => 1200.00, // $100/month × 12 months = $1200
         'metadata' => [
             'subscription_id' => $subscription->id,
             'billing_cycle' => 'annually', // Changed from monthly
         ],
     ]);
+
+    $order->refresh();
 
     // Process renewal - should update billing cycle
     $job = new ProcessSubscriptionRenewalJob($order);
@@ -115,6 +122,7 @@ test('subscription renewal rejects underpayment', function (): void {
     $subscription = Subscription::factory()->create([
         'user_id' => $user->id,
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $planPrice->id,
         'billing_cycle' => 'monthly',
     ]);
 
@@ -130,6 +138,7 @@ test('subscription renewal rejects underpayment', function (): void {
         'order_id' => $order->id,
         'domain_type' => 'subscription_renewal',
         'price' => 50.00, // Only $50, should be $100
+        'total_amount' => 50.00,
         'metadata' => [
             'subscription_id' => $subscription->id,
             'billing_cycle' => 'monthly',
@@ -157,7 +166,20 @@ test('subscription renewal updates product snapshot', function (): void {
     $subscription = Subscription::factory()->create([
         'user_id' => $user->id,
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $planPrice->id,
         'billing_cycle' => 'monthly',
+        'product_snapshot' => [
+            'plan' => [
+                'id' => $plan->id,
+                'name' => $plan->name,
+            ],
+            'price' => [
+                'id' => $planPrice->id,
+                'regular_price' => $planPrice->regular_price,
+                'renewal_price' => $planPrice->renewal_price,
+                'billing_cycle' => $planPrice->billing_cycle,
+            ],
+        ],
     ]);
 
     $order = Order::factory()->create([
@@ -171,11 +193,14 @@ test('subscription renewal updates product snapshot', function (): void {
         'order_id' => $order->id,
         'domain_type' => 'subscription_renewal',
         'price' => 100.00,
+        'total_amount' => 100.00,
         'metadata' => [
             'subscription_id' => $subscription->id,
             'billing_cycle' => 'monthly',
         ],
     ]);
+
+    $order->refresh();
 
     $job = new ProcessSubscriptionRenewalJob($order);
     $job->handle(resolve(SubscriptionRenewalService::class));
@@ -193,7 +218,7 @@ test('subscription renewal with annually extends expiry by 1 year', function ():
     $plan = HostingPlan::factory()->create();
 
     // Create monthly price (required for validation)
-    HostingPlanPrice::factory()->create([
+    $monthlyPrice = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
         'billing_cycle' => 'monthly',
         'renewal_price' => 10000, // $100.00 per month
@@ -208,6 +233,7 @@ test('subscription renewal with annually extends expiry by 1 year', function ():
     $subscription = Subscription::factory()->create([
         'user_id' => $user->id,
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $monthlyPrice->id,
         'billing_cycle' => 'monthly',
         'expires_at' => now()->addMonth(),
     ]);
@@ -224,20 +250,24 @@ test('subscription renewal with annually extends expiry by 1 year', function ():
     OrderItem::factory()->create([
         'order_id' => $order->id,
         'domain_type' => 'subscription_renewal',
-        'price' => 1200.00, // $100/month × 12 months = $1200
+        'price' => 100.00, // Monthly price
+        'quantity' => 12, // 12 months for annual
+        'total_amount' => 1200.00, // $100/month × 12 months = $1200
         'metadata' => [
             'subscription_id' => $subscription->id,
             'billing_cycle' => 'annually', // 1 year
         ],
     ]);
 
+    $order->refresh();
+
     $job = new ProcessSubscriptionRenewalJob($order);
     $job->handle(resolve(SubscriptionRenewalService::class));
 
     $subscription->refresh();
 
-    // Should extend by 1 year
-    $expectedExpiry = $originalExpiry->copy()->addYear();
+    // Should extend by 1 year (12 months)
+    $expectedExpiry = $originalExpiry->copy()->addMonths(12);
     expect($subscription->expires_at->format('Y-m-d'))->toBe($expectedExpiry->format('Y-m-d'))
         ->and($subscription->billing_cycle)->toBe('annually');
 });
