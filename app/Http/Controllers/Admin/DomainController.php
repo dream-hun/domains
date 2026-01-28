@@ -7,12 +7,14 @@ namespace App\Http\Controllers\Admin;
 use App\Actions\Domains\GetDomainInfoAction;
 use App\Actions\Domains\ListDomainAction;
 use App\Actions\Domains\ReactivateDomainAction;
+use App\Actions\Domains\RegisterCustomDomainAction;
 use App\Actions\Domains\ToggleDomainLockAction;
 use App\Actions\Domains\TransferDomainAction;
 use App\Actions\Domains\UpdateDomainContactsAction;
 use App\Actions\Domains\UpdateNameserversAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AssignDomainOwnerRequest;
+use App\Http\Requests\Admin\CreateCustomDomainRegistrationRequest;
 use App\Http\Requests\Admin\DomainTransferRequest;
 use App\Http\Requests\Admin\ReactivateDomainRequest;
 use App\Http\Requests\Admin\ToggleDomainLockRequest;
@@ -21,7 +23,10 @@ use App\Http\Requests\Admin\UpdateNameserversRequest;
 use App\Models\Contact;
 use App\Models\Country;
 use App\Models\Domain;
+use App\Models\HostingPlan;
+use App\Models\Subscription;
 use App\Models\User;
+use App\Services\CurrencyService;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -37,6 +42,58 @@ final class DomainController extends Controller
         $domains = $action->handle();
 
         return view('admin.domains.index', ['domains' => $domains]);
+    }
+
+    public function createCustom(CurrencyService $currencyService): View|Factory
+    {
+        abort_if(Gate::denies('domain_create'), 403);
+
+        $users = User::query()
+            ->select('id', 'first_name', 'last_name', 'email')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
+
+        $contacts = Contact::query()
+            ->withoutGlobalScopes()
+            ->orderBy('first_name')
+            ->get();
+
+        $hostingPlans = HostingPlan::query()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        $subscriptions = Subscription::query()
+            ->with(['user:id,first_name,last_name,email', 'plan:id,name'])
+            ->where('status', 'active')->latest()
+            ->get();
+
+        $currencies = $currencyService->getActiveCurrencies();
+
+        return view('admin.domains.create-custom', [
+            'users' => $users,
+            'contacts' => $contacts,
+            'hostingPlans' => $hostingPlans,
+            'subscriptions' => $subscriptions,
+            'currencies' => $currencies,
+        ]);
+    }
+
+    public function storeCustom(
+        CreateCustomDomainRegistrationRequest $request,
+        RegisterCustomDomainAction $action
+    ): RedirectResponse {
+        $result = $action->handle($request->validated(), auth()->id());
+
+        if ($result['success']) {
+            return to_route('admin.domains.index')
+                ->with('success', $result['message']);
+        }
+
+        return back()
+            ->withInput()
+            ->with('error', $result['message']);
     }
 
     public function domainInfo(Domain $domain, GetDomainInfoAction $action): Factory|View|\Illuminate\View\View
@@ -104,7 +161,7 @@ final class DomainController extends Controller
         }
 
         return back()
-            ->withErrors(['error' => $result['message'] ?? 'Domain transferRegister failed'])
+            ->withErrors(['error' => $result['message'] ?? 'Domain transfer failed'])
             ->withInput();
     }
 

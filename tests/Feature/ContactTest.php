@@ -12,12 +12,33 @@ beforeEach(function (): void {
     $this->actingAs($this->user);
 });
 
+function validContactData(?Country $country = null): array
+{
+    $country ??= Country::factory()->create();
+
+    return [
+        'contact_type' => ContactType::Registrant->value,
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'title' => 'CEO',
+        'organization' => 'Test Company',
+        'address_one' => '123 Main St',
+        'address_two' => 'Suite 100',
+        'city' => 'New York',
+        'state_province' => 'NY',
+        'postal_code' => '10001',
+        'country_code' => $country->iso_code,
+        'phone' => '+1-555-123-4567',
+        'phone_extension' => '123',
+        'fax_number' => '+1-555-123-4568',
+        'email' => 'john.doe@example.com',
+    ];
+}
+
 test('can view contacts index page', function (): void {
     Contact::factory(3)->create(['user_id' => $this->user->id]);
 
     $response = $this->get(route('admin.contacts.index'));
-
-    dump($response->status(), $response->baseResponse::class, ($response->original ?? null)::class);
 
     $response->assertSuccessful()
         ->assertViewIs('admin.contacts.index')
@@ -64,24 +85,7 @@ test('can view create contact page', function (): void {
 
 test('can create contact', function (): void {
     $country = Country::factory()->create();
-
-    $contactData = [
-        'contact_type' => ContactType::Registrant->value,
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'title' => 'CEO',
-        'organization' => 'Test Company',
-        'address_one' => '123 Main St',
-        'address_two' => 'Suite 100',
-        'city' => 'New York',
-        'state_province' => 'NY',
-        'postal_code' => '10001',
-        'country_code' => $country->iso_code,
-        'phone' => '+1-555-123-4567',
-        'phone_extension' => '123',
-        'fax_number' => '+1-555-123-4568',
-        'email' => 'john.doe@example.com',
-    ];
+    $contactData = validContactData($country);
 
     $response = $this->post(route('admin.contacts.store'), $contactData);
 
@@ -92,12 +96,12 @@ test('can create contact', function (): void {
     expect(Contact::query()->count())->toBe(1);
 
     $contact = Contact::query()->first();
-    expect($contact->first_name)->toBe('John');
-    expect($contact->last_name)->toBe('Doe');
-    expect($contact->email)->toBe('john.doe@example.com');
-    expect($contact->contact_type)->toBe(ContactType::Registrant);
-    expect($contact->user_id)->toBe($this->user->id);
-    expect($contact->country_code)->toBe($country->iso_code);
+    expect($contact->first_name)->toBe('John')
+        ->and($contact->last_name)->toBe('Doe')
+        ->and($contact->email)->toBe('john.doe@example.com')
+        ->and($contact->contact_type)->toBe(ContactType::Registrant)
+        ->and($contact->user_id)->toBe($this->user->id)
+        ->and($contact->country_code)->toBe($country->iso_code);
 });
 
 test('validates required fields when creating contact', function (): void {
@@ -189,9 +193,9 @@ test('can update contact', function (): void {
         ->assertSessionHas('success', 'Contact updated successfully in both EPP registry and local database');
 
     $contact->refresh();
-    expect($contact->first_name)->toBe('Jane');
-    expect($contact->email)->toBe('jane@example.com');
-    expect($contact->contact_type)->toBe(ContactType::Technical);
+    expect($contact->first_name)->toBe('Jane')
+        ->and($contact->email)->toBe('jane@example.com')
+        ->and($contact->contact_type)->toBe(ContactType::Technical);
 });
 
 test('can delete contact', function (): void {

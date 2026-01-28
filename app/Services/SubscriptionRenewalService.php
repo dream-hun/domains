@@ -28,6 +28,8 @@ final readonly class SubscriptionRenewalService
             'failed' => [],
         ];
 
+        $order->load('orderItems');
+
         /** @var OrderItem $orderItem */
         foreach ($order->orderItems as $orderItem) {
             if ($orderItem->domain_type !== 'subscription_renewal') {
@@ -70,7 +72,11 @@ final readonly class SubscriptionRenewalService
             $paidAmount = (float) $orderItem->total_amount;
             $orderItemCurrency = $orderItem->currency ?? 'USD';
             // Get the quantity (months) from the order item
+            // If not explicitly set, use the billing cycle's month duration
             $quantityMonths = (int) $orderItem->quantity;
+            if ($quantityMonths <= 1) {
+                $quantityMonths = $billingCycle->toMonths();
+            }
 
             if ($orderItemCurrency !== 'USD') {
                 $paidAmount = CurrencyHelper::convert(
@@ -92,21 +98,28 @@ final readonly class SubscriptionRenewalService
             ]);
 
             try {
-                // Get the monthly plan price for validation
-                $monthlyPlanPrice = HostingPlanPrice::query()
-                    ->where('hosting_plan_id', $subscription->hosting_plan_id)
-                    ->where('billing_cycle', 'monthly')
-                    ->where('status', 'active')
-                    ->first();
+                $expectedMonthlyPrice = $subscription->getRenewalPrice();
 
-                if (! $monthlyPlanPrice) {
-                    throw new Exception(
-                        sprintf('No active monthly pricing found for plan %s', $subscription->hosting_plan_id)
-                    );
+                if ($subscription->is_custom_price && $subscription->custom_price !== null) {
+                    if ($subscription->billing_cycle === 'annually') {
+                        $expectedMonthlyPrice /= 12;
+                    }
+                } else {
+                    $monthlyPlanPrice = HostingPlanPrice::query()
+                        ->where('hosting_plan_id', $subscription->hosting_plan_id)
+                        ->where('billing_cycle', 'monthly')
+                        ->where('status', 'active')
+                        ->first();
+
+                    if (! $monthlyPlanPrice) {
+                        throw new Exception(
+                            sprintf('No active monthly pricing found for plan %s', $subscription->hosting_plan_id)
+                        );
+                    }
+
+                    $expectedMonthlyPrice = $monthlyPlanPrice->getPriceInBaseCurrency('renewal_price');
                 }
 
-                // Validate payment amount matches expected amount for the quantity of months
-                $expectedMonthlyPrice = $monthlyPlanPrice->getPriceInBaseCurrency('renewal_price');
                 $expectedTotalAmount = $expectedMonthlyPrice * $quantityMonths;
 
                 // Use a more lenient tolerance (0.50) to account for currency conversion rounding
@@ -131,7 +144,6 @@ final readonly class SubscriptionRenewalService
                     );
                 }
 
-                // Log successful validation if there was a small difference within tolerance
                 if ($difference > 0.01) {
                     Log::info('Payment amount validation passed with small rounding difference', [
                         'subscription_id' => $subscription->id,
@@ -141,19 +153,46 @@ final readonly class SubscriptionRenewalService
                     ]);
                 }
 
-                $renewalSnapshot = [
-                    'id' => $monthlyPlanPrice->id,
-                    'regular_price' => $monthlyPlanPrice->regular_price,
-                    'renewal_price' => $monthlyPlanPrice->renewal_price,
-                    'billing_cycle' => $monthlyPlanPrice->billing_cycle,
-                ];
+                if ($subscription->is_custom_price && $subscription->custom_price !== null) {
+                    $renewalSnapshot = [
+                        'custom_price' => $subscription->custom_price,
+                        'custom_price_currency' => $subscription->custom_price_currency,
+                        'is_custom_price' => true,
+                        'billing_cycle' => $subscription->billing_cycle,
+                    ];
+                } else {
+                    $monthlyPlanPrice = HostingPlanPrice::query()
+                        ->where('hosting_plan_id', $subscription->hosting_plan_id)
+                        ->where('billing_cycle', 'monthly')
+                        ->where('status', 'active')
+                        ->first();
 
-                // Extend subscription by the quantity of months
+                    if ($monthlyPlanPrice) {
+                        $renewalSnapshot = [
+                            'id' => $monthlyPlanPrice->id,
+                            'regular_price' => $monthlyPlanPrice->regular_price,
+                            'renewal_price' => $monthlyPlanPrice->renewal_price,
+                            'billing_cycle' => $monthlyPlanPrice->billing_cycle,
+                        ];
+                    } else {
+                        $renewalSnapshot = null;
+                    }
+                }
+
                 $subscription->extendSubscriptionByMonths(
                     $quantityMonths,
                     $paidAmount,
-                    renewalSnapshot: $renewalSnapshot
+                    isComp: false,
+                    renewalSnapshot: $renewalSnapshot,
+                    paidCurrency: $orderItemCurrency
                 );
+
+                $subscription->refresh();
+
+                // Update billing cycle if it's different from the order item's billing cycle
+                if (isset($orderItem->metadata['billing_cycle']) && $billingCycle->value !== $subscription->billing_cycle) {
+                    $subscription->update(['billing_cycle' => $billingCycle->value]);
+                }
 
                 $results['successful'][] = [
                     'subscription' => $subscription->domain ?? 'Subscription UUID: '.$subscription->uuid,

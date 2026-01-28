@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Actions\Currency\UpdateExchangeRatesAction;
+use App\Contracts\Currency\CurrencyConverterContract;
+use App\Contracts\Currency\CurrencyFormatterContract;
+use App\Contracts\Currency\ExchangeRateProviderContract;
+use App\Helpers\CurrencyExchangeHelper;
 use App\Helpers\DomainSearchHelper;
 use App\Models\DomainPrice;
 use App\Models\HostingCategory;
@@ -11,6 +16,10 @@ use App\Models\HostingPlanPrice;
 use App\Models\Setting;
 use App\Observers\DomainPriceObserver;
 use App\Observers\HostingPlanPriceHistoryObserver;
+use App\Services\Currency\CurrencyConverter;
+use App\Services\Currency\CurrencyFormatter;
+use App\Services\Currency\ExchangeRateProvider;
+use App\Services\CurrencyService;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
@@ -26,14 +35,7 @@ final class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-
-        $this->app->singleton(fn (): ExchangeRateClient => new ExchangeRateClient(
-            apiKey: config('services.exchange_rate.api_key'),
-            baseUrl: config('services.exchange_rate.base_url'),
-            timeout: config('services.exchange_rate.timeout'),
-            extendedTimeout: config('services.exchange_rate.extended_timeout')
-        ));
-
+        $this->registerCurrencyServices();
         $this->registerDomainServices();
     }
 
@@ -73,6 +75,31 @@ final class AppServiceProvider extends ServiceProvider
         Blade::directive('priceMinor', fn (string $expression): string => sprintf('<?php echo app('.PriceFormatter::class.'::class)->formatFromMinorUnits(%s); ?>', $expression));
 
         Blade::directive('currencySymbol', fn (string $expression): string => sprintf('<?php echo app('.PriceFormatter::class.'::class)->getSymbol(%s); ?>', $expression));
+    }
+
+    /**
+     * Register currency-related services and contracts.
+     */
+    private function registerCurrencyServices(): void
+    {
+        // Exchange rate client singleton
+        $this->app->singleton(ExchangeRateClient::class, fn (): ExchangeRateClient => new ExchangeRateClient(
+            apiKey: config('services.exchange_rate.api_key'),
+            baseUrl: config('services.exchange_rate.base_url'),
+            timeout: config('services.exchange_rate.timeout'),
+            extendedTimeout: config('services.exchange_rate.extended_timeout')
+        ));
+
+        // Bind contracts to new implementations
+        $this->app->singleton(CurrencyFormatterContract::class, CurrencyFormatter::class);
+        $this->app->singleton(ExchangeRateProviderContract::class, ExchangeRateProvider::class);
+        $this->app->singleton(CurrencyConverterContract::class, CurrencyConverter::class);
+
+        // Backward compatibility: alias CurrencyService to new converter
+        $this->app->singleton(CurrencyService::class, fn ($app): CurrencyService => new CurrencyService(
+            $app->make(UpdateExchangeRatesAction::class),
+            $app->make(CurrencyExchangeHelper::class)
+        ));
     }
 
     /**

@@ -109,7 +109,9 @@ final readonly class CreateOrderFromCartAction
             ]);
 
             foreach ($cartItems as $item) {
-                $itemCurrency = $item->attributes->currency ?? 'USD';
+                // Use original_currency if preserved during conversion, otherwise use current currency
+                $itemCurrency = $item->attributes->original_currency ?? $item->attributes->currency ?? 'USD';
+                $originalPrice = $item->attributes->original_price ?? $item->price;
                 $itemType = $item->attributes->type ?? 'registration';
                 $domainId = $item->attributes->domain_id ?? null;
                 $metadata = $item->attributes->get('metadata');
@@ -198,7 +200,7 @@ final readonly class CreateOrderFromCartAction
                     'total_amount' => $convertedItemTotal,
                     'metadata' => array_merge($itemMetadata, [
                         'original_currency' => $itemCurrency,
-                        'original_price' => $item->price,
+                        'original_price' => $originalPrice,
                     ]),
                 ]);
             }

@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Actions\Currency\UpdateExchangeRatesAction;
+use App\Contracts\Currency\CurrencyConverterContract;
 use App\Events\ExchangeRatesUpdated;
 use App\Exceptions\CurrencyExchangeException;
 use App\Helpers\CurrencyExchangeHelper;
 use App\Models\Currency;
+use App\Services\Currency\RequestCache;
+use App\Traits\NormalizesCurrencyCode;
 use Carbon\Carbon;
 use Cknow\Money\Money;
 use Exception;
@@ -17,8 +20,14 @@ use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
 
-final readonly class CurrencyService
+/**
+ * @deprecated Use App\Services\Currency\CurrencyConverter instead.
+ *             This class is maintained for backward compatibility.
+ */
+final readonly class CurrencyService implements CurrencyConverterContract
 {
+    use NormalizesCurrencyCode;
+
     private const CACHE_TTL = 3600; // 1 hour
 
     public function __construct(
@@ -72,13 +81,23 @@ final readonly class CurrencyService
         }
 
         // Check request-level cache first to avoid duplicate queries
-        if (CurrencyRequestCache::hasCurrency($code)) {
-            return CurrencyRequestCache::getCurrency($code);
+        if (RequestCache::hasCurrency($code)) {
+            return RequestCache::getCurrency($code);
         }
 
         // Fetch from persistent cache and store in request-level cache
-        $currency = Cache::remember('currency_'.$code, self::CACHE_TTL, fn (): ?Currency => Currency::query()->where('code', $code)->first());
-        CurrencyRequestCache::setCurrency($code, $currency);
+        $cached = Cache::remember('currency_'.$code, self::CACHE_TTL, fn (): ?Currency => Currency::query()->where('code', $code)->first());
+
+        // Validate cached data (handle potential deserialization issues)
+        $currency = $cached instanceof Currency ? $cached : null;
+
+        // If cache returned invalid data, try fetching fresh
+        if ($cached !== null && ! $currency instanceof Currency) {
+            Cache::forget('currency_'.$code);
+            $currency = Currency::query()->where('code', $code)->first();
+        }
+
+        RequestCache::setCurrency($code, $currency);
 
         return $currency;
     }
@@ -89,13 +108,13 @@ final readonly class CurrencyService
     public function getBaseCurrency(): Currency
     {
         // Check request-level cache first to avoid duplicate queries
-        if (CurrencyRequestCache::hasBaseCurrency()) {
-            return CurrencyRequestCache::getBaseCurrency();
+        if (RequestCache::hasBaseCurrency()) {
+            return RequestCache::getBaseCurrency();
         }
 
         // Fetch from persistent cache and store in request-level cache
         $currency = Cache::remember('base_currency', self::CACHE_TTL, Currency::getBaseCurrency(...));
-        CurrencyRequestCache::setBaseCurrency($currency);
+        RequestCache::setBaseCurrency($currency);
 
         return $currency;
     }
@@ -275,18 +294,5 @@ final readonly class CurrencyService
         sort($pair);
 
         return $pair === ['RWF', 'USD'];
-    }
-
-    /**
-     * Validate currency code format (ISO 4217)
-     */
-    private function isValidCurrencyCode(string $code): bool
-    {
-        return preg_match('/^[A-Z]{3}$/', $code) === 1;
-    }
-
-    private function normalizeCurrencyCode(string $code): string
-    {
-        return $this->formatter->normalizeCurrency($code);
     }
 }

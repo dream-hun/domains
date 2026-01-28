@@ -990,7 +990,7 @@ final class CartComponent extends Component
                 session(['coupon' => $paymentData['coupon']]);
             }
 
-            $this->redirect(route('payment.index'));
+            $this->redirect(route('checkout.index'));
         } catch (Exception $exception) {
             Log::error('Failed to prepare cart for payment', [
                 'currency' => $this->currency,

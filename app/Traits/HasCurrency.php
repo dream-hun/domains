@@ -4,50 +4,67 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
+use App\Contracts\Currency\CurrencyConverterContract;
 use App\Models\Currency;
-use App\Services\CurrencyService;
 use Throwable;
 
+/**
+ * Provides currency conversion and formatting methods to classes.
+ *
+ * This trait uses the CurrencyConverterContract for all operations,
+ * ensuring consistent currency handling across the application.
+ */
 trait HasCurrency
 {
     /**
-     * Get the currency service instance
+     * Get the currency converter instance.
      */
-    protected function currencyService(): CurrencyService
+    protected function currencyConverter(): CurrencyConverterContract
     {
-        return resolve(CurrencyService::class);
+        return resolve(CurrencyConverterContract::class);
     }
 
     /**
-     * Get user's preferred currency
+     * Get the currency service instance.
+     *
+     * @deprecated Use currencyConverter() instead.
+     */
+    protected function currencyService(): CurrencyConverterContract
+    {
+        return $this->currencyConverter();
+    }
+
+    /**
+     * Get user's preferred currency.
      */
     protected function getUserCurrency(): Currency
     {
-        return $this->currencyService()->getUserCurrency();
+        return $this->currencyConverter()->getUserCurrency();
     }
 
     /**
-     * Convert amount between currencies
+     * Convert amount between currencies.
      *
      * @throws Throwable
      */
     protected function convertCurrency(float $amount, string $from, string $to): float
     {
-        return $this->currencyService()->convert($amount, $from, $to);
+        return $this->currencyConverter()->convert($amount, $from, $to);
     }
 
     /**
-     * Format amount with currency
+     * Format amount with currency.
      */
     protected function formatCurrency(float $amount, string $currency): string
     {
-        return $this->currencyService()->format($amount, $currency);
+        return $this->currencyConverter()->format($amount, $currency);
     }
 
     /**
-     * Convert amount from USD (database storage) to user's selected currency
+     * Convert amount from USD (database storage) to user's selected currency.
+     *
      * All prices in the database are stored in USD.
-     * This method converts them to the user's preferred currency (e.g., RWF for Rwandan users)
+     * This method converts them to the user's preferred currency (e.g., RWF for Rwandan users).
      *
      * @throws Throwable
      */
@@ -63,7 +80,7 @@ trait HasCurrency
     }
 
     /**
-     * Convert and format amount from USD to user's selected currency
+     * Convert and format amount from USD to user's selected currency.
      *
      * @throws Throwable
      */

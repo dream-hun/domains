@@ -47,10 +47,11 @@ final class LocalDomainServiceTest extends TestCase
         // Call the method that uses the connectWithRetry method
         try {
             // EppDomainService::checkAvailability expects an array
-            $service->checkAvailability(['example.com']);
+            $result = $service->checkAvailability(['example.com']);
 
-            // If we get here, the test passes
-            $this->assertTrue(true);
+            // Verify that the method was called (connectWithRetry was invoked)
+            // The mock expectation above will verify connectWithRetry was called
+            $this->assertIsArray($result);
         } catch (Exception $exception) {
             // If we get an exception, the test fails
             $this->fail('Exception thrown: '.$exception->getMessage());

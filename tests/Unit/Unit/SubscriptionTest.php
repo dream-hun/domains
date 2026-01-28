@@ -109,10 +109,10 @@ test('extendSubscription validates payment amount correctly', function (): void 
 
     $subscription = Subscription::factory()->create([
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $planPrice->id,
         'billing_cycle' => 'monthly',
     ]);
 
-    // Should succeed with correct amount
     $subscription->extendSubscription(BillingCycle::Monthly, paidAmount: 100.00, validatePayment: true);
 
     expect($subscription->status)->toBe('active');
@@ -128,10 +128,10 @@ test('extendSubscription throws exception on payment amount mismatch', function 
 
     $subscription = Subscription::factory()->create([
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $planPrice->id,
         'billing_cycle' => 'monthly',
     ]);
 
-    // Should fail with incorrect amount
     expect(fn () => $subscription->extendSubscription(BillingCycle::Monthly, paidAmount: 50.00, validatePayment: true))
         ->toThrow(Exception::class, 'Payment amount mismatch');
 });
@@ -147,10 +147,10 @@ test('extendSubscription uses renewal_price not regular_price', function (): voi
 
     $subscription = Subscription::factory()->create([
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $planPrice->id,
         'billing_cycle' => 'monthly',
     ]);
 
-    // Should accept renewal_price ($100), not regular_price ($120)
     $subscription->extendSubscription(BillingCycle::Monthly, paidAmount: 100.00, validatePayment: true);
 
     expect($subscription->status)->toBe('active');
@@ -171,10 +171,10 @@ test('extendSubscription updates billing cycle when changed', function (): void 
 
     $subscription = Subscription::factory()->create([
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $monthlyPrice->id,
         'billing_cycle' => 'monthly',
     ]);
 
-    // Change to annual billing cycle
     $subscription->extendSubscription(BillingCycle::Annually, paidAmount: 1000.00, validatePayment: true);
 
     expect($subscription->billing_cycle)->toBe('annually')
@@ -191,6 +191,7 @@ test('extendSubscription updates product snapshot on renewal', function (): void
 
     $subscription = Subscription::factory()->create([
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $planPrice->id,
         'billing_cycle' => 'monthly',
     ]);
 
@@ -227,10 +228,10 @@ test('extendSubscription allows comp renewal without payment validation', functi
 
     $subscription = Subscription::factory()->create([
         'hosting_plan_id' => $plan->id,
+        'hosting_plan_price_id' => $planPrice->id,
         'billing_cycle' => 'monthly',
     ]);
 
-    // Comp renewal should not require payment validation
     $subscription->extendSubscription(
         BillingCycle::Monthly,
         paidAmount: null,

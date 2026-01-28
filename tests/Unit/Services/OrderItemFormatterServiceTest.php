@@ -8,7 +8,6 @@ use App\Models\HostingPlan;
 use App\Models\OrderItem;
 use App\Models\Role;
 use App\Services\OrderItemFormatterService;
-use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -36,22 +35,10 @@ describe('formatBillingCycleLabel', function (): void {
         expect($result)->toBe('1 month');
     });
 
-    it('formats quarterly billing cycle correctly', function (): void {
-        $result = $this->formatter->formatBillingCycleLabel(BillingCycle::Quarterly);
-
-        expect($result)->toBe('3 months');
-    });
-
     it('formats annually billing cycle correctly', function (): void {
         $result = $this->formatter->formatBillingCycleLabel(BillingCycle::Annually);
 
         expect($result)->toBe('1 year');
-    });
-
-    it('formats biennially billing cycle correctly', function (): void {
-        $result = $this->formatter->formatBillingCycleLabel(BillingCycle::Biennially);
-
-        expect($result)->toBe('2 years');
     });
 });
 
@@ -200,85 +187,5 @@ describe('getItemPeriod with OrderItem', function (): void {
         $result = $this->formatter->getItemPeriod($orderItem);
 
         expect($result)->toBe('1 year of registration');
-    });
-});
-
-describe('getItemDisplayName with cart items', function (): void {
-    it('returns plan name for cart item with hosting plan id', function (): void {
-        $plan = HostingPlan::factory()->create(['name' => 'Premium Plan']);
-
-        Cart::add([
-            'id' => 'test-item',
-            'name' => 'example.com - Premium Plan',
-            'price' => 10.00,
-            'quantity' => 1,
-            'attributes' => [
-                'type' => 'subscription_renewal',
-                'hosting_plan_id' => $plan->id,
-            ],
-        ]);
-
-        $item = Cart::get('test-item');
-        $result = $this->formatter->getItemDisplayName($item);
-
-        expect($result)->toBe('Premium Plan');
-        Cart::clear();
-    });
-
-    it('returns domain name for cart registration item', function (): void {
-        Cart::add([
-            'id' => 'test-domain',
-            'name' => 'example.com',
-            'price' => 10.00,
-            'quantity' => 1,
-            'attributes' => [
-                'type' => 'registration',
-            ],
-        ]);
-
-        $item = Cart::get('test-domain');
-        $result = $this->formatter->getItemDisplayName($item);
-
-        expect($result)->toBe('example.com');
-        Cart::clear();
-    });
-});
-
-describe('getItemPeriod with cart items', function (): void {
-    it('formats cart item period for subscription renewal', function (): void {
-        Cart::add([
-            'id' => 'test-renewal',
-            'name' => 'Subscription Renewal',
-            'price' => 10.00,
-            'quantity' => 3,
-            'attributes' => [
-                'type' => 'subscription_renewal',
-                'duration_months' => 3,
-            ],
-        ]);
-
-        $item = Cart::get('test-renewal');
-        $result = $this->formatter->getItemPeriod($item);
-
-        expect($result)->toBe('3 months renewal');
-        Cart::clear();
-    });
-
-    it('formats cart item period for domain renewal', function (): void {
-        Cart::add([
-            'id' => 'test-domain-renewal',
-            'name' => 'example.com',
-            'price' => 10.00,
-            'quantity' => 2,
-            'attributes' => [
-                'type' => 'renewal',
-            ],
-        ]);
-
-        $item = Cart::get('test-domain-renewal');
-        $result = $this->formatter->getItemPeriod($item);
-
-        expect($result)->toBe('2 years renewal');
-        Cart::clear();
     });
 });

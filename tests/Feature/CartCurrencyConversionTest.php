@@ -58,14 +58,21 @@ it('stores converted totals in session when proceeding to payment', function ():
             'currency' => 'USD',
             'domain_id' => null,
             'years' => 1,
+            'added_at' => now()->timestamp,
         ],
     ]);
 
     $expectedTotal = CurrencyHelper::convert(160.0, 'USD', 'RWF');
 
-    Livewire::test(CartComponent::class)
-        ->call('proceedToPayment')
-        ->assertRedirect(route('payment.index'));
+    $component = Livewire::test(CartComponent::class)
+        ->set('currency', 'RWF')
+        ->call('updateCartTotal');
+
+    expect($component->get('subtotalAmount'))->toBeGreaterThan(0)
+        ->and($component->get('totalAmount'))->toBeGreaterThan(0);
+
+    $component->call('proceedToPayment')
+        ->assertRedirect(route('checkout.index'));
 
     expect(session('cart_total'))->toEqual($expectedTotal)
         ->and(session('cart_subtotal'))->toEqual($expectedTotal)

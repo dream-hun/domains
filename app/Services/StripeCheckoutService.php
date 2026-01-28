@@ -144,8 +144,8 @@ final readonly class StripeCheckoutService
                 $currency
             );
 
-            $displayName = $this->formatter->getItemDisplayName($item);
-            $period = $this->formatter->getItemPeriod($item);
+            $displayName = $this->formatter->getCartItemDisplayName($item);
+            $period = $this->formatter->getCartItemPeriod($item);
 
             $lineItems[] = [
                 'price_data' => [

@@ -4,75 +4,25 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
-use App\Exceptions\CurrencyExchangeException;
-use App\Services\PriceFormatter;
+use App\Contracts\Currency\CurrencyConverterContract;
+use App\Contracts\Currency\CurrencyFormatterContract;
+use App\Traits\NormalizesCurrencyCode;
 use Exception;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
+/**
+ * Static facade for currency operations.
+ *
+ * This class provides static methods for backward compatibility.
+ * All operations delegate to the CurrencyConverterContract service.
+ *
+ * For new code, prefer injecting CurrencyConverterContract directly.
+ */
 final class CurrencyHelper
 {
-    private const CACHE_TTL = 3600; // 1 hour
-
-    private const BASE_CURRENCY = 'USD';
+    use NormalizesCurrencyCode;
 
     /**
-     * Get exchange rate and symbol for a currency
-     *
-     * @throws Exception
-     */
-    public static function getRateAndSymbol(string $currency): array
-    {
-        $currency = mb_strtoupper($currency);
-
-        if ($currency === self::BASE_CURRENCY) {
-            return [
-                'rate' => 1.0,
-                'symbol' => self::getCurrencySymbol($currency),
-            ];
-        }
-
-        $cacheKey = 'exchange_rate_'.$currency;
-
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($currency): array {
-            try {
-                $response = Http::timeout(10)->get('https://api.exchangerate-api.com/v4/latest/'.self::BASE_CURRENCY);
-
-                throw_if($response->failed() || ! isset($response['rates'][$currency]), Exception::class, 'Currency rate not found: '.$currency);
-
-                $rate = (float) $response['rates'][$currency];
-                $symbol = self::getCurrencySymbol($currency);
-
-                return ['rate' => $rate, 'symbol' => $symbol];
-            } catch (ConnectionException $connectionException) {
-                Log::error('CurrencyAPI connection failed', ['currency' => $currency, 'error' => $connectionException->getMessage()]);
-                throw new Exception('Unable to fetch exchange rate for '.$currency, $connectionException->getCode(), $connectionException);
-            }
-        });
-    }
-
-    /**
-     * Convert USD amount to target currency
-     *
-     * @throws Exception
-     */
-    public static function convertFromUSD(float $usdAmount, string $targetCurrency): float
-    {
-        $targetCurrency = mb_strtoupper($targetCurrency);
-
-        if ($targetCurrency === self::BASE_CURRENCY) {
-            return $usdAmount;
-        }
-
-        $rateData = self::getRateAndSymbol($targetCurrency);
-
-        return round($usdAmount * $rateData['rate'], 2);
-    }
-
-    /**
-     * Convert any amount from one currency to another
+     * Convert amount from one currency to another.
      *
      * @throws Exception
      */
@@ -85,76 +35,75 @@ final class CurrencyHelper
             return $amount;
         }
 
-        if (self::isUsdRwfPair($fromCurrency, $targetCurrency)) {
-            try {
-                $exchangeHelper = resolve(CurrencyExchangeHelper::class);
-                $money = $exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
-
-                return (int) $money->getAmount() / 100; // Convert from minor units
-            } catch (CurrencyExchangeException $e) {
-                Log::warning('CurrencyExchangeHelper failed, falling back', [
-                    'from' => $fromCurrency,
-                    'to' => $targetCurrency,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        if ($fromCurrency !== self::BASE_CURRENCY) {
-            $fromRateData = self::getRateAndSymbol($fromCurrency);
-            $amount /= $fromRateData['rate'];
-        }
-
-        return self::convertFromUSD($amount, $targetCurrency);
+        return self::getConverter()->convert($amount, $fromCurrency, $targetCurrency);
     }
 
     /**
-     * Format amount with currency symbol
+     * Convert USD amount to target currency.
+     *
+     * @throws Exception
+     */
+    public static function convertFromUSD(float $usdAmount, string $targetCurrency): float
+    {
+        $targetCurrency = self::normalizeCurrency($targetCurrency);
+
+        if ($targetCurrency === 'USD') {
+            return $usdAmount;
+        }
+
+        return self::getConverter()->convert($usdAmount, 'USD', $targetCurrency);
+    }
+
+    /**
+     * Format amount with currency symbol.
      */
     public static function formatMoney(float $amount, string $currency): string
     {
-        return resolve(PriceFormatter::class)->format($amount, $currency);
+        return self::getFormatter()->format($amount, $currency);
     }
 
     /**
-     * Get currency symbol for a currency code
+     * Get currency symbol for a currency code.
      */
     public static function getCurrencySymbol(string $currencyCode): string
     {
-        return resolve(PriceFormatter::class)->getSymbol($currencyCode);
+        return self::getFormatter()->getCurrencySymbol($currencyCode);
     }
 
     /**
-     * Get user's preferred currency
+     * Get user's preferred currency code.
      */
     public static function getUserCurrency(): string
     {
-        if (session()->has('selected_currency')) {
-            return session('selected_currency');
-        }
-
-        return self::BASE_CURRENCY;
+        return self::getConverter()->getUserCurrency()->code;
     }
 
     /**
-     * Normalize a currency code
+     * Normalize currency code (handle legacy codes like FRW -> RWF).
      */
-    public static function normalizeCurrency(string $currency): string
+    private static function normalizeCurrency(string $currency): string
     {
-        return resolve(PriceFormatter::class)->normalizeCurrency($currency);
+        $currency = mb_strtoupper(mb_trim($currency));
+
+        return match ($currency) {
+            'FRW' => 'RWF',
+            default => $currency,
+        };
     }
 
     /**
-     * Check if currency pair is USD/RWF
+     * Get the currency converter service.
      */
-    private static function isUsdRwfPair(string $from, string $to): bool
+    private static function getConverter(): CurrencyConverterContract
     {
-        $from = self::normalizeCurrency($from);
-        $to = self::normalizeCurrency($to);
+        return resolve(CurrencyConverterContract::class);
+    }
 
-        $pair = [$from, $to];
-        sort($pair);
-
-        return $pair === ['RWF', 'USD'];
+    /**
+     * Get the currency formatter service.
+     */
+    private static function getFormatter(): CurrencyFormatterContract
+    {
+        return resolve(CurrencyFormatterContract::class);
     }
 }

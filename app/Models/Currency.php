@@ -4,26 +4,28 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Services\PriceFormatter;
+use App\Contracts\Currency\CurrencyFormatterContract;
 use Cknow\Money\Money;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 final class Currency extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'code',
-        'name',
-        'symbol',
-        'exchange_rate',
-        'is_base',
-        'is_active',
-        'rate_updated_at',
+    /**
+     * Currencies that don't use decimal places.
+     *
+     * @var array<int, string>
+     */
+    private const NO_DECIMAL_CURRENCIES = [
+        'RWF', 'JPY', 'KRW', 'VND', 'CLP', 'ISK', 'UGX', 'KES', 'TZS',
     ];
+
+    protected $guarded = [];
 
     protected $casts = [
         'exchange_rate' => 'float',
@@ -104,16 +106,22 @@ final class Currency extends Model
 
     /**
      * Format amount with currency symbol.
-     *
-     * Delegates to PriceFormatter for consistent formatting across the application.
      */
     public function format(float $amount): string
     {
-        return resolve(PriceFormatter::class)->format($amount, $this->code);
+        // Use formatter if available, otherwise format directly
+        try {
+            return resolve(CurrencyFormatterContract::class)->format($amount, $this->code);
+        } catch (Throwable) {
+            // Fallback formatting
+            $decimals = $this->getDecimalPlaces($amount);
+
+            return $this->symbol.number_format(round($amount, $decimals), $decimals);
+        }
     }
 
     /**
-     * Convert amount to Money object
+     * Convert amount to Money object.
      */
     public function toMoney(float $amount): Money
     {
@@ -121,5 +129,23 @@ final class Currency extends Model
         $minorUnits = (int) round($amount * 100);
 
         return Money::{$this->code}($minorUnits);
+    }
+
+    /**
+     * Get the appropriate number of decimal places for this currency.
+     */
+    private function getDecimalPlaces(float $amount): int
+    {
+        // These currencies NEVER use decimals
+        if (in_array($this->code, self::NO_DECIMAL_CURRENCIES, true)) {
+            return 0;
+        }
+
+        // For other currencies, check if the amount has meaningful decimals
+        if (abs($amount - round($amount)) < 0.01) {
+            return 0;
+        }
+
+        return 2;
     }
 }

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Hosting\BillingCycle;
+use App\Services\CurrencyService;
 use Exception;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
@@ -34,11 +36,20 @@ use Illuminate\Support\Facades\Date;
  * @property Carbon|null $cancelled_at
  * @property bool $auto_renew
  * @property Carbon|null $last_renewal_attempt_at
+ * @property float|null $custom_price
+ * @property string|null $custom_price_currency
+ * @property bool $is_custom_price
+ * @property int|null $created_by_admin_id
+ * @property string|null $custom_price_notes
+ * @property Carbon|null $last_invoice_generated_at
+ * @property Carbon|null $next_invoice_due_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read User|null $user
+ * @property-read User|null $createdByAdmin
  * @property-read HostingPlan $plan
  * @property-read HostingPlanPrice $planPrice
+ * @property-read Domain|null $linkedDomain
  * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
  * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $unreadNotifications
  */
@@ -52,10 +63,15 @@ class Subscription extends Model
     protected $casts = [
         'product_snapshot' => 'array',
         'auto_renew' => 'boolean',
+        'custom_price' => 'decimal:2',
+        'custom_price_currency' => 'string',
+        'is_custom_price' => 'boolean',
         'starts_at' => 'datetime',
         'expires_at' => 'datetime',
         'next_renewal_at' => 'datetime',
         'last_renewal_attempt_at' => 'datetime',
+        'last_invoice_generated_at' => 'datetime',
+        'next_invoice_due_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -76,9 +92,108 @@ class Subscription extends Model
         return $this->belongsTo(HostingPlanPrice::class, 'hosting_plan_price_id');
     }
 
+    public function createdByAdmin(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_admin_id');
+    }
+
+    /**
+     * @return HasOne<Domain, static>
+     */
+    public function linkedDomain(): HasOne
+    {
+        return $this->hasOne(Domain::class);
+    }
+
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    /**
+     * Get renewal price in base currency (USD)
+     */
+    public function getRenewalPrice(): float
+    {
+        if ($this->is_custom_price && $this->custom_price !== null) {
+            return (float) $this->custom_price;
+        }
+
+        $planPrice = $this->planPrice;
+
+        if (! $planPrice) {
+            return 0.0;
+        }
+
+        return $planPrice->getPriceInBaseCurrency('renewal_price');
+    }
+
+    /**
+     * Get renewal price in specified currency
+     */
+    public function getRenewalPriceInCurrency(string $currency): float
+    {
+        $basePrice = $this->getRenewalPrice();
+
+        if ($currency === 'USD') {
+            return $basePrice;
+        }
+
+        try {
+            $currencyService = resolve(CurrencyService::class);
+
+            return $currencyService->convert($basePrice, 'USD', $currency);
+        } catch (Exception) {
+            return $basePrice;
+        }
+    }
+
+    /**
+     * Get currency code for renewal
+     */
+    public function getRenewalCurrency(): string
+    {
+        if ($this->is_custom_price && $this->custom_price_currency !== null) {
+            return $this->custom_price_currency;
+        }
+
+        return 'USD';
+    }
+
+    /**
+     * Check if invoice should be generated for this subscription
+     */
+    public function shouldGenerateInvoice(int $daysBeforeRenewal = 7): bool
+    {
+        if (! $this->auto_renew) {
+            return false;
+        }
+
+        if ($this->status !== 'active') {
+            return false;
+        }
+
+        if ($this->next_renewal_at === null) {
+            return false;
+        }
+
+        $now = Date::now();
+        $invoiceDueDate = $this->next_renewal_at->copy()->subDays($daysBeforeRenewal);
+
+        if ($now->lessThan($invoiceDueDate)) {
+            return false;
+        }
+
+        if ($this->last_invoice_generated_at !== null) {
+            $billingCycleMonths = $this->billing_cycle === 'annually' ? 12 : 1;
+            $lastInvoiceDate = $this->last_invoice_generated_at->copy()->addMonths($billingCycleMonths);
+
+            if ($now->lessThan($lastInvoiceDate)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function isExpiringSoon(int $days = 7): bool
@@ -107,22 +222,36 @@ class Subscription extends Model
         ?float $paidAmount = null,
         bool $validatePayment = true,
         bool $isComp = false,
-        ?array $renewalSnapshot = null
+        ?array $renewalSnapshot = null,
+        ?string $paidCurrency = null
     ): void {
         if ($validatePayment && $paidAmount !== null && ! $isComp) {
-            $planPrice = HostingPlanPrice::query()
-                ->where('hosting_plan_id', $this->hosting_plan_id)
-                ->where('billing_cycle', $billingCycle->value)
-                ->where('status', 'active')
-                ->first();
+            if ($this->is_custom_price && $this->custom_price !== null) {
+                $expectedAmount = (float) $this->custom_price;
+            } else {
+                $planPrice = HostingPlanPrice::query()
+                    ->where('hosting_plan_id', $this->hosting_plan_id)
+                    ->where('billing_cycle', $billingCycle->value)
+                    ->where('status', 'active')
+                    ->first();
 
-            if (! $planPrice) {
-                throw new Exception(
-                    sprintf('No active pricing found for plan %s with billing cycle %s', $this->hosting_plan_id, $billingCycle->value)
-                );
+                if (! $planPrice) {
+                    throw new Exception(
+                        sprintf('No active pricing found for plan %s with billing cycle %s', $this->hosting_plan_id, $billingCycle->value)
+                    );
+                }
+
+                $expectedAmount = $planPrice->getPriceInBaseCurrency('renewal_price');
             }
 
-            $expectedAmount = $planPrice->getPriceInBaseCurrency('renewal_price');
+            if ($paidCurrency !== null && $paidCurrency !== 'USD') {
+                try {
+                    $currencyService = resolve(CurrencyService::class);
+                    $paidAmount = $currencyService->convert($paidAmount, $paidCurrency, 'USD');
+                } catch (Exception $e) {
+                    throw new Exception(sprintf('Failed to convert payment amount from %s to USD: %s', $paidCurrency, $e->getMessage()), $e->getCode(), $e);
+                }
+            }
 
             if (abs($paidAmount - $expectedAmount) > 0.01) {
                 throw new Exception(
@@ -188,24 +317,28 @@ class Subscription extends Model
         int $months,
         ?float $paidAmount = null,
         bool $isComp = false,
-        ?array $renewalSnapshot = null
+        ?array $renewalSnapshot = null,
+        ?string $paidCurrency = null
     ): void {
         if ($paidAmount !== null && ! $isComp) {
-            // Get monthly plan price for validation
-            $monthlyPlanPrice = HostingPlanPrice::query()
-                ->where('hosting_plan_id', $this->hosting_plan_id)
-                ->where('billing_cycle', 'monthly')
-                ->where('status', 'active')
-                ->first();
+            $expectedMonthlyPrice = $this->is_custom_price && $this->custom_price !== null
+                ? (float) $this->custom_price / 12
+                : $this->getRenewalPrice();
 
-            if (! $monthlyPlanPrice) {
-                throw new Exception(
-                    sprintf('No active monthly pricing found for plan %s', $this->hosting_plan_id)
-                );
+            if ($this->is_custom_price && $this->custom_price !== null && $this->billing_cycle === 'monthly') {
+                $expectedMonthlyPrice = (float) $this->custom_price;
             }
 
-            $expectedMonthlyPrice = $monthlyPlanPrice->getPriceInBaseCurrency('renewal_price');
             $expectedTotalAmount = $expectedMonthlyPrice * $months;
+
+            if ($paidCurrency !== null && $paidCurrency !== 'USD') {
+                try {
+                    $currencyService = resolve(CurrencyService::class);
+                    $paidAmount = $currencyService->convert($paidAmount, $paidCurrency, 'USD');
+                } catch (Exception $e) {
+                    throw new Exception(sprintf('Failed to convert payment amount from %s to USD: %s', $paidCurrency, $e->getMessage()), $e->getCode(), $e);
+                }
+            }
 
             // Use a more lenient tolerance (0.50) to account for currency conversion rounding
             // Currency conversions can introduce small rounding differences (typically 0.01-0.05)

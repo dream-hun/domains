@@ -54,7 +54,13 @@ Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verif
 
 Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' => 'admin.'], function (): void {
     Route::resource('contacts', ContactController::class);
+
+    // Custom domain registration with hosting subscription (must be before resource route)
+    Route::get('domains/custom-register', [DomainController::class, 'createCustom'])->name('domains.custom-register');
+    Route::post('domains/custom-register', [DomainController::class, 'storeCustom'])->name('domains.custom-register.store');
+
     Route::resource('domains', DomainController::class)->except(['show']);
+
     Route::get('domains/{domain:uuid}/info', [DomainOperationsController::class, 'domainInfo'])->name('domain.info');
     Route::post('domains/{domain:uuid}/refresh-info', [DomainController::class, 'refreshInfo'])->name('domains.refresh-info');
     Route::post('/domains/{domain:uuid}/fetch-contacts', [DomainOperationsController::class, 'getContacts'])->name('domain.fetchContacts');
@@ -84,6 +90,8 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::post('currencies/update-rates', [CurrencyController::class, 'updateRates'])->name('currencies.update-rates');
     Route::resource('settings', SettingController::class);
     Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::get('subscriptions/create', [SubscriptionController::class, 'create'])->name('subscriptions.create');
+    Route::post('subscriptions', [SubscriptionController::class, 'store'])->name('subscriptions.store');
     Route::get('subscriptions/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
     Route::get('subscriptions/{subscription}/edit', [SubscriptionController::class, 'edit'])->name('subscriptions.edit');
     Route::put('subscriptions/{subscription}', [SubscriptionController::class, 'update'])->name('subscriptions.update');

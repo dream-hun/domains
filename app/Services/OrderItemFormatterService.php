@@ -240,6 +240,14 @@ final readonly class OrderItemFormatterService
         $metadata = $item->metadata ?? [];
 
         if ($itemType === 'subscription_renewal') {
+            $billingCycle = $metadata['billing_cycle'] ?? null;
+            if ($billingCycle) {
+                $billingCycleEnum = BillingCycle::tryFrom($billingCycle);
+                if ($billingCycleEnum) {
+                    return $this->formatBillingCycleLabel($billingCycleEnum).' renewal';
+                }
+            }
+
             $durationMonths = $metadata['duration_months'] ?? null;
 
             if (! $durationMonths && $item->quantity) {
@@ -249,27 +257,9 @@ final readonly class OrderItemFormatterService
             if ($durationMonths) {
                 return $this->formatDurationLabel((int) $durationMonths).' renewal';
             }
-
-            $billingCycle = $metadata['billing_cycle'] ?? null;
-            if ($billingCycle) {
-                $billingCycleEnum = BillingCycle::tryFrom($billingCycle);
-                if ($billingCycleEnum) {
-                    return $this->formatBillingCycleLabel($billingCycleEnum).' renewal';
-                }
-            }
         }
 
         if ($itemType === 'hosting') {
-            $durationMonths = $metadata['duration_months'] ?? null;
-
-            if (! $durationMonths && $item->quantity) {
-                $durationMonths = $item->quantity;
-            }
-
-            if ($durationMonths) {
-                return $this->formatDurationLabel((int) $durationMonths);
-            }
-
             $billingCycle = $metadata['billing_cycle'] ?? null;
 
             if ($billingCycle) {
@@ -278,6 +268,16 @@ final readonly class OrderItemFormatterService
                 if ($billingCycleEnum) {
                     return $this->formatBillingCycleLabel($billingCycleEnum);
                 }
+            }
+
+            $durationMonths = $metadata['duration_months'] ?? null;
+
+            if (! $durationMonths && $item->quantity) {
+                $durationMonths = $item->quantity;
+            }
+
+            if ($durationMonths) {
+                return $this->formatDurationLabel((int) $durationMonths);
             }
         }
 

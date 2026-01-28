@@ -1,6 +1,7 @@
 {
     "agents": [
-        "cursor"
+        "cursor",
+        "copilot"
     ],
     "guidelines": true,
     "herd_mcp": false,
