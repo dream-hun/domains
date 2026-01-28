@@ -98,7 +98,8 @@ final class AppServiceProvider extends ServiceProvider
         // Backward compatibility: alias CurrencyService to new converter
         $this->app->singleton(CurrencyService::class, fn ($app): CurrencyService => new CurrencyService(
             $app->make(UpdateExchangeRatesAction::class),
-            $app->make(CurrencyExchangeHelper::class)
+            $app->make(CurrencyExchangeHelper::class),
+            $app->make(PriceFormatter::class)
         ));
     }
 
