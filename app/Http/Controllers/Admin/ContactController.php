@@ -93,17 +93,13 @@ final class ContactController extends Controller
      */
     public function show(Contact $contact): View
     {
-        $canView = Gate::allows('contact_show') || $contact->user_id === Auth::id();
-        abort_unless($canView, Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $this->authorizeContactAction($contact, 'contact_show');
 
         $contact->load(['user', 'domains']);
 
-        // Initialize variables for EPP comparison
         $eppContact = null;
         $differences = [];
-        $hasDifferences = false;
 
-        // Try to fetch EPP data if contact has a contact_id
         if ($contact->contact_id) {
             try {
                 $eppService = resolve(EppDomainService::class);
@@ -111,13 +107,9 @@ final class ContactController extends Controller
 
                 if ($eppResult && isset($eppResult['contact'])) {
                     $eppContact = $eppResult['contact'];
-
-                    // Compare local and EPP data
                     $differences = $this->compareContactData($contact, $eppContact);
-                    $hasDifferences = $differences !== [];
                 }
             } catch (Exception $e) {
-                // Log the error but don't fail the page
                 Log::warning('Failed to fetch EPP contact data', [
                     'contact_id' => $contact->contact_id,
                     'error' => $e->getMessage(),
@@ -129,19 +121,15 @@ final class ContactController extends Controller
             'contact' => $contact,
             'epp_contact' => $eppContact,
             'differences' => $differences,
-            'has_differences' => $hasDifferences,
+            'has_differences' => $differences !== [],
         ]);
     }
 
-    /**
-     * Show the form for editing the specified contact
-     */
     public function edit(Contact $contact): View
     {
-        $canEdit = Gate::allows('contact_edit', $contact) || $contact->user_id === Auth::id();
-        abort_unless($canEdit, Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $this->authorizeContactAction($contact, 'contact_edit');
 
-        $countries = Country::all();
+        $countries = Country::query()->orderBy('name')->get();
         $contactTypes = ContactType::cases();
 
         return view('admin.contacts.edit', [
@@ -156,8 +144,7 @@ final class ContactController extends Controller
      */
     public function update(UpdateContactRequest $request, Contact $contact): RedirectResponse
     {
-        $canEdit = Gate::allows('contact_edit', $contact) || $contact->user_id === Auth::id();
-        abort_unless($canEdit, Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $this->authorizeContactAction($contact, 'contact_edit');
 
         $result = $this->updateContactAction->handle($contact, $request->validated());
 
@@ -176,8 +163,7 @@ final class ContactController extends Controller
      */
     public function destroy(Contact $contact): RedirectResponse
     {
-        $canDelete = Gate::allows('contact_delete') || $contact->user_id === auth()->id();
-        abort_unless($canDelete, Response::HTTP_FORBIDDEN, '403 Forbidden');
+        $this->authorizeContactAction($contact, 'contact_delete');
 
         $result = $this->deleteContactAction->handle($contact);
 
@@ -188,6 +174,15 @@ final class ContactController extends Controller
 
         return back()
             ->with('error', $result['message']);
+    }
+
+    /**
+     * Authorize contact action
+     */
+    private function authorizeContactAction(Contact $contact, string $ability): void
+    {
+        $isAuthorized = Gate::allows($ability, $contact) || $contact->user_id === Auth::id();
+        abort_unless($isAuthorized, Response::HTTP_FORBIDDEN, '403 Forbidden');
     }
 
     /**

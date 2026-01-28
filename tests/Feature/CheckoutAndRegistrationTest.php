@@ -9,14 +9,13 @@ use App\Models\DomainPrice;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\BillingService;
+use Darryldecode\Cart\Exceptions\InvalidItemException;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Livewire\Livewire;
 
 beforeEach(function (): void {
-    // Seed roles first
     $this->artisan('db:seed', ['--class' => 'RolesSeeder']);
 
-    // Create base USD currency
     Currency::factory()->create([
         'code' => 'USD',
         'name' => 'US Dollar',
@@ -38,7 +37,7 @@ beforeEach(function (): void {
 });
 
 it('allows user to view checkout page with items in cart', function (): void {
-    // Add item to cart
+
     Cart::add([
         'id' => 'example.com',
         'name' => 'example.com',
@@ -53,7 +52,7 @@ it('allows user to view checkout page with items in cart', function (): void {
     $response = $this->actingAs($this->user)->get(route('checkout.index'));
 
     $response->assertOk();
-    $response->assertSeeLivewire('checkout-process');
+    $response->assertSeeLivewire('checkout.checkout-wizard');
 });
 
 it('shows empty cart message when cart is empty', function (): void {
@@ -65,7 +64,13 @@ it('shows empty cart message when cart is empty', function (): void {
     $response->assertSessionHas('error', 'Your cart is empty.');
 });
 
-it('creates order from cart using billing service', function (): void {
+it(/**
+ * @throws InvalidItemException
+ * @throws Throwable
+ */ /**
+ * @throws InvalidItemException
+ * @throws Throwable
+ */ 'creates order from cart using billing service', function (): void {
     // Add items to cart
     Cart::add([
         'id' => 'example.com',
@@ -98,25 +103,27 @@ it('creates order from cart using billing service', function (): void {
 
     $order = $billingService->createOrderFromCart($this->user, $billingData, $checkoutData);
 
-    expect($order)->toBeInstanceOf(Order::class);
-    expect($order->user_id)->toBe($this->user->id);
-    expect($order->type)->toBe('registration');
-    expect($order->payment_method)->toBe('stripe');
-    expect($order->total_amount)->toBe('25.98');
-    expect($order->status)->toBe('pending');
-    expect($order->payment_status)->toBe('pending');
+    expect($order)->toBeInstanceOf(Order::class)
+        ->and($order->user_id)->toBe($this->user->id)
+        ->and($order->type)->toBe('registration')
+        ->and($order->payment_method)->toBe('stripe')
+        ->and($order->total_amount)->toBe('25.98')
+        ->and($order->status)->toBe('pending')
+        ->and($order->payment_status)->toBe('pending')
+        ->and($order->orderItems)->toHaveCount(1);
 
     // Check order items
-    expect($order->orderItems)->toHaveCount(1);
 
     $orderItem = $order->orderItems->first();
-    expect($orderItem->domain_name)->toBe('example.com');
-    expect($orderItem->price)->toBe('12.99');
-    expect($orderItem->years)->toBe(2);
-    expect($orderItem->total_amount)->toBe('25.98');
+    expect($orderItem->domain_name)->toBe('example.com')
+        ->and($orderItem->price)->toBe('12.99')
+        ->and($orderItem->years)->toBe(2)
+        ->and($orderItem->total_amount)->toBe('25.98');
 });
 
-it('stores checkout session data when proceeding to payment', function (): void {
+it(/**
+ * @throws InvalidItemException
+ */ 'stores checkout session data when proceeding to payment', function (): void {
     Cart::add([
         'id' => 'example.com',
         'name' => 'example.com',
@@ -133,13 +140,13 @@ it('stores checkout session data when proceeding to payment', function (): void 
         ->set('paymentMethod', 'stripe')
         ->set('selectedContactId', $this->contact->id)
         ->call('proceedToPayment')
-        ->assertRedirect(route('payment.index'));
+        ->assertRedirect(route('checkout.index'));
 
     expect(session('checkout'))->not->toBeNull();
     $checkoutData = session('checkout');
-    expect($checkoutData['payment_method'])->toBe('stripe');
-    // Check float equality with some tolerance or direct value if exact
-    expect((float) $checkoutData['total'])->toBe(12.99);
+    expect($checkoutData['payment_method'])->toBe('stripe')
+        ->and((float) $checkoutData['total'])->toBe(12.99);
+
 });
 
 it('uses selected contact for domain registration', function (): void {
@@ -172,11 +179,14 @@ it('uses selected contact for domain registration', function (): void {
         session('checkout')
     );
 
-    expect($order)->toBeInstanceOf(Order::class);
-    expect($order->user_id)->toBe($this->user->id);
+    expect($order)->toBeInstanceOf(Order::class)
+        ->and($order->user_id)->toBe($this->user->id);
 });
 
-it('stores exchange rate on order items when creating order', function (): void {
+it(/**
+ * @throws InvalidItemException
+ * @throws Throwable
+ */ 'stores exchange rate on order items when creating order', function (): void {
     // Add items to cart with USD currency
     Cart::add([
         'id' => 'example.com',
@@ -211,6 +221,7 @@ it('stores exchange rate on order items when creating order', function (): void 
 
     expect($order->orderItems)->toHaveCount(1);
     $orderItem = $order->orderItems->first();
-    expect($orderItem->currency)->toBe('USD');
-    expect($orderItem->exchange_rate)->toBe('1.000000'); // USD base rate is 1.0
+    expect($orderItem->currency)->toBe('USD')
+        ->and($orderItem->exchange_rate)->toBe('1.000000');
+
 });

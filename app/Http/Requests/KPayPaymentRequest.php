@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 final class KPayPaymentRequest extends FormRequest
@@ -26,7 +27,6 @@ final class KPayPaymentRequest extends FormRequest
      */
     public function rules(): array
     {
-
         return [
             'msisdn' => ['required', 'string', 'max:20', 'min:10'],
             'pmethod' => ['required', 'string', 'in:momo,cc'],
@@ -36,6 +36,9 @@ final class KPayPaymentRequest extends FormRequest
             'billing_city' => ['nullable', 'string', 'max:255'],
             'billing_country' => ['nullable', 'string', 'max:255'],
             'billing_postal_code' => ['nullable', 'string', 'max:20'],
+            'card_number' => [Rule::requiredIf(fn (): bool => $this->input('pmethod') === 'cc'), 'string', 'max:19'],
+            'expiry_date' => [Rule::requiredIf(fn (): bool => $this->input('pmethod') === 'cc'), 'string', 'max:7'],
+            'cvv' => [Rule::requiredIf(fn (): bool => $this->input('pmethod') === 'cc'), 'string', 'max:4', 'min:3'],
         ];
     }
 

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Services\Currency\RequestCache;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +19,11 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature', 'Unit');
+    ->in('Feature', 'Unit')
+    ->beforeEach(function (): void {
+        // Flush static request-level caches between tests for proper isolation
+        RequestCache::flush();
+    });
 
 /*
 |--------------------------------------------------------------------------

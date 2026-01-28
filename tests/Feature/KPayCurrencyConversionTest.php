@@ -67,7 +67,9 @@ class KPayCurrencyConversionTest extends TestCase
             'payment_method' => 'kpay',
         ]);
 
+        // Mock exchange rate API to fail so it falls back to database rate (1200)
         Http::fake([
+            '*/pair/USD/RWF' => Http::response(null, 500),
             'api.kpay.test' => Http::response([
                 'status' => 'success',
                 'tid' => 'TXN123',
@@ -87,7 +89,6 @@ class KPayCurrencyConversionTest extends TestCase
 
         Http::assertSent(function ($request): bool {
             $data = $request->data();
-            file_put_contents('php://stderr', print_r($data, true));
 
             // 200 USD * 1200 rate = 240,000 RWF
             return ($data['amount'] ?? null) === 240000 && ($data['currency'] ?? null) === 'RWF';

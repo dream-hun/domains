@@ -101,6 +101,12 @@ final class CheckoutProcess extends Component
 
     public function loadUserContacts(): void
     {
+        if (! auth()->check()) {
+            $this->userContacts = [];
+
+            return;
+        }
+
         $this->userContacts = auth()->user()->contacts()->get()->toArray();
 
         // Auto-select primary contact if available
@@ -189,8 +195,8 @@ final class CheckoutProcess extends Component
                 'contact_id' => $this->selectedContactId,
             ]);
 
-            // Redirect to payment page
-            return to_route('payment.index');
+            // Redirect to checkout page
+            return to_route('checkout.index');
 
         } catch (Exception $exception) {
             $this->errorMessage = 'Failed to proceed to payment: '.$exception->getMessage();

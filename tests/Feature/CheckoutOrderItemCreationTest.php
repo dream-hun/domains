@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\CheckoutController;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\TransactionLogger;
+use App\Services\OrderProcessingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -51,11 +50,9 @@ test('createOrderItemsFromJson creates OrderItem records with billing_cycle in m
     // Verify no OrderItem records exist yet
     expect($order->orderItems()->count())->toBe(0);
 
-    // Use reflection to call the private method
-    $controller = new CheckoutController(resolve(TransactionLogger::class));
-    $reflection = new ReflectionClass($controller);
-    $method = $reflection->getMethod('createOrderItemsFromJson');
-    $method->invoke($controller, $order);
+    // Use OrderProcessingService to create order items
+    $service = resolve(OrderProcessingService::class);
+    $service->createOrderItemsFromJson($order);
 
     // Verify OrderItem was created
     $orderItem = $order->orderItems()->first();
@@ -104,10 +101,8 @@ test('createOrderItemsFromJson does not create duplicate OrderItems if they alre
     expect($order->orderItems()->count())->toBe(1);
 
     // Call the method - should not create duplicates
-    $controller = new CheckoutController(resolve(TransactionLogger::class));
-    $reflection = new ReflectionClass($controller);
-    $method = $reflection->getMethod('createOrderItemsFromJson');
-    $method->invoke($controller, $order);
+    $service = resolve(OrderProcessingService::class);
+    $service->createOrderItemsFromJson($order);
 
     // Should still be only one OrderItem
     expect($order->orderItems()->count())->toBe(1);
@@ -151,10 +146,8 @@ test('createOrderItemsFromJson handles multiple billing cycles correctly', funct
 
     Currency::factory()->create(['code' => 'USD', 'exchange_rate' => 1.0]);
 
-    $controller = new CheckoutController(resolve(TransactionLogger::class));
-    $reflection = new ReflectionClass($controller);
-    $method = $reflection->getMethod('createOrderItemsFromJson');
-    $method->invoke($controller, $order);
+    $service = resolve(OrderProcessingService::class);
+    $service->createOrderItemsFromJson($order);
 
     $orderItems = $order->orderItems()->get();
     expect($orderItems)->toHaveCount(2);

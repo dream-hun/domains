@@ -69,7 +69,7 @@ it('keeps rwf totals intact when proceeding to payment', function (): void {
         ->call('refreshCart')
         ->call('calculateTotals')
         ->call('proceedToPayment')
-        ->assertRedirect(route('payment.index'));
+        ->assertRedirect(route('checkout.index'));
 
     expect(session('cart_total'))->toEqual(16000.0)
         ->and(session('checkout.total'))->toEqual(16000.0)

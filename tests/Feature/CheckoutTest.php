@@ -10,6 +10,7 @@ use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Role;
 use App\Models\User;
+use Darryldecode\Cart\Exceptions\InvalidItemException;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -58,7 +59,7 @@ it('displays checkout page with cart items', function (): void {
     $response = $this->actingAs($user)->get(route('checkout.index'));
 
     $response->assertStatus(200);
-    $response->assertSeeLivewire('checkout-process');
+    $response->assertSeeLivewire('checkout.checkout-wizard');
 });
 
 it('applies coupon successfully', function (): void {
@@ -123,7 +124,9 @@ it('rejects invalid coupon', function (): void {
     expect(session()->has('coupon'))->toBeFalse();
 });
 
-it('proceeds to payment with valid data', function (): void {
+it(/**
+ * @throws InvalidItemException
+ */ 'proceeds to payment with valid data', function (): void {
     $user = User::factory()->create();
 
     // Add items to cart
@@ -149,7 +152,7 @@ it('proceeds to payment with valid data', function (): void {
         ->set('paymentMethod', 'stripe')
         ->set('selectedContactId', $contact->id)
         ->call('proceedToPayment')
-        ->assertRedirect(route('payment.index'));
+        ->assertRedirect(route('checkout.index'));
 
     // Verify checkout data is stored in session
     expect(session('checkout'))->not->toBeNull();

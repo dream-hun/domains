@@ -2,17 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Services\Currency;
 
 use App\Actions\Currency\UpdateExchangeRatesAction;
 use App\Contracts\Currency\CurrencyConverterContract;
+use App\Contracts\Currency\CurrencyFormatterContract;
+use App\Contracts\Currency\ExchangeRateProviderContract;
 use App\Events\ExchangeRatesUpdated;
 use App\Exceptions\CurrencyExchangeException;
-use App\Helpers\CurrencyExchangeHelper;
 use App\Models\Currency;
-use App\Services\Currency\RequestCache;
 use App\Traits\NormalizesCurrencyCode;
-use Carbon\Carbon;
 use Cknow\Money\Money;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,10 +20,12 @@ use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 /**
- * @deprecated Use App\Services\Currency\CurrencyConverter instead.
- *             This class is maintained for backward compatibility.
+ * Main currency service handling conversions, lookups, and exchange rate management.
+ *
+ * This is the primary service for all currency operations and implements
+ * CurrencyConverterContract for dependency injection.
  */
-final readonly class CurrencyService implements CurrencyConverterContract
+final readonly class CurrencyConverter implements CurrencyConverterContract
 {
     use NormalizesCurrencyCode;
 
@@ -32,11 +33,12 @@ final readonly class CurrencyService implements CurrencyConverterContract
 
     public function __construct(
         private UpdateExchangeRatesAction $updateAction,
-        private CurrencyExchangeHelper $exchangeHelper
+        private ExchangeRateProviderContract $exchangeRateProvider,
+        private CurrencyFormatterContract $formatter
     ) {}
 
     /**
-     * Get user's preferred currency
+     * Get user's preferred currency.
      */
     public function getUserCurrency(): Currency
     {
@@ -52,24 +54,25 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Get all active currencies
+     * Get all active currencies.
+     *
+     * @return Collection<int, Currency>
      */
     public function getActiveCurrencies(): Collection
     {
-        // Check request-level cache first to avoid duplicate queries
+        // Check request-level cache first
         static $cachedCurrencies = null;
         if ($cachedCurrencies !== null) {
             return $cachedCurrencies;
         }
 
-        // Fetch from persistent cache and store in request-level cache
         $cachedCurrencies = Cache::remember('active_currencies', self::CACHE_TTL, Currency::getActiveCurrencies(...));
 
         return $cachedCurrencies;
     }
 
     /**
-     * Get currency by code
+     * Get currency by code.
      */
     public function getCurrency(string $code): ?Currency
     {
@@ -79,18 +82,14 @@ final readonly class CurrencyService implements CurrencyConverterContract
             return null;
         }
 
-        // Check request-level cache first to avoid duplicate queries
         if (RequestCache::hasCurrency($code)) {
             return RequestCache::getCurrency($code);
         }
 
-        // Fetch from persistent cache and store in request-level cache
         $cached = Cache::remember('currency_'.$code, self::CACHE_TTL, fn (): ?Currency => Currency::query()->where('code', $code)->first());
 
-        // Validate cached data (handle potential deserialization issues)
         $currency = $cached instanceof Currency ? $cached : null;
 
-        // If cache returned invalid data, try fetching fresh
         if ($cached !== null && ! $currency instanceof Currency) {
             Cache::forget('currency_'.$code);
             $currency = Currency::query()->where('code', $code)->first();
@@ -102,16 +101,14 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Get base currency
+     * Get base currency.
      */
     public function getBaseCurrency(): Currency
     {
-        // Check request-level cache first to avoid duplicate queries
         if (RequestCache::hasBaseCurrency()) {
             return RequestCache::getBaseCurrency();
         }
 
-        // Fetch from persistent cache and store in request-level cache
         $currency = Cache::remember('base_currency', self::CACHE_TTL, Currency::getBaseCurrency(...));
         RequestCache::setBaseCurrency($currency);
 
@@ -119,8 +116,9 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Convert amount between currencies
-     * Uses API-based conversion for USD/RWF pairs, database for others
+     * Convert amount between currencies.
+     *
+     * Uses API-based conversion for USD/RWF pairs, database rates for others.
      *
      * @throws Exception
      * @throws Throwable
@@ -136,45 +134,73 @@ final readonly class CurrencyService implements CurrencyConverterContract
             return $amount;
         }
 
+        // Use API for USD/RWF pairs
         if ($this->isUsdRwfPair($fromCurrency, $targetCurrency)) {
             try {
-                $money = $this->exchangeHelper->convertWithAmount($fromCurrency, $targetCurrency, $amount);
+                $rate = $this->exchangeRateProvider->getRate($fromCurrency, $targetCurrency);
 
-                return (int) $money->getAmount() / 100;
+                return round($amount * $rate, 2);
             } catch (CurrencyExchangeException) {
+                // Fall through to database conversion
             }
         }
 
-        $fromCurrencyModel = $this->getCurrency($fromCurrency);
-        $targetCurrencyModel = $this->getCurrency($targetCurrency);
-
-        throw_unless($fromCurrencyModel instanceof Currency, Exception::class, 'Currency not found: '.$fromCurrency);
-
-        throw_unless($targetCurrencyModel instanceof Currency, Exception::class, 'Currency not found: '.$targetCurrency);
-
-        throw_if(! $fromCurrencyModel->is_active || ! $targetCurrencyModel->is_active, Exception::class, 'One or both currencies are inactive');
-
-        return $fromCurrencyModel->convertTo($amount, $targetCurrencyModel);
+        // Use database rates
+        return $this->convertUsingDatabase($amount, $fromCurrency, $targetCurrency);
     }
 
     /**
-     * Format amount with currency
+     * Convert amount between currencies and return Money object.
+     *
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function convertToMoney(float $amount, string $from, string $to): Money
+    {
+        throw_if($amount < 0, Exception::class, 'Amount cannot be negative');
+
+        $from = $this->normalizeCurrencyCode($from);
+        $to = $this->normalizeCurrencyCode($to);
+
+        $convertedAmount = $this->convert($amount, $from, $to);
+        $currency = $this->getCurrency($to);
+
+        if ($currency instanceof Currency) {
+            return $currency->toMoney($convertedAmount);
+        }
+
+        // Fallback for unsupported currencies
+        $minorUnits = (int) round($convertedAmount * 100);
+
+        return Money::{$to}($minorUnits);
+    }
+
+    /**
+     * Format amount with currency symbol.
      */
     public function format(float $amount, string $currencyCode): string
     {
-        $currencyCode = $this->normalizeCurrencyCode($currencyCode);
-
-        $currency = $this->getCurrency($currencyCode);
-
-        if (! $currency instanceof Currency) {
-            return $currencyCode.' '.number_format($amount, 2);
-        }
-
-        return $currency->format($amount);
+        return $this->formatter->format($amount, $currencyCode);
     }
 
     /**
-     * Update exchange rates from API
+     * Format amount as Money object.
+     */
+    public function formatAsMoney(float $amount, string $currencyCode): string
+    {
+        $currencyCode = $this->normalizeCurrencyCode($currencyCode);
+
+        try {
+            $money = $this->convertToMoney($amount, $currencyCode, $currencyCode);
+
+            return $this->formatter->formatMoney($money);
+        } catch (Exception) {
+            return $this->format($amount, $currencyCode);
+        }
+    }
+
+    /**
+     * Update exchange rates from API.
      */
     public function updateExchangeRates(): bool
     {
@@ -182,7 +208,7 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Update exchange rates only if stale
+     * Update exchange rates only if stale.
      */
     public function updateExchangeRatesIfStale(): bool
     {
@@ -194,13 +220,14 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Check if exchange rates need updating
+     * Check if exchange rates need updating.
      */
     public function ratesAreStale(): bool
     {
         $stalenessHours = config('services.exchange_rate.staleness_hours', 24);
 
-        $lastUpdate = Cache::remember('last_rate_update', self::CACHE_TTL, fn () => Currency::query()->where('is_base', false)
+        $lastUpdate = Cache::remember('last_rate_update', self::CACHE_TTL, fn () => Currency::query()
+            ->where('is_base', false)
             ->whereNotNull('rate_updated_at')
             ->max('rate_updated_at'));
 
@@ -212,8 +239,7 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Clear all user carts (backward compatibility method)
-     * This dispatches an event to trigger the ClearUserCarts listener
+     * Clear all user carts (backward compatibility).
      */
     public function clearAllCarts(): void
     {
@@ -221,15 +247,16 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Get current exchange rates with metadata
+     * Get current exchange rates with metadata.
      *
-     * @phpstan-return SupportCollection<int, array{code: string, name: string, symbol: string, is_base: bool, exchange_rate: float, rate_updated_at: Carbon|null, hours_since_update: float|null, is_stale: bool}>
+     * @return SupportCollection<int, array<string, mixed>>
      */
     public function getCurrentRates(): SupportCollection
     {
         $stalenessHours = config('services.exchange_rate.staleness_hours', 24);
 
-        return Cache::remember('current_rates', self::CACHE_TTL / 4, fn () => Currency::query()->where('is_active', true)
+        return Cache::remember('current_rates', self::CACHE_TTL / 4, fn () => Currency::query()
+            ->where('is_active', true)
             ->orderBy('is_base', 'desc')
             ->orderBy('code')
             ->get()
@@ -252,63 +279,31 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Convert amount between currencies and return Money object
-     *
-     * @throws Exception
-     * @throws Throwable
-     */
-    public function convertToMoney(float $amount, string $from, string $to): Money
-    {
-        throw_if($amount < 0, Exception::class, 'Amount cannot be negative');
-
-        $from = $this->normalizeCurrencyCode($from);
-        $to = $this->normalizeCurrencyCode($to);
-
-        if ($this->isUsdRwfPair($from, $to)) {
-            return $this->exchangeHelper->convertWithAmount($from, $to, $amount);
-        }
-
-        $convertedAmount = $this->convert($amount, $from, $to);
-        $currency = $this->getCurrency($to);
-        if ($currency instanceof Currency) {
-            return $currency->toMoney($convertedAmount);
-        }
-
-        throw new Exception('Currency not found: '.$to);
-    }
-
-    /**
-     * Format amount as Money object
-     */
-    public function formatAsMoney(float $amount, string $currencyCode): string
-    {
-        $currencyCode = $this->normalizeCurrencyCode($currencyCode);
-
-        // Use CurrencyExchangeHelper formatting for USD/RWF
-        if (in_array($currencyCode, ['USD', 'RWF'], true)) {
-            try {
-                $money = $this->exchangeHelper->convertWithAmount($currencyCode, $currencyCode, $amount);
-
-                return $this->exchangeHelper->formatMoney($money);
-            } catch (CurrencyExchangeException) {
-                // Fall back to regular format
-            }
-        }
-
-        return $this->format($amount, $currencyCode);
-    }
-
-    /**
-     * Check if currency pair is USD/RWF
+     * Check if currency pair is USD/RWF.
      */
     private function isUsdRwfPair(string $from, string $to): bool
     {
-        $from = $this->normalizeCurrencyCode($from);
-        $to = $this->normalizeCurrencyCode($to);
-
         $pair = [$from, $to];
         sort($pair);
 
         return $pair === ['RWF', 'USD'];
+    }
+
+    /**
+     * Convert using database exchange rates.
+     *
+     * @throws Exception
+     * @throws Throwable
+     */
+    private function convertUsingDatabase(float $amount, string $from, string $to): float
+    {
+        $fromCurrencyModel = $this->getCurrency($from);
+        $targetCurrencyModel = $this->getCurrency($to);
+
+        throw_unless($fromCurrencyModel instanceof Currency, Exception::class, 'Currency not found: '.$from);
+        throw_unless($targetCurrencyModel instanceof Currency, Exception::class, 'Currency not found: '.$to);
+        throw_if(! $fromCurrencyModel->is_active || ! $targetCurrencyModel->is_active, Exception::class, 'One or both currencies are inactive');
+
+        return $fromCurrencyModel->convertTo($amount, $targetCurrencyModel);
     }
 }

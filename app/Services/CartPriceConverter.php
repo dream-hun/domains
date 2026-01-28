@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Helpers\CurrencyHelper;
+use App\Contracts\Currency\CurrencyConverterContract;
 use Darryldecode\Cart\CartCollection;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +13,7 @@ use Throwable;
 final readonly class CartPriceConverter
 {
     public function __construct(
-        private CurrencyService $currencyService
+        private CurrencyConverterContract $currencyConverter
     ) {}
 
     /**
@@ -38,27 +38,16 @@ final readonly class CartPriceConverter
         }
 
         try {
-            return CurrencyHelper::convert($itemPrice, $itemCurrency, $targetCurrency);
+            return $this->currencyConverter->convert($itemPrice, $itemCurrency, $targetCurrency);
         } catch (Exception $exception) {
-            Log::warning('Primary currency conversion failed in CartPriceConverter', [
+            Log::error('Currency conversion failed in CartPriceConverter', [
                 'from' => $itemCurrency,
                 'to' => $targetCurrency,
                 'amount' => $itemPrice,
                 'error' => $exception->getMessage(),
             ]);
 
-            try {
-                return $this->currencyService->convert($itemPrice, $itemCurrency, $targetCurrency);
-            } catch (Exception $fallbackException) {
-                Log::error('Currency conversion failed after fallback in CartPriceConverter', [
-                    'from' => $itemCurrency,
-                    'to' => $targetCurrency,
-                    'amount' => $itemPrice,
-                    'error' => $fallbackException->getMessage(),
-                ]);
-
-                throw new Exception('Unable to convert currency.', $exception->getCode(), $exception);
-            }
+            throw new Exception('Unable to convert currency.', $exception->getCode(), $exception);
         }
     }
 
@@ -96,12 +85,82 @@ final readonly class CartPriceConverter
         $convertedItems = collect();
 
         foreach ($cartItems as $item) {
-            $convertedPrice = $this->convertItemPrice($item, $targetCurrency);
+            $originalCurrency = $item->attributes->currency ?? 'USD';
+            $itemType = $item->attributes->get('type', 'registration');
+
+            // Convert monthly_unit_price for hosting items before converting price
+            if ($itemType === 'hosting') {
+                $monthlyUnitPrice = $item->attributes->get('monthly_unit_price');
+                if ($monthlyUnitPrice !== null && $originalCurrency !== $targetCurrency) {
+                    try {
+                        $convertedMonthlyPrice = $this->currencyConverter->convert($monthlyUnitPrice, $originalCurrency, $targetCurrency);
+                        // Temporarily set converted monthly price to get correct converted price
+                        $tempItem = clone $item;
+                        $tempItem->attributes->monthly_unit_price = $convertedMonthlyPrice;
+                        $tempItem->attributes->currency = $targetCurrency;
+                        $convertedPrice = $this->convertItemPrice($tempItem, $targetCurrency);
+                    } catch (Exception) {
+                        $convertedPrice = $this->convertItemPrice($item, $targetCurrency);
+                    }
+                } else {
+                    $convertedPrice = $this->convertItemPrice($item, $targetCurrency);
+                }
+            } elseif ($itemType === 'subscription_renewal') {
+                $unitPrice = $item->attributes->get('unit_price');
+                if ($unitPrice !== null && $originalCurrency !== $targetCurrency) {
+                    try {
+                        $convertedUnitPrice = $this->currencyConverter->convert($unitPrice, $originalCurrency, $targetCurrency);
+                        // Temporarily set converted unit price to get correct converted price
+                        $tempItem = clone $item;
+                        $tempItem->attributes->unit_price = $convertedUnitPrice;
+                        $tempItem->attributes->currency = $targetCurrency;
+                        $convertedPrice = $this->convertItemPrice($tempItem, $targetCurrency);
+                    } catch (Exception) {
+                        $convertedPrice = $this->convertItemPrice($item, $targetCurrency);
+                    }
+                } else {
+                    $convertedPrice = $this->convertItemPrice($item, $targetCurrency);
+                }
+            } else {
+                $convertedPrice = $this->convertItemPrice($item, $targetCurrency);
+            }
 
             // Clone the item and update its price and currency
             $convertedItem = clone $item;
             $convertedItem->price = $convertedPrice;
             $convertedItem->attributes->currency = $targetCurrency;
+
+            // Set converted monthly_unit_price for hosting items
+            if ($itemType === 'hosting') {
+                $monthlyUnitPrice = $item->attributes->get('monthly_unit_price');
+                if ($monthlyUnitPrice !== null && $originalCurrency !== $targetCurrency) {
+                    try {
+                        $convertedMonthlyPrice = $this->currencyConverter->convert($monthlyUnitPrice, $originalCurrency, $targetCurrency);
+                        $convertedItem->attributes->monthly_unit_price = $convertedMonthlyPrice;
+                    } catch (Exception) {
+                        // Keep original if conversion fails
+                    }
+                }
+            }
+
+            // Set converted unit_price for subscription renewal items
+            if ($itemType === 'subscription_renewal') {
+                $unitPrice = $item->attributes->get('unit_price');
+                if ($unitPrice !== null && $originalCurrency !== $targetCurrency) {
+                    try {
+                        $convertedUnitPrice = $this->currencyConverter->convert($unitPrice, $originalCurrency, $targetCurrency);
+                        $convertedItem->attributes->unit_price = $convertedUnitPrice;
+                    } catch (Exception) {
+                        // Keep original if conversion fails
+                    }
+                }
+            }
+
+            // Preserve original currency for audit purposes
+            if ($originalCurrency !== $targetCurrency) {
+                $convertedItem->attributes->original_currency = $originalCurrency;
+                $convertedItem->attributes->original_price = $item->price;
+            }
 
             $convertedItems->push($convertedItem);
         }
@@ -144,27 +203,16 @@ final readonly class CartPriceConverter
         }
 
         try {
-            return CurrencyHelper::convert($monthlyPrice, $itemCurrency, $targetCurrency);
+            return $this->currencyConverter->convert($monthlyPrice, $itemCurrency, $targetCurrency);
         } catch (Exception $exception) {
-            Log::warning('Hosting item currency conversion failed', [
+            Log::error('Hosting item currency conversion failed', [
                 'from' => $itemCurrency,
                 'to' => $targetCurrency,
                 'amount' => $monthlyPrice,
                 'error' => $exception->getMessage(),
             ]);
 
-            try {
-                return $this->currencyService->convert($monthlyPrice, $itemCurrency, $targetCurrency);
-            } catch (Exception $fallbackException) {
-                Log::error('Hosting item currency conversion failed after fallback', [
-                    'from' => $itemCurrency,
-                    'to' => $targetCurrency,
-                    'amount' => $monthlyPrice,
-                    'error' => $fallbackException->getMessage(),
-                ]);
-
-                throw new Exception('Unable to convert hosting item currency.', $exception->getCode(), $exception);
-            }
+            throw new Exception('Unable to convert hosting item currency.', $exception->getCode(), $exception);
         }
     }
 
@@ -199,27 +247,16 @@ final readonly class CartPriceConverter
         }
 
         try {
-            return CurrencyHelper::convert($displayUnitPrice, $itemCurrency, $targetCurrency);
+            return $this->currencyConverter->convert($displayUnitPrice, $itemCurrency, $targetCurrency);
         } catch (Exception $exception) {
-            Log::warning('Subscription renewal item currency conversion failed', [
+            Log::error('Subscription renewal item currency conversion failed', [
                 'from' => $itemCurrency,
                 'to' => $targetCurrency,
                 'amount' => $displayUnitPrice,
                 'error' => $exception->getMessage(),
             ]);
 
-            try {
-                return $this->currencyService->convert($displayUnitPrice, $itemCurrency, $targetCurrency);
-            } catch (Exception $fallbackException) {
-                Log::error('Subscription renewal item currency conversion failed after fallback', [
-                    'from' => $itemCurrency,
-                    'to' => $targetCurrency,
-                    'amount' => $displayUnitPrice,
-                    'error' => $fallbackException->getMessage(),
-                ]);
-
-                throw new Exception('Unable to convert subscription renewal item currency.', $exception->getCode(), $exception);
-            }
+            throw new Exception('Unable to convert subscription renewal item currency.', $exception->getCode(), $exception);
         }
     }
 
@@ -237,27 +274,16 @@ final readonly class CartPriceConverter
             $convertedMonthlyPrice = $monthlyUnitPrice;
         } else {
             try {
-                $convertedMonthlyPrice = CurrencyHelper::convert($monthlyUnitPrice, $itemCurrency, $targetCurrency);
+                $convertedMonthlyPrice = $this->currencyConverter->convert($monthlyUnitPrice, $itemCurrency, $targetCurrency);
             } catch (Exception $exception) {
-                Log::warning('Subscription renewal monthly unit price currency conversion failed', [
+                Log::error('Subscription renewal monthly unit price currency conversion failed', [
                     'from' => $itemCurrency,
                     'to' => $targetCurrency,
                     'amount' => $monthlyUnitPrice,
                     'error' => $exception->getMessage(),
                 ]);
 
-                try {
-                    $convertedMonthlyPrice = $this->currencyService->convert($monthlyUnitPrice, $itemCurrency, $targetCurrency);
-                } catch (Exception $fallbackException) {
-                    Log::error('Subscription renewal monthly unit price currency conversion failed after fallback', [
-                        'from' => $itemCurrency,
-                        'to' => $targetCurrency,
-                        'amount' => $monthlyUnitPrice,
-                        'error' => $fallbackException->getMessage(),
-                    ]);
-
-                    throw new Exception('Unable to convert subscription renewal monthly unit price currency.', $exception->getCode(), $exception);
-                }
+                throw new Exception('Unable to convert subscription renewal monthly unit price currency.', $exception->getCode(), $exception);
             }
         }
 

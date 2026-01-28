@@ -70,7 +70,11 @@ final readonly class SubscriptionRenewalService
             $paidAmount = (float) $orderItem->total_amount;
             $orderItemCurrency = $orderItem->currency ?? 'USD';
             // Get the quantity (months) from the order item
+            // If not explicitly set, use the billing cycle's month duration
             $quantityMonths = (int) $orderItem->quantity;
+            if ($quantityMonths <= 1) {
+                $quantityMonths = $billingCycle->toMonths();
+            }
 
             if ($orderItemCurrency !== 'USD') {
                 $paidAmount = CurrencyHelper::convert(
@@ -154,6 +158,11 @@ final readonly class SubscriptionRenewalService
                     $paidAmount,
                     renewalSnapshot: $renewalSnapshot
                 );
+
+                // Update billing cycle if order item specifies a different one
+                if (isset($orderItem->metadata['billing_cycle']) && $orderItem->metadata['billing_cycle'] !== $subscription->billing_cycle) {
+                    $subscription->update(['billing_cycle' => $billingCycle->value]);
+                }
 
                 $results['successful'][] = [
                     'subscription' => $subscription->domain ?? 'Subscription UUID: '.$subscription->uuid,
