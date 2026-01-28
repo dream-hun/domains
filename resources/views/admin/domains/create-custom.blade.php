@@ -566,13 +566,19 @@
 
     @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                $('.select2-custom').select2({
-                    placeholder: 'Select an option...',
-                    allowClear: true,
-                    width: '100%'
+            $(document).ready(function() {
+                // Initialize Select2 for all select2-custom elements
+                $('.select2-custom').each(function() {
+                    if (!$(this).hasClass('select2-hidden-accessible')) {
+                        $(this).select2({
+                            placeholder: $(this).find('option[value=""]').text() || 'Select an option...',
+                            allowClear: true,
+                            width: '100%'
+                        });
+                    }
                 });
 
+                // Subscription option toggle
                 const subscriptionNone = document.getElementById('subscription_none');
                 const subscriptionCreate = document.getElementById('subscription_create');
                 const subscriptionLink = document.getElementById('subscription_link');
@@ -580,30 +586,49 @@
                 const linkSection = document.getElementById('link_subscription_section');
 
                 function updateSubscriptionSections() {
-                    if (subscriptionCreate.checked) {
+                    if (!createSection || !linkSection) return;
+
+                    if (subscriptionCreate && subscriptionCreate.checked) {
                         createSection.style.display = 'block';
                         linkSection.style.display = 'none';
-                    } else if (subscriptionLink.checked) {
+                        // Initialize select2 for elements in the newly shown section
+                        setTimeout(function() {
+                            $('#existing_subscription_id').select2({
+                                placeholder: 'Select a subscription...',
+                                allowClear: true,
+                                width: '100%'
+                            });
+                        }, 100);
+                    } else if (subscriptionLink && subscriptionLink.checked) {
                         createSection.style.display = 'none';
                         linkSection.style.display = 'block';
+                        // Initialize select2 for elements in the newly shown section
+                        setTimeout(function() {
+                            $('#existing_subscription_id').select2({
+                                placeholder: 'Select a subscription...',
+                                allowClear: true,
+                                width: '100%'
+                            });
+                        }, 100);
                     } else {
                         createSection.style.display = 'none';
                         linkSection.style.display = 'none';
                     }
                 }
 
-                subscriptionNone.addEventListener('change', updateSubscriptionSections);
-                subscriptionCreate.addEventListener('change', updateSubscriptionSections);
-                subscriptionLink.addEventListener('change', updateSubscriptionSections);
+                if (subscriptionNone) subscriptionNone.addEventListener('change', updateSubscriptionSections);
+                if (subscriptionCreate) subscriptionCreate.addEventListener('change', updateSubscriptionSections);
+                if (subscriptionLink) subscriptionLink.addEventListener('change', updateSubscriptionSections);
 
                 updateSubscriptionSections();
 
+                // Billing cycle date calculation
                 const billingCycleSelect = document.getElementById('billing_cycle');
                 const startsAtInput = document.getElementById('hosting_starts_at');
                 const expiresAtInput = document.getElementById('hosting_expires_at');
 
                 function updateExpiryDate() {
-                    if (startsAtInput.value && billingCycleSelect.value) {
+                    if (startsAtInput && expiresAtInput && billingCycleSelect && startsAtInput.value && billingCycleSelect.value) {
                         const startDate = new Date(startsAtInput.value);
                         const expiryDate = new Date(startDate);
 
@@ -617,8 +642,8 @@
                     }
                 }
 
-                billingCycleSelect.addEventListener('change', updateExpiryDate);
-                startsAtInput.addEventListener('change', updateExpiryDate);
+                if (billingCycleSelect) billingCycleSelect.addEventListener('change', updateExpiryDate);
+                if (startsAtInput) startsAtInput.addEventListener('change', updateExpiryDate);
             });
         </script>
     @endpush
