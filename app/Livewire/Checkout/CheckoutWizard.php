@@ -265,16 +265,14 @@ final class CheckoutWizard extends Component
     /**
      * Get unit price per billing cycle for display
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     public function getItemUnitPrice($item): string
     {
-        $item->attributes->get('type', 'registration');
-        $itemCurrency = $item->attributes->get('currency', 'USD');
-        $unitPrice = $item->price;
+        $cartPriceConverter = resolve(CartPriceConverter::class);
+        $convertedUnitPrice = $cartPriceConverter->convertItemPrice($item, $this->userCurrencyCode);
 
-        return CurrencyHelper::formatMoney($unitPrice, $itemCurrency);
-
+        return CurrencyHelper::formatMoney($convertedUnitPrice, $this->userCurrencyCode);
     }
 
     /**
