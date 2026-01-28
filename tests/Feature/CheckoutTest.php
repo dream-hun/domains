@@ -165,13 +165,6 @@ it('fails to proceed with empty cart', function (): void {
 
     Livewire::actingAs($user)
         ->test(CheckoutProcess::class)
-        ->call('proceedToPayment');
-    // CheckoutProcess::proceedToPayment returns null if empty, and sets errorMessage
-    // It does NOT return 400 status because it's Livewire.
-
-    // We can check if errorMessage is set
-    Livewire::actingAs($user)
-        ->test(CheckoutProcess::class)
         ->call('proceedToPayment')
         ->assertSet('errorMessage', 'Your cart is empty.');
 });
