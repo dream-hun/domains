@@ -58,9 +58,9 @@ final class SubscriptionController extends Controller
     public function store(CreateCustomSubscriptionRequest $request, CreateCustomSubscriptionAction $action): RedirectResponse
     {
         try {
-            $subscription = $action->handle($request->validated(), auth()->id());
+            $result = $action->handle($request->validated(), auth()->id());
 
-            return to_route('admin.subscriptions.show', $subscription)
+            return to_route('admin.subscriptions.show', $result['subscription'])
                 ->with('success', 'Custom subscription created successfully.');
         } catch (Exception $exception) {
             Log::error('Failed to create custom subscription', [

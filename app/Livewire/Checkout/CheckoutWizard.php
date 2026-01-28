@@ -267,7 +267,7 @@ final class CheckoutWizard extends Component
      *
      * @throws Exception|Throwable
      */
-    public function getItemUnitPrice($item): string
+    public function getItemUnitPrice(object $item): string
     {
         $cartPriceConverter = resolve(CartPriceConverter::class);
         $convertedUnitPrice = $cartPriceConverter->convertItemPrice($item, $this->userCurrencyCode);

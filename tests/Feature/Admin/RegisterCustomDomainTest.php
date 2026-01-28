@@ -9,6 +9,7 @@ use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
+use App\Models\Order;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Subscription;
@@ -19,13 +20,13 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Create admin role and permissions
-    $adminRole = Role::query()->create(['id' => 1, 'title' => 'Admin']);
-    $userRole = Role::query()->create(['id' => 2, 'title' => 'User']);
+    $adminRole = Role::query()->firstOrCreate(['title' => 'Admin']);
+    $userRole = Role::query()->firstOrCreate(['title' => 'User']);
 
-    $domainCreatePermission = Permission::query()->create(['id' => 10, 'title' => 'domain_create']);
-    $domainAccessPermission = Permission::query()->create(['id' => 11, 'title' => 'domain_access']);
+    $domainCreatePermission = Permission::query()->firstOrCreate(['title' => 'domain_create']);
+    $domainAccessPermission = Permission::query()->firstOrCreate(['title' => 'domain_access']);
 
-    $adminRole->permissions()->attach([
+    $adminRole->permissions()->syncWithoutDetaching([
         $domainCreatePermission->id,
         $domainAccessPermission->id,
     ]);
@@ -127,6 +128,23 @@ test('admin can register domain with custom price', function (): void {
         ->and($domain->custom_price_currency)->toBe('USD')
         ->and($domain->custom_price_notes)->toBe('Special VIP pricing')
         ->and($domain->created_by_admin_id)->toBe($this->admin->id);
+
+    // Verify order was created
+    $order = Order::query()->where('user_id', $this->regularUser->id)->first();
+    expect($order)->not->toBeNull()
+        ->and($order->type)->toBe('custom_registration')
+        ->and($order->payment_status)->toBe('manual')
+        ->and($order->status)->toBe('completed')
+        ->and((float) $order->total_amount)->toBe(25.00)
+        ->and($order->currency)->toBe('USD')
+        ->and($order->metadata['created_by_admin_id'])->toBe($this->admin->id);
+
+    // Verify order item was created
+    expect($order->orderItems)->toHaveCount(1);
+    $orderItem = $order->orderItems->first();
+    expect($orderItem->domain_name)->toBe('testcustom.com')
+        ->and($orderItem->domain_type)->toBe('custom_registration')
+        ->and((float) $orderItem->price)->toBe(25.00);
 });
 
 test('admin can register domain and create new subscription', function (): void {
@@ -164,6 +182,8 @@ test('admin can register domain and create new subscription', function (): void 
         'admin_contact_id' => $this->contact->id,
         'technical_contact_id' => $this->contact->id,
         'billing_contact_id' => $this->contact->id,
+        'domain_custom_price' => 30.00,
+        'domain_custom_price_currency' => 'USD',
         'subscription_option' => 'create_new',
         'hosting_plan_id' => $plan->id,
         'billing_cycle' => 'monthly',
@@ -190,6 +210,18 @@ test('admin can register domain and create new subscription', function (): void 
         ->and((float) $subscription->custom_price)->toBe(50.00)
         ->and($subscription->custom_price_notes)->toBe('Bundled discount')
         ->and($subscription->auto_renew)->toBeTrue();
+
+    // Verify orders were created (one for domain, one for subscription)
+    $orders = Order::query()->where('user_id', $this->regularUser->id)->get();
+    expect($orders)->toHaveCount(2);
+
+    $domainOrder = $orders->firstWhere('type', 'custom_registration');
+    expect($domainOrder)->not->toBeNull()
+        ->and((float) $domainOrder->total_amount)->toBe(30.00);
+
+    $subscriptionOrder = $orders->firstWhere('type', 'custom_subscription');
+    expect($subscriptionOrder)->not->toBeNull()
+        ->and((float) $subscriptionOrder->total_amount)->toBe(50.00);
 });
 
 test('admin can register domain and link to existing subscription', function (): void {
@@ -234,6 +266,8 @@ test('admin can register domain and link to existing subscription', function ():
         'admin_contact_id' => $this->contact->id,
         'technical_contact_id' => $this->contact->id,
         'billing_contact_id' => $this->contact->id,
+        'domain_custom_price' => 15.00,
+        'domain_custom_price_currency' => 'USD',
         'subscription_option' => 'link_existing',
         'existing_subscription_id' => $existingSubscription->id,
     ];
@@ -249,6 +283,12 @@ test('admin can register domain and link to existing subscription', function ():
     expect($domain)->not->toBeNull()
         ->and($domain->subscription_id)->toBe($existingSubscription->id)
         ->and($existingSubscription->domain)->toBe('linkedomain.com');
+
+    // Verify order was created for the domain
+    $order = Order::query()->where('user_id', $this->regularUser->id)->first();
+    expect($order)->not->toBeNull()
+        ->and($order->type)->toBe('custom_registration')
+        ->and((float) $order->total_amount)->toBe(15.00);
 });
 
 test('validation requires domain name', function (): void {
@@ -259,6 +299,8 @@ test('validation requires domain name', function (): void {
         'admin_contact_id' => $this->contact->id,
         'technical_contact_id' => $this->contact->id,
         'billing_contact_id' => $this->contact->id,
+        'domain_custom_price' => 25.00,
+        'domain_custom_price_currency' => 'USD',
         'subscription_option' => 'none',
     ];
 
@@ -267,23 +309,22 @@ test('validation requires domain name', function (): void {
         ->assertSessionHasErrors('domain_name');
 });
 
-test('validation requires currency when custom domain price is provided', function (): void {
+test('validation requires custom price and currency', function (): void {
     $data = [
-        'domain_name' => 'needscurrency.com',
+        'domain_name' => 'needsprice.com',
         'user_id' => $this->regularUser->id,
         'years' => 1,
         'registrant_contact_id' => $this->contact->id,
         'admin_contact_id' => $this->contact->id,
         'technical_contact_id' => $this->contact->id,
         'billing_contact_id' => $this->contact->id,
-        'domain_custom_price' => 100.00,
-        // Missing domain_custom_price_currency
+        // Missing domain_custom_price and domain_custom_price_currency
         'subscription_option' => 'none',
     ];
 
     $this->actingAs($this->admin)
         ->post(route('admin.domains.custom-register.store'), $data)
-        ->assertSessionHasErrors('domain_custom_price_currency');
+        ->assertSessionHasErrors(['domain_custom_price', 'domain_custom_price_currency']);
 });
 
 test('validation requires hosting plan when creating new subscription', function (): void {
@@ -295,6 +336,8 @@ test('validation requires hosting plan when creating new subscription', function
         'admin_contact_id' => $this->contact->id,
         'technical_contact_id' => $this->contact->id,
         'billing_contact_id' => $this->contact->id,
+        'domain_custom_price' => 25.00,
+        'domain_custom_price_currency' => 'USD',
         'subscription_option' => 'create_new',
         // Missing hosting_plan_id
         'billing_cycle' => 'monthly',
@@ -316,6 +359,8 @@ test('validation requires existing subscription when linking', function (): void
         'admin_contact_id' => $this->contact->id,
         'technical_contact_id' => $this->contact->id,
         'billing_contact_id' => $this->contact->id,
+        'domain_custom_price' => 25.00,
+        'domain_custom_price_currency' => 'USD',
         'subscription_option' => 'link_existing',
         // Missing existing_subscription_id
     ];

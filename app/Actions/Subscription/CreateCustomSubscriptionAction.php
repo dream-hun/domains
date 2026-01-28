@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Actions\Subscription;
 
+use App\Actions\Order\CreateCustomOrderAction;
 use App\Enums\Hosting\BillingCycle;
 use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
+use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\User;
 use Exception;
@@ -16,14 +18,19 @@ use Illuminate\Support\Str;
 
 final readonly class CreateCustomSubscriptionAction
 {
+    public function __construct(
+        private CreateCustomOrderAction $createCustomOrderAction
+    ) {}
+
     /**
      * Create a custom subscription
      *
      * @param  array<string, mixed>  $data
+     * @return array{subscription: Subscription, order: Order}
      *
      * @throws Exception
      */
-    public function handle(array $data, int $adminId): Subscription
+    public function handle(array $data, int $adminId): array
     {
         $user = User::query()->findOrFail($data['user_id']);
         $plan = HostingPlan::query()->findOrFail($data['hosting_plan_id']);
@@ -45,7 +52,7 @@ final readonly class CreateCustomSubscriptionAction
         $customPriceCurrency = null;
         $isCustomPrice = false;
 
-        if (isset($data['custom_price']) && $data['custom_price'] !== null && $data['custom_price'] > 0) {
+        if (isset($data['custom_price']) && $data['custom_price'] > 0) {
             $isCustomPrice = true;
             $customPriceCurrency = $data['custom_price_currency'] ?? 'USD';
             $customPrice = (float) $data['custom_price'];
@@ -97,6 +104,17 @@ final readonly class CreateCustomSubscriptionAction
 
         $subscription = Subscription::query()->create($subscriptionData);
 
+        $order = $this->createSubscriptionOrder(
+            $subscription,
+            $user,
+            $plan,
+            $customPrice ?? (float) $planPrice->renewal_price / 100,
+            $customPriceCurrency ?? 'USD',
+            $billingCycle,
+            $adminId,
+            $data['custom_price_notes'] ?? null
+        );
+
         Log::info('Custom subscription created by admin', [
             'subscription_id' => $subscription->id,
             'subscription_uuid' => $subscription->uuid,
@@ -106,9 +124,53 @@ final readonly class CreateCustomSubscriptionAction
             'is_custom_price' => $isCustomPrice,
             'custom_price' => $customPrice,
             'custom_price_currency' => $customPriceCurrency,
+            'order_id' => $order->id,
         ]);
 
-        return $subscription;
+        return [
+            'subscription' => $subscription,
+            'order' => $order,
+        ];
+    }
+
+    private function createSubscriptionOrder(
+        Subscription $subscription,
+        User $user,
+        HostingPlan $plan,
+        float $price,
+        string $currency,
+        BillingCycle $billingCycle,
+        int $adminId,
+        ?string $notes
+    ): Order {
+        $itemData = [
+            'name' => $plan->name,
+            'type' => 'custom_subscription',
+            'price' => $price,
+            'currency' => $currency,
+            'quantity' => 1,
+            'years' => 1,
+            'metadata' => [
+                'subscription_id' => $subscription->id,
+                'hosting_plan_id' => $plan->id,
+                'billing_cycle' => $billingCycle->value,
+                'custom_price_notes' => $notes,
+            ],
+        ];
+
+        $metadata = [
+            'subscription_id' => $subscription->id,
+            'subscription_uuid' => $subscription->uuid,
+            'hosting_plan_id' => $plan->id,
+        ];
+
+        return $this->createCustomOrderAction->handle(
+            $user,
+            'custom_subscription',
+            $itemData,
+            $adminId,
+            $metadata
+        );
     }
 
     private function resolveBillingCycle(string $cycle): BillingCycle

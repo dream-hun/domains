@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Domains;
 
+use App\Actions\Order\CreateCustomOrderAction;
 use App\Actions\RegisterDomainAction;
 use App\Actions\Subscription\CreateCustomSubscriptionAction;
 use App\Models\Contact;
 use App\Models\Domain;
+use App\Models\Order;
 use App\Models\Subscription;
+use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,14 +20,15 @@ final readonly class RegisterCustomDomainAction
 {
     public function __construct(
         private RegisterDomainAction $registerDomainAction,
-        private CreateCustomSubscriptionAction $createCustomSubscriptionAction
+        private CreateCustomSubscriptionAction $createCustomSubscriptionAction,
+        private CreateCustomOrderAction $createCustomOrderAction
     ) {}
 
     /**
      * Register a domain with custom pricing and optionally create/link a subscription.
      *
      * @param  array<string, mixed>  $data
-     * @return array{success: bool, message: string, domain_id?: int, subscription_id?: int}
+     * @return array{success: bool, message: string, domain_id?: int, subscription_id?: int, order_id?: int}
      */
     public function handle(array $data, int $adminId): array
     {
@@ -59,12 +63,16 @@ final readonly class RegisterCustomDomainAction
                 $this->applyCustomPricing($domain, $data, $adminId);
                 $subscriptionId = $this->handleSubscriptionOption($domain, $data, $adminId);
 
+                $user = User::query()->findOrFail($data['user_id']);
+                $order = $this->createDomainOrder($domain, $user, $data, $adminId);
+
                 Log::info('Custom domain registration completed', [
                     'domain_id' => $domain->id,
                     'domain_name' => $domain->name,
                     'admin_id' => $adminId,
                     'is_custom_price' => $domain->is_custom_price,
                     'subscription_id' => $subscriptionId,
+                    'order_id' => $order->id,
                 ]);
 
                 return [
@@ -72,6 +80,7 @@ final readonly class RegisterCustomDomainAction
                     'message' => sprintf('Domain %s registered successfully.', $domain->name),
                     'domain_id' => $domain->id,
                     'subscription_id' => $subscriptionId,
+                    'order_id' => $order->id,
                 ];
             });
         } catch (Exception $exception) {
@@ -208,7 +217,8 @@ final readonly class RegisterCustomDomainAction
             $subscriptionData['custom_price_notes'] = $data['hosting_custom_price_notes'] ?? null;
         }
 
-        $subscription = $this->createCustomSubscriptionAction->handle($subscriptionData, $adminId);
+        $result = $this->createCustomSubscriptionAction->handle($subscriptionData, $adminId);
+        $subscription = $result['subscription'];
         $domain->update(['subscription_id' => $subscription->id]);
 
         Log::info('New hosting subscription created for domain', [
@@ -240,5 +250,41 @@ final readonly class RegisterCustomDomainAction
         ]);
 
         return $subscription->id;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function createDomainOrder(Domain $domain, User $user, array $data, int $adminId): Order
+    {
+        $price = (float) $data['domain_custom_price'];
+        $currency = $data['domain_custom_price_currency'] ?? 'USD';
+        $years = (int) $data['years'];
+
+        $itemData = [
+            'name' => $domain->name,
+            'type' => 'custom_registration',
+            'domain_id' => $domain->id,
+            'price' => $price,
+            'currency' => $currency,
+            'quantity' => 1,
+            'years' => $years,
+            'metadata' => [
+                'domain_price_notes' => $data['domain_custom_price_notes'] ?? null,
+            ],
+        ];
+
+        $metadata = [
+            'domain_id' => $domain->id,
+            'domain_name' => $domain->name,
+        ];
+
+        return $this->createCustomOrderAction->handle(
+            $user,
+            'custom_registration',
+            $itemData,
+            $adminId,
+            $metadata
+        );
     }
 }

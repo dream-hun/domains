@@ -14,5 +14,5 @@ enum OrderStatus: string
     case COMPLETED = 'completed';
     case ATTENTION = 'requires_attention';
     case PARTIAL_COMPLETED = 'partial_completed';
-
+    case MANUAL = 'manual';
 }

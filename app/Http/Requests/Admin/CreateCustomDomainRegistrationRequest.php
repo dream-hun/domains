@@ -41,13 +41,12 @@ final class CreateCustomDomainRegistrationRequest extends FormRequest
             'nameserver_4' => ['nullable', 'string', 'max:255'],
 
             // Custom domain price fields
-            'domain_custom_price' => ['nullable', 'numeric', 'min:0'],
+            'domain_custom_price' => ['required', 'numeric', 'min:0'],
             'domain_custom_price_currency' => [
-                'nullable',
+                'required',
                 'string',
                 'size:3',
                 Rule::exists('currencies', 'code'),
-                'required_with:domain_custom_price',
             ],
             'domain_custom_price_notes' => ['nullable', 'string', 'max:1000'],
 
@@ -108,9 +107,10 @@ final class CreateCustomDomainRegistrationRequest extends FormRequest
             'billing_contact_id.exists' => 'Selected billing contact does not exist.',
 
             // Domain custom price
+            'domain_custom_price.required' => 'Domain custom price is required.',
             'domain_custom_price.numeric' => 'Domain custom price must be a number.',
             'domain_custom_price.min' => 'Domain custom price must be at least 0.',
-            'domain_custom_price_currency.required_with' => 'Currency is required when custom domain price is provided.',
+            'domain_custom_price_currency.required' => 'Currency is required for domain custom price.',
             'domain_custom_price_currency.exists' => 'Selected currency does not exist.',
 
             // Subscription option
