@@ -22,54 +22,38 @@
 
     <section class="content">
         <div class="container-fluid">
-            <form action="{{ route('admin.domains.custom-register.store') }}" method="POST" id="custom-domain-form">
+            <form action="{{ route('admin.domains.custom-register.store') }}" method="POST">
                 @csrf
 
-                {{-- Domain Registration Card --}}
-                <div class="card card-primary card-outline shadow-sm mb-4">
-                    <div class="card-header bg-white border-bottom">
-                        <h3 class="card-title mb-0">
-                            <i class="bi bi-globe text-primary"></i> Domain Information
-                        </h3>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Domain Information</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="domain_name" class="required font-weight-bold">
-                                        <i class="bi bi-link-45deg"></i> Domain Name
-                                    </label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text bg-light">
-                                                <i class="bi bi-globe text-primary"></i>
-                                            </span>
-                                        </div>
-                                        <input type="text"
-                                               class="form-control form-control-lg @error('domain_name') is-invalid @enderror"
-                                               id="domain_name"
-                                               name="domain_name"
-                                               value="{{ old('domain_name') }}"
-                                               placeholder="example.com"
-                                               required>
-                                    </div>
+                                    <label for="domain_name" class="required">Domain Name</label>
+                                    <input type="text"
+                                           class="form-control @error('domain_name') is-invalid @enderror"
+                                           id="domain_name"
+                                           name="domain_name"
+                                           value="{{ old('domain_name') }}"
+                                           placeholder="example.com"
+                                           required>
                                     @error('domain_name')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <small class="form-text text-muted">Enter the domain name without http:// or https://</small>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="user_id" class="required font-weight-bold">
-                                        <i class="bi bi-person"></i> Domain Owner
-                                    </label>
+                                    <label for="user_id" class="required">Domain Owner</label>
                                     <select class="form-control select2-custom @error('user_id') is-invalid @enderror"
                                             id="user_id"
                                             name="user_id"
-                                            required
-                                            data-placeholder="Select a user...">
+                                            required>
                                         <option value="">Select a user...</option>
                                         @foreach($users as $user)
                                             <option value="{{ $user->id }}" @selected(old('user_id') == $user->id)>
@@ -78,9 +62,8 @@
                                         @endforeach
                                     </select>
                                     @error('user_id')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <small class="form-text text-muted">Select the user who will own this domain</small>
                                 </div>
                             </div>
                         </div>
@@ -88,50 +71,34 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="years" class="required font-weight-bold">
-                                        <i class="bi bi-calendar-range"></i> Registration Period (Years)
-                                    </label>
-                                    <div class="input-group">
-                                        <input type="number"
-                                               class="form-control form-control-lg @error('years') is-invalid @enderror"
-                                               id="years"
-                                               name="years"
-                                               value="{{ old('years', 1) }}"
-                                               min="1"
-                                               max="10"
-                                               required>
-                                        <div class="input-group-append">
-                                            <span class="input-group-text bg-light">year(s)</span>
-                                        </div>
-                                    </div>
+                                    <label for="years" class="required">Registration Period (Years)</label>
+                                    <input type="number"
+                                           class="form-control @error('years') is-invalid @enderror"
+                                           id="years"
+                                           name="years"
+                                           value="{{ old('years', 1) }}"
+                                           min="1"
+                                           max="10"
+                                           required>
                                     @error('years')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <small class="form-text text-muted">Domain registration period in years (1-10)</small>
                                 </div>
                             </div>
                         </div>
 
-                        <hr class="my-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-person-lines-fill text-primary mr-2" style="font-size: 1.5rem;"></i>
-                            <div>
-                                <h5 class="mb-0 font-weight-bold">Contact Information</h5>
-                                <p class="text-muted mb-0 small">Select contacts for the domain registration</p>
-                            </div>
-                        </div>
+                        <hr>
+                        <h5>Contact Information</h5>
+                        <p class="text-muted">Select contacts for the domain registration.</p>
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="registrant_contact_id" class="required font-weight-bold">
-                                        <i class="bi bi-person-badge"></i> Registrant Contact
-                                    </label>
+                                    <label for="registrant_contact_id" class="required">Registrant Contact</label>
                                     <select class="form-control select2-custom @error('registrant_contact_id') is-invalid @enderror"
                                             id="registrant_contact_id"
                                             name="registrant_contact_id"
-                                            required
-                                            data-placeholder="Select Contact">
+                                            required>
                                         <option value="">Select Contact</option>
                                         @foreach ($contacts as $contact)
                                             <option value="{{ $contact->id }}" @selected(old('registrant_contact_id') == $contact->id)>
@@ -140,21 +107,18 @@
                                         @endforeach
                                     </select>
                                     @error('registrant_contact_id')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="admin_contact_id" class="required font-weight-bold">
-                                        <i class="bi bi-person-gear"></i> Admin Contact
-                                    </label>
+                                    <label for="admin_contact_id" class="required">Admin Contact</label>
                                     <select class="form-control select2-custom @error('admin_contact_id') is-invalid @enderror"
                                             id="admin_contact_id"
                                             name="admin_contact_id"
-                                            required
-                                            data-placeholder="Select Contact">
+                                            required>
                                         <option value="">Select Contact</option>
                                         @foreach ($contacts as $contact)
                                             <option value="{{ $contact->id }}" @selected(old('admin_contact_id') == $contact->id)>
@@ -163,7 +127,7 @@
                                         @endforeach
                                     </select>
                                     @error('admin_contact_id')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
@@ -172,14 +136,11 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="technical_contact_id" class="required font-weight-bold">
-                                        <i class="bi bi-tools"></i> Technical Contact
-                                    </label>
+                                    <label for="technical_contact_id" class="required">Technical Contact</label>
                                     <select class="form-control select2-custom @error('technical_contact_id') is-invalid @enderror"
                                             id="technical_contact_id"
                                             name="technical_contact_id"
-                                            required
-                                            data-placeholder="Select Contact">
+                                            required>
                                         <option value="">Select Contact</option>
                                         @foreach ($contacts as $contact)
                                             <option value="{{ $contact->id }}" @selected(old('technical_contact_id') == $contact->id)>
@@ -188,21 +149,18 @@
                                         @endforeach
                                     </select>
                                     @error('technical_contact_id')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="billing_contact_id" class="required font-weight-bold">
-                                        <i class="bi bi-credit-card"></i> Billing Contact
-                                    </label>
+                                    <label for="billing_contact_id" class="required">Billing Contact</label>
                                     <select class="form-control select2-custom @error('billing_contact_id') is-invalid @enderror"
                                             id="billing_contact_id"
                                             name="billing_contact_id"
-                                            required
-                                            data-placeholder="Select Contact">
+                                            required>
                                         <option value="">Select Contact</option>
                                         @foreach ($contacts as $contact)
                                             <option value="{{ $contact->id }}" @selected(old('billing_contact_id') == $contact->id)>
@@ -211,20 +169,15 @@
                                         @endforeach
                                     </select>
                                     @error('billing_contact_id')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
                         </div>
 
-                        <hr class="my-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-server text-primary mr-2" style="font-size: 1.5rem;"></i>
-                            <div>
-                                <h5 class="mb-0 font-weight-bold">Nameservers <span class="badge badge-secondary">Optional</span></h5>
-                                <p class="text-muted mb-0 small">If not specified, default nameservers will be used</p>
-                            </div>
-                        </div>
+                        <hr>
+                        <h5>Nameservers (Optional)</h5>
+                        <p class="text-muted">If not specified, default nameservers will be used.</p>
 
                         <div class="row">
                             <div class="col-md-6">
@@ -292,18 +245,12 @@
                     </div>
                 </div>
 
-                {{-- Custom Domain Pricing Card --}}
-                <div class="card card-info card-outline shadow-sm mb-4">
-                    <div class="card-header bg-white border-bottom">
-                        <h3 class="card-title mb-0">
-                            <i class="bi bi-currency-dollar text-info"></i> Custom Domain Pricing 
-                            <span class="badge badge-info">Optional</span>
-                        </h3>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Custom Domain Pricing (Optional)</h3>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted mb-3">
-                            <i class="bi bi-info-circle"></i> Set a custom price for this domain. Leave empty to use standard TLD pricing.
-                        </p>
+                        <p class="text-muted">Set a custom price for this domain. Leave empty to use standard TLD pricing.</p>
 
                         <div class="row">
                             <div class="col-md-4">
@@ -363,34 +310,29 @@
                     </div>
                 </div>
 
-                {{-- Hosting Subscription Card --}}
-                <div class="card card-success card-outline shadow-sm mb-4">
-                    <div class="card-header bg-white border-bottom">
-                        <h3 class="card-title mb-0">
-                            <i class="bi bi-hdd-stack text-success"></i> Hosting Subscription
-                        </h3>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Hosting Subscription</h3>
                     </div>
                     <div class="card-body">
                         <div class="form-group">
-                            <label class="required font-weight-bold mb-3">
-                                <i class="bi bi-list-ul"></i> Subscription Option
-                            </label>
-                            <div class="form-check p-3 border rounded mb-2">
+                            <label class="required">Subscription Option</label>
+                            <div class="form-check">
                                 <input class="form-check-input" type="radio" name="subscription_option" id="subscription_none" value="none" @checked(old('subscription_option', 'none') === 'none')>
-                                <label class="form-check-label font-weight-normal" for="subscription_none">
-                                    <i class="bi bi-x-circle text-muted"></i> No hosting subscription
+                                <label class="form-check-label" for="subscription_none">
+                                    No hosting subscription
                                 </label>
                             </div>
-                            <div class="form-check p-3 border rounded mb-2">
+                            <div class="form-check">
                                 <input class="form-check-input" type="radio" name="subscription_option" id="subscription_create" value="create_new" @checked(old('subscription_option') === 'create_new')>
-                                <label class="form-check-label font-weight-normal" for="subscription_create">
-                                    <i class="bi bi-plus-circle text-success"></i> Create new hosting subscription
+                                <label class="form-check-label" for="subscription_create">
+                                    Create new hosting subscription
                                 </label>
                             </div>
-                            <div class="form-check p-3 border rounded">
+                            <div class="form-check">
                                 <input class="form-check-input" type="radio" name="subscription_option" id="subscription_link" value="link_existing" @checked(old('subscription_option') === 'link_existing')>
-                                <label class="form-check-label font-weight-normal" for="subscription_link">
-                                    <i class="bi bi-link-45deg text-primary"></i> Link to existing subscription
+                                <label class="form-check-label" for="subscription_link">
+                                    Link to existing subscription
                                 </label>
                             </div>
                             @error('subscription_option')
@@ -398,7 +340,6 @@
                             @enderror
                         </div>
 
-                        {{-- Create New Subscription Section --}}
                         <div id="create_subscription_section" style="display: none;">
                             <hr>
                             <h5>New Hosting Subscription</h5>
@@ -547,23 +488,17 @@
                             </div>
                         </div>
 
-                        {{-- Link Existing Subscription Section --}}
                         <div id="link_subscription_section" style="display: none;">
-                            <hr class="my-4">
-                            <h5 class="font-weight-bold mb-3">
-                                <i class="bi bi-link-45deg text-primary"></i> Link to Existing Subscription
-                            </h5>
+                            <hr>
+                            <h5>Link to Existing Subscription</h5>
 
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="existing_subscription_id" class="font-weight-bold">
-                                            <i class="bi bi-list-ul"></i> Select Subscription
-                                        </label>
+                                        <label for="existing_subscription_id">Select Subscription</label>
                                         <select class="form-control select2-custom @error('existing_subscription_id') is-invalid @enderror"
                                                 id="existing_subscription_id"
-                                                name="existing_subscription_id"
-                                                data-placeholder="Select a subscription...">
+                                                name="existing_subscription_id">
                                             <option value="">Select a subscription...</option>
                                             @foreach($subscriptions as $subscription)
                                                 <option value="{{ $subscription->id }}" @selected(old('existing_subscription_id') == $subscription->id)>
@@ -576,7 +511,7 @@
                                             @endforeach
                                         </select>
                                         @error('existing_subscription_id')
-                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
                                 </div>
@@ -585,17 +520,14 @@
                     </div>
                 </div>
 
-                {{-- Submit Buttons --}}
-                <div class="card shadow-sm">
-                    <div class="card-body bg-light">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <a href="{{ route('admin.domains.index') }}" class="btn btn-secondary btn-lg">
-                                <i class="bi bi-arrow-left"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
-                                <i class="bi bi-check-circle"></i> Register Domain
-                            </button>
-                        </div>
+                <div class="card">
+                    <div class="card-body">
+                        <button type="submit" class="btn btn-primary">
+                            Register Domain
+                        </button>
+                        <a href="{{ route('admin.domains.index') }}" class="btn btn-secondary">
+                            Cancel
+                        </a>
                     </div>
                 </div>
             </form>
@@ -604,7 +536,6 @@
 
     @push('styles')
         <style>
-            /* Custom Select2 Styling */
             .select2-custom + .select2-container {
                 width: 100% !important;
             }
@@ -613,13 +544,6 @@
                 height: calc(2.25rem + 2px);
                 border: 1px solid #ced4da;
                 border-radius: 0.25rem;
-                padding: 0.375rem 0.75rem;
-                background-color: #fff;
-                transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-            }
-
-            .select2-custom + .select2-container .select2-selection--single:hover {
-                border-color: #adb5bd;
             }
 
             .select2-custom + .select2-container.select2-container--focus .select2-selection--single,
@@ -628,129 +552,14 @@
                 box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
             }
 
-            .select2-custom + .select2-container .select2-selection--single .select2-selection__rendered {
-                padding-left: 0;
-                padding-right: 20px;
-                line-height: calc(2.25rem + 2px);
-                color: #495057;
-            }
-
-            .select2-custom + .select2-container .select2-selection--single .select2-selection__arrow {
-                height: calc(2.25rem + 2px);
-                right: 8px;
-            }
-
-            .select2-custom + .select2-container .select2-selection--single .select2-selection__arrow b {
-                border-color: #6c757d transparent transparent transparent;
-                border-width: 5px 4px 0 4px;
-                margin-top: -2px;
-            }
-
-            .select2-custom + .select2-container.select2-container--open .select2-selection--single .select2-selection__arrow b {
-                border-color: transparent transparent #6c757d transparent;
-                border-width: 0 4px 5px 4px;
-            }
-
             .select2-custom + .select2-container .select2-dropdown {
                 border: 1px solid #ced4da;
                 border-radius: 0.25rem;
-                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-                margin-top: 2px;
-            }
-
-            .select2-custom + .select2-container .select2-search--dropdown .select2-search__field {
-                border: 1px solid #ced4da;
-                border-radius: 0.25rem;
-                padding: 0.375rem 0.75rem;
-                margin: 5px;
-                width: calc(100% - 10px);
-            }
-
-            .select2-custom + .select2-container .select2-search--dropdown .select2-search__field:focus {
-                border-color: #80bdff;
-                outline: 0;
-                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-            }
-
-            .select2-custom + .select2-container .select2-results__option {
-                padding: 0.5rem 0.75rem;
-                transition: background-color 0.15s ease-in-out;
             }
 
             .select2-custom + .select2-container .select2-results__option--highlighted {
                 background-color: #007bff;
                 color: #fff;
-            }
-
-            .select2-custom + .select2-container .select2-results__option[aria-selected="true"] {
-                background-color: #e9ecef;
-                color: #495057;
-            }
-
-            .select2-custom + .select2-container .select2-results__option[aria-selected="true"]:hover {
-                background-color: #007bff;
-                color: #fff;
-            }
-
-            .select2-custom + .select2-container--disabled .select2-selection--single {
-                background-color: #e9ecef;
-                cursor: not-allowed;
-                opacity: 0.6;
-            }
-
-            /* Form improvements */
-            .form-group label.required::after {
-                content: " *";
-                color: #dc3545;
-                font-weight: bold;
-            }
-
-            .card-primary.card-outline {
-                border-top: 3px solid #007bff;
-            }
-
-            .card-info.card-outline {
-                border-top: 3px solid #17a2b8;
-            }
-
-            .card-success.card-outline {
-                border-top: 3px solid #28a745;
-            }
-
-            .card-header {
-                background-color: #ffffff;
-                border-bottom: 1px solid #dee2e6;
-                padding: 1rem 1.25rem;
-            }
-
-            .card-title {
-                font-weight: 600;
-                color: #495057;
-                font-size: 1.1rem;
-            }
-
-            .form-check {
-                transition: all 0.2s ease;
-            }
-
-            .form-check:hover {
-                background-color: #f8f9fa;
-            }
-
-            .form-check-input:checked ~ .form-check-label {
-                color: #007bff;
-            }
-
-            .input-group-text {
-                border-right: none;
-            }
-
-            .input-group .form-control {
-                border-left: none;
-            }
-
-            .input-group .form-control:focus {
-                border-left: 1px solid #80bdff;
             }
         </style>
     @endpush
@@ -758,18 +567,12 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Initialize Custom Select2
-                $('.select2-custom').each(function() {
-                    const placeholder = $(this).data('placeholder') || 'Select an option...';
-                    $(this).select2({
-                        placeholder: placeholder,
-                        allowClear: true,
-                        width: '100%',
-                        theme: 'bootstrap4'
-                    });
+                $('.select2-custom').select2({
+                    placeholder: 'Select an option...',
+                    allowClear: true,
+                    width: '100%'
                 });
 
-                // Subscription option toggle
                 const subscriptionNone = document.getElementById('subscription_none');
                 const subscriptionCreate = document.getElementById('subscription_create');
                 const subscriptionLink = document.getElementById('subscription_link');
@@ -793,10 +596,8 @@
                 subscriptionCreate.addEventListener('change', updateSubscriptionSections);
                 subscriptionLink.addEventListener('change', updateSubscriptionSections);
 
-                // Initialize on page load
                 updateSubscriptionSections();
 
-                // Billing cycle date calculation
                 const billingCycleSelect = document.getElementById('billing_cycle');
                 const startsAtInput = document.getElementById('hosting_starts_at');
                 const expiresAtInput = document.getElementById('hosting_expires_at');
