@@ -1,0 +1,125 @@
+graph TB
+    subgraph "1. Database Storage Layer"
+        DP["`**DomainPrice Table**
+        register_price: 1299 (integer)
+        renewal_price: 2500 (integer)
+        type: international/local
+        Base Currency: USD or RWF`"]
+        
+        HPP["`**HostingPlanPrice Table**
+        regular_price: 10000 (integer)
+        renewal_price: 8000 (integer)
+        Base Currency: USD (always)`"]
+        
+        CURR["`**Currency Table**
+        code: USD/RWF/EUR
+        exchange_rate: 1.350000
+        is_base: true/false
+        rate_updated_at: timestamp`"]
+    end
+    
+    subgraph "2. Price Retrieval Layer"
+        DPBC["`**DomainPrice Model**
+        getPriceInBaseCurrency()
+        1299 / 100 = 12.99 USD
+        (RWF: no division)`"]
+        
+        HPPBC["`**HostingPlanPrice Model**
+        getPriceInBaseCurrency()
+        10000 / 100 = 100.00 USD`"]
+    end
+    
+    subgraph "3. Currency Conversion Layer"
+        CS["`**CurrencyService/**
+        **CurrencyConverter**
+        convert(amount, from, to)`"]
+        
+        CHECK{"`**Pair Type**
+        Check?`"}
+        
+        API["`**ExchangeRateProvider**
+        ExchangeRate-API
+        Real-time USD/RWF rates
+        Cached: 1 hour TTL`"]
+        
+        DBR["`**Currency Model**
+        Database Rates
+        convertTo() method
+        Via base currency`"]
+    end
+    
+    subgraph "4. Conversion Calculation"
+        CONV1["`**USD → RWF**
+        12.99 × 1350.0
+        = 17,536.5 RWF`"]
+        
+        CONV2["`**USD → EUR**
+        100.00 × 0.92
+        = 92.00 EUR`"]
+    end
+    
+    subgraph "5. Formatting Layer"
+        PF["`**PriceFormatter**
+        format(amount, currency)
+        Handles decimals & symbols`"]
+        
+        DISP1["`**Display**
+        $12.99
+        or FRW 17,537`"]
+        
+        DISP2["`**Display**
+        €92.00`"]
+    end
+    
+    subgraph "6. Cart & Checkout"
+        CPC["`**CartPriceConverter**
+        Converts all items to
+        user's preferred currency`"]
+        
+        CART["`**Cart Items**
+        Each item converted
+        Original currency preserved`"]
+        
+        CHECKOUT["`**Order Creation**
+        All items in same currency
+        Order stored with currency`"]
+    end
+    
+    DP -->|"`getPriceInBaseCurrency()`"| DPBC
+    HPP -->|"`getPriceInBaseCurrency()`"| HPPBC
+    
+    DPBC -->|"`convert(12.99, USD, RWF)`"| CS
+    HPPBC -->|"`convert(100.00, USD, EUR)`"| CS
+    
+    CS -->|"`USD/RWF pair?`"| CHECK
+    CHECK -->|"`Yes`"| API
+    CHECK -->|"`No`"| DBR
+    
+    API -->|"`Rate: 1350.0`"| CONV1
+    DBR -->|"`Rate: 0.92`"| CONV2
+    
+    CONV1 -->|"`format(17536.5, RWF)`"| PF
+    CONV2 -->|"`format(92.00, EUR)`"| PF
+    
+    PF --> DISP1
+    PF --> DISP2
+    
+    DISP1 -->|"`convertItemPrice()`"| CPC
+    DISP2 -->|"`convertItemPrice()`"| CPC
+    
+    CPC --> CART
+    CART --> CHECKOUT
+    
+    CURR -.->|"`Exchange rates`"| DBR
+    CURR -.->|"`Fallback rates`"| API
+    
+    style DP fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style HPP fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style CURR fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style API fill:#fff4e1,stroke:#e65100,stroke-width:2px
+    style DBR fill:#fff4e1,stroke:#e65100,stroke-width:2px
+    style CS fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style PF fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    style CPC fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    style CART fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    style CHECKOUT fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
