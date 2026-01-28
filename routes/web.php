@@ -54,11 +54,12 @@ Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verif
 
 Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' => 'admin.'], function (): void {
     Route::resource('contacts', ContactController::class);
-    Route::resource('domains', DomainController::class)->except(['show']);
 
-    // Custom domain registration with hosting subscription
+    // Custom domain registration with hosting subscription (must be before resource route)
     Route::get('domains/custom-register', [DomainController::class, 'createCustom'])->name('domains.custom-register');
     Route::post('domains/custom-register', [DomainController::class, 'storeCustom'])->name('domains.custom-register.store');
+
+    Route::resource('domains', DomainController::class)->except(['show']);
 
     Route::get('domains/{domain:uuid}/info', [DomainOperationsController::class, 'domainInfo'])->name('domain.info');
     Route::post('domains/{domain:uuid}/refresh-info', [DomainController::class, 'refreshInfo'])->name('domains.refresh-info');

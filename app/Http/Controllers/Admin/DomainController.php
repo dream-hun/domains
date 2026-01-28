@@ -161,7 +161,7 @@ final class DomainController extends Controller
         }
 
         return back()
-            ->withErrors(['error' => $result['message'] ?? 'Domain transferRegister failed'])
+            ->withErrors(['error' => $result['message'] ?? 'Domain transfer failed'])
             ->withInput();
     }
 
