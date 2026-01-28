@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Helpers;
 
 use App\Exceptions\CurrencyExchangeException;
+use App\Services\PriceFormatter;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use NumberFormatter;
 
 final class CurrencyHelper
 {
@@ -27,7 +27,6 @@ final class CurrencyHelper
     {
         $currency = mb_strtoupper($currency);
 
-        // Return 1:1 for USD since it's our base currency
         if ($currency === self::BASE_CURRENCY) {
             return [
                 'rate' => 1.0,
@@ -79,22 +78,13 @@ final class CurrencyHelper
      */
     public static function convert(float $amount, string $fromCurrency, string $targetCurrency): float
     {
-        $fromCurrency = mb_strtoupper($fromCurrency);
-        $targetCurrency = mb_strtoupper($targetCurrency);
-
-        if ($fromCurrency === 'FRW') {
-            $fromCurrency = 'RWF';
-        }
-
-        if ($targetCurrency === 'FRW') {
-            $targetCurrency = 'RWF';
-        }
+        $fromCurrency = self::normalizeCurrency($fromCurrency);
+        $targetCurrency = self::normalizeCurrency($targetCurrency);
 
         if ($fromCurrency === $targetCurrency) {
             return $amount;
         }
 
-        // Use CurrencyExchangeHelper for USD/RWF conversions
         if (self::isUsdRwfPair($fromCurrency, $targetCurrency)) {
             try {
                 $exchangeHelper = resolve(CurrencyExchangeHelper::class);
@@ -102,63 +92,28 @@ final class CurrencyHelper
 
                 return (int) $money->getAmount() / 100; // Convert from minor units
             } catch (CurrencyExchangeException $e) {
-                Log::warning('CurrencyExchangeHelper failed, falling back to old method', [
+                Log::warning('CurrencyExchangeHelper failed, falling back', [
                     'from' => $fromCurrency,
                     'to' => $targetCurrency,
                     'error' => $e->getMessage(),
                 ]);
-                // Fall through to old method
             }
         }
 
-        // Convert to USD first if not already USD
         if ($fromCurrency !== self::BASE_CURRENCY) {
             $fromRateData = self::getRateAndSymbol($fromCurrency);
-            $amount /= $fromRateData['rate']; // Convert to USD
+            $amount /= $fromRateData['rate'];
         }
 
-        // Convert from USD to target currency
         return self::convertFromUSD($amount, $targetCurrency);
     }
 
     /**
      * Format amount with currency symbol
-     *
-     * @throws Exception
      */
     public static function formatMoney(float $amount, string $currency): string
     {
-        $currency = mb_strtoupper($currency);
-
-        if ($currency === 'FRW') {
-            $currency = 'RWF';
-        }
-
-        // Use CurrencyExchangeHelper formatting for USD/RWF
-        if (in_array($currency, ['USD', 'RWF'], true)) {
-            try {
-                $exchangeHelper = resolve(CurrencyExchangeHelper::class);
-                $money = $exchangeHelper->convertWithAmount($currency, $currency, $amount);
-
-                return $exchangeHelper->formatMoney($money);
-            } catch (CurrencyExchangeException $e) {
-                Log::warning('CurrencyExchangeHelper formatting failed, falling back', [
-                    'currency' => $currency,
-                    'error' => $e->getMessage(),
-                ]);
-                // Fall through to old method
-            }
-        }
-
-        $rateData = self::getRateAndSymbol($currency);
-
-        // Determine decimal places based on currency
-        $decimals = self::getDecimalPlaces($currency, $amount);
-
-        // Round to the appropriate decimal places to ensure consistency
-        $amount = round($amount, $decimals);
-
-        return $rateData['symbol'].number_format($amount, $decimals);
+        return resolve(PriceFormatter::class)->format($amount, $currency);
     }
 
     /**
@@ -166,48 +121,27 @@ final class CurrencyHelper
      */
     public static function getCurrencySymbol(string $currencyCode): string
     {
-        $currencyCode = mb_strtoupper($currencyCode);
-
-        // Common currency symbols for better performance
-        $commonSymbols = [
-            'USD' => '$',
-            'FRW' => 'FRW',
-            'RWF' => 'FRW',
-
-        ];
-
-        if (isset($commonSymbols[$currencyCode])) {
-            return $commonSymbols[$currencyCode];
-        }
-
-        // Fallback to NumberFormatter for other currencies
-        try {
-            $formatter = new NumberFormatter('en', NumberFormatter::CURRENCY);
-            $formatted = $formatter->formatCurrency(0, $currencyCode);
-            $symbol = preg_replace('/[\d.,\s]/', '', $formatted);
-
-            if (in_array($symbol, ['', '0'], true)) {
-                return $currencyCode;
-            }
-
-            return $symbol;
-        } catch (Exception) {
-            return $currencyCode;
-        }
+        return resolve(PriceFormatter::class)->getSymbol($currencyCode);
     }
 
     /**
-     * Get user's preferred currency (checks session, then defaults)
+     * Get user's preferred currency
      */
     public static function getUserCurrency(): string
     {
-        // Check session first
         if (session()->has('selected_currency')) {
             return session('selected_currency');
         }
 
-        // Default to USD
         return self::BASE_CURRENCY;
+    }
+
+    /**
+     * Normalize a currency code
+     */
+    public static function normalizeCurrency(string $currency): string
+    {
+        return resolve(PriceFormatter::class)->normalizeCurrency($currency);
     }
 
     /**
@@ -215,47 +149,12 @@ final class CurrencyHelper
      */
     private static function isUsdRwfPair(string $from, string $to): bool
     {
-        if ($from === 'FRW') {
-            $from = 'RWF';
-        }
-
-        if ($to === 'FRW') {
-            $to = 'RWF';
-        }
+        $from = self::normalizeCurrency($from);
+        $to = self::normalizeCurrency($to);
 
         $pair = [$from, $to];
         sort($pair);
 
         return $pair === ['RWF', 'USD'];
-    }
-
-    /**
-     * Get the appropriate number of decimal places for a currency
-     */
-    private static function getDecimalPlaces(string $currency, float $amount): int
-    {
-        // Currencies that don't use decimal places
-        $noDecimalCurrencies = [
-            'RWF', // Rwandan Franc
-            'JPY', // Japanese Yen
-            'KRW', // South Korean Won
-        ];
-
-        if ($currency === 'FRW') {
-            $currency = 'RWF';
-        }
-
-        if (in_array($currency, $noDecimalCurrencies, true)) {
-            return 0;
-        }
-
-        // For other currencies, check if the amount has meaningful decimals
-        // If the fractional part is effectively zero, don't show decimals
-        if (abs($amount - round($amount)) < 0.01) {
-            return 0;
-        }
-
-        // Default to 2 decimal places
-        return 2;
     }
 }

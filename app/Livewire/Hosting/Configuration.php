@@ -14,6 +14,7 @@ use App\Models\HostingPlanFeature;
 use App\Models\HostingPlanPrice;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\InternationalDomainService;
+use App\Services\PriceFormatter;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -397,13 +398,13 @@ class Configuration extends Component
                         $available = isset($eppResults[$domainName]) && $eppResults[$domainName]->available;
                     }
 
-                    // Convert price from cents to dollars, then to user currency
+                    $formatter = resolve(PriceFormatter::class);
                     $rawPriceInCents = (int) $tld->register_price;
-                    $priceInUSD = $rawPriceInCents / 100;
+                    $priceInUSD = $formatter->minorToMajorUnits($rawPriceInCents);
                     $convertedPrice = $priceInUSD;
 
                     $renewalPriceInCents = (int) $tld->renewal_price;
-                    $renewalInUSD = $renewalPriceInCents / 100;
+                    $renewalInUSD = $formatter->minorToMajorUnits($renewalPriceInCents);
                     $convertedRenewal = $renewalInUSD;
 
                     if ($currentCurrency !== 'USD') {
@@ -416,8 +417,8 @@ class Configuration extends Component
                         'available' => $available,
                         'price' => $convertedPrice,
                         'renewal_price' => $convertedRenewal,
-                        'formatted_price' => CurrencyHelper::formatMoney($convertedPrice, $currentCurrency),
-                        'formatted_renewal' => CurrencyHelper::formatMoney($convertedRenewal, $currentCurrency),
+                        'formatted_price' => $formatter->format($convertedPrice, $currentCurrency),
+                        'formatted_renewal' => $formatter->format($convertedRenewal, $currentCurrency),
                         'in_cart' => $cartContent->has($domainName),
                         'tld' => $tld->tld,
                     ];

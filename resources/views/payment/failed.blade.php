@@ -39,7 +39,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <p class="mb-1 text-muted">Total Amount</p>
-                                        <p class="mb-0 fw-bold text-dark">${{ number_format($order->total_amount, 2) }}
+                                        <p class="mb-0 fw-bold text-dark">@price($order->total_amount, $order->currency ?? 'USD')
                                         </p>
                                     </div>
                                 </div>

@@ -6,6 +6,7 @@ namespace App\Helpers;
 
 use App\Exceptions\CurrencyExchangeException;
 use App\Services\ExchangeRateClient;
+use App\Services\PriceFormatter;
 use Cknow\Money\Money;
 use Exception;
 use Illuminate\Support\Facades\Cache;
@@ -63,7 +64,6 @@ final readonly class CurrencyExchangeHelper
 
         $cacheKey = $this->getCacheKey($from, $to);
 
-        // Check request-level cache first to avoid duplicate queries
         if (ExchangeRateRequestCache::hasRate($cacheKey)) {
             $rate = ExchangeRateRequestCache::getRate($cacheKey);
             if ($rate !== null) {
@@ -75,7 +75,6 @@ final readonly class CurrencyExchangeHelper
             $rate = Cache::get($cacheKey);
             if ($rate !== null) {
                 $rate = (float) $rate;
-                // Store in request-level cache
                 ExchangeRateRequestCache::setRate($cacheKey, $rate);
 
                 return $rate;
@@ -99,10 +98,7 @@ final readonly class CurrencyExchangeHelper
 
             $rate = (float) $response['conversion_rate'];
 
-            // Cache the rate and metadata
             $this->cacheRate($from, $to, $rate, $response);
-
-            // Store in request-level cache
             ExchangeRateRequestCache::setRate($cacheKey, $rate);
 
             return $rate;
@@ -130,8 +126,6 @@ final readonly class CurrencyExchangeHelper
         $rate = $this->getExchangeRate('USD', 'RWF');
         $convertedAmount = $amount * $rate;
 
-        // Money expects amount in smallest unit (minor units)
-        // For RWF, 1 RWF = 1 minor unit (no cents)
         return Money::RWF((int) round($convertedAmount * 100));
     }
 
@@ -145,7 +139,6 @@ final readonly class CurrencyExchangeHelper
         $rate = $this->getExchangeRate('RWF', 'USD');
         $convertedAmount = $amount * $rate;
 
-        // Money expects amount in smallest unit (cents for USD)
         return Money::USD((int) round($convertedAmount * 100));
     }
 
@@ -180,33 +173,7 @@ final readonly class CurrencyExchangeHelper
         $currency = $this->normalizeCurrency($money->getCurrency()->getCode());
         $amount = (int) $money->getAmount() / 100;
 
-        $config = config('currency_exchange.supported_currencies', []);
-
-        $symbol = $config[$currency]['symbol'] ?? $currency;
-
-        if ($currency === 'USD') {
-            // Show decimals only if there are cents
-            $decimals = (abs($amount - round($amount)) < 0.01) ? 0 : 2;
-            // Round first to ensure consistency
-            $amount = round($amount, $decimals);
-
-            return sprintf('%s%s', $symbol, number_format($amount, $decimals));
-        }
-
-        // RWF typically doesn't use decimal places
-        if ($currency === 'RWF') {
-            // Always round to whole number for RWF
-            $amount = round($amount, 0);
-
-            return sprintf('%s%s', $symbol, number_format($amount, 0));
-        }
-
-        // For other currencies, check if decimals are needed
-        $decimals = (abs($amount - round($amount)) < 0.01) ? 0 : 2;
-        // Round first to ensure consistency
-        $amount = round($amount, $decimals);
-
-        return sprintf('%s%s', $symbol, number_format($amount, $decimals));
+        return resolve(PriceFormatter::class)->format($amount, $currency);
     }
 
     /**
@@ -421,8 +388,6 @@ final readonly class CurrencyExchangeHelper
 
     private function normalizeCurrency(string $currency): string
     {
-        $currency = mb_strtoupper($currency);
-
-        return $currency === 'FRW' ? 'RWF' : $currency;
+        return resolve(PriceFormatter::class)->normalizeCurrency($currency);
     }
 }

@@ -28,7 +28,7 @@
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">Amount:</span>
-                                <span class="font-weight-bold">{{ $order->currency }} {{ number_format($order->total_amount, 2) }}</span>
+                                <span class="font-weight-bold">@price($order->total_amount, $order->currency)</span>
                             </div>
                             <div class="d-flex justify-content-between">
                                 <span class="text-muted">Status:</span>

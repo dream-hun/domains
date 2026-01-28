@@ -122,8 +122,8 @@
                                                             {{ ucfirst(str_replace('-', ' ', $price->billing_cycle)) }}
                                                         </span>
                                                     </td>
-                                                    <td>${{ number_format($price->regular_price / 100, 2) }}</td>
-                                                    <td>${{ number_format($price->renewal_price / 100, 2) }}</td>
+                                                    <td>@priceMinor($price->regular_price, 'USD')</td>
+                                                    <td>@priceMinor($price->renewal_price, 'USD')</td>
                                                     <td>
                                                         @if (isset($price->status) && method_exists($price->status, 'label'))
                                                             <span

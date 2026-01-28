@@ -104,7 +104,7 @@
                                             <td>{{ ucfirst($item->domain_type) }}</td>
                                             <td>{{ $item->years }} {{ $item->years == 1 ? 'Year' : 'Years' }}</td>
 
-                                            <td>{{$order->currency}} {{ number_format($item->total_amount, 2) }}</td>
+                                            <td>@price($item->total_amount, $order->currency)</td>
                                         </tr>
                                     @endforeach
                                     </tbody>
@@ -130,12 +130,12 @@
                                         <tbody>
                                         <tr>
                                             <th style="width:50%">Subtotal:</th>
-                                            <td>{{$order->currency}} {{ number_format($order->subtotal, 2) }}</td>
+                                            <td>@price($order->subtotal, $order->currency)</td>
                                         </tr>
 
                                         <tr>
                                             <th>Total:</th>
-                                            <td>{{$order->currency}} {{ number_format($order->total_amount, 2) }}</td>
+                                            <td>@price($order->total_amount, $order->currency)</td>
                                         </tr>
                                         </tbody>
                                     </table>

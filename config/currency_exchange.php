@@ -12,6 +12,89 @@ return [
     | List of currency codes supported by the currency exchange helper.
     | Currently limited to USD and RWF (Rwandan Franc) pair conversions.
     |
+    | Each currency has:
+    | - name: Human-readable name
+    | - symbol: Currency symbol for display
+    | - decimals: Number of decimal places (0 for currencies without minor units)
+    | - symbol_position: 'before' or 'after' the amount
+    | - aliases: Alternative codes that map to this currency
+    |
+    */
+
+    'currencies' => [
+        'USD' => [
+            'name' => 'US Dollar',
+            'symbol' => '$',
+            'decimals' => 2,
+            'symbol_position' => 'before',
+            'aliases' => [],
+        ],
+        'RWF' => [
+            'name' => 'Rwandan Franc',
+            'symbol' => 'FRW',
+            'decimals' => 0,
+            'symbol_position' => 'before',
+            'aliases' => ['FRW'],
+        ],
+        'EUR' => [
+            'name' => 'Euro',
+            'symbol' => '€',
+            'decimals' => 2,
+            'symbol_position' => 'before',
+            'aliases' => [],
+        ],
+        'GBP' => [
+            'name' => 'British Pound',
+            'symbol' => '£',
+            'decimals' => 2,
+            'symbol_position' => 'before',
+            'aliases' => [],
+        ],
+        'JPY' => [
+            'name' => 'Japanese Yen',
+            'symbol' => '¥',
+            'decimals' => 0,
+            'symbol_position' => 'before',
+            'aliases' => [],
+        ],
+        'KRW' => [
+            'name' => 'South Korean Won',
+            'symbol' => '₩',
+            'decimals' => 0,
+            'symbol_position' => 'before',
+            'aliases' => [],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Currency Aliases
+    |--------------------------------------------------------------------------
+    |
+    | Map alternative currency codes to their canonical codes.
+    | This ensures consistent handling when different codes are used.
+    |
+    */
+
+    'aliases' => [
+        'FRW' => 'RWF',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Currency
+    |--------------------------------------------------------------------------
+    |
+    | The default/base currency used for pricing and conversions.
+    |
+    */
+
+    'default_currency' => env('DEFAULT_CURRENCY', 'USD'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supported Currencies (Legacy - kept for backward compatibility)
+    |--------------------------------------------------------------------------
     */
 
     'supported_currencies' => [

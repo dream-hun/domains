@@ -37,14 +37,14 @@
                                     <small class="text-muted">{{ ucfirst($domainType) }} - {{ $years }} year(s)</small>
                                 </div>
                                 <div class="text-end">
-                                    <span class="fw-bold text-dark">${{ number_format($price * $years, 2) }}</span>
+                                    <span class="fw-bold text-dark">@price($price * $years, 'USD')</span>
                                 </div>
                             </div>
                         @endforeach
 
                         <div class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top">
                             <h4 class="mb-0 text-dark">Total</h4>
-                            <h4 class="mb-0 text-primary">${{ number_format($totalAmount, 2) }}</h4>
+                            <h4 class="mb-0 text-primary">@price($totalAmount, 'USD')</h4>
                         </div>
                     </div>
                 </div>
@@ -125,7 +125,7 @@
                                     <button type="submit"
                                         class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
                                         <i class="bi bi-credit-card me-2"></i>
-                                        Pay ${{ number_format($totalAmount, 2) }} with Card
+                                        Pay @price($totalAmount, 'USD') with Card
                                     </button>
                                 </div>
                             </form>
@@ -156,7 +156,7 @@
                                     <a href="{{ route('payment.kpay.show') }}"
                                        class="btn btn-success btn-lg w-100 d-flex align-items-center justify-content-center">
                                         <i class="bi bi-phone me-2"></i>
-                                        Pay ${{ number_format($totalAmount, 2) }} with KPay
+                                        Pay @price($totalAmount, 'USD') with KPay
                                     </a>
                                 </div>
                             </div>

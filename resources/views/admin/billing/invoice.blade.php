@@ -169,11 +169,9 @@
                                                         {{ $item->years }} {{ $item->years == 1 ? 'year' : 'years' }}
                                                     @endif
                                                 </td>
-                                                <td class="text-end">{{ $item->currency }}
-                                                    {{ number_format($item->price, 2) }}</td>
+                                                <td class="text-end">@price($item->price, $item->currency)</td>
                                                 <td class="text-center">{{ $item->quantity }}</td>
-                                                <td class="text-end">{{ $item->currency }}
-                                                    {{ number_format($item->total_amount, 2) }}</td>
+                                                <td class="text-end">@price($item->total_amount, $item->currency)</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -192,27 +190,23 @@
                                 <table class="table">
                                     <tr>
                                         <td class="text-end"><strong>Subtotal:</strong></td>
-                                        <td class="text-end">{{ $order->currency }}
-                                            {{ number_format($order->subtotal ?? $order->total_amount, 2) }}</td>
+                                        <td class="text-end">@price($order->subtotal ?? $order->total_amount, $order->currency)</td>
                                     </tr>
                                     @if (($order->tax ?? 0) > 0)
                                         <tr>
                                             <td class="text-end"><strong>Tax:</strong></td>
-                                            <td class="text-end">{{ $order->currency }}
-                                                {{ number_format($order->tax, 2) }}</td>
+                                            <td class="text-end">@price($order->tax, $order->currency)</td>
                                         </tr>
                                     @endif
                                     @if (($order->discount_amount ?? 0) > 0)
                                         <tr>
                                             <td class="text-end"><strong>Discount:</strong></td>
-                                            <td class="text-end">{{ $order->currency }}
-                                                -{{ number_format($order->discount_amount, 2) }}</td>
+                                            <td class="text-end">-@price($order->discount_amount, $order->currency)</td>
                                         </tr>
                                     @endif
                                     <tr class="table-light">
                                         <td class="text-end"><strong>Total:</strong></td>
-                                        <td class="text-end"><strong>{{ $order->currency }}
-                                                {{ number_format($order->total_amount, 2) }}</strong></td>
+                                        <td class="text-end"><strong>@price($order->total_amount, $order->currency)</strong></td>
                                     </tr>
                                 </table>
                             </div>
