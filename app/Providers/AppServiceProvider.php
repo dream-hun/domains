@@ -25,7 +25,9 @@ use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use App\Services\ExchangeRateClient;
+use App\Services\PriceFormatter;
 use Exception;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -54,6 +56,25 @@ final class AppServiceProvider extends ServiceProvider
             View::share('hostings', []);
         }
 
+        $this->registerBladeDirectives();
+    }
+
+    private function registerBladeDirectives(): void
+    {
+        Blade::directive('price', fn (string $expression): string => "<?php
+                \$__priceArgs = [{$expression}];
+                if (count(\$__priceArgs) === 1 && \$__priceArgs[0] instanceof \\App\\ValueObjects\\Price) {
+                    echo \$__priceArgs[0]->format();
+                } elseif (count(\$__priceArgs) >= 2) {
+                    echo app(\\App\\Services\\PriceFormatter::class)->format(\$__priceArgs[0], \$__priceArgs[1]);
+                } else {
+                    echo '';
+                }
+            ?>");
+
+        Blade::directive('priceMinor', fn (string $expression): string => sprintf('<?php echo app('.PriceFormatter::class.'::class)->formatFromMinorUnits(%s); ?>', $expression));
+
+        Blade::directive('currencySymbol', fn (string $expression): string => sprintf('<?php echo app('.PriceFormatter::class.'::class)->getSymbol(%s); ?>', $expression));
     }
 
     /**

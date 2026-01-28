@@ -32,7 +32,8 @@ final readonly class CurrencyService implements CurrencyConverterContract
 
     public function __construct(
         private UpdateExchangeRatesAction $updateAction,
-        private CurrencyExchangeHelper $exchangeHelper
+        private CurrencyExchangeHelper $exchangeHelper,
+        private PriceFormatter $formatter
     ) {}
 
     /**
@@ -158,19 +159,13 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Format amount with currency
+     * Format amount with currency.
+     *
+     * Delegates to PriceFormatter for consistent formatting across the application.
      */
     public function format(float $amount, string $currencyCode): string
     {
-        $currencyCode = $this->normalizeCurrencyCode($currencyCode);
-
-        $currency = $this->getCurrency($currencyCode);
-
-        if (! $currency instanceof Currency) {
-            return $currencyCode.' '.number_format($amount, 2);
-        }
-
-        return $currency->format($amount);
+        return $this->formatter->format($amount, $currencyCode);
     }
 
     /**
@@ -278,24 +273,13 @@ final readonly class CurrencyService implements CurrencyConverterContract
     }
 
     /**
-     * Format amount as Money object
+     * Format amount as Money object.
+     *
+     * Delegates to PriceFormatter for consistent formatting across the application.
      */
     public function formatAsMoney(float $amount, string $currencyCode): string
     {
-        $currencyCode = $this->normalizeCurrencyCode($currencyCode);
-
-        // Use CurrencyExchangeHelper formatting for USD/RWF
-        if (in_array($currencyCode, ['USD', 'RWF'], true)) {
-            try {
-                $money = $this->exchangeHelper->convertWithAmount($currencyCode, $currencyCode, $amount);
-
-                return $this->exchangeHelper->formatMoney($money);
-            } catch (CurrencyExchangeException) {
-                // Fall back to regular format
-            }
-        }
-
-        return $this->format($amount, $currencyCode);
+        return $this->formatter->format($amount, $currencyCode);
     }
 
     /**

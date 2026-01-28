@@ -114,7 +114,6 @@ final readonly class CurrencyExchangeHelper implements ExchangeRateProviderContr
 
             $rate = (float) $response['conversion_rate'];
 
-            // Cache the rate and metadata
             $this->cacheRate($from, $to, $rate, $response);
 
             // Store in request-level cache
@@ -145,8 +144,6 @@ final readonly class CurrencyExchangeHelper implements ExchangeRateProviderContr
         $rate = $this->getRate('USD', 'RWF');
         $convertedAmount = $amount * $rate;
 
-        // Money expects amount in smallest unit (minor units)
-        // For RWF, 1 RWF = 1 minor unit (no cents)
         return Money::RWF((int) round($convertedAmount * 100));
     }
 
@@ -160,7 +157,6 @@ final readonly class CurrencyExchangeHelper implements ExchangeRateProviderContr
         $rate = $this->getRate('RWF', 'USD');
         $convertedAmount = $amount * $rate;
 
-        // Money expects amount in smallest unit (cents for USD)
         return Money::USD((int) round($convertedAmount * 100));
     }
 
@@ -195,33 +191,7 @@ final readonly class CurrencyExchangeHelper implements ExchangeRateProviderContr
         $currency = $this->normalizeCurrencyCode($money->getCurrency()->getCode());
         $amount = (int) $money->getAmount() / 100;
 
-        $config = config('currency_exchange.supported_currencies', []);
-
-        $symbol = $config[$currency]['symbol'] ?? $currency;
-
-        if ($currency === 'USD') {
-            // Show decimals only if there are cents
-            $decimals = (abs($amount - round($amount)) < 0.01) ? 0 : 2;
-            // Round first to ensure consistency
-            $amount = round($amount, $decimals);
-
-            return sprintf('%s%s', $symbol, number_format($amount, $decimals));
-        }
-
-        // RWF typically doesn't use decimal places
-        if ($currency === 'RWF') {
-            // Always round to whole number for RWF
-            $amount = round($amount, 0);
-
-            return sprintf('%s%s', $symbol, number_format($amount, 0));
-        }
-
-        // For other currencies, check if decimals are needed
-        $decimals = (abs($amount - round($amount)) < 0.01) ? 0 : 2;
-        // Round first to ensure consistency
-        $amount = round($amount, $decimals);
-
-        return sprintf('%s%s', $symbol, number_format($amount, $decimals));
+        return resolve(PriceFormatter::class)->format($amount, $currency);
     }
 
     /**

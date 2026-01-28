@@ -118,7 +118,7 @@
                                 <strong>Total Amount:</strong>
                             </div>
                             <div class="col-sm-8">
-                                <strong>{{ $order->currency }} {{ number_format($order->total_amount, 2) }}</strong>
+                                <strong>@price($order->total_amount, $order->currency)</strong>
                             </div>
                         </div>
 
@@ -221,16 +221,16 @@
                                                         {{ $item->years }} {{ $item->years == 1 ? 'year' : 'years' }}
                                                     @endif
                                                 </td>
-                                                <td>{{ $item->currency }} {{ number_format($item->price, 2) }}</td>
+                                                <td>@price($item->price, $item->currency)</td>
                                                 <td>{{ $item->quantity }}</td>
-                                                <td>{{ $item->currency }} {{ number_format($item->total_amount, 2) }}</td>
+                                                <td>@price($item->total_amount, $item->currency)</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                     <tfoot>
                                         <tr>
                                             <th colspan="5" class="text-end">Total:</th>
-                                            <th>{{ $order->currency }} {{ number_format($order->total_amount, 2) }}</th>
+                                            <th>@price($order->total_amount, $order->currency)</th>
                                         </tr>
                                     </tfoot>
                                 </table>

@@ -80,8 +80,7 @@
                                                     <td>{{ $order->user->name ?? 'N/A' }}</td>
                                                 @endif
                                                 <td>
-                                                    <strong>{{ $order->currency }}
-                                                        {{ number_format($order->total_amount) }}</strong>
+                                                    <strong>@price($order->total_amount, $order->currency)</strong>
                                                 </td>
                                                 <td>
                                                     @if ($order->isPaid())

@@ -214,7 +214,7 @@
                                             class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
                                         <i class="bi bi-lock mr-2"></i>
                                         <span id="submit-text">
-                                            Pay {{ $currency ?? 'USD' }} {{ number_format($totalAmount, 2) }}
+                                            Pay @price($totalAmount, $currency ?? 'USD')
                                         </span>
                                         <span id="submit-spinner" class="spinner-border spinner-border-sm ml-2 d-none"
                                               role="status">
@@ -261,7 +261,7 @@
                                         </div>
                                         <div class="text-end ml-3">
                                             <span class="font-weight-bold text-dark">
-                                                {{ $itemCurrency }} {{ number_format($itemTotal, 2) }}
+                                                @price($itemTotal, $itemCurrency)
                                             </span>
                                         </div>
                                     </div>
@@ -278,13 +278,13 @@
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <span class="text-muted">Subtotal</span>
                                         <span class="text-muted">
-                                            {{ $currency ?? 'USD' }} {{ number_format($subtotal ?? $totalAmount, 2) }}
+                                            @price($subtotal ?? $totalAmount, $currency ?? 'USD')
                                         </span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                                         <h5 class="mb-0 font-weight-bold">Total</h5>
                                         <h4 class="mb-0 text-primary font-weight-bold">
-                                            {{ $currency ?? 'USD' }} {{ number_format($totalAmount, 2) }}
+                                            @price($totalAmount, $currency ?? 'USD')
                                         </h4>
                                     </div>
                                 </div>

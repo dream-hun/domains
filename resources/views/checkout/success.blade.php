@@ -23,7 +23,7 @@
                                 <strong>Order Number:</strong> {{ $order->order_number }}
                             </div>
                             <div class="mt-3">
-                                <p><strong>Total Amount:</strong> {{ $order->currency }} {{ number_format($order->total_amount, 2) }}</p>
+                                <p><strong>Total Amount:</strong> @price($order->total_amount, $order->currency)</p>
                             </div>
                         @elseif(session('order_number'))
                             <div class="alert alert-info d-inline-block">

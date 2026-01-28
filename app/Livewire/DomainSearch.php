@@ -10,6 +10,7 @@ use App\Models\Domain;
 use App\Models\DomainPrice;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\InternationalDomainService;
+use App\Services\PriceFormatter;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -244,16 +245,12 @@ final class DomainSearch extends Component
             $isInternational = isset($tld->type) && $tld->type === DomainType::International;
 
             if ($isInternational) {
-                // Use international domain service for international domains
                 Log::debug('Checking international domain:', ['domain' => $domainName]);
                 $checkResult = $this->internationalService->checkAvailability([$domainName]);
 
-                // All prices are stored in USD as cents (integer)
-                // Convert from cents to dollars first
+                $formatter = resolve(PriceFormatter::class);
                 $rawPriceInCents = (int) ($tld->register_price);
-                $priceInUSD = $rawPriceInCents / 100;
-
-                // Convert USD price to current currency if needed
+                $priceInUSD = $formatter->minorToMajorUnits($rawPriceInCents);
                 $convertedPrice = $priceInUSD;
                 try {
                     if ($this->currentCurrency !== 'USD') {
@@ -269,7 +266,7 @@ final class DomainSearch extends Component
                     'register_price' => $convertedPrice,
                     'transfer_price' => $tld->transfer_price,
                     'renewal_price' => $tld->renewal_price,
-                    'formatted_price' => CurrencyHelper::formatMoney($convertedPrice, $this->currentCurrency),
+                    'formatted_price' => $formatter->format($convertedPrice, $this->currentCurrency),
                     'in_cart' => $cartContent->has($domainName),
                     'is_primary' => $isPrimary,
                     'is_international' => true,
@@ -282,18 +279,14 @@ final class DomainSearch extends Component
                     'price_usd' => $priceInUSD,
                 ]);
             } else {
-                // Use EPP service for local domains
                 $eppResults = $this->eppService->checkDomain([$domainName]);
 
                 if ($eppResults !== [] && isset($eppResults[$domainName])) {
                     $result = $eppResults[$domainName];
 
-                    // All prices are stored in USD as cents (integer)
-                    // Convert from cents to dollars first
+                    $formatter = resolve(PriceFormatter::class);
                     $rawPriceInCents = (int) ($tld->register_price);
-                    $priceInUSD = $rawPriceInCents / 100;
-
-                    // Convert USD price to current currency if needed
+                    $priceInUSD = $formatter->minorToMajorUnits($rawPriceInCents);
                     $convertedPrice = $priceInUSD;
                     try {
                         if ($this->currentCurrency !== 'USD') {
@@ -309,7 +302,7 @@ final class DomainSearch extends Component
                         'register_price' => $convertedPrice,
                         'transfer_price' => $tld->transfer_price,
                         'renewal_price' => $tld->renewal_price,
-                        'formatted_price' => CurrencyHelper::formatMoney($convertedPrice, $this->currentCurrency),
+                        'formatted_price' => $formatter->format($convertedPrice, $this->currentCurrency),
                         'in_cart' => $cartContent->has($domainName),
                         'is_primary' => $isPrimary,
                         'is_international' => false,
