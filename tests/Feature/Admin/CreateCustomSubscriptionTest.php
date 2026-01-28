@@ -139,7 +139,7 @@ test('admin can create custom subscription without custom price', function (): v
         ->and($subscription->custom_price)->toBeNull();
 });
 
-test('admin can create custom subscription with custom price and currency conversion', function (): void {
+test('admin can create custom subscription with custom price in non-USD currency', function (): void {
     $plan = HostingPlan::factory()->create();
     $planPrice = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -170,7 +170,7 @@ test('admin can create custom subscription with custom price and currency conver
     expect($subscription)->not->toBeNull()
         ->and($subscription->is_custom_price)->toBeTrue()
         ->and($subscription->custom_price_currency)->toBe('RWF')
-        ->and($subscription->custom_price)->toBeGreaterThan(0); // Should be converted to USD
+        ->and(abs((float) $subscription->custom_price - 120000.0))->toBeLessThan(0.01); // Original price stored in original currency
 });
 
 test('validation requires currency when custom price is provided', function (): void {

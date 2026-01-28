@@ -9,7 +9,6 @@ use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\CurrencyService;
 use Exception;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
@@ -17,10 +16,6 @@ use Illuminate\Support\Str;
 
 final readonly class CreateCustomSubscriptionAction
 {
-    public function __construct(
-        private CurrencyService $currencyService
-    ) {}
-
     /**
      * Create a custom subscription
      *
@@ -52,20 +47,8 @@ final readonly class CreateCustomSubscriptionAction
 
         if (isset($data['custom_price']) && $data['custom_price'] !== null && $data['custom_price'] > 0) {
             $isCustomPrice = true;
-            $inputCurrency = $data['custom_price_currency'] ?? 'USD';
-            $inputPrice = (float) $data['custom_price'];
-
-            if ($inputCurrency !== 'USD') {
-                try {
-                    $customPrice = $this->currencyService->convert($inputPrice, $inputCurrency, 'USD');
-                    $customPriceCurrency = $inputCurrency;
-                } catch (Exception $e) {
-                    throw new Exception(sprintf('Failed to convert custom price from %s to USD: %s', $inputCurrency, $e->getMessage()), $e->getCode(), $e);
-                }
-            } else {
-                $customPrice = $inputPrice;
-                $customPriceCurrency = 'USD';
-            }
+            $customPriceCurrency = $data['custom_price_currency'] ?? 'USD';
+            $customPrice = (float) $data['custom_price'];
         }
 
         $startsAt = Date::parse($data['starts_at']);

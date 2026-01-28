@@ -99,7 +99,7 @@
                                             <th>Custom Price:</th>
                                             <td>
                                                 <span class="badge badge-info">Custom</span>
-                                                {{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}
+                                                @price($subscription->custom_price, $subscription->custom_price_currency ?? 'USD')
                                             </td>
                                         </tr>
                                         @if($subscription->custom_price_notes)

@@ -128,8 +128,8 @@ test('command uses correct currency for custom price subscriptions', function ()
         'auto_renew' => true,
         'billing_cycle' => 'monthly',
         'is_custom_price' => true,
-        'custom_price' => 100.00, // USD (stored in base currency)
-        'custom_price_currency' => 'RWF', // But original currency was RWF
+        'custom_price' => 100.00, // Stored in original currency (RWF)
+        'custom_price_currency' => 'RWF',
         'next_renewal_at' => now()->addDays(5),
         'last_invoice_generated_at' => null,
     ]);

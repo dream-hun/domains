@@ -6,9 +6,9 @@ namespace App\Actions\Domains;
 
 use App\Actions\RegisterDomainAction;
 use App\Actions\Subscription\CreateCustomSubscriptionAction;
+use App\Models\Contact;
 use App\Models\Domain;
 use App\Models\Subscription;
-use App\Services\CurrencyService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,8 +17,7 @@ final readonly class RegisterCustomDomainAction
 {
     public function __construct(
         private RegisterDomainAction $registerDomainAction,
-        private CreateCustomSubscriptionAction $createCustomSubscriptionAction,
-        private CurrencyService $currencyService
+        private CreateCustomSubscriptionAction $createCustomSubscriptionAction
     ) {}
 
     /**
@@ -31,12 +30,8 @@ final readonly class RegisterCustomDomainAction
     {
         try {
             return DB::transaction(function () use ($data, $adminId): array {
-                $contacts = [
-                    'registrant' => $data['registrant_contact_id'],
-                    'admin' => $data['admin_contact_id'],
-                    'technical' => $data['technical_contact_id'],
-                    'billing' => $data['billing_contact_id'],
-                ];
+                // Validate and prepare contacts
+                $contacts = $this->validateAndPrepareContacts($data);
 
                 $nameservers = array_filter([
                     $data['nameserver_1'] ?? null,
@@ -95,6 +90,64 @@ final readonly class RegisterCustomDomainAction
     }
 
     /**
+     * Validate that all contacts exist and prepare contact array
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, int>
+     *
+     * @throws Exception
+     */
+    private function validateAndPrepareContacts(array $data): array
+    {
+        $contactTypes = [
+            'registrant' => 'registrant_contact_id',
+            'admin' => 'admin_contact_id',
+            'technical' => 'technical_contact_id',
+            'billing' => 'billing_contact_id',
+        ];
+
+        $contacts = [];
+
+        foreach ($contactTypes as $type => $field) {
+            $contactId = $data[$field] ?? null;
+
+            // Log the raw contact ID for debugging
+            Log::debug('Validating contact', [
+                'type' => $type,
+                'field' => $field,
+                'raw_contact_id' => $contactId,
+                'contact_id_type' => gettype($contactId),
+            ]);
+
+            // Ensure contact ID is valid
+            if (empty($contactId) || $contactId === 0 || $contactId === '0') {
+                Log::error('Invalid contact ID provided', [
+                    'type' => $type,
+                    'contact_id' => $contactId,
+                ]);
+                throw new Exception(sprintf('Missing or invalid %s contact ID', $type));
+            }
+
+            $contactId = (int) $contactId;
+
+            // Verify contact exists in database
+            $contact = Contact::query()->find($contactId);
+            if (! $contact) {
+                Log::error('Contact not found in database', [
+                    'type' => $type,
+                    'contact_id' => $contactId,
+                    'available_contacts_count' => Contact::query()->count(),
+                ]);
+                throw new Exception(sprintf('%s contact with ID %d does not exist. Please select a valid contact.', ucfirst($type), $contactId));
+            }
+
+            $contacts[$type] = $contactId;
+        }
+
+        return $contacts;
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      */
     private function applyCustomPricing(Domain $domain, array $data, int $adminId): void
@@ -108,18 +161,11 @@ final readonly class RegisterCustomDomainAction
 
         $inputPrice = (float) $data['domain_custom_price'];
         $inputCurrency = $data['domain_custom_price_currency'] ?? 'USD';
-        $customPriceUsd = $inputPrice;
 
-        if ($inputCurrency !== 'USD') {
-            try {
-                $customPriceUsd = $this->currencyService->convert($inputPrice, $inputCurrency, 'USD');
-            } catch (Exception $e) {
-                throw new Exception(sprintf('Failed to convert custom price from %s to USD: %s', $inputCurrency, $e->getMessage()), $e->getCode(), $e);
-            }
-        }
-
+        // Store custom price directly without currency conversion
+        // The price is stored as-is in the specified currency
         $domain->update([
-            'custom_price' => $customPriceUsd,
+            'custom_price' => $inputPrice,
             'custom_price_currency' => $inputCurrency,
             'is_custom_price' => true,
             'custom_price_notes' => $data['domain_custom_price_notes'] ?? null,

@@ -98,27 +98,10 @@ final readonly class SubscriptionRenewalService
             ]);
 
             try {
-                $expectedMonthlyPrice = $subscription->getRenewalPrice();
-
-                if ($subscription->is_custom_price && $subscription->custom_price !== null) {
-                    if ($subscription->billing_cycle === 'annually') {
-                        $expectedMonthlyPrice /= 12;
-                    }
-                } else {
-                    $monthlyPlanPrice = HostingPlanPrice::query()
-                        ->where('hosting_plan_id', $subscription->hosting_plan_id)
-                        ->where('billing_cycle', 'monthly')
-                        ->where('status', 'active')
-                        ->first();
-
-                    if (! $monthlyPlanPrice) {
-                        throw new Exception(
-                            sprintf('No active monthly pricing found for plan %s', $subscription->hosting_plan_id)
-                        );
-                    }
-
-                    $expectedMonthlyPrice = $monthlyPlanPrice->getPriceInBaseCurrency('renewal_price');
-                }
+                // getRenewalPrice() returns price in USD for the subscription's billing cycle
+                // Convert to monthly price for calculation
+                $renewalPrice = $subscription->getRenewalPrice();
+                $expectedMonthlyPrice = $subscription->billing_cycle === 'annually' ? $renewalPrice / 12 : $renewalPrice;
 
                 $expectedTotalAmount = $expectedMonthlyPrice * $quantityMonths;
 

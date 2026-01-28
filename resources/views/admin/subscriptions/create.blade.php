@@ -38,8 +38,7 @@
                                             <select class="form-control select2 @error('user_id') is-invalid @enderror"
                                                     id="user_id"
                                                     name="user_id"
-                                                    required
-                                                    style="width: 100%;">
+                                                    required>
                                                 <option value="">Select a user...</option>
                                                 @foreach($users as $user)
                                                     <option value="{{ $user->id }}" @selected(old('user_id') == $user->id)>
@@ -75,7 +74,7 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="billing_cycle" class="required">Billing Cycle</label>
                                             <select class="form-control @error('billing_cycle') is-invalid @enderror"
@@ -91,7 +90,27 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="domain">Domain <small class="text-muted">(Optional)</small></label>
+                                            <input type="text"
+                                                   class="form-control @error('domain') is-invalid @enderror"
+                                                   id="domain"
+                                                   name="domain"
+                                                   value="{{ old('domain') }}"
+                                                   placeholder="example.com">
+                                            @error('domain')
+                                                <span class="error invalid-feedback">{{ $message }}</span>
+                                            @enderror
+                                            <small class="form-text text-muted">
+                                                Leave empty for VPS or standalone hosting
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="custom_price">Custom Price <small class="text-muted">(Optional)</small></label>
                                             <input type="number"
@@ -111,7 +130,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="custom_price_currency">Currency</label>
                                             <select class="form-control @error('custom_price_currency') is-invalid @enderror"
@@ -131,46 +150,6 @@
                                             <small class="form-text text-muted">
                                                 Required if custom price is provided
                                             </small>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="domain">Domain <small class="text-muted">(Optional)</small></label>
-                                            <input type="text"
-                                                   class="form-control @error('domain') is-invalid @enderror"
-                                                   id="domain"
-                                                   name="domain"
-                                                   value="{{ old('domain') }}"
-                                                   placeholder="example.com">
-                                            @error('domain')
-                                                <span class="error invalid-feedback">{{ $message }}</span>
-                                            @enderror
-                                            <small class="form-text text-muted">
-                                                Leave empty for VPS or standalone hosting
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Auto Renew</label>
-                                            <div class="form-check">
-                                                <input class="form-check-input"
-                                                       type="checkbox"
-                                                       id="auto_renew"
-                                                       name="auto_renew"
-                                                       value="1"
-                                                       @checked(old('auto_renew', false))>
-                                                <label class="form-check-label" for="auto_renew">
-                                                    Enable automatic renewal
-                                                </label>
-                                            </div>
-                                            @error('auto_renew')
-                                                <span class="error invalid-feedback d-block">{{ $message }}</span>
-                                            @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -208,7 +187,27 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Auto Renew</label>
+                                            <div class="form-check mt-2">
+                                                <input class="form-check-input"
+                                                       type="checkbox"
+                                                       id="auto_renew"
+                                                       name="auto_renew"
+                                                       value="1"
+                                                       @checked(old('auto_renew', false))>
+                                                <label class="form-check-label" for="auto_renew">
+                                                    Enable automatic renewal
+                                                </label>
+                                            </div>
+                                            @error('auto_renew')
+                                                <span class="error invalid-feedback d-block">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="custom_price_notes">Custom Price Notes <small class="text-muted">(Optional)</small></label>
                                             <textarea class="form-control @error('custom_price_notes') is-invalid @enderror"
@@ -235,12 +234,81 @@
         </div>
     </section>
 
+    @push('styles')
+        <style>
+            /* Select2 Custom Styles */
+            .select2-container--default .select2-selection--single {
+                height: 38px;
+                border: 1px solid #ced4da;
+                border-radius: 0.25rem;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 38px;
+                padding-left: 12px;
+                color: #495057;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 36px;
+                right: 10px;
+            }
+
+            .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                background-color: #007bff;
+            }
+
+            .select2-container--default .select2-results__option[aria-selected=true] {
+                background-color: #e9ecef;
+            }
+
+            .select2-dropdown {
+                border: 1px solid #ced4da;
+                border-radius: 0.25rem;
+            }
+
+            .select2-container--default .select2-search--dropdown .select2-search__field {
+                border: 1px solid #ced4da;
+                border-radius: 0.25rem;
+            }
+
+            .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
+
+            /* Form Alignment */
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+
+            .form-group label {
+                font-weight: 500;
+                margin-bottom: 0.5rem;
+                display: block;
+            }
+
+            .form-group label.required::after {
+                content: " *";
+                color: #dc3545;
+            }
+
+            .form-group small.text-muted {
+                display: block;
+                margin-top: 0.25rem;
+                font-size: 0.875rem;
+            }
+        </style>
+    @endpush
+
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 $('#user_id').select2({
                     placeholder: 'Select a user...',
-                    allowClear: true
+                    allowClear: true,
+                    width: '100%'
                 });
 
                 const billingCycleSelect = document.getElementById('billing_cycle');

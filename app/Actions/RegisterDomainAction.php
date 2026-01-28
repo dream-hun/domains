@@ -203,11 +203,19 @@ class RegisterDomainAction
             // Extract contact ID from the contact data
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
-            throw_unless($contactId, Exception::class, 'Missing contact ID for type: '.$type);
+            // Ensure contact ID is valid and not empty
+            if (empty($contactId) || $contactId === 0 || $contactId === '0') {
+                throw new Exception(sprintf('Missing or invalid contact ID for type: %s', $type));
+            }
+
+            // Cast to integer to ensure proper type
+            $contactId = (int) $contactId;
 
             // Get the contact from the database
             $contact = Contact::query()->find($contactId);
-            throw_unless($contact, Exception::class, sprintf('Contact with ID %s not found', $contactId));
+            if (! $contact) {
+                throw new Exception(sprintf('Contact with ID %d not found for type: %s', $contactId, $type));
+            }
 
             // Check if contact has an EPP contact_id
             if (! $contact->contact_id) {
@@ -253,11 +261,19 @@ class RegisterDomainAction
             // Extract contact ID from the contact data
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
-            throw_unless($contactId, Exception::class, 'Missing contact ID for type: '.$type);
+            // Ensure contact ID is valid and not empty
+            if (empty($contactId) || $contactId === 0 || $contactId === '0') {
+                throw new Exception(sprintf('Missing or invalid contact ID for type: %s', $type));
+            }
+
+            // Cast to integer to ensure proper type
+            $contactId = (int) $contactId;
 
             // Get the contact from the database
             $contact = Contact::query()->find($contactId);
-            throw_unless($contact, Exception::class, sprintf('Contact with ID %s not found', $contactId));
+            if (! $contact) {
+                throw new Exception(sprintf('Contact with ID %d not found for type: %s', $contactId, $type));
+            }
 
             // Convert contact model to array format expected by Namecheap
             $preparedContacts[$type] = [
@@ -313,8 +329,13 @@ class RegisterDomainAction
         foreach ($contacts as $type => $contactData) {
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
 
-            // Ensure we have a valid contact ID
-            throw_unless($contactId, Exception::class, 'Missing contact ID for type: '.$type);
+            // Ensure contact ID is valid and not empty
+            if (empty($contactId) || $contactId === 0 || $contactId === '0') {
+                throw new Exception(sprintf('Missing or invalid contact ID for type: %s', $type));
+            }
+
+            // Cast to integer to ensure proper type
+            $contactId = (int) $contactId;
 
             $domain->contacts()->attach($contactId, [
                 'type' => $type,

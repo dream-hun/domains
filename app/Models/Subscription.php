@@ -116,7 +116,21 @@ class Subscription extends Model
     public function getRenewalPrice(): float
     {
         if ($this->is_custom_price && $this->custom_price !== null) {
-            return (float) $this->custom_price;
+            $customPrice = (float) $this->custom_price;
+
+            // If custom price is in a different currency, convert to USD
+            if ($this->custom_price_currency !== null && $this->custom_price_currency !== 'USD') {
+                try {
+                    $currencyService = resolve(CurrencyService::class);
+
+                    return $currencyService->convert($customPrice, $this->custom_price_currency, 'USD');
+                } catch (Exception) {
+                    // If conversion fails, return the original price
+                    return $customPrice;
+                }
+            }
+
+            return $customPrice;
         }
 
         $planPrice = $this->planPrice;
@@ -227,7 +241,8 @@ class Subscription extends Model
     ): void {
         if ($validatePayment && $paidAmount !== null && ! $isComp) {
             if ($this->is_custom_price && $this->custom_price !== null) {
-                $expectedAmount = (float) $this->custom_price;
+                // getRenewalPrice() handles currency conversion for custom prices
+                $expectedAmount = $this->getRenewalPrice();
             } else {
                 $planPrice = HostingPlanPrice::query()
                     ->where('hosting_plan_id', $this->hosting_plan_id)
@@ -321,12 +336,15 @@ class Subscription extends Model
         ?string $paidCurrency = null
     ): void {
         if ($paidAmount !== null && ! $isComp) {
-            $expectedMonthlyPrice = $this->is_custom_price && $this->custom_price !== null
-                ? (float) $this->custom_price / 12
-                : $this->getRenewalPrice();
+            if ($this->is_custom_price && $this->custom_price !== null) {
+                // getRenewalPrice() returns price in USD and handles currency conversion
+                $renewalPrice = $this->getRenewalPrice();
 
-            if ($this->is_custom_price && $this->custom_price !== null && $this->billing_cycle === 'monthly') {
-                $expectedMonthlyPrice = (float) $this->custom_price;
+                // If billing cycle is annual, divide by 12 to get monthly price
+                // If monthly, use the price directly
+                $expectedMonthlyPrice = $this->billing_cycle === 'monthly' ? $renewalPrice : $renewalPrice / 12;
+            } else {
+                $expectedMonthlyPrice = $this->getRenewalPrice();
             }
 
             $expectedTotalAmount = $expectedMonthlyPrice * $months;

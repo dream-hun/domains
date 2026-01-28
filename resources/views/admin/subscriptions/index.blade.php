@@ -21,68 +21,18 @@
 
     <section class="content">
         <div class="container-fluid">
-            @php
-                $cards = [
-                    [
-                        'value' => number_format($stats['total']),
-                        'label' => 'Total Subscriptions',
-                        'color' => 'bg-info',
-                        'icon' => 'fas fa-box',
-                        'link' => route('admin.subscriptions.index'),
-                    ],
-                    [
-                        'value' => number_format($stats['active']),
-                        'label' => 'Active',
-                        'color' => 'bg-success',
-                        'icon' => 'fas fa-check-circle',
-                        'link' => route('admin.subscriptions.index', ['status' => 'active']),
-                    ],
-                    [
-                        'value' => number_format($stats['expiring_soon']),
-                        'label' => 'Expiring (Next 30 days)',
-                        'color' => 'bg-warning',
-                        'icon' => 'fas fa-exclamation-triangle',
-                        'link' => route('admin.subscriptions.index', ['status' => 'active']),
-                    ],
-                    [
-                        'value' => number_format($stats['cancelled']),
-                        'label' => 'Cancelled',
-                        'color' => 'bg-danger',
-                        'icon' => 'fas fa-times-circle',
-                        'link' => route('admin.subscriptions.index', ['status' => 'cancelled']),
-                    ],
-                ];
-            @endphp
-
-            <div class="row">
-                @foreach ($cards as $card)
-                    <div class="col-lg-3 col-6">
-                        <div class="small-box {{ $card['color'] }}">
-                            <div class="inner">
-                                <h3>{{ $card['value'] }}</h3>
-                                <p>{{ $card['label'] }}</p>
-                            </div>
-                            <div class="icon">
-                                <i class="{{ $card['icon'] }}"></i>
-                            </div>
-                            <a href="{{ $card['link'] }}" class="small-box-footer">
-                                More info <i class="fas fa-arrow-circle-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                @endforeach
+             <div class="row mb-4">
+                <div class="col-md-12">
+                    @can('subscription_create')
+                        <a href="{{ route('admin.subscriptions.create') }}" class="btn btn-primary btn-md">
+                            Create Custom Subscription
+                        </a>
+                    @endcan
+                </div>
             </div>
-
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Subscription Monitor</h3>
-                    <div>
-                        @can('subscription_create')
-                            <a href="{{ route('admin.subscriptions.create') }}" class="btn btn-primary btn-sm">
-                                Create Custom Subscription
-                            </a>
-                        @endcan
-                    </div>
                 </div>
                 <div class="card-body">
                     <form method="GET" action="{{ route('admin.subscriptions.index') }}" class="mb-4" id="filters-form">
@@ -192,7 +142,7 @@
                                             <td class="align-middle">
                                                 @if ($subscription->is_custom_price && $subscription->custom_price !== null)
                                                     <span class="badge badge-info" title="Custom Price">Custom</span>
-                                                    {{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}
+                                                    @price($subscription->custom_price, $subscription->custom_price_currency ?? 'USD')
                                                 @elseif ($subscription->planPrice)
                                                     {{ $subscription->planPrice->getFormattedPrice('regular_price') }}
                                                 @else
@@ -202,7 +152,7 @@
                                             <td class="align-middle">
                                                 @if ($subscription->is_custom_price && $subscription->custom_price !== null)
                                                     <span class="badge badge-info" title="Custom Price">Custom</span>
-                                                    {{ number_format($subscription->custom_price, 2) }} {{ $subscription->custom_price_currency ?? 'USD' }}
+                                                    @price($subscription->custom_price, $subscription->custom_price_currency ?? 'USD')
                                                 @elseif ($subscription->planPrice)
                                                     {{ $subscription->planPrice->getFormattedPrice('renewal_price') }}
                                                 @else
@@ -269,6 +219,7 @@
             </div>
         </div>
     </section>
+    
 
     @section('styles')
         @parent
