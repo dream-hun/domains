@@ -40,7 +40,7 @@ class ProductController extends Controller
 
         $subscriptionsQuery = Subscription::query()
             ->where('user_id', $user->id)
-            ->with(['plan.category', 'planPrice']);
+            ->with(['plan.category', 'planPrice.currency']);
 
         if ($categorySlug !== '') {
             $subscriptionsQuery->whereHas('plan.category', function ($query) use ($categorySlug): void {
@@ -75,7 +75,7 @@ class ProductController extends Controller
         $user = $request->user();
         abort_if(! $user->isAdmin() && $subscription->user_id !== $user->id, 403, 'Unauthorized');
 
-        $subscription->load(['plan', 'planPrice']);
+        $subscription->load(['plan', 'planPrice.currency']);
 
         return view('admin.products.subscription-detail', [
             'subscription' => $subscription,
@@ -95,6 +95,7 @@ class ProductController extends Controller
         }
 
         $monthlyPlanPrice = HostingPlanPrice::query()
+            ->with('currency')
             ->where('hosting_plan_id', $subscription->hosting_plan_id)
             ->where('billing_cycle', 'monthly')
             ->where('status', 'active')
@@ -106,6 +107,7 @@ class ProductController extends Controller
 
         $originalBillingCycle = BillingCycle::tryFrom($subscription->billing_cycle) ?? BillingCycle::Monthly;
         $originalPlanPrice = HostingPlanPrice::query()
+            ->with('currency')
             ->where('hosting_plan_id', $subscription->hosting_plan_id)
             ->where('billing_cycle', $subscription->billing_cycle)
             ->where('status', 'active')

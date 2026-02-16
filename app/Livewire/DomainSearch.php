@@ -69,11 +69,50 @@ final class DomainSearch extends Component
         $this->currentCurrency = session('selected_currency', 'USD');
     }
 
-    public function handleCurrencyChanged(string $currency): void
+    public function handleCurrencyChanged(mixed $currencyOrPayload): void
     {
-        $this->currentCurrency = $currency;
-        // Force refresh of the component to show new prices
-        $this->dispatch('$refresh');
+        $currency = is_array($currencyOrPayload)
+            ? ($currencyOrPayload['currency'] ?? $currencyOrPayload[0] ?? '')
+            : (string) $currencyOrPayload;
+
+        if ($currency === '') {
+            return;
+        }
+
+        $this->currentCurrency = mb_strtoupper($currency);
+        session(['selected_currency' => $this->currentCurrency]);
+
+        if (empty($this->results)) {
+            return;
+        }
+
+        $tlds = Cache::remember('active_tlds', 3600, fn () => Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
+            ->where('status', 'active')
+            ->get());
+
+        $cartContent = Cart::getContent();
+
+        foreach ($this->results as $domainName => $result) {
+            $tldString = $result['tld'] ?? null;
+            if ($tldString === null) {
+                continue;
+            }
+            $tld = $tlds->firstWhere('tld', $tldString);
+            if (! $tld instanceof Tld) {
+                continue;
+            }
+            $this->results[$domainName] = $this->buildDomainSearchResult->handle(
+                $tld,
+                $domainName,
+                $result['available'],
+                $result['reason'],
+                $this->currentCurrency,
+                $cartContent->has($domainName),
+                $result['is_primary'],
+                $result['is_international']
+            );
+        }
     }
 
     public function render(): View
@@ -108,7 +147,7 @@ final class DomainSearch extends Component
         try {
             // Get cached TLDs
             $tlds = Cache::remember('active_tlds', 3600, fn () => Tld::query()
-                ->with('domainPriceCurrencies.currency')
+                ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
                 ->where('status', 'active')
                 ->get());
 

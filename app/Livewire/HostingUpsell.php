@@ -129,7 +129,8 @@ final class HostingUpsell extends Component
             $plan = HostingPlan::query()
                 ->with(['planPrices' => function ($query): void {
                     $query->where('status', HostingPlanPriceStatus::Active)
-                        ->where('is_current', true);
+                        ->where('is_current', true)
+                        ->with('currency');
                 }])
                 ->where('status', HostingPlanStatus::Active)
                 ->find($planId);
@@ -244,7 +245,8 @@ final class HostingUpsell extends Component
             ->with(['planPrices' => function ($query): void {
                 $query->where('status', HostingPlanPriceStatus::Active)
                     ->where('is_current', true)
-                    ->orderBy('billing_cycle');
+                    ->orderBy('billing_cycle')
+                    ->with('currency');
             }])
             ->where('status', HostingPlanStatus::Active)
             ->orderByDesc('is_popular')

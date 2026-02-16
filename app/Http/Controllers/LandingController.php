@@ -22,7 +22,7 @@ final class LandingController extends Controller
             ->where('status', 'active')
             ->with([
                 'category:id,name,slug',
-                'planPrices' => fn ($q) => $q->where('status', 'active'),
+                'planPrices' => fn ($q) => $q->where('status', 'active')->with('currency'),
                 'planFeatures.hostingFeature',
             ])
             ->orderBy('sort_order')

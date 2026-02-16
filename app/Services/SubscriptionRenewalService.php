@@ -145,6 +145,7 @@ final readonly class SubscriptionRenewalService
                     ];
                 } else {
                     $monthlyPlanPrice = HostingPlanPrice::query()
+                        ->with('currency')
                         ->where('hosting_plan_id', $subscription->hosting_plan_id)
                         ->where('billing_cycle', 'monthly')
                         ->where('status', 'active')

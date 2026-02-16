@@ -185,6 +185,7 @@ final readonly class DomainSearchHelper
                     'type' => TldType::Local->value,
                     'currency' => $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'RWF',
                     'base_currency' => $priceInfo?->getBaseCurrency() ?? 'RWF',
+                    'tld_id' => $priceInfo instanceof Tld ? $priceInfo->id : null,
                 ];
             }
         }
@@ -213,6 +214,7 @@ final readonly class DomainSearchHelper
                     'type' => TldType::Local->value,
                     'currency' => $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'RWF',
                     'base_currency' => $priceInfo?->getBaseCurrency() ?? 'RWF',
+                    'tld_id' => $priceInfo instanceof Tld ? $priceInfo->id : null,
                 ];
             }
         }
@@ -251,6 +253,7 @@ final readonly class DomainSearchHelper
                         'type' => TldType::International->value,
                         'currency' => $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'USD',
                         'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
+                        'tld_id' => $priceInfo instanceof Tld ? $priceInfo->id : null,
                     ];
                 }
             }
@@ -290,6 +293,7 @@ final readonly class DomainSearchHelper
                         'type' => TldType::International->value,
                         'currency' => $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'USD',
                         'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
+                        'tld_id' => $priceInfo instanceof Tld ? $priceInfo->id : null,
                     ];
                 }
             }
@@ -320,6 +324,7 @@ final readonly class DomainSearchHelper
             'type' => $domainType->value,
             'currency' => $displayCurrency,
             'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
+            'tld_id' => $priceInfo instanceof Tld ? $priceInfo->id : null,
         ];
 
         $suggestions = Tld::query()
@@ -341,6 +346,7 @@ final readonly class DomainSearchHelper
                     'type' => $domainType->value,
                     'currency' => $display['currency_code'],
                     'base_currency' => $price->getBaseCurrency(),
+                    'tld_id' => $price->id,
                 ];
             })
             ->values()

@@ -24,7 +24,7 @@ class CategoryShowController extends Controller
                 $query->where('status', HostingPlanStatus::Active)
                     ->with([
                         'planPrices' => function ($priceQuery): void {
-                            $priceQuery->where('status', HostingPlanPriceStatus::Active);
+                            $priceQuery->where('status', HostingPlanPriceStatus::Active)->with('currency');
                         },
                         'planFeatures.hostingFeature',
                     ]);

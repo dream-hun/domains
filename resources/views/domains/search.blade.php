@@ -194,7 +194,9 @@
                                 </div>
                                 <div class="domain-actions">
                                     <livewire:domain-cart-button :domain="$details['domain']" :price="$details['price']"
-                                        :available="$details['available'] === 'true'" />
+                                        :available="$details['available'] === 'true'"
+                                        :tld-id="$details['tld_id'] ?? null"
+                                        :currency="$details['currency'] ?? null" />
                                 </div>
                             </div>
                         @endif
@@ -208,7 +210,9 @@
                                     </div>
                                     <div class="domain-actions">
                                         <livewire:domain-cart-button :domain="$suggestion['domain']" :price="$suggestion['price']"
-                                            :available="$suggestion['available'] === 'true'" />
+                                            :available="$suggestion['available'] === 'true'"
+                                            :tld-id="$suggestion['tld_id'] ?? null"
+                                            :currency="$suggestion['currency'] ?? null" />
                                     </div>
                                 </div>
                             @endforeach

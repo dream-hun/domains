@@ -28,7 +28,7 @@ final class HostingSubscriptionService
         $planPriceIds = $hostingItems->map(fn (OrderItem $item) => (int) (($item->metadata ?? [])['hosting_plan_pricing_id'] ?? ($item->metadata ?? [])['hosting_plan_price_id'] ?? 0))->filter()->unique();
 
         $plans = $planIds->isNotEmpty() ? HostingPlan::query()->findMany($planIds)->keyBy('id') : collect();
-        $planPrices = $planPriceIds->isNotEmpty() ? HostingPlanPrice::query()->findMany($planPriceIds)->keyBy('id') : collect();
+        $planPrices = $planPriceIds->isNotEmpty() ? HostingPlanPrice::query()->with('currency')->findMany($planPriceIds)->keyBy('id') : collect();
 
         foreach ($hostingItems as $orderItem) {
             $this->createSubscriptionFromItem($order, $orderItem, $plans, $planPrices);

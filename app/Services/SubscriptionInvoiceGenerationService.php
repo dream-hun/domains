@@ -32,7 +32,7 @@ final readonly class SubscriptionInvoiceGenerationService
             ->where('auto_renew', true)
             ->whereNotNull('next_renewal_at')
             ->whereBetween('next_renewal_at', [$now, $endDate])
-            ->with(['user', 'plan', 'planPrice'])
+            ->with(['user', 'plan', 'planPrice.currency'])
             ->get();
 
         $generated = 0;
@@ -88,7 +88,7 @@ final readonly class SubscriptionInvoiceGenerationService
      */
     public function createRenewalInvoiceOrder(Subscription $subscription): Order
     {
-        $subscription->loadMissing(['user', 'plan', 'planPrice']);
+        $subscription->loadMissing(['user', 'plan', 'planPrice.currency']);
 
         $user = $subscription->user;
 

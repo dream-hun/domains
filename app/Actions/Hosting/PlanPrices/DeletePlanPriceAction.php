@@ -10,7 +10,7 @@ final class DeletePlanPriceAction
 {
     public function handle(string $uuid): void
     {
-        $planPrice = HostingPlanPrice::query()->where('uuid', $uuid)->firstOrFail();
+        $planPrice = HostingPlanPrice::query()->with('currency')->where('uuid', $uuid)->firstOrFail();
         $planPrice->delete();
     }
 }

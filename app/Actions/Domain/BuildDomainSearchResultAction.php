@@ -12,7 +12,7 @@ final class BuildDomainSearchResultAction
     /**
      * Build the domain result array used by Livewire domain search.
      *
-     * @return array{available: bool, reason: string, register_price: float, transfer_price: float, renewal_price: float, formatted_price: string, display_currency_code: string, in_cart: bool, is_primary: bool, is_international: bool}
+     * @return array{available: bool, reason: string, register_price: float, transfer_price: float, renewal_price: float, formatted_price: string, display_currency_code: string, in_cart: bool, is_primary: bool, is_international: bool, tld: string}
      */
     public function handle(
         Tld $tld,
@@ -41,6 +41,7 @@ final class BuildDomainSearchResultAction
             'in_cart' => $inCart,
             'is_primary' => $isPrimary,
             'is_international' => $isInternational,
+            'tld' => $tld->tld,
         ];
     }
 }

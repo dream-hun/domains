@@ -33,6 +33,8 @@ class TldPricing extends Model
 
     protected $guarded = [];
 
+    protected $with = ['currency'];
+
     public function tld(): BelongsTo
     {
         return $this->belongsTo(Tld::class);

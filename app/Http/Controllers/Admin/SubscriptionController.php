@@ -90,7 +90,7 @@ final class SubscriptionController extends Controller
             ->with([
                 'user:id,first_name,last_name,email',
                 'plan:id,name',
-                'planPrice:id,hosting_plan_id,billing_cycle,regular_price,renewal_price',
+                'planPrice.currency',
                 'createdByAdmin:id,first_name,last_name',
             ]);
 
@@ -173,7 +173,7 @@ final class SubscriptionController extends Controller
     {
         abort_if(Gate::denies('subscription_show'), 403);
 
-        $subscription->load(['user', 'plan', 'planPrice', 'createdByAdmin']);
+        $subscription->load(['user', 'plan', 'planPrice.currency', 'createdByAdmin']);
 
         return view('admin.subscriptions.show', [
             'subscription' => $subscription,
@@ -184,7 +184,7 @@ final class SubscriptionController extends Controller
     {
         abort_if(Gate::denies('subscription_edit'), 403);
 
-        $subscription->load(['user', 'plan', 'planPrice']);
+        $subscription->load(['user', 'plan', 'planPrice.currency']);
 
         $statusOptions = ['active', 'expired', 'cancelled', 'suspended'];
 
@@ -239,6 +239,7 @@ final class SubscriptionController extends Controller
             $billingCycle = $this->resolveBillingCycle($billingCycleValue);
 
             $planPrice = HostingPlanPrice::query()
+                ->with('currency')
                 ->where('hosting_plan_id', $subscription->hosting_plan_id)
                 ->where('billing_cycle', $billingCycle->value)
                 ->where('status', 'active')

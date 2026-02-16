@@ -37,6 +37,7 @@ final readonly class CreateCustomSubscriptionAction
 
         $billingCycle = $this->resolveBillingCycle($data['billing_cycle']);
         $planPrice = HostingPlanPrice::query()
+            ->with('currency')
             ->where('hosting_plan_id', $plan->id)
             ->where('billing_cycle', $billingCycle->value)
             ->where('status', 'active')

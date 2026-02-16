@@ -225,6 +225,7 @@ class Subscription extends Model
                 $expectedAmount = $this->getRenewalPrice();
             } else {
                 $planPrice = HostingPlanPrice::query()
+                    ->with('currency')
                     ->where('hosting_plan_id', $this->hosting_plan_id)
                     ->where('billing_cycle', $billingCycle->value)
                     ->where('status', 'active')
@@ -268,6 +269,7 @@ class Subscription extends Model
             ];
         } else {
             $planPrice = HostingPlanPrice::query()
+                ->with('currency')
                 ->where('hosting_plan_id', $this->hosting_plan_id)
                 ->where('billing_cycle', $billingCycle->value)
                 ->first();

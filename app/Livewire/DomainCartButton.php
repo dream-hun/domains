@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Models\Tld;
 use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -27,15 +28,22 @@ final class DomainCartButton extends Component
 
     protected $listeners = ['refreshCart' => '$refresh', 'currency-changed' => 'updateCurrency', 'currencyChanged' => 'updateCurrency'];
 
-    public function mount($domain, $price, $available = true, $domainPrice = null, $currency = null): void
+    public function mount($domain, $price, $available = true, $domainPrice = null, $currency = null, ?int $tldId = null): void
     {
         $this->domain = $domain;
         $this->available = $available;
         $this->domainPrice = $domainPrice;
         $this->currency = $currency ?? $this->getUserCurrency()->code;
+
+        if ($this->domainPrice === null && $tldId !== null && ($price === null || $price === '')) {
+            $this->domainPrice = Tld::query()
+                ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
+                ->find($tldId);
+        }
+
         $this->price = $this->domainPrice
             ? $this->domainPrice->getFormattedPriceWithFallback('register_price', $this->currency)
-            : $price;
+            : (is_string($price) ? $price : (string) $price);
     }
 
     public function updateCurrency(string $currency): void

@@ -82,7 +82,7 @@ class Configuration extends Component
 
     public function mount(HostingPlan $plan): void
     {
-        $this->plan = $plan->load(['category', 'planPrices', 'planFeatures.hostingFeature']);
+        $this->plan = $plan->load(['category', 'planPrices.currency', 'planFeatures.hostingFeature']);
 
         $this->billingCycle = request()->query('billing_cycle', 'monthly');
 

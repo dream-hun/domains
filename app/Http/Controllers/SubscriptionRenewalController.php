@@ -25,13 +25,14 @@ final class SubscriptionRenewalController extends Controller
 
         abort_unless($subscription->canBeRenewed(), 400, 'This subscription cannot be renewed at this time.');
 
-        $subscription->load(['plan', 'planPrice']);
+        $subscription->load(['plan', 'planPrice.currency']);
 
         // Get user's preferred currency
         CurrencyHelper::getUserCurrency();
 
         // Get available billing cycles for this plan
         $availableBillingCycles = HostingPlanPrice::query()
+            ->with('currency')
             ->where('hosting_plan_id', $subscription->hosting_plan_id)
             ->where('status', 'active')
             ->get()
@@ -79,6 +80,7 @@ final class SubscriptionRenewalController extends Controller
 
         // Get monthly plan price (renewals always use monthly pricing for calculation)
         $monthlyPlanPrice = HostingPlanPrice::query()
+            ->with('currency')
             ->where('hosting_plan_id', $subscription->hosting_plan_id)
             ->where('billing_cycle', 'monthly')
             ->where('status', 'active')
@@ -91,6 +93,7 @@ final class SubscriptionRenewalController extends Controller
         // Get the original billing cycle plan price for display
         $originalBillingCycle = BillingCycle::tryFrom($subscription->billing_cycle) ?? BillingCycle::Monthly;
         $originalPlanPrice = HostingPlanPrice::query()
+            ->with('currency')
             ->where('hosting_plan_id', $subscription->hosting_plan_id)
             ->where('billing_cycle', $subscription->billing_cycle)
             ->where('status', 'active')

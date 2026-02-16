@@ -606,7 +606,7 @@ final class CartComponent extends Component
     public function addSubscriptionRenewalToCart(int $subscriptionId, string $billingCycle): void
     {
         try {
-            $subscription = Subscription::with(['plan', 'planPrice'])->findOrFail($subscriptionId);
+            $subscription = Subscription::with(['plan', 'planPrice.currency'])->findOrFail($subscriptionId);
             $user = auth()->user();
 
             if (! $user) {
@@ -647,6 +647,7 @@ final class CartComponent extends Component
             }
 
             $monthlyPlanPrice = HostingPlanPrice::query()
+                ->with('currency')
                 ->where('hosting_plan_id', $subscription->hosting_plan_id)
                 ->where('billing_cycle', 'monthly')
                 ->where('status', 'active')
@@ -654,6 +655,7 @@ final class CartComponent extends Component
 
             if (! $monthlyPlanPrice) {
                 $monthlyPlanPrice = HostingPlanPrice::query()
+                    ->with('currency')
                     ->where('hosting_plan_id', $subscription->hosting_plan_id)
                     ->where('status', 'active')
                     ->first();

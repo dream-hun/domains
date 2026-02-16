@@ -101,9 +101,21 @@ final class Tld extends Model
 
     public function getBaseCurrency(): string
     {
-        $pricing = $this->currentTldPricings()->with('currency')->first();
-        if ($pricing?->currency) {
-            return $pricing->currency->code;
+        if ($this->relationLoaded('tldPricings')) {
+            $pricing = $this->tldPricings->where('is_current', true)->first();
+            if ($pricing !== null) {
+                if (! $pricing->relationLoaded('currency')) {
+                    $pricing->loadMissing('currency');
+                }
+                if ($pricing->currency) {
+                    return $pricing->currency->code;
+                }
+            }
+        } else {
+            $pricing = $this->currentTldPricings()->with('currency')->first();
+            if ($pricing?->currency) {
+                return $pricing->currency->code;
+            }
         }
 
         return $this->type === TldType::Local ? 'RWF' : 'USD';
@@ -215,7 +227,9 @@ final class Tld extends Model
             : $this->currentTldPricings()->with('currency')->get();
 
         foreach ($pricings as $pricing) {
-            $pricing->loadMissing('currency');
+            if (! $pricing->relationLoaded('currency')) {
+                $pricing->loadMissing('currency');
+            }
             if ($pricing->currency && mb_strtoupper((string) $pricing->currency->code) === $currencyCode) {
                 return $pricing;
             }

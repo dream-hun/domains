@@ -149,7 +149,7 @@ final readonly class CartPriceConverter
             return CurrencyHelper::convert((float) $monthlyPrice);
         }
 
-        $planPrice = HostingPlanPrice::query()->find($planPriceId);
+        $planPrice = HostingPlanPrice::query()->with('currency')->find($planPriceId);
         if (! $planPrice instanceof HostingPlanPrice) {
             return CurrencyHelper::convert((float) $monthlyPrice);
         }

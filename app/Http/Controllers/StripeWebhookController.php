@@ -536,6 +536,7 @@ final class StripeWebhookController extends Controller
             }
 
             $planPrice = HostingPlanPrice::query()
+                ->with('currency')
                 ->where('hosting_plan_id', $subscription->hosting_plan_id)
                 ->where('billing_cycle', $billingCycle->value)
                 ->where('status', 'active')
