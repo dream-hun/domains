@@ -29,235 +29,15 @@ use Illuminate\Support\Str;
         <div class="container-fluid">
             <div class="row">
                 <div class="col-lg-8">
-                    <div class="card card-primary card-outline">
-                        <div class="card-header">
-                            <h3 class="card-title">
-                                <i class="fas fa-server mr-2"></i>Hosting Plan Price Information
-                            </h3>
-                            <div class="card-tools">
-                                <span class="badge badge-{{ ($price->status?->value ?? 'active') === 'active' ? 'success' : 'secondary' }} badge-lg">
-                                    {{ ucfirst($price->status?->value ?? 'active') }}
-                                </span>
-                            </div>
-                        </div>
-                        <form method="POST" action="{{ route('admin.hosting-plan-prices.update', $price->uuid) }}" id="price-form">
-                            @csrf
-                            @method('PATCH')
-
-                            <div class="card-body">
-                                <h5 class="mb-3">
-                                    <i class="fas fa-info-circle mr-2 text-primary"></i>Basic Information
-                                </h5>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="hosting_category_id">
-                                                <i class="fas fa-folder mr-1"></i>Hosting Category
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <select name="hosting_category_id"
-                                                    id="hosting_category_id"
-                                                    class="form-control @error('hosting_category_id') is-invalid @enderror"
-                                                    required>
-                                                <option value="">Select a category</option>
-                                                @foreach($categories as $category)
-                                                    <option value="{{ $category->id }}" {{ old('hosting_category_id', $price->plan?->category_id) == $category->id ? 'selected' : '' }}>
-                                                        {{ $category->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('hosting_category_id')
-                                            <span class="invalid-feedback d-block">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="hosting_plan_id">
-                                                <i class="fas fa-server mr-1"></i>Hosting Plan
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <select name="hosting_plan_id"
-                                                    id="hosting_plan_id"
-                                                    class="form-control @error('hosting_plan_id') is-invalid @enderror"
-                                                    required>
-                                                <option value="">Select a plan</option>
-                                                @foreach($plans as $plan)
-                                                    <option value="{{ $plan->id }}"
-                                                            data-category="{{ $plan->category_id }}"
-                                                            {{ old('hosting_plan_id', $price->hosting_plan_id) == $plan->id ? 'selected' : '' }}>
-                                                        {{ $plan->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('hosting_plan_id')
-                                            <span class="invalid-feedback d-block">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="billing_cycle">
-                                                <i class="fas fa-calendar-alt mr-1"></i>Billing Cycle
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <select name="billing_cycle"
-                                                    id="billing_cycle"
-                                                    class="form-control @error('billing_cycle') is-invalid @enderror"
-                                                    required>
-                                                <option value="monthly" {{ old('billing_cycle', $price->billing_cycle) === 'monthly' ? 'selected' : '' }}>Monthly</option>
-                                                <option value="quarterly" {{ old('billing_cycle', $price->billing_cycle) === 'quarterly' ? 'selected' : '' }}>Quarterly</option>
-                                                <option value="semi-annually" {{ old('billing_cycle', $price->billing_cycle) === 'semi-annually' ? 'selected' : '' }}>Semi-Annually</option>
-                                                <option value="annually" {{ old('billing_cycle', $price->billing_cycle) === 'annually' ? 'selected' : '' }}>Annually</option>
-                                                <option value="biennially" {{ old('billing_cycle', $price->billing_cycle) === 'biennially' ? 'selected' : '' }}>Biennially</option>
-                                                <option value="triennially" {{ old('billing_cycle', $price->billing_cycle) === 'triennially' ? 'selected' : '' }}>Triennially</option>
-                                            </select>
-                                            @error('billing_cycle')
-                                            <span class="invalid-feedback d-block">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="status">
-                                                <i class="fas fa-toggle-on mr-1"></i>Status
-                                            </label>
-                                            <select name="status"
-                                                    id="status"
-                                                    class="form-control @error('status') is-invalid @enderror">
-                                                <option value="active" {{ old('status', $price->status?->value ?? 'active') === 'active' ? 'selected' : '' }}>
-                                                    Active
-                                                </option>
-                                                <option value="inactive" {{ old('status', $price->status?->value ?? 'active') === 'inactive' ? 'selected' : '' }}>
-                                                    Inactive
-                                                </option>
-                                            </select>
-                                            @error('status')
-                                            <span class="invalid-feedback d-block">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <hr class="my-4">
-
-                                <h5 class="mb-3">
-                                    <i class="fas fa-dollar-sign mr-2 text-success"></i>Pricing Information
-                                </h5>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="regular_price">
-                                                <i class="fas fa-tag mr-1"></i>Regular Price
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">USD</span>
-                                                </div>
-                                                <input type="number"
-                                                       name="regular_price"
-                                                       id="regular_price"
-                                                       class="form-control @error('regular_price') is-invalid @enderror"
-                                                       value="{{ old('regular_price', $price->regular_price) }}"
-                                                       min="0"
-                                                       step="1"
-                                                       required>
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text">cents</span>
-                                                </div>
-                                            </div>
-                                            <small class="form-text text-muted">
-                                                Current: {{ $price->getFormattedPrice('regular_price', 'USD') }}
-                                            </small>
-                                            @error('regular_price')
-                                            <span class="invalid-feedback d-block">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="renewal_price">
-                                                <i class="fas fa-sync-alt mr-1"></i>Renewal Price
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">USD</span>
-                                                </div>
-                                                <input type="number"
-                                                       name="renewal_price"
-                                                       id="renewal_price"
-                                                       class="form-control @error('renewal_price') is-invalid @enderror"
-                                                       value="{{ old('renewal_price', $price->renewal_price) }}"
-                                                       min="0"
-                                                       step="1"
-                                                       required>
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text">cents</span>
-                                                </div>
-                                            </div>
-                                            <small class="form-text text-muted">
-                                                Current: {{ $price->getFormattedPrice('renewal_price', 'USD') }}
-                                            </small>
-                                            @error('renewal_price')
-                                            <span class="invalid-feedback d-block">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <hr class="my-4">
-
-                                <h5 class="mb-3">
-                                    <i class="fas fa-comment-alt mr-2 text-warning"></i>Change Reason
-                                </h5>
-
-                                <div class="form-group">
-                                    <label for="reason">
-                                        <i class="fas fa-comment-alt mr-1"></i>Reason for Price Change
-                                        <span class="text-danger" id="reason-required-indicator" style="display: none;">*</span>
-                                    </label>
-                                    <textarea name="reason"
-                                              id="reason"
-                                              rows="4"
-                                              class="form-control @error('reason') is-invalid @enderror"
-                                              placeholder="Please provide a reason for changing the price...">{{ old('reason') }}</textarea>
-                                    <small class="form-text text-muted">
-                                        <i class="fas fa-info-circle mr-1"></i>
-                                        Required when any price field is changed. This reason will be recorded in the price change history.
-                                    </small>
-                                    @error('reason')
-                                    <span class="invalid-feedback d-block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="card-footer bg-light">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <a href="{{ route('admin.hosting-plan-prices.index') }}" class="btn btn-default">
-                                        <i class="fas fa-arrow-left mr-1"></i>Back to List
-                                    </a>
-                                    <div>
-                                        <button type="reset" class="btn btn-secondary mr-2">
-                                            <i class="fas fa-redo mr-1"></i>Reset
-                                        </button>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-save mr-1"></i>Update Price
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                    @include('admin.hosting-plan-prices._form', [
+                        'price' => $price,
+                        'categories' => $categories,
+                        'plans' => $plans,
+                        'currencies' => $currencies,
+                        'action' => route('admin.hosting-plan-prices.update', $price->uuid),
+                        'method' => 'PATCH',
+                        'submitLabel' => 'Update Price',
+                    ])
                 </div>
 
                 <div class="col-lg-4">
@@ -275,6 +55,9 @@ use Illuminate\Support\Str;
                                 <dt class="col-sm-5"><i class="fas fa-folder mr-1"></i>Category:</dt>
                                 <dd class="col-sm-7">{{ $price->plan?->category?->name ?? 'N/A' }}</dd>
 
+                                <dt class="col-sm-5"><i class="fas fa-money-bill mr-1"></i>Currency:</dt>
+                                <dd class="col-sm-7">{{ $price->currency?->code ?? 'N/A' }}</dd>
+
                                 <dt class="col-sm-5"><i class="fas fa-calendar-alt mr-1"></i>Billing Cycle:</dt>
                                 <dd class="col-sm-7">
                                     <span class="badge badge-info">{{ ucfirst(str_replace('-', ' ', $price->billing_cycle)) }}</span>
@@ -286,6 +69,16 @@ use Illuminate\Support\Str;
                                         {{ ucfirst($price->status?->value ?? 'active') }}
                                     </span>
                                 </dd>
+
+                                <dt class="col-sm-5"><i class="fas fa-check-circle mr-1"></i>Current:</dt>
+                                <dd class="col-sm-7">
+                                    <span class="badge badge-{{ $price->is_current ? 'success' : 'secondary' }}">
+                                        {{ $price->is_current ? 'Yes' : 'No' }}
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-5"><i class="fas fa-calendar-day mr-1"></i>Effective:</dt>
+                                <dd class="col-sm-7">{{ $price->effective_date?->format('M d, Y') ?? 'N/A' }}</dd>
 
                                 <dt class="col-sm-5"><i class="fas fa-calendar mr-1"></i>Created:</dt>
                                 <dd class="col-sm-7">{{ $price->created_at?->format('M d, Y') ?? 'N/A' }}</dd>
@@ -304,10 +97,10 @@ use Illuminate\Support\Str;
                         </div>
                         <div class="card-body">
                             <ul class="mb-0 pl-3">
-                                <li class="mb-2">All prices are stored in <strong>cents (USD)</strong></li>
+                                <li class="mb-2">Prices are stored in <strong>major units</strong> per currency</li>
                                 <li class="mb-2">Price changes require a <strong>reason</strong></li>
                                 <li class="mb-2">All changes are tracked in history</li>
-                                <li>Prices are displayed in USD currency</li>
+                                <li>Prices are displayed in the selected currency</li>
                             </ul>
                         </div>
                     </div>
@@ -362,17 +155,18 @@ use Illuminate\Support\Str;
                                                     @php
                                                         $oldValues = $history->old_values ?? [];
                                                         $changes = $history->changes ?? [];
+                                                        $historyCurrencyCode = $price->currency?->code ?? 'USD';
                                                     @endphp
                                                     <div class="small">
                                                         @if(isset($changes['regular_price']))
                                                             <div class="mb-1">
                                                                 <span class="badge badge-light">Regular:</span>
                                                                 <span class="text-muted">
-                                                                    {{ \Cknow\Money\Money::USD($oldValues['regular_price'] ?? 0)->format() }}
+                                                                    {{ app(\App\Services\PriceFormatter::class)->format((float) ($oldValues['regular_price'] ?? 0), $historyCurrencyCode) }}
                                                                 </span>
                                                                 <i class="fas fa-arrow-right mx-1 text-muted"></i>
                                                                 <span class="text-success font-weight-bold">
-                                                                    {{ \Cknow\Money\Money::USD($changes['regular_price'])->format() }}
+                                                                    {{ app(\App\Services\PriceFormatter::class)->format((float) $changes['regular_price'], $historyCurrencyCode) }}
                                                                 </span>
                                                             </div>
                                                         @endif
@@ -380,11 +174,11 @@ use Illuminate\Support\Str;
                                                             <div class="mb-1">
                                                                 <span class="badge badge-light">Renewal:</span>
                                                                 <span class="text-muted">
-                                                                    {{ \Cknow\Money\Money::USD($oldValues['renewal_price'] ?? 0)->format() }}
+                                                                    {{ app(\App\Services\PriceFormatter::class)->format((float) ($oldValues['renewal_price'] ?? 0), $historyCurrencyCode) }}
                                                                 </span>
                                                                 <i class="fas fa-arrow-right mx-1 text-muted"></i>
                                                                 <span class="text-success font-weight-bold">
-                                                                    {{ \Cknow\Money\Money::USD($changes['renewal_price'])->format() }}
+                                                                    {{ app(\App\Services\PriceFormatter::class)->format((float) $changes['renewal_price'], $historyCurrencyCode) }}
                                                                 </span>
                                                             </div>
                                                         @endif
@@ -428,6 +222,8 @@ use Illuminate\Support\Str;
             const reasonField = document.getElementById('reason');
             const reasonRequiredIndicator = document.getElementById('reason-required-indicator');
             const originalValues = {};
+
+            if (!reasonField) return;
 
             // Store original values
             priceFields.forEach(function(field) {

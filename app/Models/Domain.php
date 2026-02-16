@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Support\Carbon;
 
 /**
@@ -36,7 +37,8 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $createdByAdmin
  * @property-read Subscription|null $subscription
  * @property-read Collection<int, Nameserver> $nameservers
- * @property-read DomainPrice|null $domainPrice
+ * @property-read Tld|null $domainPrice Tld accessed via tldPricing.tld
+ * @property-read TldPricing|null $tldPricing
  * @property-read Collection<int, DomainRenewal> $renewals
  */
 #[ScopedBy([DomainScope::class])]
@@ -60,7 +62,6 @@ final class Domain extends Model
      */
     public function contacts(): BelongsToMany
     {
-
         return $this->belongsToMany(Contact::class, 'domain_contacts', 'domain_id', 'contact_id')
             ->using(DomainContact::class)
             ->withPivot('type', 'user_id');
@@ -71,7 +72,6 @@ final class Domain extends Model
      */
     public function owner(): BelongsTo
     {
-
         return $this->belongsTo(User::class, 'owner_id');
     }
 
@@ -80,17 +80,25 @@ final class Domain extends Model
      */
     public function nameservers(): BelongsToMany
     {
-
         return $this->belongsToMany(Nameserver::class, 'domain_nameservers', 'domain_id', 'nameserver_id');
     }
 
     /**
-     * @return BelongsTo<DomainPrice, static>
+     * @return BelongsTo<TldPricing, static>
      */
-    public function domainPrice(): BelongsTo
+    public function tldPricing(): BelongsTo
     {
+        return $this->belongsTo(TldPricing::class, 'tld_pricing_id');
+    }
 
-        return $this->belongsTo(DomainPrice::class);
+    /**
+     * Tld for pricing/display (via tldPricing.tld).
+     *
+     * @return HasOneThrough<Tld, TldPricing, static>
+     */
+    public function domainPrice(): HasOneThrough
+    {
+        return $this->through('tldPricing')->has('tld');
     }
 
     /**

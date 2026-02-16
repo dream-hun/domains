@@ -11,7 +11,6 @@ use App\Models\Contact;
 use App\Models\Coupon;
 use App\Services\CartPriceConverter;
 use App\Services\Coupon\CouponService;
-use App\Services\CurrencyService;
 use App\Services\OrderItemFormatterService;
 use App\Services\PaymentService;
 use Darryldecode\Cart\CartCollection;
@@ -23,8 +22,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Throwable;
 
 /**
@@ -79,21 +76,15 @@ final class CheckoutWizard extends Component
 
     public bool $isCouponApplied = false;
 
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     */
-    public function mount(CurrencyService $currencyService): void
+    public function mount(): void
     {
-
         if (Cart::isEmpty()) {
             $this->redirect(route('cart.index'), navigate: true);
 
             return;
         }
 
-        $currency = $currencyService->getUserCurrency();
-        $this->userCurrencyCode = $currency->code;
+        $this->userCurrencyCode = CurrencyHelper::getUserCurrency();
 
         /** @var Contact|null $defaultContact */
         $defaultContact = auth()->user()->contacts()

@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace App\Livewire\Hosting;
 
 use App\Enums\DomainStatus;
-use App\Enums\DomainType;
 use App\Helpers\CurrencyHelper;
 use App\Models\Domain;
-use App\Models\DomainPrice;
 use App\Models\HostingPlan;
 use App\Models\HostingPlanFeature;
 use App\Models\HostingPlanPrice;
+use App\Models\Tld;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\InternationalDomainService;
 use App\Services\PriceFormatter;
@@ -153,7 +152,7 @@ class Configuration extends Component
 
             // For external domains, we want to check if the domain is registered (not available)
             // This means checking if it's NOT available for registration
-            $tlds = Cache::remember('active_tlds', 3600, fn () => DomainPrice::query()->where('status', 'active')->get());
+            $tlds = Cache::remember('active_tlds', 3600, fn () => Tld::query()->where('status', 'active')->get());
 
             // Extract TLD from domain
             $domainParts = explode('.', $domainName);
@@ -170,7 +169,7 @@ class Configuration extends Component
                 return;
             }
 
-            $isInternational = isset($tldRecord->type) && $tldRecord->type === DomainType::International;
+            $isInternational = ! $tldRecord->isLocalTld();
 
             if ($isInternational) {
                 $checkResult = $this->internationalService->checkAvailability([$domainName]);
@@ -223,7 +222,16 @@ class Configuration extends Component
     #[Computed]
     public function selectedPrice(): ?HostingPlanPrice
     {
-        return $this->plan->planPrices->firstWhere('billing_cycle', $this->billingCycle);
+        $userCurrency = CurrencyHelper::getUserCurrency();
+
+        return $this->plan->planPrices
+            ->where('billing_cycle', $this->billingCycle)
+            ->where('is_current', true)
+            ->first(fn (HostingPlanPrice $p): bool => $p->currency?->code === $userCurrency)
+            ?? $this->plan->planPrices
+                ->where('billing_cycle', $this->billingCycle)
+                ->where('is_current', true)
+                ->first();
     }
 
     #[Computed]
@@ -272,8 +280,8 @@ class Configuration extends Component
             return 0;
         }
 
-        $userCurrency = CurrencyHelper::getUserCurrency();
-        $hostingPrice = $price->getPriceInCurrency('regular_price', $userCurrency);
+        CurrencyHelper::getUserCurrency();
+        $hostingPrice = $price->getPriceInCurrency('regular_price');
 
         // Add domain price if a new domain is selected
         if ($this->domainOption === 'new' && $this->selectedDomainPrice) {
@@ -367,7 +375,7 @@ class Configuration extends Component
         $this->domainConfirmed = false;
 
         try {
-            $tlds = Cache::remember('active_tlds', 3600, fn () => DomainPrice::query()->where('status', 'active')->get());
+            $tlds = Cache::remember('active_tlds', 3600, fn () => Tld::query()->where('status', 'active')->get());
 
             if ($tlds->isEmpty()) {
                 $this->addError('domainSearchQuery', 'No TLDs configured in the system.');
@@ -388,7 +396,7 @@ class Configuration extends Component
                 $domainName = $searchTerm.'.'.mb_ltrim($tld->tld, '.');
 
                 try {
-                    $isInternational = isset($tld->type) && $tld->type === DomainType::International;
+                    $isInternational = ! $tld->isLocalTld();
 
                     if ($isInternational) {
                         $checkResult = $this->internationalService->checkAvailability([$domainName]);
@@ -399,26 +407,16 @@ class Configuration extends Component
                     }
 
                     $formatter = resolve(PriceFormatter::class);
-                    $rawPriceInCents = (int) $tld->register_price;
-                    $priceInUSD = $formatter->minorToMajorUnits($rawPriceInCents);
-                    $convertedPrice = $priceInUSD;
-
-                    $renewalPriceInCents = (int) $tld->renewal_price;
-                    $renewalInUSD = $formatter->minorToMajorUnits($renewalPriceInCents);
-                    $convertedRenewal = $renewalInUSD;
-
-                    if ($currentCurrency !== 'USD') {
-                        $convertedPrice = CurrencyHelper::convertFromUSD($priceInUSD, $currentCurrency);
-                        $convertedRenewal = CurrencyHelper::convertFromUSD($renewalInUSD, $currentCurrency);
-                    }
+                    $registerDisplay = $tld->getDisplayPriceForCurrency($currentCurrency, 'register_price');
+                    $renewalDisplay = $tld->getDisplayPriceForCurrency($currentCurrency, 'renewal_price');
 
                     $results[$domainName] = [
                         'domain' => $domainName,
                         'available' => $available,
-                        'price' => $convertedPrice,
-                        'renewal_price' => $convertedRenewal,
-                        'formatted_price' => $formatter->format($convertedPrice, $currentCurrency),
-                        'formatted_renewal' => $formatter->format($convertedRenewal, $currentCurrency),
+                        'price' => $registerDisplay['amount'],
+                        'renewal_price' => $renewalDisplay['amount'],
+                        'formatted_price' => $formatter->format($registerDisplay['amount'], $registerDisplay['currency_code']),
+                        'formatted_renewal' => $formatter->format($renewalDisplay['amount'], $renewalDisplay['currency_code']),
                         'in_cart' => $cartContent->has($domainName),
                         'tld' => $tld->tld,
                     ];
@@ -586,7 +584,7 @@ class Configuration extends Component
             }
 
             $userCurrency = CurrencyHelper::getUserCurrency();
-            $hostingPrice = $priceModel->getPriceInCurrency('regular_price', $userCurrency);
+            $hostingPrice = $priceModel->getPriceInCurrency('regular_price');
 
             // Add Hosting Plan to Cart
             // Use timestamp for unique cart ID when no domain is attached
@@ -603,7 +601,7 @@ class Configuration extends Component
                 'attributes' => [
                     'type' => 'hosting',
                     'hosting_plan_id' => $this->plan->id,
-                    'hosting_plan_price_id' => $priceModel->id,
+                    'hosting_plan_pricing_id' => $priceModel->id,
                     'billing_cycle' => $this->billingCycle,
                     'linked_domain' => $domainName,
                     'domain_name' => $domainName,
@@ -613,7 +611,7 @@ class Configuration extends Component
                     'currency' => $userCurrency,
                     'metadata' => [
                         'hosting_plan_id' => $this->plan->id,
-                        'hosting_plan_price_id' => $priceModel->id,
+                        'hosting_plan_pricing_id' => $priceModel->id,
                         'billing_cycle' => $this->billingCycle,
                         'linked_domain' => $domainName,
                         'domain_required' => $domainRequired,

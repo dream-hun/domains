@@ -1,6 +1,6 @@
 # Price Storage & Currency Exchange Architecture
 
-## Why Prices Are Stored in Cents (Minor Units)
+## Why Tld Are Stored in Cents (Minor Units)
 
 ### 1. **Precision & Accuracy**
 - **Avoids Floating-Point Errors**: Storing prices as integers eliminates floating-point precision issues that can cause calculation errors (e.g., `0.1 + 0.2 = 0.30000000000000004`)
@@ -20,7 +20,7 @@
 ### 4. **Code Evidence**
 
 ```php
-// DomainPrice.php - Line 83-99
+// Tld.php - Line 83-99
 public function getPriceInBaseCurrency(string $priceType = 'register_price'): float
 {
     $rawPrice = $this->{$priceType};

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions\Domains;
 
-use App\Enums\DomainType;
 use App\Models\Domain;
 use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
@@ -35,10 +34,7 @@ final readonly class ToggleDomainLockAction
             $domain->refresh();
             $desiredLock = $forceLock ?? ! $domain->is_locked;
 
-            // Check if this is a local domain
-            $domain->loadMissing('domainPrice');
-            $type = $domain->domainPrice?->type;
-            $isLocal = $type === DomainType::Local || ($type === null && $this->isLocalDomain($domain->name));
+            $isLocal = $this->isLocalDomain($domain->name);
 
             // Check if we have mocks for this request
             $hasMocks = $this->eppDomainService instanceof MockInterface || $this->namecheapDomainService instanceof MockInterface;
@@ -89,9 +85,7 @@ final readonly class ToggleDomainLockAction
 
     private function resolveService(Domain $domain): DomainServiceInterface
     {
-        $domain->loadMissing('domainPrice');
-        $type = $domain->domainPrice?->type;
-        $isLocal = $type === DomainType::Local || ($type === null && $this->isLocalDomain($domain->name));
+        $isLocal = $this->isLocalDomain($domain->name);
 
         try {
             $resolved = app()->make(DomainServiceInterface::class);
@@ -103,17 +97,7 @@ final readonly class ToggleDomainLockAction
             // Fall through to concrete service resolution.
         }
 
-        if ($isLocal) {
-            return $this->eppDomainService;
-        }
-
-        if ($type === DomainType::International) {
-            return $this->namecheapDomainService;
-        }
-
-        return $this->isLocalDomain($domain->name)
-            ? $this->eppDomainService
-            : $this->namecheapDomainService;
+        return $isLocal ? $this->eppDomainService : $this->namecheapDomainService;
     }
 
     private function isLocalDomain(string $domainName): bool

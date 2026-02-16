@@ -1,6 +1,6 @@
 # Price Storage & Currency Exchange - Executive Summary
 
-## Why Prices Are Stored in Cents
+## Why Tld Are Stored in Cents
 
 ### Primary Reasons
 

@@ -25,15 +25,8 @@ return new class extends Migration
             $table->integer('quantity')->default(1);
             $table->integer('years')->default(1);
             $table->decimal('total_amount', 10, 2);
+            $table->json('metadata')->nullable();
             $table->timestamps();
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('order_items');
     }
 };

@@ -20,7 +20,6 @@ final class StoreCurrencyRequest extends FormRequest
             'code' => ['required', 'string', 'size:3', 'uppercase', 'unique:currencies,code'],
             'name' => ['required', 'string', 'max:255'],
             'symbol' => ['required', 'string', 'max:10'],
-            'exchange_rate' => ['required', 'numeric', 'min:0.000001'],
             'is_base' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ];
@@ -31,7 +30,6 @@ final class StoreCurrencyRequest extends FormRequest
         return [
             'code.size' => 'The currency code must be exactly 3 characters.',
             'code.uppercase' => 'The currency code must be uppercase.',
-            'exchange_rate.min' => 'The exchange rate must be greater than zero.',
         ];
     }
 }

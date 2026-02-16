@@ -18,7 +18,7 @@ final class StoreDomainPriceRequest extends FormRequest
     {
         return [
             'tld' => ['required', 'string', 'unique:domain_prices,tld'],
-            'type' => ['required', 'string', 'in:local,international'],
+            'currency' => ['required', 'string', 'in:USD,RWF'],
             'register_price' => ['required', 'integer', 'min:0'],
             'renewal_price' => ['required', 'integer', 'min:0'],
             'transfer_price' => ['required', 'integer', 'min:0'],

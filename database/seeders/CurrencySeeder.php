@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Models\Currency;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 final class CurrencySeeder extends Seeder
 {
@@ -16,28 +17,30 @@ final class CurrencySeeder extends Seeder
     {
         $currencies = [
             [
+                'uuid' => Str::uuid(),
                 'code' => 'USD',
                 'name' => 'US Dollar',
                 'symbol' => '$',
-                'exchange_rate' => 1.000000,
-                'is_base' => true,
+                'is_base' => false,
                 'is_active' => true,
-                'rate_updated_at' => now(),
             ],
             [
+                'uuid' => Str::uuid(),
                 'code' => 'RWF',
                 'name' => 'Rwandan Franc',
                 'symbol' => 'FRW',
-                'exchange_rate' => 1350.000000,
-                'is_base' => false,
+                'is_base' => true,
                 'is_active' => true,
-                'rate_updated_at' => now(),
             ],
-
+            [
+                'uuid' => Str::uuid(),
+                'code' => 'EUR',
+                'name' => 'Euro',
+                'symbol' => '€',
+                'is_base' => false,
+                'is_active' => false,
+            ],
         ];
-
         Currency::query()->insert($currencies);
-
-        $this->command->info('Currencies seeded successfully.');
     }
 }

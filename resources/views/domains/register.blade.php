@@ -1,4 +1,4 @@
-@php use App\Enums\DomainType; @endphp
+@php use App\Enums\TldType; @endphp
 <x-admin-layout>
     @section('page-title')
         Check out
@@ -34,13 +34,13 @@
                             </div>
                             <div class="card-body">
                                 <div
-                                    x-data="{ useSingleContact: {{ old('use_single_contact', '0') === '1' ? 'true' : 'false' }},registrantContactId: '{{ old('registrant_contact_id', '') }}'}">
+                                        x-data="{ useSingleContact: {{ old('use_single_contact', '0') === '1' ? 'true' : 'false' }},registrantContactId: '{{ old('registrant_contact_id', '') }}'}">
                                     <div class="form-check form-check-inline mb-3">
                                         <!-- Hidden field to ensure a value is always sent -->
                                         <input type="hidden" name="use_single_contact" value="0">
                                         <input type="checkbox" class="form-check-input" id="use_single_contact"
                                                name="use_single_contact" value="1" x-model="useSingleContact"
-                                            {{ old('use_single_contact') ? 'checked' : '' }}>
+                                                {{ old('use_single_contact') ? 'checked' : '' }}>
                                         <label class="form-check-label ms-2" for="use_single_contact">
                                             Use the same contact for all roles (Registrant, Admin, Technical, Billing)
                                         </label>
@@ -51,7 +51,7 @@
                                                  x-data="{ contact: { id: '{{ old('registrant_contact_id', '') }}', details: null } }"
                                                  x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
                                                 <label class="form-label font-weight-bold">Registrant Contact <span
-                                                        class="text-danger">*</span></label>
+                                                            class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select name="registrant_contact_id"
                                                             class="form-control @error('registrant_contact_id') is-invalid @enderror"
@@ -61,7 +61,7 @@
                                                         <option value="">Select Registrant Contact</option>
                                                         @foreach ($existingContacts['registrant'] ?? [] as $contact)
                                                             <option value="{{ $contact->id }}"
-                                                                {{ old('registrant_contact_id') == $contact->id ? 'selected' : '' }}>
+                                                                    {{ old('registrant_contact_id') == $contact->id ? 'selected' : '' }}>
                                                                 {{ $contact->full_name }}
                                                                 ({{ $contact->email }})
                                                             </option>
@@ -87,38 +87,38 @@
                                                                 <div class="row">
                                                                     <div class="col-md-6">
                                                                         <p class="mb-1"><strong>Name:</strong> <span
-                                                                                x-text="contact.details.full_name"></span>
+                                                                                    x-text="contact.details.full_name"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Email:</strong> <span
-                                                                                x-text="contact.details.email"></span>
+                                                                                    x-text="contact.details.email"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Phone:</strong> <span
-                                                                                x-text="contact.details.phone || 'N/A'"></span>
+                                                                                    x-text="contact.details.phone || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Organization:</strong>
                                                                             <span
-                                                                                x-text="contact.details.organization || 'N/A'"></span>
+                                                                                    x-text="contact.details.organization || 'N/A'"></span>
                                                                         </p>
                                                                     </div>
                                                                     <div class="col-md-6">
                                                                         <p class="mb-1"><strong>Address:</strong>
                                                                             <span
-                                                                                x-text="contact.details.address_one || 'N/A'"></span>
+                                                                                    x-text="contact.details.address_one || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>City:</strong> <span
-                                                                                x-text="contact.details.city || 'N/A'"></span>
+                                                                                    x-text="contact.details.city || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Province:</strong>
                                                                             <span
-                                                                                x-text="contact.details.province || 'N/A'"></span>
+                                                                                    x-text="contact.details.province || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Country:</strong>
                                                                             <span
-                                                                                x-text="contact.details.country_code || 'N/A'"></span>
+                                                                                    x-text="contact.details.country_code || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Postal Code:</strong>
                                                                             <span
-                                                                                x-text="contact.details.postal_code || 'N/A'"></span>
+                                                                                    x-text="contact.details.postal_code || 'N/A'"></span>
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -133,7 +133,7 @@
                                                  x-data="{ contact: { id: '{{ old('admin_contact_id', '') }}', details: null } }"
                                                  x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
                                                 <label class="form-label font-weight-bold">Admin Contact <span
-                                                        class="text-danger">*</span></label>
+                                                            class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select name="admin_contact_id"
                                                             class="form-control @error('admin_contact_id') is-invalid @enderror"
@@ -143,7 +143,7 @@
                                                         <option value="">Select Admin Contact</option>
                                                         @foreach ($existingContacts['admin'] ?? [] as $contact)
                                                             <option value="{{ $contact->id }}"
-                                                                {{ old('admin_contact_id') == $contact->id ? 'selected' : '' }}>
+                                                                    {{ old('admin_contact_id') == $contact->id ? 'selected' : '' }}>
                                                                 {{ $contact->full_name }}
                                                                 ({{ $contact->email }})
                                                             </option>
@@ -169,39 +169,39 @@
                                                                 <div class="row">
                                                                     <div class="col-md-6">
                                                                         <p class="mb-1"><strong>Name:</strong> <span
-                                                                                x-text="contact.details.full_name"></span>
+                                                                                    x-text="contact.details.full_name"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Email:</strong> <span
-                                                                                x-text="contact.details.email"></span>
+                                                                                    x-text="contact.details.email"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Phone:</strong> <span
-                                                                                x-text="contact.details.phone || 'N/A'"></span>
+                                                                                    x-text="contact.details.phone || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1">
                                                                             <strong>Organization:</strong>
                                                                             <span
-                                                                                x-text="contact.details.organization || 'N/A'"></span>
+                                                                                    x-text="contact.details.organization || 'N/A'"></span>
                                                                         </p>
                                                                     </div>
                                                                     <div class="col-md-6">
                                                                         <p class="mb-1"><strong>Address:</strong>
                                                                             <span
-                                                                                x-text="contact.details.address_one || 'N/A'"></span>
+                                                                                    x-text="contact.details.address_one || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>City:</strong> <span
-                                                                                x-text="contact.details.city || 'N/A'"></span>
+                                                                                    x-text="contact.details.city || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Province:</strong>
                                                                             <span
-                                                                                x-text="contact.details.province || 'N/A'"></span>
+                                                                                    x-text="contact.details.province || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Country:</strong>
                                                                             <span
-                                                                                x-text="contact.details.country_code || 'N/A'"></span>
+                                                                                    x-text="contact.details.country_code || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Postal Code:</strong>
                                                                             <span
-                                                                                x-text="contact.details.postal_code || 'N/A'"></span>
+                                                                                    x-text="contact.details.postal_code || 'N/A'"></span>
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -216,7 +216,7 @@
                                                  x-data="{ contact: { id: '{{ old('tech_contact_id', '') }}', details: null } }"
                                                  x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
                                                 <label class="form-label font-weight-bold">Technical Contact <span
-                                                        class="text-danger">*</span></label>
+                                                            class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select name="tech_contact_id"
                                                             class="form-control @error('tech_contact_id') is-invalid @enderror"
@@ -226,7 +226,7 @@
                                                         <option value="">Select Technical Contact</option>
                                                         @foreach ($existingContacts['technical'] ?? [] as $contact)
                                                             <option value="{{ $contact->id }}"
-                                                                {{ old('tech_contact_id') == $contact->id ? 'selected' : '' }}>
+                                                                    {{ old('tech_contact_id') == $contact->id ? 'selected' : '' }}>
                                                                 {{ $contact->full_name }}
                                                                 ({{ $contact->email }})
                                                             </option>
@@ -252,39 +252,39 @@
                                                                 <div class="row">
                                                                     <div class="col-md-6">
                                                                         <p class="mb-1"><strong>Name:</strong> <span
-                                                                                x-text="contact.details.full_name"></span>
+                                                                                    x-text="contact.details.full_name"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Email:</strong> <span
-                                                                                x-text="contact.details.email"></span>
+                                                                                    x-text="contact.details.email"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Phone:</strong> <span
-                                                                                x-text="contact.details.phone || 'N/A'"></span>
+                                                                                    x-text="contact.details.phone || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1">
                                                                             <strong>Organization:</strong>
                                                                             <span
-                                                                                x-text="contact.details.organization || 'N/A'"></span>
+                                                                                    x-text="contact.details.organization || 'N/A'"></span>
                                                                         </p>
                                                                     </div>
                                                                     <div class="col-md-6">
                                                                         <p class="mb-1"><strong>Address:</strong>
                                                                             <span
-                                                                                x-text="contact.details.address_one || 'N/A'"></span>
+                                                                                    x-text="contact.details.address_one || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>City:</strong> <span
-                                                                                x-text="contact.details.city || 'N/A'"></span>
+                                                                                    x-text="contact.details.city || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Province:</strong>
                                                                             <span
-                                                                                x-text="contact.details.province || 'N/A'"></span>
+                                                                                    x-text="contact.details.province || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Country:</strong>
                                                                             <span
-                                                                                x-text="contact.details.country_code || 'N/A'"></span>
+                                                                                    x-text="contact.details.country_code || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Postal Code:</strong>
                                                                             <span
-                                                                                x-text="contact.details.postal_code || 'N/A'"></span>
+                                                                                    x-text="contact.details.postal_code || 'N/A'"></span>
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -299,7 +299,7 @@
                                                  x-data="{ contact: { id: '{{ old('billing_contact_id', '') }}', details: null } }"
                                                  x-init="if (contact.id) { fetchContactDetails(contact.id).then(result => contact.details = result) }">
                                                 <label class="form-label font-weight-bold">Billing Contact <span
-                                                        class="text-danger">*</span></label>
+                                                            class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select name="billing_contact_id"
                                                             class="form-control @error('billing_contact_id') is-invalid @enderror"
@@ -309,7 +309,7 @@
                                                         <option value="">Select Billing Contact</option>
                                                         @foreach ($existingContacts['billing'] ?? [] as $contact)
                                                             <option value="{{ $contact->id }}"
-                                                                {{ old('billing_contact_id') == $contact->id ? 'selected' : '' }}>
+                                                                    {{ old('billing_contact_id') == $contact->id ? 'selected' : '' }}>
                                                                 {{ $contact->full_name }}
                                                                 ({{ $contact->email }})
                                                             </option>
@@ -335,42 +335,42 @@
                                                                 <div class="row">
                                                                     <div class="col-md-6">
                                                                         <p class="mb-1"><strong>Name:</strong> <span
-                                                                                x-text="contact.details.full_name"></span>
+                                                                                    x-text="contact.details.full_name"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Email:</strong> <span
-                                                                                x-text="contact.details.email"></span>
+                                                                                    x-text="contact.details.email"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Phone:</strong> <span
-                                                                                x-text="contact.details.phone || 'N/A'"></span>
+                                                                                    x-text="contact.details.phone || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1">
                                                                             <strong>Organization:</strong>
                                                                             <span
-                                                                                x-text="contact.details.organization || 'N/A'"></span>
+                                                                                    x-text="contact.details.organization || 'N/A'"></span>
                                                                         </p>
                                                                     </div>
                                                                     <div class="col-md-6">
                                                                         <p class="mb-1"><strong>Address:</strong>
                                                                             <span
-                                                                                x-text="contact.details.address_one || 'N/A'"></span>
+                                                                                    x-text="contact.details.address_one || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>City:</strong> <span
-                                                                                x-text="contact.details.city || 'N/A'"></span>
+                                                                                    x-text="contact.details.city || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1">
                                                                             <strong>Province:</strong>
                                                                             <span
-                                                                                x-text="contact.details.province || 'N/A'"></span>
+                                                                                    x-text="contact.details.province || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1">
                                                                             <strong>Country:</strong>
                                                                             <span
-                                                                                x-text="contact.details.country_code || 'N/A'"></span>
+                                                                                    x-text="contact.details.country_code || 'N/A'"></span>
                                                                         </p>
                                                                         <p class="mb-1"><strong>Postal
                                                                                 Code:</strong>
                                                                             <span
-                                                                                x-text="contact.details.postal_code || 'N/A'"></span>
+                                                                                    x-text="contact.details.postal_code || 'N/A'"></span>
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -413,7 +413,7 @@
                                     <input type="hidden" name="disable_dns" value="0">
                                     <input type="checkbox" class="form-check-input" id="disable_dns"
                                            name="disable_dns" value="1" x-model="disableDNS"
-                                        {{ old('disable_dns') ? 'checked' : '' }}>
+                                            {{ old('disable_dns') ? 'checked' : '' }}>
                                     <label class="form-check-label ms-2" for="disable_dns">
                                         Don't delegate this domain now
                                     </label>
@@ -489,7 +489,7 @@
                                 <a href="{{ route('cart.index') }}" class="btn btn-secondary btn-block mb-3">
                                     <i class="bi bi-arrow-left"></i> Back to Cart
                                 </a>
-                                @if ($domainType === DomainType::International)
+                                @if ($domainType === TldType::International)
                                     <div class="alert alert-info mt-3 mb-3">
                                         <i class="bi bi-info-circle"></i> Free WHOIS Privacy included with your
                                         registration.
@@ -501,10 +501,10 @@
                                     <input type="checkbox"
                                            class="form-check-input @error('terms_accepted') is-invalid @enderror"
                                            id="terms_accepted" name="terms_accepted" required
-                                        {{ old('terms_accepted') ? 'checked' : '' }}>
+                                            {{ old('terms_accepted') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="terms_accepted">
                                         I accept the <a href="#" target="_blank">Terms and Conditions</a> <span
-                                            class="text-danger">*</span>
+                                                class="text-danger">*</span>
                                     </label>
                                     @error('terms_accepted')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -515,10 +515,10 @@
                                     <input type="checkbox"
                                            class="form-check-input @error('privacy_policy_accepted') is-invalid @enderror"
                                            id="privacy_policy_accepted" name="privacy_policy_accepted" required
-                                        {{ old('privacy_policy_accepted') ? 'checked' : '' }}>
+                                            {{ old('privacy_policy_accepted') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="privacy_policy_accepted">
                                         I accept the <a href="#" target="_blank">Privacy Policy</a> <span
-                                            class="text-danger">*</span>
+                                                class="text-danger">*</span>
                                     </label>
                                     @error('privacy_policy_accepted')
                                     <div class="invalid-feedback">{{ $message }}</div>

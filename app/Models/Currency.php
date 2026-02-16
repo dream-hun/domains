@@ -4,14 +4,25 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Contracts\Currency\CurrencyFormatterContract;
-use Cknow\Money\Money;
+use App\Services\PriceFormatter;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Throwable;
 
+/**
+ * @property-read int $id
+ * @property-read string $uuid
+ * @property-read string $code
+ * @property-read string $name
+ * @property-read bool $is_active
+ * @property-read bool $is_base
+ * @property-read CarbonInterface $created_at
+ * @property-read CarbonInterface $updated_at
+ **/
 final class Currency extends Model
 {
     use HasFactory;
@@ -28,10 +39,8 @@ final class Currency extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'exchange_rate' => 'float',
         'is_base' => 'boolean',
         'is_active' => 'boolean',
-        'rate_updated_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -53,7 +62,6 @@ final class Currency extends Model
                 'code' => 'USD',
                 'name' => 'US Dollar',
                 'symbol' => '$',
-                'exchange_rate' => 1.0,
                 'is_base' => true,
                 'is_active' => true,
             ]);
@@ -68,40 +76,9 @@ final class Currency extends Model
         return Cache::remember('active_currencies', 3600, fn () => self::query()->where('is_active', true)->orderBy('code')->get());
     }
 
-    public function formattedBaseRate(): Money
+    public function getRouteKeyName(): string
     {
-        return Money::USD($this->exchange_rate);
-
-    }
-
-    public function formattedRate(): Money
-    {
-        return Money::RWF($this->exchange_rate);
-
-    }
-
-    /**
-     * Convert amount from this currency to target currency
-     */
-    public function convertTo(float $amount, self $targetCurrency): float
-    {
-        if ($this->code === $targetCurrency->code) {
-            return $amount;
-        }
-
-        $baseCurrency = self::getBaseCurrency();
-
-        // Convert to base currency first if not already base
-        if ($this->code !== $baseCurrency->code) {
-            $amount /= $this->exchange_rate;
-        }
-
-        // Convert from base to target currency
-        if ($targetCurrency->code !== $baseCurrency->code) {
-            $amount *= $targetCurrency->exchange_rate;
-        }
-
-        return round($amount, 2);
+        return 'uuid';
     }
 
     /**
@@ -109,26 +86,22 @@ final class Currency extends Model
      */
     public function format(float $amount): string
     {
-        // Use formatter if available, otherwise format directly
         try {
-            return resolve(CurrencyFormatterContract::class)->format($amount, $this->code);
+            return resolve(PriceFormatter::class)->format($amount, $this->code);
         } catch (Throwable) {
-            // Fallback formatting
             $decimals = $this->getDecimalPlaces($amount);
 
-            return $this->symbol.number_format(round($amount, $decimals), $decimals);
+            return ($this->symbol ?? $this->code.' ').number_format(round($amount, $decimals), $decimals);
         }
     }
 
-    /**
-     * Convert amount to Money object.
-     */
-    public function toMoney(float $amount): Money
+    protected static function booted(): void
     {
-        // Convert to minor units (cents/smallest unit)
-        $minorUnits = (int) round($amount * 100);
-
-        return Money::{$this->code}($minorUnits);
+        self::creating(function (Currency $currency): void {
+            if (empty($currency->uuid)) {
+                $currency->uuid = (string) Str::uuid();
+            }
+        });
     }
 
     /**
@@ -136,12 +109,10 @@ final class Currency extends Model
      */
     private function getDecimalPlaces(float $amount): int
     {
-        // These currencies NEVER use decimals
         if (in_array($this->code, self::NO_DECIMAL_CURRENCIES, true)) {
             return 0;
         }
 
-        // For other currencies, check if the amount has meaningful decimals
         if (abs($amount - round($amount)) < 0.01) {
             return 0;
         }

@@ -1,6 +1,6 @@
 @php
-use App\Enums\DomainType;
 use Illuminate\Support\Str;
+$baseCurrency = $price->getBaseCurrency();
 @endphp
 <x-admin-layout>
     @section('page-title')
@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('admin.prices.index') }}">Domain Prices</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.prices.index') }}">Domain Tld</a></li>
                         <li class="breadcrumb-item active">{{ $price->tld }}</li>
                     </ol>
                 </div>
@@ -71,30 +71,7 @@ use Illuminate\Support\Str;
                                         </div>
                                     </div>
 
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label for="type">
-                                                <i class="fas fa-map-marker-alt mr-1"></i>Type
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <select name="type"
-                                                    id="type"
-                                                    class="form-control @error('type') is-invalid @enderror"
-                                                    required>
-                                                @foreach(DomainType::cases() as $type)
-                                                    <option
-                                                        value="{{ $type->value }}" {{ old('type', $price->type?->value) === $type->value ? 'selected' : '' }}>
-                                                        {{ $type->label() }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('type')
-                                            <span class="invalid-feedback d-block">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-3">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="status">
                                                 <i class="fas fa-toggle-on mr-1"></i>Status
@@ -122,8 +99,11 @@ use Illuminate\Support\Str;
                                 <hr class="my-4">
 
                                 <h5 class="mb-3">
-                                    <i class="fas fa-dollar-sign mr-2 text-success"></i>Pricing (in cents)
+                                    <i class="fas fa-dollar-sign mr-2 text-success"></i>Pricing
                                 </h5>
+                                <p class="text-muted small mb-2">
+                                    {{ $baseCurrency === 'RWF' ? 'Enter prices in RWF (whole units).' : 'Enter prices in USD (dollars).' }}
+                                </p>
 
                                 <div class="row">
                                     <div class="col-md-6 col-lg-3">
@@ -135,14 +115,14 @@ use Illuminate\Support\Str;
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text">
-                                                        {{ $price->type === \App\Enums\DomainType::Local ? 'RWF' : 'USD' }}
+                                                        {{ $baseCurrency }}
                                                     </span>
                                                 </div>
                                                 <input type="number"
                                                        name="register_price"
                                                        id="register_price"
                                                        class="form-control @error('register_price') is-invalid @enderror"
-                                                       value="{{ old('register_price', $price->register_price) }}"
+                                                       value="{{ old('register_price', $price->getRawPriceForAdminForm('register_price', $baseCurrency)) }}"
                                                        min="0"
                                                        step="1"
                                                        required>
@@ -165,14 +145,14 @@ use Illuminate\Support\Str;
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text">
-                                                        {{ $price->type === \App\Enums\DomainType::Local ? 'RWF' : 'USD' }}
+                                                        {{ $baseCurrency }}
                                                     </span>
                                                 </div>
                                                 <input type="number"
                                                        name="renewal_price"
                                                        id="renewal_price"
                                                        class="form-control @error('renewal_price') is-invalid @enderror"
-                                                       value="{{ old('renewal_price', $price->renewal_price) }}"
+                                                       value="{{ old('renewal_price', $price->getRawPriceForAdminForm('renewal_price', $baseCurrency)) }}"
                                                        min="0"
                                                        step="1"
                                                        required>
@@ -195,14 +175,14 @@ use Illuminate\Support\Str;
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text">
-                                                        {{ $price->type === \App\Enums\DomainType::Local ? 'RWF' : 'USD' }}
+                                                        {{ $baseCurrency }}
                                                     </span>
                                                 </div>
                                                 <input type="number"
                                                        name="transfer_price"
                                                        id="transfer_price"
                                                        class="form-control @error('transfer_price') is-invalid @enderror"
-                                                       value="{{ old('transfer_price', $price->transfer_price) }}"
+                                                       value="{{ old('transfer_price', $price->getRawPriceForAdminForm('transfer_price', $baseCurrency)) }}"
                                                        min="0"
                                                        step="1"
                                                        required>
@@ -224,19 +204,19 @@ use Illuminate\Support\Str;
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text">
-                                                        {{ $price->type === \App\Enums\DomainType::Local ? 'RWF' : 'USD' }}
+                                                        {{ $baseCurrency }}
                                                     </span>
                                                 </div>
                                                 <input type="number"
                                                        name="redemption_price"
                                                        id="redemption_price"
                                                        class="form-control @error('redemption_price') is-invalid @enderror"
-                                                       value="{{ old('redemption_price', $price->redemption_price) }}"
+                                                       value="{{ old('redemption_price', $price->getRawPriceForAdminForm('redemption_price', $baseCurrency) ?: '') }}"
                                                        min="0"
                                                        step="1">
                                             </div>
                                             <small class="form-text text-muted">
-                                                @if($price->redemption_price)
+                                                @if($price->getPriceInBaseCurrency('redemption_price') > 0)
                                                     Current: {{ $price->formatRedemptionPrice() }}
                                                 @else
                                                     Not set
@@ -363,13 +343,9 @@ use Illuminate\Support\Str;
                                 <dt class="col-sm-5"><i class="fas fa-globe mr-1"></i>TLD:</dt>
                                 <dd class="col-sm-7"><strong>.{{ $price->tld }}</strong></dd>
 
-                                <dt class="col-sm-5"><i class="fas fa-map-marker-alt mr-1"></i>Type:</dt>
+                                <dt class="col-sm-5"><i class="fas fa-coins mr-1"></i>Currencies:</dt>
                                 <dd class="col-sm-7">
-                                    @if(isset($price->type) && method_exists($price->type, 'label'))
-                                        <span class="badge {{ $price->type->color() }}">{{ $price->type->label() }}</span>
-                                    @else
-                                        <span class="badge badge-secondary">{{ ucfirst((string) $price->type) }}</span>
-                                    @endif
+                                    {{ $price->domainPriceCurrencies->map(fn ($dpc) => $dpc->currency?->code)->filter()->implode(', ') ?: '—' }}
                                 </dd>
 
                                 <dt class="col-sm-5"><i class="fas fa-toggle-on mr-1"></i>Status:</dt>
@@ -396,10 +372,10 @@ use Illuminate\Support\Str;
                         </div>
                         <div class="card-body">
                             <ul class="mb-0 pl-3">
-                                <li class="mb-2">All prices are stored in <strong>cents</strong></li>
+                                <li class="mb-2">Tld are in <strong>{{ $baseCurrency === 'RWF' ? 'RWF (whole units)' : 'USD (dollars)' }}</strong></li>
                                 <li class="mb-2">Price changes require a <strong>reason</strong></li>
                                 <li class="mb-2">All changes are tracked in history</li>
-                                <li>Currency depends on domain type</li>
+                                <li>Tld are stored per currency (USD or RWF)</li>
                             </ul>
                         </div>
                     </div>
@@ -452,7 +428,7 @@ use Illuminate\Support\Str;
                                                 </td>
                                                 <td>
                                                     @php
-                                                        $isRWF = $price->type === \App\Enums\DomainType::Local;
+                                                        $isRWF = $baseCurrency === 'RWF';
                                                         $oldValues = $history->old_values ?? [];
                                                         $changes = $history->changes ?? [];
                                                     @endphp

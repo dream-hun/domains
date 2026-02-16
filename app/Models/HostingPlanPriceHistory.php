@@ -16,7 +16,7 @@ class HostingPlanPriceHistory extends Model
 
     public function hostingPlanPrice(): BelongsTo
     {
-        return $this->belongsTo(HostingPlanPrice::class);
+        return $this->belongsTo(HostingPlanPrice::class, 'hosting_plan_pricing_id');
     }
 
     public function changedBy(): BelongsTo
@@ -27,11 +27,11 @@ class HostingPlanPriceHistory extends Model
     protected function casts(): array
     {
         return [
-            'hosting_plan_price_id' => 'integer',
+            'hosting_plan_pricing_id' => 'integer',
             'changed_by' => 'integer',
             'reason' => 'string',
-            'regular_price' => 'integer',
-            'renewal_price' => 'integer',
+            'regular_price' => 'float',
+            'renewal_price' => 'float',
             'changes' => 'array',
             'old_values' => 'array',
             'ip_address' => 'string',

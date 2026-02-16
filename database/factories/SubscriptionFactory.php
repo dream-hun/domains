@@ -34,7 +34,7 @@ final class SubscriptionFactory extends Factory
             'uuid' => $this->faker->uuid(),
             'user_id' => User::factory(),
             'hosting_plan_id' => $plan->id,
-            'hosting_plan_price_id' => $planPrice->id,
+            'hosting_plan_pricing_id' => $planPrice->id,
             'product_snapshot' => [
                 'plan' => [
                     'id' => $plan->id,

@@ -1,18 +1,17 @@
-@php use App\Enums\DomainType; @endphp
 <x-admin-layout>
     @section('page-title')
-        Domain Prices
+        Domain Tld
     @endsection
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Domain Prices</h1>
+                    <h1 class="m-0">Domain Tld</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{route('dashboard')}}">Dashboard</a></li>
-                        <li class="breadcrumb-item active"><a href="{{route('admin.prices.index')}}">Domain Prices</a>
+                        <li class="breadcrumb-item active"><a href="{{route('admin.prices.index')}}">Domain Tld</a>
                         </li>
                         <li class="breadcrumb-item active">Add New Tld</li>
                     </ol>
@@ -40,19 +39,15 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <label for="type">Type <span class="text-danger">*</span></label>
-                            <select name="type"
-                                    id="type"
-                                    class="form-control @error('type') is-invalid @enderror"
+                            <label for="currency">Currency <span class="text-danger">*</span></label>
+                            <select name="currency"
+                                    id="currency"
+                                    class="form-control @error('currency') is-invalid @enderror"
                                     required>
-                                @foreach(DomainType::cases() as $type)
-                                    <option
-                                        value="{{ $type->value }}" {{ old('type') === $type->value ? 'selected' : '' }}>
-                                        {{ $type->label() }}
-                                    </option>
-                                @endforeach
+                                <option value="USD" {{ old('currency', 'USD') === 'USD' ? 'selected' : '' }}>USD</option>
+                                <option value="RWF" {{ old('currency') === 'RWF' ? 'selected' : '' }}>RWF</option>
                             </select>
-                            @error('type')
+                            @error('currency')
                             <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
@@ -75,7 +70,7 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <label for="register_price" class="form-label required">Register Price </label>
+                            <label for="register_price" class="form-label required">Register Price (whole units: USD dollars, RWF)</label>
                             <input type="number"
                                    name="register_price"
                                    id="register_price"
@@ -87,7 +82,7 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <label for="renewal_price">Renewal Price (cents) <span
+                            <label for="renewal_price">Renewal Price <span
                                     class="text-danger">*</span></label>
                             <input type="number"
                                    name="renewal_price"
@@ -100,7 +95,7 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <label for="transfer_price">Transfer Price (cents) <span
+                            <label for="transfer_price">Transfer Price <span
                                     class="text-danger">*</span></label>
                             <input type="number"
                                    name="transfer_price"
@@ -113,7 +108,7 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <label for="redemption_price">Redemption Price (cents)</label>
+                            <label for="redemption_price">Redemption Price</label>
                             <input type="number"
                                    name="redemption_price"
                                    id="redemption_price"

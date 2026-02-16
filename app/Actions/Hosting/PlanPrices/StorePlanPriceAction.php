@@ -14,6 +14,8 @@ final class StorePlanPriceAction
     {
         $data['uuid'] ??= (string) Str::uuid();
         $data['status'] ??= HostingPlanPriceStatus::Active;
+        $data['is_current'] ??= true;
+        $data['effective_date'] ??= now()->toDateString();
 
         return HostingPlanPrice::query()->create($data);
     }

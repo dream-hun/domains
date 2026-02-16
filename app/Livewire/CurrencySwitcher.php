@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Livewire;
 
 use App\Models\Currency;
-use App\Services\CurrencyService;
 use App\Services\GeolocationService;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -18,7 +17,7 @@ final class CurrencySwitcher extends Component
 
     public bool $showDropdown = false;
 
-    public function mount(CurrencyService $currencyService, GeolocationService $geolocationService): void
+    public function mount(GeolocationService $geolocationService): void
     {
 
         if (session()->has('selected_currency')) {
@@ -34,11 +33,9 @@ final class CurrencySwitcher extends Component
                 return;
             }
 
-            // Session contains invalid data, clear it and continue to geolocation
             session()->forget('selected_currency');
         }
 
-        // No session currency, initialize from geolocation
         $isFromRwanda = $geolocationService->isUserFromRwanda();
         $userCountry = $geolocationService->getUserCountryCode();
 
@@ -90,12 +87,14 @@ final class CurrencySwitcher extends Component
         $this->showDropdown = ! $this->showDropdown;
     }
 
-    public function render(CurrencyService $currencyService): Factory|View|\Illuminate\View\View
+    public function render(): Factory|View|\Illuminate\View\View
     {
-        $availableCurrencies = [];
+        $currencies = Currency::query()
+            ->where('is_active', true)
+            ->get();
 
-        foreach ($currencyService->getActiveCurrencies()->whereIn('code', ['USD', 'RWF']) as $currency) {
-            /** @var Currency $currency */
+        $availableCurrencies = [];
+        foreach ($currencies as $currency) {
             $availableCurrencies[$currency->code] = [
                 'name' => $currency->name,
                 'symbol' => $currency->symbol,

@@ -4,7 +4,7 @@
 <head>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="UTF-8">
-    <title>@yield('page-title') - {{ config('app.name') }}</title>
+    <title>@isset($pageTitle){{ $pageTitle }}@else @yield('page-title') @endisset - {{ config('app.name') }}</title>
     <link rel="stylesheet" href="{{ asset('css/adminlte.min.css') }}">
     <link href="{{ asset('plugins/select2/css/select2.min.css') }}" rel="stylesheet" />
     <link href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet" />

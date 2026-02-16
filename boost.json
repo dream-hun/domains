@@ -1,7 +1,7 @@
 {
     "agents": [
         "cursor",
-        "copilot"
+        "claude_code"
     ],
     "guidelines": true,
     "herd_mcp": false,

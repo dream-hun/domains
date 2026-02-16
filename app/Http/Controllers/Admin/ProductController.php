@@ -122,11 +122,11 @@ class ProductController extends Controller
         }
 
         $userCurrency = CurrencyHelper::getUserCurrency();
-        $monthlyRenewalPrice = $monthlyPlanPrice->getPriceInCurrency('renewal_price', $userCurrency);
+        $monthlyRenewalPrice = $monthlyPlanPrice->getPriceInCurrency('renewal_price');
 
         $displayUnitPrice = $monthlyRenewalPrice;
         if ($originalPlanPrice && $originalBillingCycle === BillingCycle::Annually) {
-            $displayUnitPrice = $originalPlanPrice->getPriceInCurrency('renewal_price', $userCurrency);
+            $displayUnitPrice = $originalPlanPrice->getPriceInCurrency('renewal_price');
         }
 
         $totalPrice = $monthlyRenewalPrice * $quantity;
@@ -144,7 +144,7 @@ class ProductController extends Controller
                 'domain_name' => $subscription->domain ?? 'N/A',
                 'billing_cycle' => $subscription->billing_cycle,
                 'hosting_plan_id' => $subscription->hosting_plan_id,
-                'hosting_plan_price_id' => $monthlyPlanPrice->id,
+                'hosting_plan_pricing_id' => $monthlyPlanPrice->id,
                 'current_expiry' => $subscription->expires_at->format('Y-m-d'),
                 'currency' => $userCurrency,
                 'unit_price' => $monthlyRenewalPrice,
@@ -154,7 +154,7 @@ class ProductController extends Controller
                 'added_at' => now()->timestamp,
                 'metadata' => [
                     'hosting_plan_id' => $subscription->hosting_plan_id,
-                    'hosting_plan_price_id' => $monthlyPlanPrice->id,
+                    'hosting_plan_pricing_id' => $monthlyPlanPrice->id,
                     'billing_cycle' => $subscription->billing_cycle,
                     'subscription_id' => $subscription->id,
                 ],

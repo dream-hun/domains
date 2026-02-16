@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\ValueObjects\Price;
+use App\Models\Currency;
 use Exception;
 use NumberFormatter;
 
@@ -19,7 +19,7 @@ final readonly class PriceFormatter
         $config = $this->getCurrencyConfig($currency);
 
         $decimals = $this->getDecimalPlaces($currency, $amount, $config);
-        $symbol = $config['symbol'] ?? $this->getSymbolFromFormatter($currency);
+        $symbol = $this->resolveSymbol($currency, $config);
         $position = $config['symbol_position'] ?? 'before';
 
         $amount = round($amount, $decimals);
@@ -28,14 +28,6 @@ final readonly class PriceFormatter
         return $position === 'before'
             ? $symbol.$formattedNumber
             : $formattedNumber.$symbol;
-    }
-
-    /**
-     * Format a Price value object.
-     */
-    public function formatPrice(Price $price): string
-    {
-        return $this->format($price->toMajorUnits(), $price->getCurrency());
     }
 
     /**
@@ -94,7 +86,7 @@ final readonly class PriceFormatter
         $currency = $this->normalizeCurrency($currency);
         $config = $this->getCurrencyConfig($currency);
 
-        return $config['symbol'] ?? $this->getSymbolFromFormatter($currency);
+        return $this->resolveSymbol($currency, $config);
     }
 
     /**
@@ -176,6 +168,22 @@ final readonly class PriceFormatter
         }
 
         return 2;
+    }
+
+    /**
+     * Resolve symbol: Currency model first, then config, then formatter fallback.
+     *
+     * @param  array{name?: string, symbol?: string, decimals?: int, symbol_position?: string, aliases?: array<string>}  $config
+     */
+    private function resolveSymbol(string $currency, array $config): string
+    {
+        $currencyModel = Currency::query()->where('code', $currency)->first();
+
+        if ($currencyModel instanceof Currency && (string) $currencyModel->symbol !== '') {
+            return (string) $currencyModel->symbol;
+        }
+
+        return $config['symbol'] ?? $this->getSymbolFromFormatter($currency);
     }
 
     /**

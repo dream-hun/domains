@@ -6,11 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Actions\Order\CreateOrderFromCartAction;
 use App\Actions\Order\ProcessOrderAfterPaymentAction;
+use App\Helpers\CurrencyHelper;
 use App\Http\Requests\KPayPaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\CartPriceConverter;
-use App\Services\CurrencyService;
 use App\Services\PaymentService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -26,8 +26,7 @@ final class KpayPaymentController extends Controller
     public function __construct(
         private readonly PaymentService $paymentService,
         private readonly CreateOrderFromCartAction $createOrderAction,
-        private readonly CartPriceConverter $cartPriceConverter,
-        private readonly CurrencyService $currencyService
+        private readonly CartPriceConverter $cartPriceConverter
     ) {}
 
     /**
@@ -56,7 +55,7 @@ final class KpayPaymentController extends Controller
         }
 
         $user = Auth::user();
-        $currency = $this->currencyService->getUserCurrency()->code;
+        $currency = CurrencyHelper::getUserCurrency();
 
         if ($order) {
             $cartItems = $this->prepareCartItemsForDisplay($order);
@@ -123,7 +122,7 @@ final class KpayPaymentController extends Controller
             }
 
             try {
-                $currency = $this->currencyService->getUserCurrency()->code;
+                $currency = CurrencyHelper::getUserCurrency();
 
                 $checkoutState = session('checkout_state', []);
                 $contactIds = [
@@ -170,10 +169,12 @@ final class KpayPaymentController extends Controller
             $order->update([
                 'billing_name' => $validated['billing_name'],
                 'billing_email' => $validated['billing_email'],
-                'billing_address' => $validated['billing_address'] ?? null,
-                'billing_city' => $validated['billing_city'] ?? null,
-                'billing_country' => $validated['billing_country'] ?? null,
-                'billing_postal_code' => $validated['billing_postal_code'] ?? null,
+                'billing_address' => [
+                    'address' => $validated['billing_address'] ?? '',
+                    'city' => $validated['billing_city'] ?? '',
+                    'country_code' => $validated['billing_country'] ?? '',
+                    'postal_code' => $validated['billing_postal_code'] ?? '',
+                ],
             ]);
         }
 

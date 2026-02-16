@@ -9,11 +9,11 @@ use App\Enums\Hosting\BillingCycle;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CreateCustomSubscriptionRequest;
 use App\Http\Requests\Admin\UpdateSubscriptionRequest;
+use App\Models\Currency;
 use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\CurrencyService;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -27,10 +27,6 @@ use Throwable;
 
 final class SubscriptionController extends Controller
 {
-    public function __construct(
-        private readonly CurrencyService $currencyService
-    ) {}
-
     public function create(): View|Factory
     {
         abort_if(Gate::denies('subscription_create'), 403);
@@ -46,7 +42,7 @@ final class SubscriptionController extends Controller
             ->orderBy('name')
             ->get();
 
-        $currencies = $this->currencyService->getActiveCurrencies();
+        $currencies = Currency::getActiveCurrencies();
 
         return view('admin.subscriptions.create', [
             'users' => $users,

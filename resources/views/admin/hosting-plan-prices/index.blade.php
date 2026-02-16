@@ -61,7 +61,19 @@
                                     @endforeach
                                 </select>
                             </div>
-                            @if ($selectedCategoryUuid || $selectedPlanUuid || $search)
+                            <div class="form-group mb-0 mr-2">
+                                <label for="currency_id" class="sr-only">Filter by Currency</label>
+                                <select name="currency_id" id="currency_id_filter" class="form-control">
+                                    <option value="">All Currencies</option>
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency->id }}"
+                                            {{ $selectedCurrencyId == $currency->id ? 'selected' : '' }}>
+                                            {{ $currency->code }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @if ($selectedCategoryUuid || $selectedPlanUuid || $selectedCurrencyId || $search)
                                 <a href="{{ route('admin.hosting-plan-prices.index') }}"
                                     class="btn btn-secondary btn-sm">
                                     <i class="bi bi-x-lg"></i> Clear Filter
@@ -103,13 +115,16 @@
                                         class="table table-bordered table-striped table-hover datatable-HostingPlanPrice w-100">
                                         <thead>
                                             <tr>
-                                                <th style="width: 15%">Category</th>
-                                                <th style="width: 20%">Plan</th>
-                                                <th style="width: 15%">Billing Cycle</th>
-                                                <th style="width: 15%">Regular Price</th>
-                                                <th style="width: 15%">Renewal Price</th>
-                                                <th style="width: 10%">Status</th>
-                                                <th style="width: 10%">Actions</th>
+                                                <th style="width: 12%">Category</th>
+                                                <th style="width: 15%">Plan</th>
+                                                <th style="width: 8%">Currency</th>
+                                                <th style="width: 10%">Billing Cycle</th>
+                                                <th style="width: 12%">Regular Price</th>
+                                                <th style="width: 12%">Renewal Price</th>
+                                                <th style="width: 7%">Status</th>
+                                                <th style="width: 7%">Current</th>
+                                                <th style="width: 9%">Effective Date</th>
+                                                <th style="width: 8%">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -118,12 +133,17 @@
                                                     <td>{{ $price->plan?->category?->name ?? 'N/A' }}</td>
                                                     <td>{{ $price->plan?->name ?? 'N/A' }}</td>
                                                     <td>
+                                                        <span class="badge badge-secondary">
+                                                            {{ $price->currency?->code ?? 'N/A' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
                                                         <span class="badge badge-info">
                                                             {{ ucfirst(str_replace('-', ' ', $price->billing_cycle)) }}
                                                         </span>
                                                     </td>
-                                                    <td>@priceMinor($price->regular_price, 'USD')</td>
-                                                    <td>@priceMinor($price->renewal_price, 'USD')</td>
+                                                    <td>{{ $price->getFormattedPrice('regular_price') }}</td>
+                                                    <td>{{ $price->getFormattedPrice('renewal_price') }}</td>
                                                     <td>
                                                         @if (isset($price->status) && method_exists($price->status, 'label'))
                                                             <span
@@ -133,6 +153,12 @@
                                                                 class="badge badge-secondary">{{ ucfirst((string) $price->status) }}</span>
                                                         @endif
                                                     </td>
+                                                    <td>
+                                                        <span class="badge badge-{{ $price->is_current ? 'success' : 'secondary' }}">
+                                                            {{ $price->is_current ? 'Yes' : 'No' }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ $price->effective_date?->format('M d, Y') ?? 'N/A' }}</td>
                                                     <td class="text-nowrap">
                                                         @can('hosting_plan_price_edit')
                                                             <a href="{{ route('admin.hosting-plan-prices.edit', $price->uuid) }}"
@@ -195,6 +221,11 @@
 
                 // Submit form when plan changes
                 $('#plan_id').on('change', function() {
+                    filterForm.submit();
+                });
+
+                // Submit form when currency changes
+                $('#currency_id_filter').on('change', function() {
                     filterForm.submit();
                 });
 

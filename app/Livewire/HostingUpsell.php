@@ -128,7 +128,8 @@ final class HostingUpsell extends Component
             /** @var HostingPlan|null $plan */
             $plan = HostingPlan::query()
                 ->with(['planPrices' => function ($query): void {
-                    $query->where('status', HostingPlanPriceStatus::Active);
+                    $query->where('status', HostingPlanPriceStatus::Active)
+                        ->where('is_current', true);
                 }])
                 ->where('status', HostingPlanStatus::Active)
                 ->find($planId);
@@ -176,7 +177,7 @@ final class HostingUpsell extends Component
                 return;
             }
 
-            $price = $planPrice->getPriceInCurrency('regular_price', $this->currencyCode);
+            $price = $planPrice->getPriceInCurrency('regular_price');
             $durationMonths = $this->getBillingCycleMonths($planPrice->billing_cycle);
 
             Cart::add([
@@ -188,14 +189,14 @@ final class HostingUpsell extends Component
                     'type' => 'hosting',
                     'currency' => $this->currencyCode,
                     'hosting_plan_id' => $plan->id,
-                    'hosting_plan_price_id' => $planPrice->id,
+                    'hosting_plan_pricing_id' => $planPrice->id,
                     'billing_cycle' => $planPrice->billing_cycle,
                     'linked_domain' => $this->selectedDomain,
                     'domain_name' => $this->selectedDomain,
                     'duration_months' => $durationMonths,
                     'metadata' => [
                         'hosting_plan_id' => $plan->id,
-                        'hosting_plan_price_id' => $planPrice->id,
+                        'hosting_plan_pricing_id' => $planPrice->id,
                         'billing_cycle' => $planPrice->billing_cycle,
                         'linked_domain' => $this->selectedDomain,
                         'duration_months' => $durationMonths,
@@ -241,7 +242,9 @@ final class HostingUpsell extends Component
     {
         $plans = HostingPlan::query()
             ->with(['planPrices' => function ($query): void {
-                $query->where('status', HostingPlanPriceStatus::Active)->orderBy('billing_cycle');
+                $query->where('status', HostingPlanPriceStatus::Active)
+                    ->where('is_current', true)
+                    ->orderBy('billing_cycle');
             }])
             ->where('status', HostingPlanStatus::Active)
             ->orderByDesc('is_popular')
@@ -256,7 +259,7 @@ final class HostingUpsell extends Component
     {
         return $plans->map(function (HostingPlan $plan): array {
             $prices = $plan->planPrices->map(function ($price): array {
-                $converted = $price->getPriceInCurrency('regular_price', $this->currencyCode);
+                $converted = $price->getPriceInCurrency('regular_price');
 
                 return [
                     'id' => $price->id,

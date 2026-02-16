@@ -37,10 +37,12 @@ final class OrderFactory extends Factory
             'currency' => 'USD',
             'billing_email' => $this->faker->email(),
             'billing_name' => $this->faker->name(),
-            'billing_address' => $this->faker->address(),
-            'billing_city' => $this->faker->city(),
-            'billing_country' => $this->faker->country(),
-            'billing_postal_code' => $this->faker->postcode(),
+            'billing_address' => [
+                'city' => $this->faker->city(),
+                'country' => $this->faker->country(),
+                'postal_code' => $this->faker->postcode(),
+                'line1' => $this->faker->streetAddress(),
+            ],
             'notes' => $this->faker->optional()->sentence(),
             'processed_at' => $this->faker->optional()->dateTimeBetween('-1 month', 'now'),
         ];

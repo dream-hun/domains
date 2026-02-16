@@ -213,13 +213,48 @@
                             @can('subscription_edit')
                                 <a href="{{ route('admin.subscriptions.edit', $subscription) }}" class="btn btn-primary">Edit Subscription</a>
                                 @if($subscription->canBeRenewed())
-                                    <form action="{{ route('admin.subscriptions.renew-now', $subscription) }}"
-                                          method="POST"
-                                          class="d-inline"
-                                          onsubmit="return confirm('Are you sure you want to manually renew this subscription? This will extend the subscription period immediately.');">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success">Renew Now</button>
-                                    </form>
+                                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#renewSubscriptionModal">Renew Now</button>
+                                    <div class="modal fade" id="renewSubscriptionModal" tabindex="-1" aria-labelledby="renewSubscriptionModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form action="{{ route('admin.subscriptions.renew-now', $subscription) }}" method="POST"
+                                                      onsubmit="return confirm('Are you sure you want to manually renew this subscription? This will extend the subscription period immediately.');">
+                                                    @csrf
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="renewSubscriptionModalLabel">Renew subscription (comp)</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p class="text-muted small">Admin renewals are complimentary (comp). Provide a reason for audit purposes.</p>
+                                                        <input type="hidden" name="is_comp" value="1">
+                                                        <div class="form-group">
+                                                            <label for="comp_reason">Reason for comp renewal <span class="text-danger">*</span></label>
+                                                            <textarea name="comp_reason" id="comp_reason" class="form-control" rows="2" required
+                                                                      placeholder="e.g. Goodwill gesture, billing correction, promo"></textarea>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="billing_cycle">Billing cycle for this renewal</label>
+                                                            <select name="billing_cycle" id="billing_cycle" class="form-control">
+                                                                <option value="{{ $subscription->billing_cycle }}" selected>{{ ucfirst($subscription->billing_cycle) }}</option>
+                                                                @if($subscription->billing_cycle !== 'monthly')
+                                                                    <option value="monthly">Monthly</option>
+                                                                @endif
+                                                                @if($subscription->billing_cycle !== 'annually')
+                                                                    <option value="annually">Annually</option>
+                                                                @endif
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-success">Renew now (comp)</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                 @endif
                             @endcan
                         </div>

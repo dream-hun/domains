@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
-use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
@@ -26,8 +25,7 @@ final readonly class CreateCustomOrderAction
         array $metadata = []
     ): Order {
         $currency = $itemData['currency'] ?? 'USD';
-        $currencyModel = Currency::query()->where('code', $currency)->first();
-        $exchangeRate = $currencyModel !== null ? $currencyModel->exchange_rate : 1.0;
+        $exchangeRate = 1.0;
 
         $price = (float) $itemData['price'];
         $quantity = (int) ($itemData['quantity'] ?? 1);

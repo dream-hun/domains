@@ -25,10 +25,8 @@ final class CurrencyFactory extends Factory
             'code' => mb_strtoupper(fake()->unique()->lexify('???')),
             'name' => fake()->currencyCode().' Currency',
             'symbol' => fake()->randomElement(['$', '€', '£', '¥', '₹', '₽']),
-            'exchange_rate' => fake()->randomFloat(6, 0.1, 10),
             'is_base' => false,
             'is_active' => true,
-            'rate_updated_at' => now(),
         ];
     }
 
@@ -39,7 +37,6 @@ final class CurrencyFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'is_base' => true,
-            'exchange_rate' => 1.000000,
         ]);
     }
 

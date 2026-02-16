@@ -26,14 +26,6 @@
                         <a href="{{ route('admin.currencies.create') }}" class="btn btn-success">
                             <i class="bi bi-plus-lg"></i> Add New Currency
                         </a>
-                        <form action="{{ route('admin.currencies.update-rates') }}" method="POST"
-                              style="display:inline;" class="push-right"
-                              onsubmit="return confirm('Are you sure? This will update exchange rates and clear all user carts.');">
-                            @csrf
-                            <button type="submit" class="btn btn-info">
-                                <i class="bi bi-arrow-clockwise"></i> Update Exchange Rates
-                            </button>
-                        </form>
                     </div>
                     <div class="card">
                         <div class="card-header">
@@ -74,37 +66,20 @@
                                         <thead>
                                         <tr>
                                             <th style="width: 10%">Code</th>
-                                            <th style="width: 20%">Name</th>
+                                            <th style="width: 22%">Name</th>
                                             <th style="width: 10%">Symbol</th>
-                                            <th style="width: 15%">Exchange Rate</th>
-                                            <th style="width: 15%">Rate Updated</th>
-                                            <th style="width: 10%">Is Base</th>
-                                            <th style="width: 10%">Status</th>
-                                            <th style="width: 10%">Actions</th>
+                                            <th style="width: 12%">Is Base</th>
+                                            <th style="width: 12%">Status</th>
+                                            <th style="width: 12%">Actions</th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                         @foreach ($currencies as $currency)
                                             <tr>
+
                                                 <td><strong>{{ $currency->code }}</strong></td>
                                                 <td>{{ $currency->name }}</td>
                                                 <td>{{ $currency->symbol }}</td>
-                                                <td>
-                                                    @if($currency->is_base)
-                                                        {{ $currency->formattedBaseRate() }}
-                                                    @else
-                                                        {{ $currency->formattedRate() }}
-
-                                                    @endif
-
-                                                </td>
-                                                <td>
-                                                    @if ($currency->rate_updated_at)
-                                                        {{ $currency->rate_updated_at->format('Y-m-d H:i') }}
-                                                    @else
-                                                        <span class="text-muted">Never</span>
-                                                    @endif
-                                                </td>
                                                 <td>
                                                     @if ($currency->is_base)
                                                         <span class="badge badge-primary">Base</span>
@@ -121,14 +96,14 @@
                                                 </td>
                                                 <td>
                                                     <div class="btn-group">
-                                                        <a href="{{ route('admin.currencies.edit', $currency->id) }}"
+                                                        <a href="{{ route('admin.currencies.edit', $currency) }}"
                                                            class="btn btn-warning btn-sm" title="Edit">
                                                             <i class="bi bi-pencil"></i> Edit
                                                         </a>
 
                                                         @if (!$currency->is_base)
                                                             <form
-                                                                action="{{ route('admin.currencies.destroy', $currency->id) }}"
+                                                                action="{{ route('admin.currencies.destroy', $currency) }}"
                                                                 method="POST" style="display:inline-block;">
                                                                 @csrf
                                                                 @method('DELETE')

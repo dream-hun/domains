@@ -18,8 +18,6 @@ return new class extends Migration
             $table->uuid();
             $table->string('name')->unique();
             $table->string('auth_code')->nullable();
-            $table->string('registrar')->nullable();
-            $table->string('provider')->nullable()->comment('Service used for registration (EPP, Namecheap)');
             $table->integer('years')->default(1);
             $table->string('status');
             $table->boolean('auto_renew')->default(false);
@@ -28,9 +26,16 @@ return new class extends Migration
             $table->timestamp('registered_at');
             $table->timestamp('expires_at');
             $table->timestamp('last_renewed_at')->nullable();
-            $table->foreignId('domain_price_id')->constrained('domain_prices');
+            $table->foreignId('tld_pricing_id')->constrained('tld_pricing');
+            $table->decimal('custom_price')->nullable();
+            $table->string('custom_price_currency', 3)->nullable();
+            $table->boolean('is_custom_price')->default(false);
+            $table->text('custom_price_notes')->nullable();
+            $table->foreignId('created_by_admin_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('owner_id')->constrained('users');
             $table->timestamps();
+
+            $table->index(['owner_id', 'name']);
         });
     }
 };

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Hosting\BillingCycle;
-use App\Services\CurrencyService;
+use App\Helpers\CurrencyHelper;
 use Exception;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Date;
  * @property string $uuid
  * @property int $user_id
  * @property int $hosting_plan_id
- * @property int $hosting_plan_price_id
+ * @property int $hosting_plan_pricing_id
  * @property array $product_snapshot
  * @property string $billing_cycle
  * @property string $domain
@@ -89,7 +89,7 @@ class Subscription extends Model
 
     public function planPrice(): BelongsTo
     {
-        return $this->belongsTo(HostingPlanPrice::class, 'hosting_plan_price_id');
+        return $this->belongsTo(HostingPlanPrice::class, 'hosting_plan_pricing_id');
     }
 
     public function createdByAdmin(): BelongsTo
@@ -116,21 +116,7 @@ class Subscription extends Model
     public function getRenewalPrice(): float
     {
         if ($this->is_custom_price && $this->custom_price !== null) {
-            $customPrice = (float) $this->custom_price;
-
-            // If custom price is in a different currency, convert to USD
-            if ($this->custom_price_currency !== null && $this->custom_price_currency !== 'USD') {
-                try {
-                    $currencyService = resolve(CurrencyService::class);
-
-                    return $currencyService->convert($customPrice, $this->custom_price_currency, 'USD');
-                } catch (Exception) {
-                    // If conversion fails, return the original price
-                    return $customPrice;
-                }
-            }
-
-            return $customPrice;
+            return (float) $this->custom_price;
         }
 
         $planPrice = $this->planPrice;
@@ -153,13 +139,7 @@ class Subscription extends Model
             return $basePrice;
         }
 
-        try {
-            $currencyService = resolve(CurrencyService::class);
-
-            return $currencyService->convert($basePrice, 'USD', $currency);
-        } catch (Exception) {
-            return $basePrice;
-        }
+        return CurrencyHelper::convert($basePrice);
     }
 
     /**
@@ -260,12 +240,7 @@ class Subscription extends Model
             }
 
             if ($paidCurrency !== null && $paidCurrency !== 'USD') {
-                try {
-                    $currencyService = resolve(CurrencyService::class);
-                    $paidAmount = $currencyService->convert($paidAmount, $paidCurrency, 'USD');
-                } catch (Exception $e) {
-                    throw new Exception(sprintf('Failed to convert payment amount from %s to USD: %s', $paidCurrency, $e->getMessage()), $e->getCode(), $e);
-                }
+                $paidAmount = CurrencyHelper::convert($paidAmount);
             }
 
             if (abs($paidAmount - $expectedAmount) > 0.01) {
@@ -350,12 +325,7 @@ class Subscription extends Model
             $expectedTotalAmount = $expectedMonthlyPrice * $months;
 
             if ($paidCurrency !== null && $paidCurrency !== 'USD') {
-                try {
-                    $currencyService = resolve(CurrencyService::class);
-                    $paidAmount = $currencyService->convert($paidAmount, $paidCurrency, 'USD');
-                } catch (Exception $e) {
-                    throw new Exception(sprintf('Failed to convert payment amount from %s to USD: %s', $paidCurrency, $e->getMessage()), $e->getCode(), $e);
-                }
+                $paidAmount = CurrencyHelper::convert($paidAmount);
             }
 
             // Use a more lenient tolerance (0.50) to account for currency conversion rounding

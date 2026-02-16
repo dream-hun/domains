@@ -22,7 +22,7 @@ final readonly class RenewDomainAction
     {
         try {
             return DB::transaction(function () use ($domain, $years): array {
-                // Determine which service to use based on TLD
+
                 $isLocalDomain = $this->isLocalDomain($domain->name);
 
                 if ($isLocalDomain) {
@@ -81,7 +81,7 @@ final readonly class RenewDomainAction
 
     private function updateDomainRecord(Domain $domain, int $years): void
     {
-        // Calculate new expiry date
+
         $currentExpiry = $domain->expires_at ?? now();
         $newExpiry = $currentExpiry->addYears($years);
 

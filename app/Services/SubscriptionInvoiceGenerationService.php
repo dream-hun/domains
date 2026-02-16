@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\Hosting\BillingCycle;
-use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Subscription;
@@ -89,6 +88,8 @@ final readonly class SubscriptionInvoiceGenerationService
      */
     public function createRenewalInvoiceOrder(Subscription $subscription): Order
     {
+        $subscription->loadMissing(['user', 'plan', 'planPrice']);
+
         $user = $subscription->user;
 
         throw_unless($user, Exception::class, 'Subscription has no associated user');
@@ -96,10 +97,7 @@ final readonly class SubscriptionInvoiceGenerationService
         $renewalCurrency = $subscription->getRenewalCurrency();
         $renewalPrice = $subscription->getRenewalPriceInCurrency($renewalCurrency);
 
-        $currencyModel = Currency::query()->where('code', $renewalCurrency)->firstOrFail();
-        $baseCurrencyModel = Currency::query()->where('code', 'USD')->firstOrFail();
-
-        $exchangeRate = $renewalCurrency === 'USD' ? 1.0 : ($currencyModel->exchange_rate / $baseCurrencyModel->exchange_rate);
+        $exchangeRate = 1.0;
 
         $billingCycle = BillingCycle::from($subscription->billing_cycle);
 
@@ -129,7 +127,7 @@ final readonly class SubscriptionInvoiceGenerationService
                         'subscription_uuid' => $subscription->uuid,
                         'billing_cycle' => $billingCycle->value,
                         'hosting_plan_id' => $subscription->hosting_plan_id,
-                        'hosting_plan_price_id' => $subscription->hosting_plan_price_id,
+                        'hosting_plan_pricing_id' => $subscription->hosting_plan_pricing_id,
                         'domain' => $subscription->domain,
                         'currency' => $renewalCurrency,
                         'is_custom_price' => $subscription->is_custom_price,
@@ -155,7 +153,7 @@ final readonly class SubscriptionInvoiceGenerationService
                 'subscription_uuid' => $subscription->uuid,
                 'billing_cycle' => $billingCycle->value,
                 'hosting_plan_id' => $subscription->hosting_plan_id,
-                'hosting_plan_price_id' => $subscription->hosting_plan_price_id,
+                'hosting_plan_pricing_id' => $subscription->hosting_plan_pricing_id,
                 'is_custom_price' => $subscription->is_custom_price,
                 'custom_price' => $subscription->custom_price,
                 'custom_price_currency' => $subscription->custom_price_currency,

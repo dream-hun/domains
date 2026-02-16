@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('domain_price_histories', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('domain_price_id')->constrained('domain_prices');
+            $table->foreignId('tld_pricing_id')->constrained('tld_pricing');
             $table->integer('register_price');
             $table->integer('renewal_price');
             $table->integer('transfer_price');

@@ -6,7 +6,6 @@ namespace App\Services;
 
 use App\Jobs\ProcessDomainRenewalJob;
 use App\Jobs\ProcessSubscriptionRenewalJob;
-use App\Models\Currency;
 use App\Models\Domain;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -52,9 +51,7 @@ final readonly class OrderProcessingService
             $domainId = $attributes['domain_id'] ?? null;
             $domainName = $attributes['domain_name'] ?? $item['name'] ?? 'Unknown';
 
-            // Get the exchange rate for the item's currency
-            $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
-            $exchangeRate = $itemCurrencyModel ? $itemCurrencyModel->exchange_rate : 1.0;
+            $exchangeRate = 1.0;
 
             // Build metadata from attributes
             $itemMetadata = $attributes['metadata'] ?? [];
@@ -94,8 +91,9 @@ final readonly class OrderProcessingService
                     $itemMetadata['hosting_plan_id'] = $attributes['hosting_plan_id'];
                 }
 
-                if (isset($attributes['hosting_plan_price_id'])) {
-                    $itemMetadata['hosting_plan_price_id'] = $attributes['hosting_plan_price_id'];
+                $pricingId = $this->resolveHostingPlanPricingId($attributes);
+                if ($pricingId !== null) {
+                    $itemMetadata['hosting_plan_pricing_id'] = $pricingId;
                 }
             }
 
@@ -114,8 +112,9 @@ final readonly class OrderProcessingService
                     $itemMetadata['hosting_plan_id'] = $attributes['hosting_plan_id'];
                 }
 
-                if (isset($attributes['hosting_plan_price_id'])) {
-                    $itemMetadata['hosting_plan_price_id'] = $attributes['hosting_plan_price_id'];
+                $pricingId = $this->resolveHostingPlanPricingId($attributes);
+                if ($pricingId !== null) {
+                    $itemMetadata['hosting_plan_pricing_id'] = $pricingId;
                 }
 
                 if (isset($attributes['linked_domain'])) {
@@ -202,15 +201,40 @@ final readonly class OrderProcessingService
 
     public function getServiceDetailsRedirectUrl(Order $order): string
     {
+        $order->loadMissing('orderItems');
         $orderItems = $order->orderItems;
 
         if ($orderItems->isEmpty()) {
             return route('billing.show', $order);
         }
 
+        // Batch-load domains for registration/renewal items
+        $domainIds = $orderItems
+            ->whereIn('domain_type', ['registration', 'renewal'])
+            ->pluck('domain_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $domains = $domainIds->isNotEmpty()
+            ? Domain::query()->findMany($domainIds)->keyBy('id')
+            : collect();
+
+        // Batch-load subscriptions for items that have subscription_id in metadata
+        $subscriptionIds = $orderItems
+            ->whereIn('domain_type', ['hosting', 'subscription_renewal'])
+            ->map(fn (OrderItem $item) => ($item->metadata ?? [])['subscription_id'] ?? null)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $subscriptions = $subscriptionIds->isNotEmpty()
+            ? Subscription::query()->findMany($subscriptionIds)->keyBy('id')
+            : collect();
+
         foreach ($orderItems as $item) {
             if (in_array($item->domain_type, ['registration', 'renewal'], true) && $item->domain_id) {
-                $domain = Domain::query()->find($item->domain_id);
+                $domain = $domains->get($item->domain_id);
                 if ($domain && $domain->uuid) {
                     return route('admin.domain.info', $domain);
                 }
@@ -224,13 +248,13 @@ final readonly class OrderProcessingService
 
                 if (! $subscriptionId && $item->domain_type === 'hosting') {
                     $planId = $metadata['hosting_plan_id'] ?? null;
-                    $planPriceId = $metadata['hosting_plan_price_id'] ?? null;
+                    $planPriceId = $this->resolveHostingPlanPricingId($metadata);
 
                     if ($planId && $planPriceId) {
                         $subscription = Subscription::query()
                             ->where('user_id', $order->user_id)
                             ->where('hosting_plan_id', $planId)
-                            ->where('hosting_plan_price_id', $planPriceId)
+                            ->where('hosting_plan_pricing_id', $planPriceId)
                             ->where('created_at', '>=', $order->created_at->subMinutes(5))
                             ->latest()
                             ->first();
@@ -238,7 +262,7 @@ final readonly class OrderProcessingService
                         $subscription = null;
                     }
                 } else {
-                    $subscription = $subscriptionId ? Subscription::query()->find($subscriptionId) : null;
+                    $subscription = $subscriptionId ? $subscriptions->get($subscriptionId) : null;
                 }
 
                 if ($subscription) {
@@ -248,5 +272,15 @@ final readonly class OrderProcessingService
         }
 
         return route('billing.show', $order);
+    }
+
+    /**
+     * Resolve hosting plan pricing ID from attributes, supporting legacy key for backwards compatibility.
+     */
+    private function resolveHostingPlanPricingId(array $attributes): ?int
+    {
+        $id = $attributes['hosting_plan_pricing_id'] ?? $attributes['hosting_plan_price_id'] ?? null;
+
+        return $id !== null ? (int) $id : null;
     }
 }

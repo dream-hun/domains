@@ -18,18 +18,16 @@ final class UpdatePlanPriceRequest extends FormRequest
 
     public function rules(): array
     {
-        $hostingPlanPrice = $this->route('hostingPlanPrice');
+        $hostingPlanPrice = $this->route('hosting_plan_price');
         $priceFields = ['regular_price', 'renewal_price'];
         $hasPriceChange = false;
 
         if ($hostingPlanPrice !== null) {
             foreach ($priceFields as $field) {
-                $inputValue = $this->input($field);
-                $currentValue = $hostingPlanPrice->{$field};
+                $inputValue = (float) $this->input($field);
+                $currentValue = (float) $hostingPlanPrice->{$field};
 
-                $inputValue = (int) $inputValue;
-
-                if ($inputValue !== $currentValue) {
+                if (abs($inputValue - $currentValue) > 0.001) {
                     $hasPriceChange = true;
                     break;
                 }
@@ -46,9 +44,12 @@ final class UpdatePlanPriceRequest extends FormRequest
                 }),
             ],
             'billing_cycle' => ['required', 'string', Rule::in(BillingCycle::values())],
-            'regular_price' => ['required', 'integer', 'min:0'],
-            'renewal_price' => ['required', 'integer', 'min:0'],
+            'regular_price' => ['required', 'numeric', 'min:0'],
+            'renewal_price' => ['required', 'numeric', 'min:0'],
+            'currency_id' => ['required', 'integer', 'exists:currencies,id'],
             'status' => ['nullable', 'string', 'in:active,inactive'],
+            'is_current' => ['required', 'boolean'],
+            'effective_date' => ['required', 'date'],
             'reason' => $hasPriceChange ? ['required', 'string', 'min:3', 'max:1000'] : ['nullable', 'string'],
         ];
     }

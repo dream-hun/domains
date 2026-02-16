@@ -28,9 +28,12 @@ final class StorePlanPriceRequest extends FormRequest
                 }),
             ],
             'billing_cycle' => ['required', 'string', Rule::in(BillingCycle::values())],
-            'regular_price' => ['required', 'integer', 'min:0'],
-            'renewal_price' => ['required', 'integer', 'min:0'],
+            'regular_price' => ['required', 'numeric', 'min:0'],
+            'renewal_price' => ['required', 'numeric', 'min:0'],
+            'currency_id' => ['required', 'integer', 'exists:currencies,id'],
             'status' => ['nullable', 'string', 'in:active,inactive'],
+            'is_current' => ['required', 'boolean'],
+            'effective_date' => ['required', 'date'],
         ];
     }
 }

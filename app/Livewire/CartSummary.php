@@ -14,6 +14,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Throwable;
 
 final class CartSummary extends Component
 {
@@ -39,7 +40,7 @@ final class CartSummary extends Component
     }
 
     /**
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     #[Computed]
     public function formattedTotal(): string
@@ -58,7 +59,6 @@ final class CartSummary extends Component
             $subtotal = 0;
         }
 
-        // Apply discount from session if coupon is applied
         $this->discountAmount = $this->calculateDiscount($subtotal);
         $total = max(0, $subtotal - $this->discountAmount);
 
@@ -89,7 +89,6 @@ final class CartSummary extends Component
         $couponCurrency = $couponData['currency'] ?? 'USD';
         $discountAmount = $couponData['discount_amount'] ?? 0;
 
-        // Convert discount to current currency if different
         if ($couponCurrency !== $this->currency) {
             try {
                 $discountAmount = CurrencyHelper::convert(
@@ -98,14 +97,13 @@ final class CartSummary extends Component
                     $this->currency
                 );
             } catch (Exception) {
-                // Fallback to recalculating discount
+
                 $type = $couponData['type'] ?? 'percentage';
                 $value = $couponData['value'] ?? 0;
 
                 if ($type === 'percentage') {
                     $discountAmount = $subtotal * ($value / 100);
                 } elseif ($type === 'fixed') {
-                    // Convert fixed amount to current currency
                     try {
                         $discountAmount = CurrencyHelper::convert(
                             $value,
@@ -119,7 +117,6 @@ final class CartSummary extends Component
             }
         }
 
-        // Ensure discount doesn't exceed subtotal
         return min($discountAmount, $subtotal);
     }
 }

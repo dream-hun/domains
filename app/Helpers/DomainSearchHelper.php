@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
-use App\Enums\DomainType;
-use App\Models\DomainPrice;
+use App\Enums\TldType;
+use App\Models\Tld;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
-use App\Traits\HasCurrency;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 final readonly class DomainSearchHelper
 {
-    use HasCurrency;
-
     public function __construct(
         private NamecheapDomainService $internationalDomainService,
         private EppDomainService $eppDomainService
@@ -37,7 +35,7 @@ final readonly class DomainSearchHelper
 
             $primaryDomainToSearch = $sanitizedDomain;
             if (! $searchedTld) {
-                $defaultTld = ($domainType === DomainType::Local) ? '.rw' : '.com';
+                $defaultTld = ($domainType === TldType::Local) ? '.rw' : '.com';
                 $primaryDomainToSearch .= $defaultTld;
                 $domainType = $this->detectDomainType($primaryDomainToSearch);
             }
@@ -52,7 +50,7 @@ final readonly class DomainSearchHelper
             }
 
             // Execute the search using the appropriate service based on detected type
-            if ($domainType === DomainType::Local) {
+            if ($domainType === TldType::Local) {
                 [$details, $suggestions] = $this->searchLocalDomains($primaryDomainToSearch, $domainBase);
             } else {
                 [$details, $suggestions] = $this->searchInternationalDomains($primaryDomainToSearch, $domainBase);
@@ -127,22 +125,34 @@ final readonly class DomainSearchHelper
     }
 
     /**
-     * Get popular domains for display
+     * Get popular domains for display. Prices are shown in the currency they are stored in (no conversion).
      */
-    public function getPopularDomains(DomainType $type, int $limit = 5, ?string $targetCurrency = null): array
+    public function getPopularDomains(TldType $type, int $limit = 5, ?string $targetCurrency = null): array
     {
-        $targetCurrency ??= $this->getUserCurrency()->code;
+        $query = Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->latest();
+        if ($type === TldType::Local) {
+            $query->localTlds();
+        } else {
+            $query->internationalTlds();
+        }
 
-        return DomainPrice::query()->where('type', $type)
-            ->latest()
+        $preferredCurrency = $targetCurrency ?? CurrencyHelper::getUserCurrency();
+
+        return $query
             ->limit($limit)
             ->get()
-            ->map(fn ($price): array => [
-                'tld' => $price->tld,
-                'price' => $price->getFormattedPrice('register_price', $targetCurrency),
-                'currency' => $targetCurrency,
-                'base_currency' => $price->getBaseCurrency(),
-            ])
+            ->map(function (Tld $price) use ($preferredCurrency): array {
+                $display = $price->getDisplayPriceForCurrency($preferredCurrency, 'register_price');
+
+                return [
+                    'tld' => $price->tld,
+                    'price' => $price->getFormattedPriceWithFallback('register_price', $preferredCurrency),
+                    'currency' => $display['currency_code'],
+                    'base_currency' => $price->getBaseCurrency(),
+                ];
+            })
             ->all();
     }
 
@@ -162,46 +172,46 @@ final readonly class DomainSearchHelper
             if (isset($primaryResult[$primaryDomain])) {
                 $result = $primaryResult[$primaryDomain];
                 $priceInfo = $this->findDomainPriceInfo($primaryTld);
-                $targetCurrency = $this->getUserCurrency()->code;
+                $preferredCurrency = CurrencyHelper::getUserCurrency();
                 $available = $result['available'];
                 $reason = $result['reason'] ?? null;
 
                 $details = [
                     'domain' => $primaryDomain,
                     'available' => $this->normalizeAvailabilityStatus($available),
-                    'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency) ?? $result['price'],
+                    'price' => $priceInfo?->getFormattedPriceWithFallback('register_price', $preferredCurrency) ?? $result['price'],
                     'service_error' => false,
                     'error_message' => $reason !== '' ? $reason : null,
-                    'type' => DomainType::Local->value,
-                    'currency' => $targetCurrency,
+                    'type' => TldType::Local->value,
+                    'currency' => $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'RWF',
                     'base_currency' => $priceInfo?->getBaseCurrency() ?? 'RWF',
                 ];
             }
         }
 
-        $allLocalTlds = DomainPrice::query()->where('type', DomainType::Local)->pluck('tld')->map(fn ($tld): string => mb_ltrim($tld, '.'))->all();
+        $allLocalTlds = Tld::query()->localTlds()->pluck('name')->map(fn (string $name): string => mb_ltrim($name, '.'))->all();
         $suggestionTlds = array_diff($allLocalTlds, [$primaryTld]);
 
         if ($suggestionTlds !== []) {
             $suggestionResults = $this->eppDomainService->searchDomains($domainBase, $suggestionTlds);
             unset($suggestionResults[$primaryDomain]);
 
+            $preferredCurrency = CurrencyHelper::getUserCurrency();
             // Normalize the suggestion results
             foreach ($suggestionResults as $domainName => $result) {
                 $tld = explode('.', (string) $domainName)[1] ?? null;
                 $priceInfo = $this->findDomainPriceInfo($tld);
-                $targetCurrency = $this->getUserCurrency()->code;
                 $available = $result['available'];
                 $reason = $result['reason'] ?? null;
 
                 $suggestions[$domainName] = [
                     'domain' => $domainName,
                     'available' => $this->normalizeAvailabilityStatus($available),
-                    'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency) ?? $result['price'],
+                    'price' => $priceInfo?->getFormattedPriceWithFallback('register_price', $preferredCurrency) ?? $result['price'],
                     'service_error' => false,
                     'error_message' => $reason !== '' ? $reason : null,
-                    'type' => DomainType::Local->value,
-                    'currency' => $targetCurrency,
+                    'type' => TldType::Local->value,
+                    'currency' => $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'RWF',
                     'base_currency' => $priceInfo?->getBaseCurrency() ?? 'RWF',
                 ];
             }
@@ -222,6 +232,7 @@ final readonly class DomainSearchHelper
                 if (isset($availabilityResults[$primaryDomain])) {
                     $result = $availabilityResults[$primaryDomain];
                     $priceInfo = $this->findDomainPriceInfo($primaryTld);
+                    $preferredCurrency = CurrencyHelper::getUserCurrency();
 
                     // Debug log the raw result
                     Log::debug('International domain check result', [
@@ -231,26 +242,24 @@ final readonly class DomainSearchHelper
                         'error_property' => $result['reason'],
                     ]);
 
-                    $targetCurrency = $this->getUserCurrency()->code;
-
                     $details = [
                         'domain' => $primaryDomain,
                         'available' => $this->normalizeAvailabilityStatus($result['available']),
-                        'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency),
+                        'price' => $priceInfo?->getFormattedPriceWithFallback('register_price', $preferredCurrency),
                         'service_error' => $result['available'] === false && $result['reason'] !== '',
                         'error_message' => $result['reason'] !== '' ? $result['reason'] : null,
-                        'type' => DomainType::International->value,
-                        'currency' => $targetCurrency,
+                        'type' => TldType::International->value,
+                        'currency' => $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'USD',
                         'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
                     ];
                 }
             }
 
-            $suggestionTlds = DomainPrice::query()->where('type', DomainType::International)
-                ->where('tld', '!=', '.'.$primaryTld)
+            $suggestionTlds = Tld::query()->internationalTlds()
+                ->whereRaw($this->tldNormalizedNotEqualRaw(), [mb_strtolower((string) $primaryTld)])
                 ->latest()
                 ->limit(10)
-                ->pluck('tld')->map(fn ($tld): string => mb_ltrim($tld, '.'))
+                ->pluck('name')->map(fn (string $name): string => mb_ltrim($name, '.'))
                 ->all();
 
             $domainsToSuggest = array_map(fn (string $tld): string => $domainBase.'.'.$tld, $suggestionTlds);
@@ -264,6 +273,7 @@ final readonly class DomainSearchHelper
 
                     $tld = explode('.', $domainName)[1];
                     $priceInfo = $this->findDomainPriceInfo($tld);
+                    $preferredCurrency = CurrencyHelper::getUserCurrency();
 
                     Log::debug('International suggestion result', [
                         'domain' => $domainName,
@@ -271,16 +281,14 @@ final readonly class DomainSearchHelper
                         'error' => $result['reason'],
                     ]);
 
-                    $targetCurrency = $this->getUserCurrency()->code;
-
                     $suggestions[$domainName] = [
                         'domain' => $domainName,
                         'available' => $this->normalizeAvailabilityStatus($result['available']),
-                        'price' => $priceInfo?->getFormattedPrice('register_price', $targetCurrency),
+                        'price' => $priceInfo?->getFormattedPriceWithFallback('register_price', $preferredCurrency),
                         'service_error' => $result['available'] === false && $result['reason'] !== '',
                         'error_message' => $result['reason'] !== '' ? $result['reason'] : null,
-                        'type' => DomainType::International->value,
-                        'currency' => $targetCurrency,
+                        'type' => TldType::International->value,
+                        'currency' => $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'USD',
                         'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
                     ];
                 }
@@ -296,39 +304,42 @@ final readonly class DomainSearchHelper
         return [$details, $suggestions];
     }
 
-    private function simulateTestingResponse(string $primaryDomain, DomainType $domainType, string $domainBase, string $searchedDomain): array
+    private function simulateTestingResponse(string $primaryDomain, TldType $domainType, string $domainBase, string $searchedDomain): array
     {
         $tld = $this->extractTldSegment($primaryDomain);
         $priceInfo = $tld ? $this->findDomainPriceInfo($tld) : null;
-        $currency = $this->getUserCurrency()->code;
+        $preferredCurrency = CurrencyHelper::getUserCurrency();
+        $displayCurrency = $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'USD';
 
         $details = [
             'domain' => $primaryDomain,
             'available' => true,
-            'price' => $priceInfo?->getFormattedPrice('register_price', $currency),
+            'price' => $priceInfo?->getFormattedPriceWithFallback('register_price', $preferredCurrency),
             'service_error' => false,
             'error_message' => null,
             'type' => $domainType->value,
-            'currency' => $currency,
+            'currency' => $displayCurrency,
             'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
         ];
 
-        $suggestions = DomainPrice::query()
-            ->where('type', $domainType)
-            ->when($tld, fn ($query): mixed => $query->where('tld', '!=', '.'.$tld))
+        $suggestions = Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->when($domainType === TldType::Local, fn ($q): mixed => $q->localTlds(), fn ($q): mixed => $q->internationalTlds())
+            ->when($tld, fn ($query): mixed => $query->whereRaw($this->tldNormalizedNotEqualRaw(), [mb_strtolower((string) $tld)]))
             ->limit(5)
             ->get()
-            ->map(function (DomainPrice $price) use ($domainBase, $domainType, $currency): array {
+            ->map(function (Tld $price) use ($domainBase, $domainType, $preferredCurrency): array {
                 $suggestionTld = mb_ltrim($price->tld, '.');
+                $display = $price->getDisplayPriceForCurrency($preferredCurrency, 'register_price');
 
                 return [
                     'domain' => $domainBase.'.'.$suggestionTld,
                     'available' => true,
-                    'price' => $price->getFormattedPrice('register_price', $currency),
+                    'price' => $price->getFormattedPriceWithFallback('register_price', $preferredCurrency),
                     'service_error' => false,
                     'error_message' => null,
                     'type' => $domainType->value,
-                    'currency' => $currency,
+                    'currency' => $display['currency_code'],
                     'base_currency' => $price->getBaseCurrency(),
                 ];
             })
@@ -360,11 +371,14 @@ final readonly class DomainSearchHelper
         return mb_trim($domain, '/.');
     }
 
-    private function findDomainPriceInfo(string $tld): ?DomainPrice
+    private function findDomainPriceInfo(string $tld): ?Tld
     {
         $cleanTld = mb_ltrim($tld, '.');
 
-        return DomainPrice::query()->where('tld', '.'.$cleanTld)->first();
+        return Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->where('name', '.'.$cleanTld)
+            ->first();
     }
 
     private function normalizeAvailabilityStatus($available): string
@@ -383,15 +397,22 @@ final readonly class DomainSearchHelper
     /**
      * Auto-detect domain type based on TLD
      */
-    private function detectDomainType(string $domain): DomainType
+    private function detectDomainType(string $domain): TldType
     {
         $domainParts = explode('.', $domain);
         $tld = count($domainParts) > 1 ? end($domainParts) : null;
 
         if ($tld === 'rw') {
-            return DomainType::Local;
+            return TldType::Local;
         }
 
-        return DomainType::International;
+        return TldType::International;
+    }
+
+    private function tldNormalizedNotEqualRaw(): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "LOWER(LTRIM(name, '.')) != ?"
+            : "LOWER(TRIM(LEADING '.' FROM name)) != ?";
     }
 }

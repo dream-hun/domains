@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Services\Currency\RequestCache;
+use App\Models\Currency;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,8 +21,15 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature', 'Unit')
     ->beforeEach(function (): void {
-        // Flush static request-level caches between tests for proper isolation
-        RequestCache::flush();
+        // Ensure USD and RWF exist for domain price tests (idempotent to avoid unique constraint)
+        Currency::query()->firstOrCreate(
+            ['code' => 'USD'],
+            ['name' => 'US Dollar', 'symbol' => '$', 'is_base' => true, 'is_active' => true]
+        );
+        Currency::query()->firstOrCreate(
+            ['code' => 'RWF'],
+            ['name' => 'Rwandan Franc', 'symbol' => 'FRW', 'is_base' => false, 'is_active' => true]
+        );
     });
 
 /*

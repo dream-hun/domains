@@ -15,8 +15,8 @@ final class ListDomainAction
     public function handle(): Collection
     {
         return Domain::query()
-            ->with('domainPrice', 'owner')
-            ->select(['id', 'uuid', 'name', 'registrar', 'provider', 'registered_at', 'auto_renew', 'expires_at', 'status', 'owner_id', 'domain_price_id'])
+            ->with('tldPricing', 'owner')
+            ->select(['id', 'uuid', 'name', 'registered_at', 'auto_renew', 'expires_at', 'status', 'owner_id'])
             ->latest()
             ->get();
     }

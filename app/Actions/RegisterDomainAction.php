@@ -6,8 +6,8 @@ namespace App\Actions;
 
 use App\Models\Contact;
 use App\Models\Domain;
-use App\Models\DomainPrice;
 use App\Models\Nameserver;
+use App\Models\Tld;
 use App\Notifications\DomainRegisteredNotification;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\EppDomainService;
@@ -15,12 +15,13 @@ use App\Services\Domain\NamecheapDomainService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
-class RegisterDomainAction
+readonly class RegisterDomainAction
 {
-    private readonly DomainRegistrationServiceInterface $eppDomainService;
+    private DomainRegistrationServiceInterface $eppDomainService;
 
-    private readonly DomainRegistrationServiceInterface $namecheapDomainService;
+    private DomainRegistrationServiceInterface $namecheapDomainService;
 
     public function __construct()
     {
@@ -201,21 +202,7 @@ class RegisterDomainAction
 
         foreach ($contacts as $type => $contactData) {
             // Extract contact ID from the contact data
-            $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
-
-            // Ensure contact ID is valid and not empty
-            if (empty($contactId) || $contactId === 0 || $contactId === '0') {
-                throw new Exception(sprintf('Missing or invalid contact ID for type: %s', $type));
-            }
-
-            // Cast to integer to ensure proper type
-            $contactId = (int) $contactId;
-
-            // Get the contact from the database
-            $contact = Contact::query()->find($contactId);
-            if (! $contact) {
-                throw new Exception(sprintf('Contact with ID %d not found for type: %s', $contactId, $type));
-            }
+            [$contactId, $contact] = $this->extractContactIDFromTheContactData($contactData, $type);
 
             // Check if contact has an EPP contact_id
             if (! $contact->contact_id) {
@@ -259,21 +246,7 @@ class RegisterDomainAction
 
         foreach ($contacts as $type => $contactData) {
             // Extract contact ID from the contact data
-            $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
-
-            // Ensure contact ID is valid and not empty
-            if (empty($contactId) || $contactId === 0 || $contactId === '0') {
-                throw new Exception(sprintf('Missing or invalid contact ID for type: %s', $type));
-            }
-
-            // Cast to integer to ensure proper type
-            $contactId = (int) $contactId;
-
-            // Get the contact from the database
-            $contact = Contact::query()->find($contactId);
-            if (! $contact) {
-                throw new Exception(sprintf('Contact with ID %d not found for type: %s', $contactId, $type));
-            }
+            [$contactId, $contact] = $this->extractContactIDFromTheContactData($contactData, $type);
 
             // Convert contact model to array format expected by Namecheap
             $preparedContacts[$type] = [
@@ -297,15 +270,19 @@ class RegisterDomainAction
     /**
      * Create domain record in local database
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     private function createDomainRecord(string $domainName, int $years, array $contacts, string $service, ?int $userId = null): Domain
     {
-        // Get the domain price for the TLD
-        $tld = $this->extractTld($domainName);
-        $domainPrice = DomainPrice::query()->where('tld', $tld)->firstOrFail();
+        $tldString = $this->extractTld($domainName);
+        $tld = Tld::query()
+            ->with(['currentTldPricings' => fn ($q) => $q->with('currency')])
+            ->where('name', $tldString)
+            ->firstOrFail();
 
-        // Use provided userId or fall back to authenticated user
+        $tldPricing = $tld->currentTldPricings->first();
+        throw_if($tldPricing === null, Exception::class, sprintf('No current pricing found for TLD: %s', $tldString));
+
         $ownerId = $userId ?? auth()->id();
 
         throw_if($ownerId === null, Exception::class, 'Cannot create domain: No user ID provided and no authenticated user found.');
@@ -319,22 +296,16 @@ class RegisterDomainAction
             'expires_at' => now()->addYears($years),
             'auto_renew' => false,
             'status' => 'active',
-            'domain_price_id' => $domainPrice->id,
+            'tld_pricing_id' => $tldPricing->id,
             'is_premium' => false,
             'is_locked' => true,
-            'provider' => $service,
         ]);
 
-        // Attach existing contacts to domain
         foreach ($contacts as $type => $contactData) {
             $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
-
-            // Ensure contact ID is valid and not empty
-            if (empty($contactId) || $contactId === 0 || $contactId === '0') {
+            if (empty($contactId)) {
                 throw new Exception(sprintf('Missing or invalid contact ID for type: %s', $type));
             }
-
-            // Cast to integer to ensure proper type
             $contactId = (int) $contactId;
 
             $domain->contacts()->attach($contactId, [
@@ -461,5 +432,29 @@ class RegisterDomainAction
         ]);
 
         return $result['contact_id'];
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function extractContactIDFromTheContactData(mixed $contactData, int|string $type): array
+    {
+        $contactId = is_array($contactData) ? ($contactData['id'] ?? null) : $contactData;
+
+        // Ensure contact ID is valid and not empty
+        if (empty($contactId)) {
+            throw new Exception(sprintf('Missing or invalid contact ID for type: %s', $type));
+        }
+
+        // Cast to integer to ensure proper type
+        $contactId = (int) $contactId;
+
+        // Get the contact from the database
+        $contact = Contact::query()->find($contactId);
+        if (! $contact) {
+            throw new Exception(sprintf('Contact with ID %d not found for type: %s', $contactId, $type));
+        }
+
+        return [$contactId, $contact];
     }
 }

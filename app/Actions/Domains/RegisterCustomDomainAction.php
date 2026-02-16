@@ -15,6 +15,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final readonly class RegisterCustomDomainAction
 {
@@ -29,12 +30,14 @@ final readonly class RegisterCustomDomainAction
      *
      * @param  array<string, mixed>  $data
      * @return array{success: bool, message: string, domain_id?: int, subscription_id?: int, order_id?: int}
+     *
+     * @throws Throwable
      */
     public function handle(array $data, int $adminId): array
     {
         try {
             return DB::transaction(function () use ($data, $adminId): array {
-                // Validate and prepare contacts
+
                 $contacts = $this->validateAndPrepareContacts($data);
 
                 $nameservers = array_filter([
@@ -129,7 +132,7 @@ final readonly class RegisterCustomDomainAction
             ]);
 
             // Ensure contact ID is valid
-            if (empty($contactId) || $contactId === 0 || $contactId === '0') {
+            if (empty($contactId)) {
                 Log::error('Invalid contact ID provided', [
                     'type' => $type,
                     'contact_id' => $contactId,
@@ -171,8 +174,6 @@ final readonly class RegisterCustomDomainAction
         $inputPrice = (float) $data['domain_custom_price'];
         $inputCurrency = $data['domain_custom_price_currency'] ?? 'USD';
 
-        // Store custom price directly without currency conversion
-        // The price is stored as-is in the specified currency
         $domain->update([
             'custom_price' => $inputPrice,
             'custom_price_currency' => $inputCurrency,
@@ -198,6 +199,8 @@ final readonly class RegisterCustomDomainAction
 
     /**
      * @param  array<string, mixed>  $data
+     *
+     * @throws Exception
      */
     private function createNewSubscription(Domain $domain, array $data, int $adminId): int
     {

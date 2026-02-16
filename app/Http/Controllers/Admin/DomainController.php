@@ -22,11 +22,11 @@ use App\Http\Requests\Admin\UpdateDomainContactsRequest;
 use App\Http\Requests\Admin\UpdateNameserversRequest;
 use App\Models\Contact;
 use App\Models\Country;
+use App\Models\Currency;
 use App\Models\Domain;
 use App\Models\HostingPlan;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\CurrencyService;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -44,7 +44,7 @@ final class DomainController extends Controller
         return view('admin.domains.index', ['domains' => $domains]);
     }
 
-    public function createCustom(CurrencyService $currencyService): View|Factory
+    public function createCustom(): View|Factory
     {
         abort_if(Gate::denies('domain_create'), 403);
 
@@ -69,7 +69,7 @@ final class DomainController extends Controller
             ->where('status', 'active')->latest()
             ->get();
 
-        $currencies = $currencyService->getActiveCurrencies();
+        $currencies = Currency::getActiveCurrencies();
 
         return view('admin.domains.create-custom', [
             'users' => $users,

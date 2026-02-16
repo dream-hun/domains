@@ -21,7 +21,7 @@ final class DomainCartButton extends Component
 
     public $available;
 
-    public $domainPrice; // DomainPrice model instance
+    public $domainPrice; // Tld model instance
 
     public $currency;
 
@@ -30,17 +30,19 @@ final class DomainCartButton extends Component
     public function mount($domain, $price, $available = true, $domainPrice = null, $currency = null): void
     {
         $this->domain = $domain;
-        $this->price = $price;
         $this->available = $available;
         $this->domainPrice = $domainPrice;
         $this->currency = $currency ?? $this->getUserCurrency()->code;
+        $this->price = $this->domainPrice
+            ? $this->domainPrice->getFormattedPriceWithFallback('register_price', $this->currency)
+            : $price;
     }
 
     public function updateCurrency(string $currency): void
     {
         $this->currency = $currency;
         if ($this->domainPrice) {
-            $this->price = $this->domainPrice->getFormattedPrice('register_price', $this->currency);
+            $this->price = $this->domainPrice->getFormattedPriceWithFallback('register_price', $this->currency);
         }
     }
 
@@ -53,10 +55,14 @@ final class DomainCartButton extends Component
     public function addToCart(): void
     {
         try {
-            // Get numeric price in the selected currency
-            $numericPrice = $this->domainPrice
-                ? $this->domainPrice->getPriceInCurrency('register_price', $this->currency)
-                : (float) preg_replace('/[^\d.]/', '', (string) $this->price);
+            if ($this->domainPrice) {
+                $display = $this->domainPrice->getDisplayPriceForCurrency($this->currency, 'register_price');
+                $numericPrice = $display['amount'];
+                $itemCurrency = $display['currency_code'];
+            } else {
+                $numericPrice = (float) preg_replace('/[^\d.]/', '', (string) $this->price);
+                $itemCurrency = $this->currency;
+            }
 
             Cart::add([
                 'id' => $this->domain,
@@ -66,7 +72,7 @@ final class DomainCartButton extends Component
                 'attributes' => [
                     'type' => 'domain',
                     'domain_name' => $this->domain,
-                    'currency' => $this->currency,
+                    'currency' => $itemCurrency,
                     'added_at' => now()->timestamp,
                 ],
             ]);

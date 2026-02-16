@@ -18,17 +18,16 @@ final class UpdateDomainPriceRequest extends FormRequest
     public function rules(): array
     {
         $domainPrice = $this->route('price');
+        $baseCurrency = $domainPrice->getBaseCurrency();
         $priceFields = ['register_price', 'renewal_price', 'transfer_price', 'redemption_price'];
         $hasPriceChange = false;
 
         foreach ($priceFields as $field) {
             $inputValue = $this->input($field);
-            $currentValue = $domainPrice->{$field};
+            $currentValue = $domainPrice->getRawPriceForAdminForm($field, $baseCurrency);
 
-            // Handle nullable redemption_price comparison
             if ($field === 'redemption_price') {
-                $inputValue = $inputValue === '' || $inputValue === null ? null : (int) $inputValue;
-                $currentValue ??= null;
+                $inputValue = $inputValue === '' || $inputValue === null ? 0 : (int) $inputValue;
             } else {
                 $inputValue = (int) $inputValue;
             }
@@ -45,7 +44,6 @@ final class UpdateDomainPriceRequest extends FormRequest
                 'string',
                 Rule::unique('domain_prices', 'tld')->ignore($domainPrice),
             ],
-            'type' => ['required', 'string', 'in:local,international'],
             'register_price' => ['required', 'integer', 'min:0'],
             'renewal_price' => ['required', 'integer', 'min:0'],
             'transfer_price' => ['required', 'integer', 'min:0'],

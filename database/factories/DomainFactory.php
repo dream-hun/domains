@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\Domain;
-use App\Models\DomainPrice;
+use App\Models\Tld;
+use App\Models\TldPricing;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -21,13 +22,12 @@ final class DomainFactory extends Factory
             'name' => fake()->unique()->domainName(),
             'uuid' => Str::uuid(),
             'owner_id' => User::factory(),
-            'domain_price_id' => DomainPrice::factory(),
+            'tld_pricing_id' => TldPricing::factory(),
             'registered_at' => now(),
             'expires_at' => now()->addYear(),
             'status' => 'active',
             'is_locked' => false,
             'last_renewed_at' => null,
-            'provider' => null,
             'auto_renew' => false,
         ];
     }
@@ -36,13 +36,13 @@ final class DomainFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'name' => fake()->unique()->domainWord().'.rw',
-        ])->for(DomainPrice::factory()->local(), 'domainPrice');
+        ])->for(TldPricing::factory()->for(Tld::factory()->local()), 'tldPricing');
     }
 
     public function comDomain(): static
     {
         return $this->state(fn (array $attributes): array => [
             'name' => fake()->unique()->domainWord().'.com',
-        ])->for(DomainPrice::factory()->international(), 'domainPrice');
+        ])->for(TldPricing::factory()->for(Tld::factory()->international()), 'tldPricing');
     }
 }

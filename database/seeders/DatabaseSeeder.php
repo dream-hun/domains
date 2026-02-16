@@ -11,22 +11,25 @@ final class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            CountrySeeder::class,
+            TldSeeder::class,
+            CurrencySeeder::class,
             UserSeeder::class,
             PermissionSeeder::class,
             RolesSeeder::class,
             PermissionRoleSeeder::class,
             RoleUserSeeder::class,
-            DomainPricingSeeder::class,
+            TldPricingSeeder::class,
             SettingSeeder::class,
-            DomainPriceSeeder::class,
             DomainSeeder::class,
-            CurrencySeeder::class,
             CouponSeeder::class,
             HostingCategorySeeder::class,
             HostingPlanSeeder::class,
-            HostingPlanPriceSeeder::class,
+            HostingPlanPricingSeeder::class,
             HostingPromotionSeeder::class,
             FeatureCategorySeeder::class,
+            HostingFeatureSeeder::class,
+            HostingPlanFeatureSeeder::class,
         ]);
     }
 }

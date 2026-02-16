@@ -8,12 +8,10 @@ use App\Enums\Hosting\BillingCycle;
 use App\Helpers\CurrencyHelper;
 use App\Models\Coupon;
 use App\Models\Domain;
-use App\Models\DomainPrice;
 use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
 use App\Services\CartPriceConverter;
 use App\Services\Coupon\CouponService;
-use App\Services\CurrencyService;
 use App\Services\OrderItemFormatterService;
 use App\Services\RenewalService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
@@ -671,7 +669,7 @@ final class CartComponent extends Component
             }
 
             $userCurrency = $this->currency;
-            $monthlyRenewalPrice = $monthlyPlanPrice->getPriceInCurrency('renewal_price', $userCurrency);
+            $monthlyRenewalPrice = $monthlyPlanPrice->getPriceInCurrency('renewal_price');
             $durationMonths = $this->getBillingCycleMonths($billingCycle);
             $cartId = 'subscription-renewal-'.$subscription->id;
 
@@ -695,7 +693,7 @@ final class CartComponent extends Component
                     'subscription_uuid' => $subscription->uuid,
                     'billing_cycle' => $billingCycle,
                     'hosting_plan_id' => $subscription->hosting_plan_id,
-                    'hosting_plan_price_id' => $monthlyPlanPrice->id,
+                    'hosting_plan_pricing_id' => $monthlyPlanPrice->id,
                     'domain' => $subscription->domain,
                     'current_expiry' => $subscription->expires_at->format('Y-m-d'),
                     'currency' => $userCurrency,
@@ -907,7 +905,7 @@ final class CartComponent extends Component
 
             if ($itemType === 'hosting') {
                 $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
-                $metadata['hosting_plan_price_id'] = $item->attributes->get('hosting_plan_price_id');
+                $metadata['hosting_plan_pricing_id'] = $item->attributes->get('hosting_plan_pricing_id');
                 $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
                 $metadata['linked_domain'] = $item->attributes->get('linked_domain');
                 $metadata['is_existing_domain'] = $item->attributes->get('is_existing_domain');
@@ -916,7 +914,7 @@ final class CartComponent extends Component
 
             if ($itemType === 'subscription_renewal') {
                 $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
-                $metadata['hosting_plan_price_id'] = $item->attributes->get('hosting_plan_price_id');
+                $metadata['hosting_plan_pricing_id'] = $item->attributes->get('hosting_plan_pricing_id');
                 $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
                 $metadata['subscription_id'] = $item->attributes->get('subscription_id');
                 $metadata['duration_months'] = (int) ($item->attributes->get('duration_months') ?? $item->quantity);
@@ -938,7 +936,7 @@ final class CartComponent extends Component
                 'domain_id' => $item->attributes->get('domain_id'),
                 'metadata' => $metadata,
                 'hosting_plan_id' => $item->attributes->get('hosting_plan_id'),
-                'hosting_plan_price_id' => $item->attributes->get('hosting_plan_price_id'),
+                'hosting_plan_pricing_id' => $item->attributes->get('hosting_plan_pricing_id'),
                 'linked_domain' => $item->attributes->get('linked_domain'),
             ];
         }
@@ -1061,31 +1059,7 @@ final class CartComponent extends Component
             return $amount;
         }
 
-        try {
-            return CurrencyHelper::convert($amount, $fromCurrency, $toCurrency);
-        } catch (Exception $exception) {
-            Log::warning('Primary currency conversion failed in cart component', [
-                'from' => $fromCurrency,
-                'to' => $toCurrency,
-                'amount' => $amount,
-                'error' => $exception->getMessage(),
-            ]);
-
-            try {
-                $currencyService = resolve(CurrencyService::class);
-
-                return $currencyService->convert($amount, $fromCurrency, $toCurrency);
-            } catch (Exception $fallbackException) {
-                Log::error('Currency conversion failed after fallback in cart component', [
-                    'from' => $fromCurrency,
-                    'to' => $toCurrency,
-                    'amount' => $amount,
-                    'error' => $fallbackException->getMessage(),
-                ]);
-
-                throw new Exception('Unable to convert currency.', $exception->getCode(), $exception);
-            }
-        }
+        return CurrencyHelper::convert($amount);
     }
 
     private function calculateDiscount(): void
@@ -1111,40 +1085,9 @@ final class CartComponent extends Component
     /**
      * Get the maximum registration years for a domain based on its TLD's domain price
      */
-    private function getDomainMaxYears($cartItem): int
+    private function getDomainMaxYears(object $cartItem): int
     {
-        $domainName = $cartItem->attributes->get('domain_name') ?? $cartItem->name;
-
-        if (! $domainName) {
-            return 10; // Default max years
-        }
-
-        try {
-            // Extract TLD from domain name
-            $domainParts = explode('.', (string) $domainName);
-            if (count($domainParts) < 2) {
-                return 10; // Default if TLD can't be extracted
-            }
-
-            $tld = '.'.end($domainParts);
-
-            // Look up domain price for this TLD
-            $domainPrice = DomainPrice::query()
-                ->where('tld', $tld)
-                ->where('status', 'active')
-                ->first();
-
-            if ($domainPrice && $domainPrice->max_years) {
-                return (int) $domainPrice->max_years;
-            }
-        } catch (Exception $exception) {
-            Log::warning('Failed to get domain max years', [
-                'domain' => $domainName,
-                'error' => $exception->getMessage(),
-            ]);
-        }
-
-        return 10; // Default max years
+        return 10;
     }
 
     private function removeHostingForDomain(string $domain): void

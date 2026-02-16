@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('hosting_plan_price_histories', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('hosting_plan_price_id')->constrained('hosting_plan_prices')->onDelete('cascade');
+            $table->foreignId('hosting_plan_pricing_id')->references('id')->on('hosting_plan_pricing')->onDelete('cascade');
             $table->integer('regular_price');
             $table->integer('renewal_price');
             $table->json('changes')->nullable();
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('ip_address')->nullable();
             $table->timestamps();
 
-            $table->index('hosting_plan_price_id');
+            $table->index('hosting_plan_pricing_id');
             $table->index('changed_by');
         });
     }

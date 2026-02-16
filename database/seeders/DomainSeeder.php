@@ -20,8 +20,6 @@ final class DomainSeeder extends Seeder
             'uuid' => Str::uuid(),
             'name' => 'blutest.co.rw',
             'auth_code' => 'AL4HTCJI8x5NU0MA',
-            'registrar' => 'Ricta',
-            'provider' => 'EPP',
             'years' => 4,
             'status' => 'active',
             'auto_renew' => false,
@@ -30,7 +28,7 @@ final class DomainSeeder extends Seeder
             'registered_at' => Date::parse('2025-02-28T00:00:00Z'),
             'expires_at' => Date::parse('2029-02-28T00:00:00Z'),
             'last_renewed_at' => Date::parse('2025-04-17T10:26:15Z'),
-            'domain_price_id' => 1,
+            'tld_pricing_id' => 1,
             'owner_id' => 1,
         ]);
     }

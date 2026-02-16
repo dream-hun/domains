@@ -7,7 +7,6 @@ namespace App\Livewire;
 use App\Helpers\CurrencyHelper;
 use App\Services\CartPriceConverter;
 use App\Services\Coupon\CouponService;
-use App\Services\CurrencyService;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\Factory;
@@ -263,7 +262,7 @@ final class CheckoutProcess extends Component
         $itemCurrency = $item['attributes']['currency'] ?? 'USD';
         try {
             if ($itemCurrency !== $this->currency) {
-                $convertedPrice = CurrencyHelper::convert($item['price'], $itemCurrency, $this->currency);
+                $convertedPrice = CurrencyHelper::convert($item['price']);
             } else {
                 $convertedPrice = $item['price'];
             }
@@ -292,7 +291,7 @@ final class CheckoutProcess extends Component
         $itemCurrency = $item['attributes']['currency'] ?? 'USD';
         try {
             if ($itemCurrency !== $this->currency) {
-                $convertedPrice = CurrencyHelper::convert($item['price'], $itemCurrency, $this->currency);
+                $convertedPrice = CurrencyHelper::convert($item['price']);
             } else {
                 $convertedPrice = $item['price'];
             }
@@ -350,7 +349,7 @@ final class CheckoutProcess extends Component
 
             if ($itemType === 'hosting') {
                 $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
-                $metadata['hosting_plan_price_id'] = $item->attributes->get('hosting_plan_price_id');
+                $metadata['hosting_plan_pricing_id'] = $item->attributes->get('hosting_plan_pricing_id');
                 $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
                 $metadata['linked_domain'] = $item->attributes->get('linked_domain');
                 $metadata['duration_months'] = (int) ($item->attributes->get('duration_months') ?? $item->quantity);
@@ -358,7 +357,7 @@ final class CheckoutProcess extends Component
 
             if ($itemType === 'subscription_renewal') {
                 $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
-                $metadata['hosting_plan_price_id'] = $item->attributes->get('hosting_plan_price_id');
+                $metadata['hosting_plan_pricing_id'] = $item->attributes->get('hosting_plan_pricing_id');
                 $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
                 $metadata['subscription_id'] = $item->attributes->get('subscription_id');
                 $metadata['duration_months'] = (int) ($item->attributes->get('duration_months') ?? $item->quantity);
@@ -374,7 +373,7 @@ final class CheckoutProcess extends Component
                 'domain_id' => $item->attributes->get('domain_id'),
                 'metadata' => $metadata,
                 'hosting_plan_id' => $item->attributes->get('hosting_plan_id'),
-                'hosting_plan_price_id' => $item->attributes->get('hosting_plan_price_id'),
+                'hosting_plan_pricing_id' => $item->attributes->get('hosting_plan_pricing_id'),
                 'linked_domain' => $item->attributes->get('linked_domain'),
             ];
         }
@@ -412,31 +411,7 @@ final class CheckoutProcess extends Component
             return $amount;
         }
 
-        try {
-            return CurrencyHelper::convert($amount, $fromCurrency, $toCurrency);
-        } catch (Exception $exception) {
-            Log::warning('Primary currency conversion failed', [
-                'from' => $fromCurrency,
-                'to' => $toCurrency,
-                'amount' => $amount,
-                'error' => $exception->getMessage(),
-            ]);
-
-            try {
-                $currencyService = resolve(CurrencyService::class);
-
-                return $currencyService->convert($amount, $fromCurrency, $toCurrency);
-            } catch (Exception $fallbackException) {
-                Log::error('Currency conversion failed after fallback', [
-                    'from' => $fromCurrency,
-                    'to' => $toCurrency,
-                    'amount' => $amount,
-                    'error' => $fallbackException->getMessage(),
-                ]);
-
-                throw new Exception('Unable to convert currency.', $exception->getCode(), $exception);
-            }
-        }
+        return CurrencyHelper::convert($amount);
     }
 
     /**

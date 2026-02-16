@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\TldStatus;
+use App\Enums\TldType;
+use App\Models\Currency;
 use App\Models\Domain;
 use App\Models\Scopes\DomainScope;
+use App\Models\Tld;
+use App\Models\TldPricing;
 use App\Models\User;
 use App\Notifications\DomainImportedNotification;
 use App\Services\Domain\NamecheapDomainService;
@@ -101,13 +106,11 @@ final class FetchDomainsJob implements ShouldQueue
                             'status' => $status,
                             'auto_renew' => $domainData['auto_renew'] ?? false,
                             'is_locked' => $isLocked,
-                            'provider' => 'namecheap',
-                            'registrar' => $domainData['registrar'] ?? 'Namecheap',
                             'owner_id' => $domainData['owner_id'] ?? 1,
                             'years' => $years,
                             'auth_code' => $domainData['auth_code'] ?? null,
                             'is_premium' => $domainData['is_premium'] ?? false,
-                            'domain_price_id' => $this->getOrCreateDomainPrice($domainData),
+                            'tld_pricing_id' => $this->getOrCreateTldPricingId($domainData),
                         ]
                     );
 
@@ -178,15 +181,47 @@ final class FetchDomainsJob implements ShouldQueue
     }
 
     /**
-     * Get or create a domain price record for the domain
+     * Get or create a TldPricing id for the domain (by TLD suffix).
      */
-    private function getOrCreateDomainPrice(array $domainData): int
+    private function getOrCreateTldPricingId(array $domainData): int
     {
+        $suffix = $this->extractTldSuffix((string) ($domainData['name'] ?? ''));
 
-        $domainParts = explode('.', (string) $domainData['name']);
-        end($domainParts);
+        $tld = Tld::query()->firstOrCreate(
+            ['name' => $suffix],
+            [
+                'uuid' => (string) Str::uuid(),
+                'name' => $suffix,
+                'type' => TldType::International,
+                'status' => TldStatus::Active,
+            ]
+        );
 
-        return 1;
+        $tldPricing = $tld->currentTldPricings()->with('currency')->first();
+        if ($tldPricing instanceof TldPricing) {
+            return $tldPricing->id;
+        }
+
+        $currency = Currency::getBaseCurrency();
+
+        return TldPricing::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'tld_id' => $tld->id,
+            'currency_id' => $currency->id,
+            'register_price' => 2000,
+            'renew_price' => 2000,
+            'transfer_price' => 1000,
+            'redemption_price' => null,
+            'is_current' => true,
+            'effective_date' => now(),
+        ])->id;
+    }
+
+    private function extractTldSuffix(string $domainName): string
+    {
+        $parts = explode('.', $domainName);
+
+        return count($parts) > 1 ? '.'.end($parts) : '.com';
     }
 
     /**

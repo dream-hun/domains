@@ -10,6 +10,7 @@ use App\Models\HostingPlanPrice;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Subscription;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -22,17 +23,28 @@ final class HostingSubscriptionService
             ->where('domain_type', 'hosting')
             ->get();
 
+        // Batch-load hosting plans and prices
+        $planIds = $hostingItems->map(fn (OrderItem $item) => (int) (($item->metadata ?? [])['hosting_plan_id'] ?? 0))->filter()->unique();
+        $planPriceIds = $hostingItems->map(fn (OrderItem $item) => (int) (($item->metadata ?? [])['hosting_plan_pricing_id'] ?? ($item->metadata ?? [])['hosting_plan_price_id'] ?? 0))->filter()->unique();
+
+        $plans = $planIds->isNotEmpty() ? HostingPlan::query()->findMany($planIds)->keyBy('id') : collect();
+        $planPrices = $planPriceIds->isNotEmpty() ? HostingPlanPrice::query()->findMany($planPriceIds)->keyBy('id') : collect();
+
         foreach ($hostingItems as $orderItem) {
-            $this->createSubscriptionFromItem($order, $orderItem);
+            $this->createSubscriptionFromItem($order, $orderItem, $plans, $planPrices);
         }
     }
 
-    private function createSubscriptionFromItem(Order $order, OrderItem $orderItem): void
+    /**
+     * @param  Collection<int, HostingPlan>  $plans
+     * @param  Collection<int, HostingPlanPrice>  $planPrices
+     */
+    private function createSubscriptionFromItem(Order $order, OrderItem $orderItem, Collection $plans, Collection $planPrices): void
     {
         $metadata = $orderItem->metadata ?? [];
 
         $planId = (int) ($metadata['hosting_plan_id'] ?? 0);
-        $planPriceId = (int) ($metadata['hosting_plan_price_id'] ?? 0);
+        $planPriceId = (int) ($metadata['hosting_plan_pricing_id'] ?? $metadata['hosting_plan_price_id'] ?? 0);
         $billingCycle = (string) ($metadata['billing_cycle'] ?? '');
         $linkedDomain = array_key_exists('linked_domain', $metadata)
             ? $metadata['linked_domain']
@@ -47,9 +59,9 @@ final class HostingSubscriptionService
         }
 
         /** @var HostingPlan|null $plan */
-        $plan = HostingPlan::query()->find($planId);
+        $plan = $plans->get($planId);
         /** @var HostingPlanPrice|null $planPrice */
-        $planPrice = HostingPlanPrice::query()->find($planPriceId);
+        $planPrice = $planPrices->get($planPriceId);
 
         if (! $plan || ! $planPrice) {
             Log::warning('Skipping hosting subscription creation due to missing plan records', [
@@ -65,7 +77,7 @@ final class HostingSubscriptionService
             $alreadyExists = Subscription::query()
                 ->where('user_id', $order->user_id)
                 ->where('domain', $linkedDomain)
-                ->where('hosting_plan_price_id', $planPrice->id)
+                ->where('hosting_plan_pricing_id', $planPrice->id)
                 ->exists();
 
             if ($alreadyExists) {
@@ -95,7 +107,7 @@ final class HostingSubscriptionService
             'uuid' => (string) Str::uuid(),
             'user_id' => $order->user_id,
             'hosting_plan_id' => $plan->id,
-            'hosting_plan_price_id' => $planPrice->id,
+            'hosting_plan_pricing_id' => $planPrice->id,
             'product_snapshot' => [
                 'plan' => [
                     'id' => $plan->id,

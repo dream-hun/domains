@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use App\Enums\DomainType;
-use App\Helpers\CurrencyHelper;
+use App\Actions\Domain\BuildDomainSearchResultAction;
 use App\Models\Domain;
-use App\Models\DomainPrice;
+use App\Models\Tld;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\InternationalDomainService;
-use App\Services\PriceFormatter;
+use Darryldecode\Cart\CartCollection;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -42,16 +41,25 @@ final class DomainSearch extends Component
 
     private InternationalDomainService $internationalService;
 
-    public function boot(EppDomainService $eppService, InternationalDomainService $internationalService): void
-    {
+    private BuildDomainSearchResultAction $buildDomainSearchResult;
+
+    public function boot(
+        EppDomainService $eppService,
+        InternationalDomainService $internationalService,
+        BuildDomainSearchResultAction $buildDomainSearchResult
+    ): void {
         $this->eppService = $eppService;
         $this->internationalService = $internationalService;
+        $this->buildDomainSearchResult = $buildDomainSearchResult;
     }
 
     public function mount(): void
     {
         // Set default extension to first TLD
-        $firstTld = Cache::remember('active_tld', 3600, fn () => DomainPrice::query()->where('status', 'active')->first());
+        $firstTld = Cache::remember('active_tld', 3600, fn () => Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->where('status', 'active')
+            ->first());
 
         if ($firstTld) {
             $this->extension = $firstTld->tld;
@@ -70,7 +78,10 @@ final class DomainSearch extends Component
 
     public function render(): View
     {
-        $tlds = Cache::remember('active_tlds', 3600, fn () => DomainPrice::query()->where('status', 'active')->get());
+        $tlds = Cache::remember('active_tlds', 3600, fn () => Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->where('status', 'active')
+            ->get());
 
         return view('livewire.domain-search', [
             'tlds' => $tlds,
@@ -96,7 +107,10 @@ final class DomainSearch extends Component
 
         try {
             // Get cached TLDs
-            $tlds = Cache::remember('active_tlds', 3600, fn () => DomainPrice::query()->where('status', 'active')->get());
+            $tlds = Cache::remember('active_tlds', 3600, fn () => Tld::query()
+                ->with('domainPriceCurrencies.currency')
+                ->where('status', 'active')
+                ->get());
 
             if ($tlds->isEmpty()) {
                 $this->error = 'No TLDs configured in the system.';
@@ -142,7 +156,7 @@ final class DomainSearch extends Component
         }
     }
 
-    public function addToCart($domain, $price): void
+    public function addToCart($domain, $price, ?string $currency = null): void
     {
         try {
             $cartContent = Cart::getContent();
@@ -155,9 +169,12 @@ final class DomainSearch extends Component
                 return;
             }
 
+            $itemCurrency = $currency !== null && $currency !== '' ? $currency : $this->currentCurrency;
+
             Log::debug('Adding to cart:', [
                 'domain' => $domain,
                 'price' => $price,
+                'currency' => $itemCurrency,
             ]);
 
             Cart::add([
@@ -169,7 +186,7 @@ final class DomainSearch extends Component
                     'type' => 'domain',
                     'domain' => $domain,
                     'domain_name' => $domain,
-                    'currency' => $this->currentCurrency,
+                    'currency' => $itemCurrency,
                     'user_id' => auth()->id(),
                     'added_at' => now()->timestamp,
                 ],
@@ -238,82 +255,25 @@ final class DomainSearch extends Component
     /**
      * Check a domain and add it to results if check succeeds
      */
-    private function checkAndAddDomain(array &$results, string $domainName, $tld, $cartContent, bool $isPrimary): void
+    private function checkAndAddDomain(array &$results, string $domainName, Tld $tld, $cartContent, bool $isPrimary): void
     {
         try {
-            // Check if the domain is international
-            $isInternational = isset($tld->type) && $tld->type === DomainType::International;
+            $isInternational = ! $tld->isLocalTld();
 
             if ($isInternational) {
                 Log::debug('Checking international domain:', ['domain' => $domainName]);
                 $checkResult = $this->internationalService->checkAvailability([$domainName]);
-
-                $formatter = resolve(PriceFormatter::class);
-                $rawPriceInCents = (int) ($tld->register_price);
-                $priceInUSD = $formatter->minorToMajorUnits($rawPriceInCents);
-                $convertedPrice = $priceInUSD;
-                try {
-                    if ($this->currentCurrency !== 'USD') {
-                        $convertedPrice = CurrencyHelper::convertFromUSD($priceInUSD, $this->currentCurrency);
-                    }
-                } catch (Exception $e) {
-                    Log::warning('Currency conversion failed', ['error' => $e->getMessage()]);
-                }
-
-                $results[$domainName] = [
-                    'available' => $checkResult['available'] ?? false,
-                    'reason' => $checkResult['reason'] ?? 'Unknown status',
-                    'register_price' => $convertedPrice,
-                    'transfer_price' => $tld->transfer_price,
-                    'renewal_price' => $tld->renewal_price,
-                    'formatted_price' => $formatter->format($convertedPrice, $this->currentCurrency),
-                    'in_cart' => $cartContent->has($domainName),
-                    'is_primary' => $isPrimary,
-                    'is_international' => true,
-                ];
-
-                Log::debug('International domain check processed', [
-                    'domain' => $domainName,
-                    'available' => $checkResult['available'] ?? false,
-                    'raw_price_cents' => $rawPriceInCents,
-                    'price_usd' => $priceInUSD,
-                ]);
+                $available = $checkResult['available'] ?? false;
+                $reason = $checkResult['reason'] ?? 'Unknown status';
+                $results[$domainName] = $this->buildDomainResult($tld, $domainName, $available, $reason, $cartContent, $isPrimary, true);
+                Log::debug('International domain check processed', ['domain' => $domainName, 'available' => $available]);
             } else {
                 $eppResults = $this->eppService->checkDomain([$domainName]);
 
                 if ($eppResults !== [] && isset($eppResults[$domainName])) {
                     $result = $eppResults[$domainName];
-
-                    $formatter = resolve(PriceFormatter::class);
-                    $rawPriceInCents = (int) ($tld->register_price);
-                    $priceInUSD = $formatter->minorToMajorUnits($rawPriceInCents);
-                    $convertedPrice = $priceInUSD;
-                    try {
-                        if ($this->currentCurrency !== 'USD') {
-                            $convertedPrice = CurrencyHelper::convertFromUSD($priceInUSD, $this->currentCurrency);
-                        }
-                    } catch (Exception $e) {
-                        Log::warning('Currency conversion failed', ['error' => $e->getMessage()]);
-                    }
-
-                    $results[$domainName] = [
-                        'available' => $result->available,
-                        'reason' => $result->reason,
-                        'register_price' => $convertedPrice,
-                        'transfer_price' => $tld->transfer_price,
-                        'renewal_price' => $tld->renewal_price,
-                        'formatted_price' => $formatter->format($convertedPrice, $this->currentCurrency),
-                        'in_cart' => $cartContent->has($domainName),
-                        'is_primary' => $isPrimary,
-                        'is_international' => false,
-                    ];
-
-                    Log::debug('Local domain check successful', [
-                        'domain' => $domainName,
-                        'available' => $result->available,
-                        'raw_price_cents' => $rawPriceInCents,
-                        'price_usd' => $priceInUSD,
-                    ]);
+                    $results[$domainName] = $this->buildDomainResult($tld, $domainName, $result->available, $result->reason, $cartContent, $isPrimary, false);
+                    Log::debug('Local domain check successful', ['domain' => $domainName, 'available' => $result->available]);
                 }
             }
         } catch (Exception $exception) {
@@ -323,6 +283,24 @@ final class DomainSearch extends Component
                 'trace' => $exception->getTraceAsString(),
             ]);
         }
+    }
+
+    /**
+     * @param  CartCollection  $cartContent
+     * @return array<string, mixed>
+     */
+    private function buildDomainResult(Tld $tld, string $domainName, bool $available, string $reason, $cartContent, bool $isPrimary, bool $isInternational): array
+    {
+        return $this->buildDomainSearchResult->handle(
+            $tld,
+            $domainName,
+            $available,
+            $reason,
+            $this->currentCurrency,
+            $cartContent->has($domainName),
+            $isPrimary,
+            $isInternational
+        );
     }
 
     private function removeLinkedHosting(string $domain): void

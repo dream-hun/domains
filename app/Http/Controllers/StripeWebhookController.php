@@ -604,8 +604,8 @@ final class StripeWebhookController extends Controller
             'status' => 'paid',
             'payment_method' => 'stripe',
             'payment_status' => 'paid',
-            'total_amount' => $paidAmount ?? $planPrice->renewal_price,
-            'subtotal' => $paidAmount ?? $planPrice->renewal_price,
+            'total_amount' => $paidAmount ?? $planPrice->getPriceInBaseCurrency('renewal_price'),
+            'subtotal' => $paidAmount ?? $planPrice->getPriceInBaseCurrency('renewal_price'),
             'tax' => 0,
             'currency' => 'USD',
             'billing_email' => $user->email,
@@ -617,7 +617,7 @@ final class StripeWebhookController extends Controller
                 [
                     'id' => $subscription->id,
                     'name' => ($subscription->domain ?: 'Hosting').' - '.$subscription->plan->name.' (Auto-Renewal)',
-                    'price' => $paidAmount ?? $planPrice->renewal_price,
+                    'price' => $paidAmount ?? $planPrice->getPriceInBaseCurrency('renewal_price'),
                     'quantity' => 1,
                     'attributes' => [
                         'type' => 'subscription_renewal',
@@ -625,7 +625,7 @@ final class StripeWebhookController extends Controller
                         'subscription_uuid' => $subscription->uuid,
                         'billing_cycle' => $billingCycle->value,
                         'hosting_plan_id' => $subscription->hosting_plan_id,
-                        'hosting_plan_price_id' => $planPrice->id,
+                        'hosting_plan_pricing_id' => $planPrice->id,
                         'domain' => $subscription->domain,
                         'currency' => 'USD',
                     ],
@@ -637,18 +637,18 @@ final class StripeWebhookController extends Controller
             'order_id' => $order->id,
             'domain_name' => $subscription->domain ?: 'Hosting',
             'domain_type' => 'subscription_renewal',
-            'price' => $paidAmount ?? $planPrice->renewal_price,
+            'price' => $paidAmount ?? $planPrice->getPriceInBaseCurrency('renewal_price'),
             'currency' => 'USD',
             'exchange_rate' => 1.0,
             'quantity' => 1,
             'years' => 1,
-            'total_amount' => $paidAmount ?? $planPrice->renewal_price,
+            'total_amount' => $paidAmount ?? $planPrice->getPriceInBaseCurrency('renewal_price'),
             'metadata' => [
                 'subscription_id' => $subscription->id,
                 'subscription_uuid' => $subscription->uuid,
                 'billing_cycle' => $billingCycle->value,
                 'hosting_plan_id' => $subscription->hosting_plan_id,
-                'hosting_plan_price_id' => $planPrice->id,
+                'hosting_plan_pricing_id' => $planPrice->id,
                 'stripe_invoice_id' => $stripeInvoiceId,
                 'auto_renewal' => true,
             ],
@@ -889,7 +889,7 @@ final class StripeWebhookController extends Controller
                     }
                 }
 
-                if (! empty($paymentUpdateData)) {
+                if ($paymentUpdateData !== []) {
                     $payment->update($paymentUpdateData);
 
                     Log::info('Payment record updated via webhook', [

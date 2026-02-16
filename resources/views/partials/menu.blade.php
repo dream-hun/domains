@@ -1,8 +1,8 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4" style="height:auto !important;">
     <!-- Brand Logo -->
     <a href="{{ route('dashboard') }}" class="brand-link">
-        <img src="{{ asset('logo.webp') }}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
-            style="opacity: .8">
+        <img src="{{ asset('logo.webp') }}" alt="{{config('app.name')}}" class="brand-image img-circle elevation-3"
+             style="opacity: .8">
         <span class="brand-text font-weight-light">{{ config('app.name') }}</span>
     </a>
     <!-- Sidebar -->
@@ -21,7 +21,7 @@
         <div class="form-inline">
             <div class="input-group" data-widget="sidebar-search">
                 <input class="form-control form-control-sidebar" type="search" placeholder="Search"
-                    aria-label="Search">
+                       aria-label="Search">
                 <div class="input-group-append">
                     <button class="btn btn-sidebar">
                         <i class="bi bi-search"></i>
@@ -37,7 +37,7 @@
 
                 <li class="nav-item">
                     <a href="{{ route('dashboard') }}"
-                        class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}">
+                       class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}">
                         <i class="bi bi-speedometer"></i>
                         <p>
                             Dashboard
@@ -45,53 +45,34 @@
                     </a>
                 </li>
                 @can('contact_access')
-                    <li class="nav-item">
-                        <a href="{{ route('admin.contacts.index') }}"
-                            class="nav-link {{ request()->is('admin/contacts*') ? 'active' : '' }}">
-                            <i class="bi bi-person-lines-fill"></i>
-                            <p>
-                                {{ trans('cruds.contact.title') }}
-                            </p>
-                        </a>
-                    </li>
-                @endcan
-                @can('domain_pricing_access')
-                    <li class="nav-item">
-                        <a href="{{ route('admin.prices.index') }}"
-                            class="nav-link {{ request()->is('admin/prices*') ? 'active' : '' }}">
-                            <i class="bi bi-cash-coin"></i>
-                            <p>
-                                Domain Prices
-                            </p>
-                        </a>
-                    </li>
+                    <x-admin.sidebar-link route="admin.contacts.index" icon="bi bi-person-lines-fill">
+                        Contact Management
+                    </x-admin.sidebar-link>
                 @endcan
                 @can('currency_access')
-                    <li class="nav-item">
-                        <a href="{{ route('admin.currencies.index') }}"
-                            class="nav-link {{ request()->is('admin/currencies*') ? 'active' : '' }}">
-                            <i class="bi bi-currency-exchange"></i>
-                            <p>
-                                Currencies
-                            </p>
-                        </a>
-                    </li>
+                    <x-admin.sidebar-link route="admin.currencies.index" icon="bi bi-cash-stack">
+                        Currencies
+                    </x-admin.sidebar-link>
+                @endcan
+                @can('tld_access')
+                    <x-admin.sidebar-link route="admin.tlds.index" icon="bi bi-globe">
+                        Tld
+                    </x-admin.sidebar-link>
+                @endcan
+                @can('tld_pricing_access')
+                    <x-admin.sidebar-link route="admin.tld-pricings.index" icon="bi bi-currency-exchange">
+                        TLD Pricing
+                    </x-admin.sidebar-link>
                 @endcan
                 @can('domain_access')
-                    <li class="nav-item">
-                        <a href="{{ route('admin.domains.index') }}"
-                            class="nav-link {{ request()->is('admin/domains*') ? 'active' : '' }}">
-                            <i class="bi bi-globe2"></i>
-                            <p>
-                                {{ trans('cruds.domain.title') }}
-                            </p>
-                        </a>
-                    </li>
+                    <x-admin.sidebar-link route="admin.domains.index" icon="bi bi-globe2">
+                        Domains
+                    </x-admin.sidebar-link>
                 @endcan
                 @can('failed_registration_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.failed-registrations.index') }}"
-                            class="nav-link {{ request()->is('admin/failed-registrations*') ? 'active' : '' }}">
+                           class="nav-link {{ request()->is('admin/failed-registrations*') ? 'active' : '' }}">
                             <i class="bi bi-exclamation-triangle"></i>
                             <p>
                                 Failed Registrations
@@ -112,7 +93,7 @@
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a href="{{ route('admin.hosting-categories.index') }}"
-                                    class="nav-link {{ request()->is('admin/hosting-categories*') ? 'active' : '' }}">
+                                   class="nav-link {{ request()->is('admin/hosting-categories*') ? 'active' : '' }}">
                                     <i class="bi bi-hdd"></i>
                                     <p>Hosting Categories</p>
                                 </a>
@@ -121,7 +102,7 @@
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a href="{{ route('admin.hosting-plans.index') }}"
-                                    class="nav-link {{ request()->is('admin/hosting-plans*') ? 'active' : '' }}">
+                                   class="nav-link {{ request()->is('admin/hosting-plans*') ? 'active' : '' }}">
                                     <i class="bi bi-hdd"></i>
                                     <p>Hosting Plans</p>
                                 </a>
@@ -130,7 +111,7 @@
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a href="{{ route('admin.hosting-plan-prices.index') }}"
-                                    class="nav-link {{ request()->is('admin/hosting-plan-prices*') ? 'active' : '' }}">
+                                   class="nav-link {{ request()->is('admin/hosting-plan-prices*') ? 'active' : '' }}">
                                     <i class="bi bi-hdd"></i>
                                     <p>Hosting Plan Prices</p>
                                 </a>
@@ -140,7 +121,7 @@
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
                                     <a href="{{ route('admin.hosting-promotions.index') }}"
-                                        class="nav-link {{ request()->is('admin/hosting-promotions*') ? 'active' : '' }}">
+                                       class="nav-link {{ request()->is('admin/hosting-promotions*') ? 'active' : '' }}">
                                         <i class="bi bi-hdd"></i>
                                         <p>Hosting Promotions</p>
                                     </a>
@@ -150,7 +131,7 @@
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a href="{{ route('admin.hosting-features.index') }}"
-                                    class="nav-link {{ request()->is('admin/hosting-features*') ? 'active' : '' }}">
+                                   class="nav-link {{ request()->is('admin/hosting-features*') ? 'active' : '' }}">
                                     <i class="bi bi-hdd"></i>
                                     <p>Hosting Features</p>
                                 </a>
@@ -159,7 +140,7 @@
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a href="{{ route('admin.hosting-plan-features.index') }}"
-                                    class="nav-link {{ request()->is('admin/hosting-plan-features*') ? 'active' : '' }}">
+                                   class="nav-link {{ request()->is('admin/hosting-plan-features*') ? 'active' : '' }}">
                                     <i class="bi bi-hdd"></i>
                                     <p>Hosting Plan Features</p>
                                 </a>
@@ -170,7 +151,7 @@
                 @can('subscription_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.subscriptions.index') }}"
-                            class="nav-link {{ request()->is('admin/subscriptions*') ? 'active' : '' }}">
+                           class="nav-link {{ request()->is('admin/subscriptions*') ? 'active' : '' }}">
                             <i class="bi bi-repeat"></i>
                             <p>
                                 {{ trans('cruds.subscription.title') }}
@@ -181,7 +162,7 @@
                 @can('setting_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.settings.index') }}"
-                            class="nav-link {{ request()->is('admin/settings') || request()->is('admin/settings/*') ? 'active' : '' }}">
+                           class="nav-link {{ request()->is('admin/settings') || request()->is('admin/settings/*') ? 'active' : '' }}">
                             <i class="bi bi-gear-fill"></i>
                             <p>
                                 {{ trans('cruds.setting.title') }}
@@ -192,7 +173,7 @@
                 @can('product_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.products.domains') }}"
-                            class="nav-link {{ request()->is('admin/products/domains*') ? 'active' : '' }}">
+                           class="nav-link {{ request()->is('admin/products/domains*') ? 'active' : '' }}">
                             <i class="bi bi-globe2"></i>
                             <p>My Products</p>
                             <i class="bi bi-chevron-down right"></i>
@@ -200,14 +181,14 @@
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a href="{{ route('admin.products.domains') }}"
-                                    class="nav-link {{ request()->is('admin/products/domains*') ? 'active' : '' }}">
+                                   class="nav-link {{ request()->is('admin/products/domains*') ? 'active' : '' }}">
                                     <i class="bi bi-globe2"></i>
                                     <p>Domains</p>
-                        </a>
+                                </a>
                             </li>
                             <li class="nav-item">
                                 <a href="{{ route('admin.products.hosting') }}"
-                                    class="nav-link {{ request()->is('admin/products/hosting*') ? 'active' : '' }}">
+                                   class="nav-link {{ request()->is('admin/products/hosting*') ? 'active' : '' }}">
                                     <i class="bi bi-hdd"></i>
                                     <p>Hosting</p>
                                 </a>
@@ -219,7 +200,7 @@
                     <li
                         class="nav-item {{ request()->is('admin/permissions*') || request()->is('admin/roles*') || request()->is('admin/users*') ? 'menu-open' : '' }}">
                         <a href="#"
-                            class="nav-link {{ request()->is('admin/permissions*') || request()->is('admin/roles*') || request()->is('admin/users*') ? 'active' : '' }}">
+                           class="nav-link {{ request()->is('admin/permissions*') || request()->is('admin/roles*') || request()->is('admin/users*') ? 'active' : '' }}">
                             <i class="bi bi-people-fill"></i>
                             <p>
                                 {{ trans('cruds.userManagement.title') }}
@@ -232,7 +213,7 @@
                             @can('permission_access')
                                 <li class="nav-item">
                                     <a href="{{ route('admin.permissions.index') }}"
-                                        class="nav-link {{ request()->is('admin/permissions*') ? 'active' : '' }}">
+                                       class="nav-link {{ request()->is('admin/permissions*') ? 'active' : '' }}">
                                         <i class="bi bi-lock-fill"></i>
                                         <p>{{ trans('cruds.permission.title') }}</p>
                                     </a>
@@ -241,7 +222,7 @@
                             @can('role_access')
                                 <li class="nav-item">
                                     <a href="{{ route('admin.roles.index') }}"
-                                        class="nav-link {{ request()->is('admin/roles*') ? 'active' : '' }}">
+                                       class="nav-link {{ request()->is('admin/roles*') ? 'active' : '' }}">
                                         <i class="bi bi-gear-wide-connected"></i>
                                         <p>{{ trans('cruds.role.title') }}</p>
                                     </a>
@@ -250,7 +231,7 @@
                             @can('user_access')
                                 <li class="nav-item">
                                     <a href="{{ route('admin.users.index') }}"
-                                        class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}">
+                                       class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}">
                                         <i class="bi bi-people"></i>
                                         <p>{{ trans('cruds.user.title') }}</p>
                                     </a>
@@ -262,7 +243,7 @@
                 @can('audit_log_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.audit-logs.index') }}"
-                            class="nav-link {{ request()->is('admin/audit-logs*') ? 'active' : '' }}">
+                           class="nav-link {{ request()->is('admin/audit-logs*') ? 'active' : '' }}">
                             <i class="bi bi-clipboard-data"></i>
                             <p>
                                 Audit Activity
@@ -272,7 +253,7 @@
                 @endcan
                 <li class="nav-item">
                     <a href="{{ route('billing.index') }}"
-                        class="nav-link {{ request()->is('billing.index') ? 'active' : '' }}">
+                       class="nav-link {{ request()->is('billing.index') ? 'active' : '' }}">
                         <i class="bi bi-credit-card-fill"></i>
                         <p>
                             Billing
@@ -282,7 +263,7 @@
 
                 <li class="nav-item">
                     <a href="{{ route('profile.edit') }}"
-                        class="nav-link {{ request()->is('profile.edit') ? 'active' : '' }}">
+                       class="nav-link {{ request()->is('profile.edit') ? 'active' : '' }}">
                         <i class="bi bi-person"></i>
                         <p>
                             My Profile
@@ -295,7 +276,7 @@
                         @csrf
                     </form>
                     <a href="#" class="nav-link"
-                        onclick="event.preventDefault(); document.getElementById('log-out').submit();">
+                       onclick="event.preventDefault(); document.getElementById('log-out').submit();">
                         <i class="bi bi-box-arrow-right"></i>
                         <p>{{ trans('global.logout') }}</p>
                     </a>

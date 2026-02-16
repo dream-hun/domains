@@ -6,11 +6,7 @@ namespace App\Helpers;
 
 final class StripeHelper
 {
-    /**
-     * Zero-decimal currencies that don't use fractional units
-     * For these currencies, Stripe expects the amount as-is (not multiplied by 100)
-     */
-    private const ZERO_DECIMAL_CURRENCIES = [
+    private const array ZERO_DECIMAL_CURRENCIES = [
         'BIF', // Burundian Franc
         'CLP', // Chilean Peso
         'DJF', // Djiboutian Franc

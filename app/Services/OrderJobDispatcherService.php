@@ -44,19 +44,37 @@ final readonly class OrderJobDispatcherService
             ]);
         }
 
-        if (in_array($order->type, ['renewal', 'subscription_renewal'], true)) {
+        if ($this->orderHasRenewalItems($order)) {
             $this->dispatchRenewalJobs($order);
         }
     }
 
     /**
-     * Dispatch renewal jobs based on order type
-     * Renewal jobs are processed synchronously to ensure immediate processing after payment
+     * Whether the order has any domain or subscription renewal items (supports mixed renewal orders)
+     */
+    private function orderHasRenewalItems(Order $order): bool
+    {
+        return $order->orderItems()
+            ->whereIn('domain_type', ['renewal', 'subscription_renewal'])
+            ->exists();
+    }
+
+    /**
+     * Dispatch renewal jobs based on order item types (not order type)
+     * Supports mixed orders: dispatches both jobs when order contains both domain and subscription renewals.
+     * Renewal jobs are processed synchronously to ensure immediate processing after payment.
      */
     private function dispatchRenewalJobs(Order $order): void
     {
-        if ($order->type === 'renewal') {
-            // Process renewal jobs synchronously to ensure immediate processing
+        $hasDomainRenewals = $order->orderItems()
+            ->where('domain_type', 'renewal')
+            ->exists();
+
+        $hasSubscriptionRenewals = $order->orderItems()
+            ->where('domain_type', 'subscription_renewal')
+            ->exists();
+
+        if ($hasDomainRenewals) {
             dispatch_sync(new ProcessDomainRenewalJob($order));
             Log::info('Processed domain renewal job synchronously', [
                 'order_id' => $order->id,
@@ -64,8 +82,7 @@ final readonly class OrderJobDispatcherService
             ]);
         }
 
-        if ($order->type === 'subscription_renewal') {
-            // Process subscription renewal jobs synchronously to ensure immediate processing
+        if ($hasSubscriptionRenewals) {
             dispatch_sync(new ProcessSubscriptionRenewalJob($order));
             Log::info('Processed subscription renewal job synchronously', [
                 'order_id' => $order->id,

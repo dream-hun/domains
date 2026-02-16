@@ -42,7 +42,7 @@ final readonly class CreateOrderFromCartAction
         float $discountAmount = 0.0
     ): Order {
         return DB::transaction(function () use ($user, $cartItems, $currency, $paymentMethod, $contactIds, $billingData, $coupon, $discountAmount): Order {
-            $currencyModel = Currency::query()->where('code', $currency)->firstOrFail();
+            Currency::query()->where('code', $currency)->firstOrFail();
             $orderType = $this->determineOrderType($cartItems);
             $subtotal = $this->cartPriceConverter->calculateCartSubtotal($cartItems, $currency);
             $total = max(0, $subtotal - $discountAmount);
@@ -116,13 +116,7 @@ final readonly class CreateOrderFromCartAction
                 $domainId = $item->attributes->domain_id ?? null;
                 $metadata = $item->attributes->get('metadata');
 
-                $itemCurrencyModel = Currency::query()->where('code', $itemCurrency)->first();
-                $originalExchangeRate = $itemCurrencyModel ? $itemCurrencyModel->exchange_rate : 1.0;
-                $orderExchangeRate = $currencyModel->exchange_rate;
-
-                $exchangeRate = $originalExchangeRate > 0 && $orderExchangeRate > 0
-                    ? $orderExchangeRate / $originalExchangeRate
-                    : 1.0;
+                $exchangeRate = 1.0;
 
                 try {
                     $convertedItemPrice = $this->cartPriceConverter->convertItemPrice($item, $currency);
@@ -173,8 +167,9 @@ final readonly class CreateOrderFromCartAction
                         $itemMetadata['hosting_plan_id'] = $item->attributes->hosting_plan_id;
                     }
 
-                    if (isset($item->attributes->hosting_plan_price_id)) {
-                        $itemMetadata['hosting_plan_price_id'] = $item->attributes->hosting_plan_price_id;
+                    $pricingId = $item->attributes->hosting_plan_pricing_id ?? $item->attributes->hosting_plan_price_id ?? null;
+                    if ($pricingId !== null) {
+                        $itemMetadata['hosting_plan_pricing_id'] = $pricingId;
                     }
 
                     if (isset($item->attributes->linked_domain)) {

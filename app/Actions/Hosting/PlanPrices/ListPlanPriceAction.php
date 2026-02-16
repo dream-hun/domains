@@ -9,10 +9,10 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class ListPlanPriceAction
 {
-    public function handle(int $perPage = 15, ?string $categoryUuid = null, ?string $planUuid = null, ?string $search = null): LengthAwarePaginator
+    public function handle(int $perPage = 15, ?string $categoryUuid = null, ?string $planUuid = null, ?string $search = null, ?int $currencyId = null): LengthAwarePaginator
     {
         $query = HostingPlanPrice::query()
-            ->with(['plan.category'])
+            ->with(['plan.category', 'currency'])
             ->orderByDesc('id');
 
         if ($categoryUuid !== null) {
@@ -25,6 +25,10 @@ final class ListPlanPriceAction
             $query->whereHas('plan', function ($q) use ($planUuid): void {
                 $q->where('uuid', $planUuid);
             });
+        }
+
+        if ($currencyId !== null) {
+            $query->where('currency_id', $currencyId);
         }
 
         if ($search !== null) {

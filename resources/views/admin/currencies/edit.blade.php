@@ -22,18 +22,22 @@
     <section class="content">
         <div class="container-fluid">
             <div class="col-md-12">
-                <form class="card" method="POST" action="{{ route('admin.currencies.update', $currency->id) }}">
+                <form class="card" method="POST" action="{{ route('admin.currencies.update', $currency) }}">
                     @csrf
                     @method('PUT')
                     <div class="card-body">
                         @if ($currency->is_base)
-                            <div class="alert alert-warning">
-                                <i class="icon fas fa-exclamation-triangle"></i>
-                                <strong>Base Currency:</strong> This is the base currency for the system. Be careful
-                                when editing exchange rates.
+                            <div class="alert alert-info">
+                                <i class="icon fas fa-info-circle"></i>
+                                <strong>Base Currency:</strong> This is the base currency for the system.
                             </div>
                         @endif
 
+                        <div class="form-group">
+                            <label for="uuid">UUID</label>
+                            <input type="text" name="uuid" id="uuid" class="form-control" value="{{ $currency->uuid }}" disabled>
+                            <small class="form-text text-muted">Unique identifier (read-only)</small>
+                        </div>
                         <div class="form-group">
                             <label for="code">Currency Code</label>
                             <input type="text" name="code" id="code" class="form-control"
@@ -58,32 +62,11 @@
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="form-group">
-                            <label for="exchange_rate">Exchange Rate <span class="text-danger">*</span></label>
-                            <input type="number" name="exchange_rate" id="exchange_rate" step="0.000001"
-                                class="form-control @error('exchange_rate') is-invalid @enderror"
-                                value="{{ old('exchange_rate', $currency->exchange_rate) }}" required>
-                            @error('exchange_rate')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                            <small class="form-text text-muted">Rate relative to base currency</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Last Rate Update</label>
-                            <div class="form-control-plaintext">
-                                @if ($currency->rate_updated_at)
-                                    {{ $currency->rate_updated_at->format('Y-m-d H:i:s') }}
-                                    ({{ $currency->rate_updated_at->diffForHumans() }})
-                                @else
-                                    <span class="text-muted">Never</span>
-                                @endif
-                            </div>
-                        </div>
                         <div class="form-check">
                             <input type="checkbox" name="is_active" id="is_active" class="form-check-input"
                                 value="1" {{ old('is_active', $currency->is_active) ? 'checked' : '' }}>
                             <label class="form-check-label" for="is_active">
-                                Active
+                                Status (Active)
                             </label>
                         </div>
                         <div class="form-check">

@@ -173,7 +173,7 @@
     </section>
 
     <div class="container my-5">
-        <livewire:hosting-upsell />
+        {{--<livewire:hosting-upsell />--}}
     </div>
 
     @if (isset($details) || (isset($suggestions) && count($suggestions) > 0))
@@ -204,7 +204,7 @@
                                 <div class="domain-result">
                                     <div class="domain-info-box">
                                         <span class="domain">{{ $suggestion['domain'] }}</span>
-                                        {{-- <span class="domain-price">{{ $suggestion['price'] }}/year</span> --}}
+                                         <span class="domain-price">{{ $suggestion['price'] }}/year</span>
                                     </div>
                                     <div class="domain-actions">
                                         <livewire:domain-cart-button :domain="$suggestion['domain']" :price="$suggestion['price']"
@@ -220,7 +220,7 @@
 
     @endif
 
-    
+
 
     <livewire:cart-summary />
 </x-user-layout>

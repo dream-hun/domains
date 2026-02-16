@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\DomainType;
+use App\Enums\TldType;
 use App\Helpers\DomainSearchHelper;
 use App\Http\Requests\SearchDomainRequest;
 use Exception;
@@ -146,10 +146,10 @@ final class SearchDomainController extends Controller
 
         try {
             // Get popular local domains
-            $popularDomains['local'] = $this->domainSearchHelper->getPopularDomains(DomainType::Local, 3);
+            $popularDomains['local'] = $this->domainSearchHelper->getPopularDomains(TldType::Local, 3);
 
             // Get popular international domains
-            $popularDomains['international'] = $this->domainSearchHelper->getPopularDomains(DomainType::International);
+            $popularDomains['international'] = $this->domainSearchHelper->getPopularDomains(TldType::International);
 
         } catch (Exception $exception) {
             Log::warning('Failed to load popular domains', [

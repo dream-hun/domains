@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Domain;
 
-use App\Enums\DomainType;
 use App\Models\Contact;
-use App\Models\DomainPrice;
+use App\Models\Tld;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -800,7 +799,10 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
     public function getDomainPricing(string $domain): array
     {
         $tld = $this->extractTld($domain);
-        $domainPrice = DomainPrice::query()->where('tld', $tld)->first();
+        $domainPrice = Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->where('name', $tld)
+            ->first();
 
         if (! $domainPrice) {
             return [
@@ -818,10 +820,12 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
 
                 // If it's a premium domain, return the premium price
                 if (isset($domainInfo['is_premium']) && $domainInfo['is_premium']) {
+                    $currency = $domainPrice->getBaseCurrency();
+
                     return [
                         'success' => true,
-                        'price' => (float) ($domainInfo['premium_price'] ?? ($domainPrice->register_price / 100)),
-                        'currency' => $domainPrice->type === DomainType::Local ? 'RWF' : 'USD',
+                        'price' => (float) ($domainInfo['premium_price'] ?? $domainPrice->getPriceForCurrency($currency, 'register_price')),
+                        'currency' => $currency,
                         'is_premium' => true,
                         'eap_fee' => (float) ($domainInfo['eap_fee'] ?? 0),
                     ];
@@ -834,11 +838,12 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
             ]);
         }
 
-        // Return standard pricing
+        $currency = $domainPrice->getBaseCurrency();
+
         return [
             'success' => true,
-            'price' => $domainPrice->register_price / 100,
-            'currency' => $domainPrice->type === DomainType::Local ? 'RWF' : 'USD',
+            'price' => $domainPrice->getPriceForCurrency($currency, 'register_price'),
+            'currency' => $currency,
             'is_premium' => $domainPrice->is_premium ?? false,
             'eap_fee' => 0,
         ];

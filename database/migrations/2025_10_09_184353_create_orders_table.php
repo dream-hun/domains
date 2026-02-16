@@ -15,32 +15,32 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table): void {
             $table->id();
+            $table->uuid();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('order_number')->unique();
-            $table->string('status')->default('pending');
-            $table->enum('payment_method', ['stripe', 'mtn_mobile_money'])->default('stripe');
-            $table->enum('payment_status', ['pending', 'paid', 'failed', 'cancelled', 'refunded'])->default('pending');
+            $table->string('type')->default('registration');
             $table->string('stripe_payment_intent_id')->nullable();
             $table->string('stripe_session_id')->nullable();
-            $table->decimal('total_amount', 10, 2);
+            $table->decimal('total_amount');
+            $table->decimal('subtotal', 10, 2)->default(0);
+            $table->decimal('tax', 10, 2)->default(0);
             $table->string('currency', 3)->default('USD');
-            $table->string('billing_email');
-            $table->string('billing_name');
+            $table->string('coupon_code')->nullable();
+            $table->string('discount_type')->nullable();
+            $table->decimal('discount_amount')->nullable();
+            $table->string('billing_name')->nullable();
+            $table->string('billing_email')->nullable();
             $table->json('billing_address')->nullable();
-            $table->string('billing_city')->nullable();
-            $table->string('billing_country')->nullable();
-            $table->string('billing_postal_code')->nullable();
+            $table->json('items')->nullable();
             $table->text('notes')->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamp('processed_at')->nullable();
+            $table->string('status')->default('pending');
+            $table->string('payment_method');
+            $table->string('payment_status')->default('pending');
             $table->timestamps();
-        });
-    }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('orders');
+            $table->index(['user_id', 'order_number']);
+        });
     }
 };

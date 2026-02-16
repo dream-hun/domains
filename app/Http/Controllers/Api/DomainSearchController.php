@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\DomainType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\DomainSearchRequest;
-use App\Models\DomainPrice;
+use App\Models\Tld;
 use App\Services\Domain\DomainServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
@@ -35,14 +34,18 @@ final class DomainSearchController extends Controller
     }
 
     /**
-     * @return Collection<int, DomainPrice>
+     * @return Collection<int, Tld>
      */
     private function getDomainPrices(string $type): Collection
     {
-        $query = DomainPrice::query()->where('status', 'active');
+        $query = Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->where('status', 'active');
 
-        if ($type !== 'all') {
-            $query->where('type', DomainType::from($type));
+        if ($type === 'local') {
+            $query->localTlds();
+        } elseif ($type === 'international') {
+            $query->internationalTlds();
         }
 
         return $query->get();
@@ -58,13 +61,13 @@ final class DomainSearchController extends Controller
         }
 
         $domains = $domainPrices->map(
-            fn (DomainPrice $price): string => $this->buildDomainName($query, $price->tld)
+            fn (Tld $price): string => $this->buildDomainName($query, $price->tld)
         )->all();
 
         $availability = $domainService->checkAvailability($domains);
 
         return $domainPrices
-            ->map(fn (DomainPrice $price): array => $this->transformDomainPrice(
+            ->map(fn (Tld $price): array => $this->transformDomainPrice(
                 $price,
                 $query,
                 $availability
@@ -81,7 +84,7 @@ final class DomainSearchController extends Controller
     }
 
     private function transformDomainPrice(
-        DomainPrice $price,
+        Tld $price,
         string $query,
         array $availability
     ): array {
@@ -102,7 +105,7 @@ final class DomainSearchController extends Controller
         return [
             'domain' => $fullDomain,
             'available' => $available,
-            'type' => $price->type->value,
+            'type' => $price->isLocalTld() ? 'local' : 'international',
             'register_price' => $price->getPriceInBaseCurrency('register_price'),
             'renewal_price' => $price->getPriceInBaseCurrency('renewal_price'),
             'transfer_price' => $price->getPriceInBaseCurrency('transfer_price'),

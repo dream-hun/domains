@@ -1,17 +1,17 @@
 <x-admin-layout>
     @section('page-title')
-        Domain Prices
+        Domain Tld
     @endsection
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Domain Prices</h1>
+                    <h1 class="m-0">Domain Tld</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Domain Prices</li>
+                        <li class="breadcrumb-item active">Domain Tld</li>
                     </ol>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                     <div class="card">
                         <div class="card-header">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h3 class="card-title">Manage Domain Prices</h3>
+                                <h3 class="card-title">Manage Domain Tld</h3>
                             </div>
                         </div>
                         <div class="card-body">
@@ -56,7 +56,7 @@
                                         <thead>
                                         <tr>
                                             <th style="width: 10%">TLD</th>
-                                            <th style="width: 12%">Type</th>
+                                            <th style="width: 12%">Currencies</th>
                                             <th style="width: 15%">Register</th>
                                             <th style="width: 15%">Renewal</th>
                                             <th style="width: 15%">Transfer</th>
@@ -69,19 +69,13 @@
                                             <tr>
                                                 <td>{{ $price->tld }}</td>
                                                 <td>
-                                                    @if (isset($price->type) && method_exists($price->type, 'label'))
-                                                        <span
-                                                            class="badge {{ $price->type->color() }}">{{ $price->type->label() }}</span>
-                                                    @else
-                                                        <span
-                                                            class="badge badge-secondary">{{ ucfirst((string) $price->type) }}</span>
-                                                    @endif
+                                                    {{ $price->domainPriceCurrencies->map(fn ($dpc) => $dpc->currency?->code)->filter()->implode(', ') ?: '—' }}
                                                 </td>
                                                 <td>{{ $price->formatRegistrationPrice() }}</td>
                                                 <td>{{ $price->formatRenewalPrice() }}</td>
                                                 <td>{{ $price->formatTransferPrice() }}</td>
                                                 <td>
-                                                    @if (!is_null($price->redemption_price))
+                                                    @if ($price->getPriceInBaseCurrency('redemption_price') > 0)
                                                         {{ $price->formatRedemptionPrice() }}
                                                     @else
                                                         <span class="text-muted">—</span>
@@ -201,7 +195,7 @@
         <script>
             $(function () {
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
-                let table = $('.datatable-DomainPrice:not(.ajaxTable)').DataTable({
+                let table = $('.datatable-Tld:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,
                     paging: true,
                     pageLength: 10,

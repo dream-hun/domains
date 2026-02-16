@@ -53,21 +53,11 @@
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="form-group">
-                            <label for="exchange_rate">Exchange Rate <span class="text-danger">*</span></label>
-                            <input type="number" name="exchange_rate" id="exchange_rate" step="0.000001"
-                                class="form-control @error('exchange_rate') is-invalid @enderror"
-                                value="{{ old('exchange_rate', '1.000000') }}" required>
-                            @error('exchange_rate')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                            <small class="form-text text-muted">Rate relative to base currency</small>
-                        </div>
                         <div class="form-check">
                             <input type="checkbox" name="is_active" id="is_active" class="form-check-input"
                                 value="1" {{ old('is_active', '1') ? 'checked' : '' }}>
                             <label class="form-check-label" for="is_active">
-                                Active
+                                Status (Active)
                             </label>
                         </div>
                         <div class="form-check">

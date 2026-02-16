@@ -16,21 +16,11 @@ final class UpdateCurrencyRequest extends FormRequest
 
     public function rules(): array
     {
-        $this->route('currency')->id;
-
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'symbol' => ['sometimes', 'required', 'string', 'max:10'],
-            'exchange_rate' => ['sometimes', 'required', 'numeric', 'min:0.000001'],
             'is_base' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'exchange_rate.min' => 'The exchange rate must be greater than zero.',
         ];
     }
 }

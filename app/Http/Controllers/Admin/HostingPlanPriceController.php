@@ -11,6 +11,7 @@ use App\Actions\Hosting\PlanPrices\UpdatePlanPriceAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePlanPriceRequest;
 use App\Http\Requests\Admin\UpdatePlanPriceRequest;
+use App\Models\Currency;
 use App\Models\HostingCategory;
 use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
@@ -31,8 +32,12 @@ final class HostingPlanPriceController extends Controller
         $search = request()->input('search');
         $search = ($search !== null && $search !== '') ? (string) $search : null;
 
-        $prices = $action->handle(10, $categoryUuid, $planUuid, $search);
+        $currencyId = request()->input('currency_id');
+        $currencyId = ($currencyId !== null && $currencyId !== '') ? (int) $currencyId : null;
+
+        $prices = $action->handle(10, $categoryUuid, $planUuid, $search, $currencyId);
         $categories = HostingCategory::query()->select(['uuid', 'name'])->orderBy('name')->get();
+        $currencies = Currency::query()->where('is_active', true)->orderBy('code')->get();
 
         $plansQuery = HostingPlan::query()->select(['uuid', 'name', 'category_id'])->orderBy('name');
         if ($categoryUuid !== null) {
@@ -47,8 +52,10 @@ final class HostingPlanPriceController extends Controller
             'prices' => $prices,
             'categories' => $categories,
             'plans' => $plans,
+            'currencies' => $currencies,
             'selectedCategoryUuid' => $categoryUuid,
             'selectedPlanUuid' => $planUuid,
+            'selectedCurrencyId' => $currencyId,
             'search' => $search,
         ]);
     }
@@ -57,10 +64,12 @@ final class HostingPlanPriceController extends Controller
     {
         $categories = HostingCategory::query()->select(['id', 'name'])->orderBy('name')->get();
         $plans = HostingPlan::query()->select(['id', 'name', 'category_id'])->orderBy('name')->get();
+        $currencies = Currency::query()->where('is_active', true)->orderBy('code')->get();
 
         return view('admin.hosting-plan-prices.create', [
             'categories' => $categories,
             'plans' => $plans,
+            'currencies' => $currencies,
         ]);
     }
 
@@ -78,7 +87,8 @@ final class HostingPlanPriceController extends Controller
     {
         $categories = HostingCategory::query()->select(['id', 'name'])->orderBy('name')->get();
         $plans = HostingPlan::query()->select(['id', 'name', 'category_id'])->orderBy('name')->get();
-        $hostingPlanPrice->load('plan.category');
+        $currencies = Currency::query()->where('is_active', true)->orderBy('code')->get();
+        $hostingPlanPrice->load(['plan.category', 'currency']);
 
         $histories = $hostingPlanPrice->hostingPlanPriceHistories()
             ->with('changedBy')
@@ -89,6 +99,7 @@ final class HostingPlanPriceController extends Controller
             'price' => $hostingPlanPrice,
             'categories' => $categories,
             'plans' => $plans,
+            'currencies' => $currencies,
             'histories' => $histories,
         ]);
     }

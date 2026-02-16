@@ -9,13 +9,9 @@ use Illuminate\View\Component;
 
 final class AdminLayout extends Component
 {
-    /**
-     * Create a new component instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+    public function __construct(
+        public ?string $pageTitle = null
+    ) {}
 
     /**
      * Get the view / contents that represent the component.

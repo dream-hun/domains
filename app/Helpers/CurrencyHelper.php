@@ -4,106 +4,49 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
-use App\Contracts\Currency\CurrencyConverterContract;
-use App\Contracts\Currency\CurrencyFormatterContract;
-use App\Traits\NormalizesCurrencyCode;
-use Exception;
+use App\Models\Currency;
+use App\Services\PriceFormatter;
 
 /**
- * Static facade for currency operations.
- *
- * This class provides static methods for backward compatibility.
- * All operations delegate to the CurrencyConverterContract service.
- *
- * For new code, prefer injecting CurrencyConverterContract directly.
+ * Currency helper using stored prices and session. No external conversion.
  */
 final class CurrencyHelper
 {
-    use NormalizesCurrencyCode;
-
     /**
-     * Convert amount from one currency to another.
-     *
-     * @throws Exception
-     */
-    public static function convert(float $amount, string $fromCurrency, string $targetCurrency): float
-    {
-        $fromCurrency = self::normalizeCurrency($fromCurrency);
-        $targetCurrency = self::normalizeCurrency($targetCurrency);
-
-        if ($fromCurrency === $targetCurrency) {
-            return $amount;
-        }
-
-        return self::getConverter()->convert($amount, $fromCurrency, $targetCurrency);
-    }
-
-    /**
-     * Convert USD amount to target currency.
-     *
-     * @throws Exception
-     */
-    public static function convertFromUSD(float $usdAmount, string $targetCurrency): float
-    {
-        $targetCurrency = self::normalizeCurrency($targetCurrency);
-
-        if ($targetCurrency === 'USD') {
-            return $usdAmount;
-        }
-
-        return self::getConverter()->convert($usdAmount, 'USD', $targetCurrency);
-    }
-
-    /**
-     * Format amount with currency symbol.
-     */
-    public static function formatMoney(float $amount, string $currency): string
-    {
-        return self::getFormatter()->format($amount, $currency);
-    }
-
-    /**
-     * Get currency symbol for a currency code.
-     */
-    public static function getCurrencySymbol(string $currencyCode): string
-    {
-        return self::getFormatter()->getCurrencySymbol($currencyCode);
-    }
-
-    /**
-     * Get user's preferred currency code.
+     * User's selected currency code (from session).
      */
     public static function getUserCurrency(): string
     {
-        return self::getConverter()->getUserCurrency()->code;
+        $code = (string) session('selected_currency', 'USD');
+
+        return mb_strtoupper($code) === 'FRW' ? 'RWF' : $code;
     }
 
     /**
-     * Normalize currency code (handle legacy codes like FRW -> RWF).
+     * Format amount for display in the given currency.
      */
-    private static function normalizeCurrency(string $currency): string
+    public static function formatMoney(float $amount, string $currencyCode): string
     {
-        $currency = mb_strtoupper(mb_trim($currency));
+        $code = mb_strtoupper($currencyCode);
+        if ($code === 'FRW') {
+            $code = 'RWF';
+        }
 
-        return match ($currency) {
-            'FRW' => 'RWF',
-            default => $currency,
-        };
+        $currency = Currency::query()->where('code', $code)->first();
+
+        if ($currency instanceof Currency) {
+            return $currency->format($amount);
+        }
+
+        return resolve(PriceFormatter::class)->format($amount, $code);
     }
 
     /**
-     * Get the currency converter service.
+     * No conversion: returns amount as-is. Use stored prices (e.g. Tld::getPriceForCurrency)
+     * when multi-currency pricing exists.
      */
-    private static function getConverter(): CurrencyConverterContract
+    public static function convert(float $amount, ?string $fromCurrency = null, ?string $toCurrency = null): float
     {
-        return resolve(CurrencyConverterContract::class);
-    }
-
-    /**
-     * Get the currency formatter service.
-     */
-    private static function getFormatter(): CurrencyFormatterContract
-    {
-        return resolve(CurrencyFormatterContract::class);
+        return $amount;
     }
 }

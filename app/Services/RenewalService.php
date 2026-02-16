@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\DomainType;
 use App\Helpers\CurrencyHelper;
 use App\Models\Domain;
-use App\Models\DomainPrice;
 use App\Models\DomainRenewal;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Tld;
 use App\Models\User;
 use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
@@ -33,6 +32,17 @@ final readonly class RenewalService
             'failed' => [],
         ];
 
+        $order->loadMissing('orderItems');
+
+        $domainIds = $order->orderItems
+            ->where('domain_type', 'renewal')
+            ->pluck('domain_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $domains = Domain::query()->findMany($domainIds)->keyBy('id');
+
         /** @var OrderItem $orderItem */
         foreach ($order->orderItems as $orderItem) {
             // Skip non-renewal items
@@ -43,7 +53,7 @@ final readonly class RenewalService
             $oldExpiryDate = null;
 
             try {
-                $domain = Domain::query()->find($orderItem->domain_id);
+                $domain = $domains->get($orderItem->domain_id);
 
                 if (! $domain) {
                     throw new Exception('Domain not found: '.$orderItem->domain_name);
@@ -144,10 +154,11 @@ final readonly class RenewalService
     }
 
     /**
-     * Get renewal price for a domain
+     * Get renewal price for a domain in the specified currency.
      *
      * @param  Domain  $domain  The domain to renew
      * @param  int  $years  Number of years to renew
+     * @param  string|null  $currency  Target currency code. Uses user's preferred currency when null.
      * @return array{
      *     unit_price: float,
      *     price: float,
@@ -157,19 +168,20 @@ final readonly class RenewalService
      *
      * @throws Exception
      */
-    public function getRenewalPrice(Domain $domain, int $years = 1): array
+    public function getRenewalPrice(Domain $domain, int $years = 1, ?string $currency = null): array
     {
         $domainPrice = $this->resolveDomainPrice($domain);
 
-        if (! $domainPrice instanceof DomainPrice) {
+        if (! $domainPrice instanceof Tld) {
             throw new Exception('Pricing information not available for domain: '.$domain->name);
         }
 
         $domain->setRelation('domainPrice', $domainPrice);
 
-        $currency = $domainPrice->type === DomainType::Local ? 'RWF' : 'USD';
-
-        $unitPrice = $domainPrice->getPriceInCurrency('renewal_price', $currency);
+        $preferredCurrency = $currency ?? CurrencyHelper::getUserCurrency();
+        $resolved = $domainPrice->getDisplayPriceForCurrency($preferredCurrency, 'renewal_price');
+        $unitPrice = $resolved['amount'];
+        $currency = $resolved['currency_code'];
 
         $unitPrice = $currency === 'RWF' ? round($unitPrice) : round($unitPrice, 2);
 
@@ -225,12 +237,12 @@ final readonly class RenewalService
         return ['can_renew' => true];
     }
 
-    public function resolveDomainPrice(Domain $domain): ?DomainPrice
+    public function resolveDomainPrice(Domain $domain): ?Tld
     {
-        if ($domain->relationLoaded('domainPrice') || $domain->domainPrice) {
+        if ($domain->relationLoaded('domainPrice')) {
             $domainPrice = $domain->domainPrice;
 
-            return $domainPrice instanceof DomainPrice ? $domainPrice : null;
+            return $domainPrice instanceof Tld ? $domainPrice : null;
         }
 
         $tld = $this->extractTld($domain->name);
@@ -239,7 +251,10 @@ final readonly class RenewalService
             return null;
         }
 
-        return DomainPrice::query()->where('tld', '.'.$tld)->first();
+        return Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->where('name', '.'.$tld)
+            ->first();
     }
 
     /**
@@ -247,9 +262,9 @@ final readonly class RenewalService
      *
      * @return array{valid: bool, message?: string, min_years?: int, currency?: string, required_total?: float}
      */
-    public function validateStripeMinimumAmountForRenewal(DomainPrice $domainPrice, int $years): array
+    public function validateStripeMinimumAmountForRenewal(Tld $domainPrice, int $years): array
     {
-        $pricePerYearUsd = $domainPrice->getPriceInCurrency('renewal_price');
+        $pricePerYearUsd = $domainPrice->getPriceInCurrency('renewal_price', 'USD');
 
         if ($pricePerYearUsd <= 0) {
             return [
@@ -267,15 +282,9 @@ final readonly class RenewalService
 
         $minYears = (int) max(1, ceil($minUsd / max($pricePerYearUsd, 0.0001)));
 
-        $displayCurrency = $domainPrice->type === DomainType::Local ? 'RWF' : 'USD';
-
-        try {
-            $requiredTotal = $displayCurrency === 'USD'
-                ? $pricePerYearUsd * $minYears
-                : CurrencyHelper::convert($pricePerYearUsd * $minYears, 'USD', $displayCurrency);
-        } catch (Exception) {
-            $requiredTotal = $pricePerYearUsd * $minYears;
-        }
+        $displayCurrency = $domainPrice->getBaseCurrency();
+        $pricePerYearDisplay = $domainPrice->getPriceForCurrency($displayCurrency, 'renewal_price');
+        $requiredTotal = $pricePerYearDisplay * $minYears;
 
         $decimals = $displayCurrency === 'USD' ? 2 : 0;
         $requiredTotal = round($requiredTotal, $decimals);

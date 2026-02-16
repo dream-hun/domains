@@ -4,21 +4,19 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Helpers\CurrencyHelper;
 use App\Models\Currency;
 use App\Services\CartPriceConverter;
-use App\Services\CurrencyService;
-use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Throwable;
 
 final class CartTotal extends Component
 {
-    use HasCurrency;
-
     public string $selectedCurrency = '';
 
     public string $formattedTotal = '';
@@ -34,7 +32,7 @@ final class CartTotal extends Component
 
     public function mount(): void
     {
-        $this->selectedCurrency = $this->getUserCurrency()->code;
+        $this->selectedCurrency = CurrencyHelper::getUserCurrency();
         $this->updateFormattedTotal();
     }
 
@@ -92,15 +90,16 @@ final class CartTotal extends Component
                 'error' => $exception->getMessage(),
             ]);
 
-            // Fallback to 0 if conversion fails
             $subtotal = 0;
+        } catch (Throwable $e) {
+            return $e->getMessage();
+
         }
 
-        // Apply discount from session if coupon is applied
         $this->discountAmount = $this->calculateDiscount($subtotal);
         $total = max(0, $subtotal - $this->discountAmount);
 
-        return $this->formatCurrency($total, $this->selectedCurrency);
+        return CurrencyHelper::formatMoney($total, $this->selectedCurrency);
     }
 
     #[Computed]
@@ -109,11 +108,16 @@ final class CartTotal extends Component
         return Cart::getContent()->count();
     }
 
-    public function render(CurrencyService $currencyService): View
+    public function render(): View
     {
+        $currentCurrency = Currency::query()
+            ->where('code', $this->selectedCurrency)
+            ->where('is_active', true)
+            ->first() ?? Currency::getBaseCurrency();
+
         return view('livewire.cart-total', [
-            'currencies' => $currencyService->getActiveCurrencies(),
-            'currentCurrency' => $currencyService->getCurrency($this->selectedCurrency) ?? $currencyService->getUserCurrency(),
+            'currencies' => Currency::getActiveCurrencies(),
+            'currentCurrency' => $currentCurrency,
         ]);
     }
 
@@ -123,7 +127,6 @@ final class CartTotal extends Component
     private function getBillingCycleMonths(string $billingCycle): int
     {
         return match ($billingCycle) {
-            'monthly' => 1,
             'quarterly' => 3,
             'semi-annually' => 6,
             'annually' => 12,
@@ -145,32 +148,11 @@ final class CartTotal extends Component
 
         // Convert discount to current currency if different
         if ($couponCurrency !== $this->selectedCurrency) {
-            try {
-                $discountAmount = $this->convertCurrency(
-                    $discountAmount,
-                    $couponCurrency,
-                    $this->selectedCurrency
-                );
-            } catch (Exception) {
-                // Fallback to recalculating discount
-                $type = $couponData['type'] ?? 'percentage';
-                $value = $couponData['value'] ?? 0;
-
-                if ($type === 'percentage') {
-                    $discountAmount = $subtotal * ($value / 100);
-                } elseif ($type === 'fixed') {
-                    // Convert fixed amount to current currency
-                    try {
-                        $discountAmount = $this->convertCurrency(
-                            $value,
-                            $couponCurrency,
-                            $this->selectedCurrency
-                        );
-                    } catch (Exception) {
-                        $discountAmount = $value;
-                    }
-                }
-            }
+            $discountAmount = CurrencyHelper::convert(
+                $discountAmount,
+                $couponCurrency,
+                $this->selectedCurrency
+            );
         }
 
         // Ensure discount doesn't exceed subtotal

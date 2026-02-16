@@ -20,10 +20,10 @@ use AfriCC\EPP\Frame\Command\Renew\Domain as RenewDomain;
 use AfriCC\EPP\Frame\Command\Transfer\Domain as TransferDomain;
 use AfriCC\EPP\Frame\Command\Update\Domain as UpdateDomain;
 use AfriCC\EPP\Frame\Response;
-use App\Enums\DomainType;
+use App\Enums\TldType;
 use App\Models\Contact;
 use App\Models\Domain;
-use App\Models\DomainPrice;
+use App\Models\Tld;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
@@ -147,13 +147,16 @@ class EppDomainService implements DomainRegistrationServiceInterface
             // Process results and add pricing information
             foreach ($suggestedDomains as $suggestedDomain) {
                 $tld = $this->extractTld($suggestedDomain);
-                $priceInfo = DomainPrice::query()->where('tld', $tld)->first();
+                $priceInfo = Tld::query()
+                    ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                    ->where('name', '.'.$tld)
+                    ->first();
 
                 $suggestions[] = [
                     'domain' => $suggestedDomain,
                     'available' => $availabilityResults[$suggestedDomain]['available'] ?? false,
                     'price' => $priceInfo?->getFormattedPrice(),
-                    'type' => $priceInfo?->type->value ?? 'unknown',
+                    'type' => $priceInfo ? ($priceInfo->isLocalTld() ? 'local' : 'international') : 'unknown',
                     'reason' => $availabilityResults[$suggestedDomain]['reason'] ?? null,
                     'suggestion_type' => $this->getSuggestionType($suggestedDomain, $baseName),
                 ];
@@ -449,7 +452,10 @@ class EppDomainService implements DomainRegistrationServiceInterface
     {
         try {
             $tld = $this->extractTld($domain);
-            $priceInfo = DomainPrice::query()->where('tld', $tld)->first();
+            $priceInfo = Tld::query()
+                ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                ->where('name', '.'.$tld)
+                ->first();
 
             if (! $priceInfo) {
                 return [
@@ -1608,28 +1614,28 @@ class EppDomainService implements DomainRegistrationServiceInterface
      *
      * @param  string  $searchTerm  Base domain name without TLD
      * @param  array|null  $specificTlds  Optional array of specific TLDs to check
-     * @param  DomainType|null  $domainType  Optional domain type filter for suggestions
+     * @param  TldType|null  $domainType  Optional domain type filter for suggestions
      * @return array Array of domain availability results
      *
      * @throws Exception
      */
-    public function searchDomains(string $searchTerm, ?array $specificTlds = null, ?DomainType $domainType = null): array
+    public function searchDomains(string $searchTerm, ?array $specificTlds = null, ?TldType $domainType = null): array
     {
         try {
             $this->ensureConnection();
 
-            // Get all active TLDs from DomainPrice if no specific TLDs provided
+            // Get all active TLDs from Tld if no specific TLDs provided
             if ($specificTlds === null) {
-                $query = DomainPrice::query()->where('status', 'active');
+                $query = Tld::query()->where('status', 'active');
 
                 // Filter by domain type if specified
-                if ($domainType instanceof DomainType) {
+                if ($domainType instanceof TldType) {
                     $query->where('type', $domainType);
                 }
 
                 $tlds = $query->latest()
                     ->limit(20)
-                    ->pluck('tld')
+                    ->pluck('name')
                     ->toArray();
             } else {
                 $tlds = $specificTlds;
@@ -1675,7 +1681,9 @@ class EppDomainService implements DomainRegistrationServiceInterface
 
                                 // Get pricing information
                                 $tld = $this->extractTld($domainName);
-                                $priceInfo = DomainPrice::query()->where('tld', '.'.$tld)
+                                $priceInfo = Tld::query()
+                                    ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                                    ->where('name', '.'.$tld)
                                     ->where('status', 'active')
                                     ->first();
 
@@ -1684,7 +1692,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                                     'available' => $available,
                                     'reason' => $reason,
                                     'price' => $priceInfo?->getFormattedPrice(),
-                                    'type' => $priceInfo?->type->value ?? 'unknown',
+                                    'type' => $priceInfo ? ($priceInfo->isLocalTld() ? 'local' : 'international') : 'unknown',
                                 ];
                             }
                         }
@@ -1933,12 +1941,12 @@ class EppDomainService implements DomainRegistrationServiceInterface
     private function getCommonTlds(): array
     {
         if ($this->commonTlds === []) {
-            $this->commonTlds = DomainPrice::query()->where('status', 'active')
-                ->whereIn('type', [DomainType::Local, DomainType::International])
+            $this->commonTlds = Tld::query()->where('status', 'active')
+                ->whereIn('type', [TldType::Local, TldType::International])
                 ->latest()
                 ->limit(20) // Limit to top 20 most recent TLDs
-                ->pluck('tld')
-                ->map(fn ($tld): string => mb_ltrim($tld, '.'))
+                ->pluck('name')
+                ->map(fn (string $name): string => mb_ltrim($name, '.'))
                 ->all();
         }
 

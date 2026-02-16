@@ -70,7 +70,7 @@ final readonly class CreateCustomSubscriptionAction
             'uuid' => (string) Str::uuid(),
             'user_id' => $user->id,
             'hosting_plan_id' => $plan->id,
-            'hosting_plan_price_id' => $planPrice->id,
+            'hosting_plan_pricing_id' => $planPrice->id,
             'product_snapshot' => [
                 'plan' => [
                     'id' => $plan->id,
@@ -108,7 +108,7 @@ final readonly class CreateCustomSubscriptionAction
             $subscription,
             $user,
             $plan,
-            $customPrice ?? (float) $planPrice->renewal_price / 100,
+            $customPrice ?? $planPrice->getPriceInBaseCurrency('renewal_price'),
             $customPriceCurrency ?? 'USD',
             $billingCycle,
             $adminId,

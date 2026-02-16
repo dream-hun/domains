@@ -17,7 +17,7 @@ final class LandingController extends Controller
      */
     public function __invoke(Request $request): View|Factory
     {
-        // Load all active plans with their prices and features once to avoid duplicate queries
+
         $allPlans = HostingPlan::query()
             ->where('status', 'active')
             ->with([

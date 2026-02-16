@@ -6,9 +6,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Domain;
-use App\Models\DomainPrice;
 use App\Models\HostingPlan;
 use App\Models\Scopes\DomainPriceScope;
+use App\Models\Tld;
 use App\Models\User;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -22,7 +22,7 @@ final class DashboardController extends Controller
      */
     public function __invoke(Request $request): View|Factory
     {
-        $tlds = Cache::remember('dashboard.tlds', 3600, fn () => DomainPrice::query()->withoutGlobalScope(DomainPriceScope::class)->count());
+        $tlds = Cache::remember('dashboard.tlds', 3600, fn () => Tld::query()->withoutGlobalScope(DomainPriceScope::class)->count());
         $plans = Cache::remember('dashboard.plans', 3600, fn (): int => 0);
 
         $customers = Cache::remember('dashboard.customers', 3600, fn () => User::query()->whereHas('roles', function ($query): void {
