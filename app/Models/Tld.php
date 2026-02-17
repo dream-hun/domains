@@ -30,7 +30,7 @@ final class Tld extends Model
 {
     use HasFactory;
 
-    private const array PRICE_TYPE_TO_COLUMN = [
+    private const  PRICE_TYPE_TO_COLUMN = [
         'register_price' => 'register_price',
         'renewal_price' => 'renew_price',
         'renew_price' => 'renew_price',
@@ -38,6 +38,8 @@ final class Tld extends Model
     ];
 
     protected $table = 'tld';
+
+    protected $with=['tldPricings'];
 
     protected $guarded = [];
 
@@ -113,7 +115,7 @@ final class Tld extends Model
             }
         } else {
             $pricing = $this->currentTldPricings()->with('currency')->first();
-            if ($pricing?->currency) {
+            if (null) {
                 return $pricing->currency->code;
             }
         }
