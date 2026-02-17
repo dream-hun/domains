@@ -131,7 +131,7 @@
                             </div>
 
                             <div class="mt-4">
-                                {{ $orders->links('vendor.pagination.adminlte') }}
+                                {{ $orders->links('pagination.adminlte') }}
                             </div>
                         @else
                             <div class="alert alert-info" role="alert">
