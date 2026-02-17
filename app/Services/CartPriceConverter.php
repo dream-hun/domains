@@ -14,9 +14,11 @@ use Throwable;
 final readonly class CartPriceConverter
 {
     /**
+     * @param  array<string, Tld>|null  $tldMap  Pre-loaded TLD map from batchLoadTldsForCartItems
+     *
      * @throws Exception|Throwable
      */
-    public function convertItemPrice(object $item, string $targetCurrency): float
+    public function convertItemPrice(object $item, string $targetCurrency, ?array $tldMap = null): float
     {
         $itemCurrency = $item->attributes->currency ?? 'USD';
         $itemType = $item->attributes->get('type', 'registration');
@@ -34,7 +36,7 @@ final readonly class CartPriceConverter
             return $itemPrice;
         }
 
-        $domainPriceResult = $this->getDomainPriceAndCurrency($item, $targetCurrency, null);
+        $domainPriceResult = $this->getDomainPriceAndCurrency($item, $targetCurrency, $tldMap);
 
         if ($domainPriceResult !== null) {
             return $domainPriceResult['price'];
@@ -44,9 +46,11 @@ final readonly class CartPriceConverter
     }
 
     /**
+     * @param  array<string, Tld>|null  $tldMap  Pre-loaded TLD map from batchLoadTldsForCartItems
+     *
      * @throws Exception|Throwable
      */
-    public function calculateItemTotal(object $item, string $targetCurrency): float
+    public function calculateItemTotal(object $item, string $targetCurrency, ?array $tldMap = null): float
     {
         $itemType = $item->attributes->get('type', 'registration');
 
@@ -58,7 +62,7 @@ final readonly class CartPriceConverter
             return $this->calculateSubscriptionRenewalItemTotal($item, $targetCurrency);
         }
 
-        $convertedPrice = $this->convertItemPrice($item, $targetCurrency);
+        $convertedPrice = $this->convertItemPrice($item, $targetCurrency, $tldMap);
 
         return $convertedPrice * $item->quantity;
     }
@@ -82,7 +86,7 @@ final readonly class CartPriceConverter
                 $convertedPrice = $domainPriceResult['price'];
                 $resolvedCurrency = $domainPriceResult['currency'];
             } else {
-                $convertedPrice = $this->convertItemPrice($item, $targetCurrency);
+                $convertedPrice = $this->convertItemPrice($item, $targetCurrency, $tldMap);
                 $resolvedCurrency = $targetCurrency;
             }
 
@@ -120,10 +124,13 @@ final readonly class CartPriceConverter
      */
     public function calculateCartSubtotal(CartCollection $cartItems, string $targetCurrency): float
     {
+        // Batch load TLDs for domain items to avoid N+1 queries
+        $tldMap = $this->batchLoadTldsForCartItems($cartItems);
+
         $subtotal = 0;
 
         foreach ($cartItems as $item) {
-            $subtotal += $this->calculateItemTotal($item, $targetCurrency);
+            $subtotal += $this->calculateItemTotal($item, $targetCurrency, $tldMap);
         }
 
         return $subtotal;
@@ -214,7 +221,8 @@ final readonly class CartPriceConverter
 
         foreach ($cartItems as $item) {
             $itemType = $item->attributes->get('type', 'registration');
-            if ($itemType !== 'domain') {
+            // Include all domain-related item types
+            if (! in_array($itemType, ['domain', 'registration', 'renewal', 'transfer'], true)) {
                 continue;
             }
 
