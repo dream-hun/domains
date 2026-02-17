@@ -22,6 +22,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Throwable;
 
 /**
@@ -76,6 +78,10 @@ final class CheckoutWizard extends Component
 
     public bool $isCouponApplied = false;
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     public function mount(): void
     {
         if (Cart::isEmpty()) {
@@ -86,8 +92,10 @@ final class CheckoutWizard extends Component
 
         $this->userCurrencyCode = CurrencyHelper::getUserCurrency();
 
+        // Eager load contacts to avoid N+1 queries
+        $user = auth()->user()->load('contacts');
         /** @var Contact|null $defaultContact */
-        $defaultContact = auth()->user()->contacts()
+        $defaultContact = $user->contacts()
             ->where('is_primary', true)
             ->first();
 
@@ -168,7 +176,9 @@ final class CheckoutWizard extends Component
             return null;
         }
 
-        return Contact::query()->find($this->selectedRegistrantId);
+        $map = $this->selectedContactsMap();
+
+        return $map[$this->selectedRegistrantId] ?? null;
     }
 
     #[Computed(persist: false)]
@@ -178,7 +188,9 @@ final class CheckoutWizard extends Component
             return null;
         }
 
-        return Contact::query()->find($this->selectedAdminId);
+        $map = $this->selectedContactsMap();
+
+        return $map[$this->selectedAdminId] ?? null;
     }
 
     #[Computed(persist: false)]
@@ -188,7 +200,9 @@ final class CheckoutWizard extends Component
             return null;
         }
 
-        return Contact::query()->find($this->selectedTechId);
+        $map = $this->selectedContactsMap();
+
+        return $map[$this->selectedTechId] ?? null;
     }
 
     #[Computed(persist: false)]
@@ -198,7 +212,9 @@ final class CheckoutWizard extends Component
             return null;
         }
 
-        return Contact::query()->find($this->selectedBillingId);
+        $map = $this->selectedContactsMap();
+
+        return $map[$this->selectedBillingId] ?? null;
     }
 
     /**
@@ -388,8 +404,8 @@ final class CheckoutWizard extends Component
         try {
             $billingContactId = $this->selectedBillingId;
             if ((! $this->hasItemsRequiringContacts || $this->hasOnlyRenewals) && ! $billingContactId) {
-                /** @var Contact|null $primaryContact */
-                $primaryContact = auth()->user()->contacts()->where('is_primary', true)->first();
+                // Use already loaded contacts from userContacts computed property
+                $primaryContact = $this->userContacts->where('is_primary', true)->first();
                 $billingContactId = $primaryContact?->id;
             }
 
@@ -497,6 +513,32 @@ final class CheckoutWizard extends Component
     public function render(): Factory|View
     {
         return view('livewire.checkout.checkout-wizard');
+    }
+
+    /**
+     * Get a map of all selected contact IDs to Contact models (batch loaded to avoid N+1).
+     *
+     * @return array<int, Contact>
+     */
+    #[Computed(persist: false)]
+    private function selectedContactsMap(): array
+    {
+        $contactIds = array_filter([
+            $this->selectedRegistrantId,
+            $this->selectedAdminId,
+            $this->selectedTechId,
+            $this->selectedBillingId,
+        ], fn ($id): bool => $id !== null);
+
+        if ($contactIds === []) {
+            return [];
+        }
+
+        $contacts = Contact::query()
+            ->whereIn('id', $contactIds)
+            ->get();
+
+        return $contacts->keyBy('id')->all();
     }
 
     private function validateCurrentStep(): bool

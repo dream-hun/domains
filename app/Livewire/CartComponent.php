@@ -20,6 +20,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Throwable;
 
 final class CartComponent extends Component
 {
@@ -88,7 +89,7 @@ final class CartComponent extends Component
         session(['selected_currency' => $this->currency]);
     }
 
-    public function updateCartTotal(): void
+    public function updateCartTotal(): string
     {
         // Get cart content and maintain original order
         $cartContent = Cart::getContent();
@@ -192,7 +193,11 @@ final class CartComponent extends Component
                 'type' => 'error',
                 'message' => 'Unable to convert cart totals to the selected currency. Please try again or switch currencies.',
             ]);
+        } catch (Throwable $e) {
+            return $e->getMessage();
         }
+
+        return $this->totalAmount = max(0);
     }
 
     /**
@@ -368,25 +373,7 @@ final class CartComponent extends Component
                     ]);
                 }
 
-                $this->updateCartTotal();
-
-                // Recalculate discount if coupon is applied
-                if ($this->isCouponApplied && $this->appliedCoupon) {
-                    $this->calculateDiscount();
-
-                    // Update coupon session with new discount amount
-                    session([
-                        'coupon' => [
-                            'code' => $this->appliedCoupon->code,
-                            'type' => $this->appliedCoupon->type->value,
-                            'value' => $this->appliedCoupon->value,
-                            'discount_amount' => $this->discountAmount,
-                            'currency' => $this->currency,
-                        ],
-                    ]);
-                }
-
-                $this->dispatch('refreshCart');
+                $this->extracted();
 
                 $this->dispatch('notify', [
                     'type' => 'success',
@@ -427,25 +414,7 @@ final class CartComponent extends Component
                 ],
             ]);
 
-            $this->updateCartTotal();
-
-            // Recalculate discount if coupon is applied
-            if ($this->isCouponApplied && $this->appliedCoupon) {
-                $this->calculateDiscount();
-
-                // Update coupon session with new discount amount
-                session([
-                    'coupon' => [
-                        'code' => $this->appliedCoupon->code,
-                        'type' => $this->appliedCoupon->type->value,
-                        'value' => $this->appliedCoupon->value,
-                        'discount_amount' => $this->discountAmount,
-                        'currency' => $this->currency,
-                    ],
-                ]);
-            }
-
-            $this->dispatch('refreshCart');
+            $this->extracted();
 
             $this->dispatch('notify', [
                 'type' => 'success',
@@ -563,25 +532,7 @@ final class CartComponent extends Component
                 ],
             ]);
 
-            $this->updateCartTotal();
-
-            // Recalculate discount if coupon is applied
-            if ($this->isCouponApplied && $this->appliedCoupon) {
-                $this->calculateDiscount();
-
-                // Update coupon session with new discount amount
-                session([
-                    'coupon' => [
-                        'code' => $this->appliedCoupon->code,
-                        'type' => $this->appliedCoupon->type->value,
-                        'value' => $this->appliedCoupon->value,
-                        'discount_amount' => $this->discountAmount,
-                        'currency' => $this->currency,
-                    ],
-                ]);
-            }
-
-            $this->dispatch('refreshCart');
+            $this->extracted();
 
             $this->dispatch('notify', [
                 'type' => 'success',
@@ -705,25 +656,7 @@ final class CartComponent extends Component
                 ],
             ]);
 
-            $this->updateCartTotal();
-
-            // Recalculate discount if coupon is applied
-            if ($this->isCouponApplied && $this->appliedCoupon) {
-                $this->calculateDiscount();
-
-                // Update coupon session with new discount amount
-                session([
-                    'coupon' => [
-                        'code' => $this->appliedCoupon->code,
-                        'type' => $this->appliedCoupon->type->value,
-                        'value' => $this->appliedCoupon->value,
-                        'discount_amount' => $this->discountAmount,
-                        'currency' => $this->currency,
-                    ],
-                ]);
-            }
-
-            $this->dispatch('refreshCart');
+            $this->extracted();
 
             $formatter = resolve(OrderItemFormatterService::class);
             $durationLabel = $formatter->formatDurationLabel($durationMonths);
@@ -762,25 +695,7 @@ final class CartComponent extends Component
                 }
             }
 
-            $this->updateCartTotal();
-
-            // Recalculate discount if coupon is applied
-            if ($this->isCouponApplied && $this->appliedCoupon) {
-                $this->calculateDiscount();
-
-                // Update coupon session with new discount amount
-                session([
-                    'coupon' => [
-                        'code' => $this->appliedCoupon->code,
-                        'type' => $this->appliedCoupon->type->value,
-                        'value' => $this->appliedCoupon->value,
-                        'discount_amount' => $this->discountAmount,
-                        'currency' => $this->currency,
-                    ],
-                ]);
-            }
-
-            $this->dispatch('refreshCart');
+            $this->extracted();
 
             $this->dispatch('notify', [
                 'type' => 'success',
@@ -901,6 +816,7 @@ final class CartComponent extends Component
                     'error' => $exception->getMessage(),
                 ]);
                 throw $exception;
+            } catch (Throwable $e) {
             }
 
             $metadata = $item->attributes->get('metadata', []);
@@ -1120,5 +1036,28 @@ final class CartComponent extends Component
             $months === 36 => 'triennially',
             default => 'monthly',
         };
+    }
+
+    private function extracted(): void
+    {
+        $this->updateCartTotal();
+
+        // Recalculate discount if coupon is applied
+        if ($this->isCouponApplied && $this->appliedCoupon) {
+            $this->calculateDiscount();
+
+            // Update coupon session with new discount amount
+            session([
+                'coupon' => [
+                    'code' => $this->appliedCoupon->code,
+                    'type' => $this->appliedCoupon->type->value,
+                    'value' => $this->appliedCoupon->value,
+                    'discount_amount' => $this->discountAmount,
+                    'currency' => $this->currency,
+                ],
+            ]);
+        }
+
+        $this->dispatch('refreshCart');
     }
 }

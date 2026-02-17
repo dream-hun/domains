@@ -34,7 +34,7 @@ final readonly class CartPriceConverter
             return $itemPrice;
         }
 
-        $domainPriceResult = $this->getDomainPriceAndCurrency($item, $targetCurrency);
+        $domainPriceResult = $this->getDomainPriceAndCurrency($item, $targetCurrency, null);
 
         if ($domainPriceResult !== null) {
             return $domainPriceResult['price'];
@@ -70,10 +70,13 @@ final readonly class CartPriceConverter
     {
         $convertedItems = collect();
 
+        // Batch load TLDs for domain items to avoid N+1 queries
+        $tldMap = $this->batchLoadTldsForCartItems($cartItems);
+
         foreach ($cartItems as $item) {
             $originalCurrency = $item->attributes->currency ?? 'USD';
             $itemType = $item->attributes->get('type', 'registration');
-            $domainPriceResult = $itemType === 'domain' ? $this->getDomainPriceAndCurrency($item, $targetCurrency) : null;
+            $domainPriceResult = $itemType === 'domain' ? $this->getDomainPriceAndCurrency($item, $targetCurrency, $tldMap) : null;
 
             if ($domainPriceResult !== null) {
                 $convertedPrice = $domainPriceResult['price'];
@@ -201,9 +204,64 @@ final readonly class CartPriceConverter
     }
 
     /**
+     * Batch load TLDs for all domain items in cart to avoid N+1 queries.
+     *
+     * @return array<string, Tld> Map of normalized TLD name (e.g., 'com') => Tld model
+     */
+    private function batchLoadTldsForCartItems(CartCollection $cartItems): array
+    {
+        $tldNames = [];
+
+        foreach ($cartItems as $item) {
+            $itemType = $item->attributes->get('type', 'registration');
+            if ($itemType !== 'domain') {
+                continue;
+            }
+
+            $domainName = $item->attributes->get('domain_name') ?? $item->name ?? null;
+            if (! is_string($domainName)) {
+                continue;
+            }
+
+            $tldPart = mb_strrpos($domainName, '.') !== false
+                ? mb_substr($domainName, mb_strrpos($domainName, '.') + 1)
+                : null;
+
+            if ($tldPart) {
+                $tldNames[] = mb_strtolower($tldPart);
+            }
+        }
+
+        if ($tldNames === []) {
+            return [];
+        }
+
+        $tldNames = array_unique($tldNames);
+        $normalizedNames = array_map(fn (string $name): string => mb_ltrim($name, '.'), $tldNames);
+        $searchNames = array_merge(
+            array_map(fn (string $name): string => '.'.$name, $normalizedNames),
+            $normalizedNames
+        );
+
+        $loaded = Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->whereIn('name', $searchNames)
+            ->get();
+
+        $map = [];
+        foreach ($loaded as $tld) {
+            $key = mb_ltrim($tld->name, '.');
+            $map[mb_strtolower($key)] = $tld;
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param  array<string, Tld>|null  $tldMap  Pre-loaded TLD map from batchLoadTldsForCartItems
      * @return array{price: float, currency: string}|null
      */
-    private function getDomainPriceAndCurrency(object $item, string $targetCurrency): ?array
+    private function getDomainPriceAndCurrency(object $item, string $targetCurrency, ?array $tldMap = null): ?array
     {
         $domainName = $item->attributes->get('domain_name') ?? $item->name ?? null;
 
@@ -219,10 +277,19 @@ final readonly class CartPriceConverter
             return null;
         }
 
-        $tld = Tld::query()
-            ->where('name', $tldPart)
-            ->orWhere('name', '.'.$tldPart)
-            ->first();
+        $tld = null;
+        $normalizedTld = mb_strtolower($tldPart);
+
+        if ($tldMap !== null && isset($tldMap[$normalizedTld])) {
+            $tld = $tldMap[$normalizedTld];
+        } else {
+            // Fallback to individual query if map not provided (for backward compatibility)
+            $tld = Tld::query()
+                ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                ->where('name', $tldPart)
+                ->orWhere('name', '.'.$tldPart)
+                ->first();
+        }
 
         if (! $tld instanceof Tld) {
             return null;

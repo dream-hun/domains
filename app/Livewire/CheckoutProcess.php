@@ -341,7 +341,6 @@ final class CheckoutProcess extends Component
 
             $years = match ($itemType) {
                 'subscription_renewal', 'hosting' => (int) ($item->quantity / 12),
-                'renewal', 'registration' => (int) $item->quantity,
                 default => (int) $item->quantity,
             };
 

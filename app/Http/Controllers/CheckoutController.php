@@ -102,8 +102,11 @@ final class CheckoutController extends Controller
                     ->with('error', 'Invalid session.');
             }
 
-            // Retrieve the order
-            $order = Order::query()->where('order_number', $order)->firstOrFail();
+            // Retrieve the order with eager loaded relationships to avoid N+1 queries
+            $order = Order::query()
+                ->with('orderItems')
+                ->where('order_number', $order)
+                ->firstOrFail();
 
             // Verify order belongs to current user
             abort_if($order->user_id !== auth()->id(), 403);
