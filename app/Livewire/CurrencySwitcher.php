@@ -56,9 +56,7 @@ final class CurrencySwitcher extends Component
             'currency_code' => $currencyCode,
         ]);
 
-        $currency = Currency::query()->where('code', $currencyCode)
-            ->where('is_active', true)
-            ->first();
+        $currency = Currency::getActiveCurrencies()->firstWhere('code', $currencyCode);
 
         if (! $currency) {
             Log::error('Currency not found or inactive', [
@@ -89,9 +87,7 @@ final class CurrencySwitcher extends Component
 
     public function render(): Factory|View|\Illuminate\View\View
     {
-        $currencies = Currency::query()
-            ->where('is_active', true)
-            ->get();
+        $currencies = Currency::getActiveCurrencies();
 
         $availableCurrencies = [];
         foreach ($currencies as $currency) {

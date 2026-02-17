@@ -48,9 +48,7 @@ final class CartTotal extends Component
 
     public function updatedSelectedCurrency(): void
     {
-        $currency = Currency::query()->where('code', $this->selectedCurrency)
-            ->where('is_active', true)
-            ->first();
+        $currency = Currency::getActiveCurrencies()->firstWhere('code', $this->selectedCurrency);
 
         if ($currency) {
             session(['selected_currency' => $currency->code]);
@@ -110,10 +108,8 @@ final class CartTotal extends Component
 
     public function render(): View
     {
-        $currentCurrency = Currency::query()
-            ->where('code', $this->selectedCurrency)
-            ->where('is_active', true)
-            ->first() ?? Currency::getBaseCurrency();
+        $currentCurrency = Currency::getActiveCurrencies()->firstWhere('code', $this->selectedCurrency)
+            ?? Currency::getBaseCurrency();
 
         return view('livewire.cart-total', [
             'currencies' => Currency::getActiveCurrencies(),

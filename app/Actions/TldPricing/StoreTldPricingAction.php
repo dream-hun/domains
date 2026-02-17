@@ -14,7 +14,7 @@ final class StoreTldPricingAction
      */
     public function handle(array $validated): TldPricing
     {
-        return TldPricing::query()->create([
+        $tldPricing = TldPricing::query()->create([
             'uuid' => Str::uuid()->toString(),
             'tld_id' => $validated['tld_id'] ?? null,
             'currency_id' => $validated['currency_id'],
@@ -25,5 +25,7 @@ final class StoreTldPricingAction
             'is_current' => $validated['is_current'] ?? true,
             'effective_date' => $validated['effective_date'],
         ]);
+
+        return $tldPricing->load(['tld']);
     }
 }

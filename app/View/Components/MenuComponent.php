@@ -24,7 +24,7 @@ class MenuComponent extends Component
      */
     public function render(): View|Closure|string
     {
-        $hostingCategories = HostingCategory::query()->select(['name', 'slug', 'icon'])->where('status', 'active')->get();
+        $hostingCategories = HostingCategory::getActiveCategories();
 
         return view('components.menu-component', ['hostingCategories' => $hostingCategories]);
     }

@@ -596,7 +596,7 @@ final class StripeWebhookController extends Controller
 
         throw_unless($user, Exception::class, 'Subscription has no associated user');
 
-        Currency::query()->where('code', 'USD')->firstOrFail();
+        throw_unless(Currency::getActiveCurrencies()->firstWhere('code', 'USD'), \Illuminate\Database\Eloquent\ModelNotFoundException::class);
 
         $order = Order::query()->create([
             'user_id' => $user->id,

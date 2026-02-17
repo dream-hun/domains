@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property-read int $id
@@ -43,6 +44,14 @@ class TldPricing extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    /**
+     * @return HasMany<DomainPriceHistory, static>
+     */
+    public function domainPriceHistories(): HasMany
+    {
+        return $this->hasMany(DomainPriceHistory::class, 'tld_pricing_id');
     }
 
     #[Scope]

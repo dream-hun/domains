@@ -28,6 +28,7 @@ final class StoreTldPricingRequest extends FormRequest
             'transfer_price' => ['nullable', 'integer', 'min:0'],
             'is_current' => ['required', 'boolean'],
             'effective_date' => ['required', 'date'],
+            'reason' => ['nullable', 'string', 'max:1000'],
         ];
     }
 }

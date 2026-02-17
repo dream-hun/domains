@@ -36,7 +36,7 @@ final class TldPricingController extends Controller
         abort_if(Gate::denies('tld_pricing_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $tlds = Tld::query()->orderBy('name')->get();
-        $currencies = Currency::query()->orderBy('code')->get();
+        $currencies = Currency::getActiveCurrencies();
 
         return view('admin.tld-pricing.create', [
             'tlds' => $tlds,
@@ -55,13 +55,21 @@ final class TldPricingController extends Controller
     {
         abort_if(Gate::denies('tld_pricing_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
+        $tldPricing->load(['tld', 'currency']);
+
         $tlds = Tld::query()->orderBy('name')->get();
-        $currencies = Currency::query()->orderBy('code')->get();
+        $currencies = Currency::getActiveCurrencies();
+
+        $histories = $tldPricing->domainPriceHistories()
+            ->with('changedBy')
+            ->latest('created_at')
+            ->get();
 
         return view('admin.tld-pricing.edit', [
             'tldPricing' => $tldPricing,
             'tlds' => $tlds,
             'currencies' => $currencies,
+            'histories' => $histories,
         ]);
     }
 

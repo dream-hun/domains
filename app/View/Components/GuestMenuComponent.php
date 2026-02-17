@@ -24,7 +24,7 @@ class GuestMenuComponent extends Component
      */
     public function render(): View|Closure|string
     {
-        $hostingCategories = HostingCategory::query()->select(['name', 'slug', 'description', 'icon'])->where('status', 'active')->get();
+        $hostingCategories = HostingCategory::getActiveCategories();
 
         return view('components.guest-menu-component', ['hostingCategories' => $hostingCategories]);
     }

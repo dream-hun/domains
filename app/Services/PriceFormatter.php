@@ -177,7 +177,7 @@ final readonly class PriceFormatter
      */
     private function resolveSymbol(string $currency, array $config): string
     {
-        $currencyModel = Currency::query()->where('code', $currency)->first();
+        $currencyModel = Currency::getActiveCurrencies()->firstWhere('code', $currency);
 
         if ($currencyModel instanceof Currency && (string) $currencyModel->symbol !== '') {
             return (string) $currencyModel->symbol;

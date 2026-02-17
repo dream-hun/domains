@@ -12,7 +12,7 @@ trait HasCurrency
     protected function getUserCurrency(): Currency
     {
         $code = CurrencyHelper::getUserCurrency();
-        $currency = Currency::query()->where('code', $code)->first();
+        $currency = Currency::getActiveCurrencies()->firstWhere('code', $code);
 
         if ($currency instanceof Currency) {
             return $currency;

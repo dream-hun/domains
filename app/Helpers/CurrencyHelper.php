@@ -32,7 +32,7 @@ final class CurrencyHelper
             $code = 'RWF';
         }
 
-        $currency = Currency::query()->where('code', $code)->first();
+        $currency = Currency::getActiveCurrencies()->firstWhere('code', $code);
 
         if ($currency instanceof Currency) {
             return $currency->format($amount);

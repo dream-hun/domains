@@ -117,7 +117,7 @@
                                             <input type="email"
                                                    name="billing_email"
                                                    id="billing_email"
-                                                   value="{{ old('billing_email', $user->address->email) }}"
+                                                   value="{{ old('billing_email', $user->address->email ?? '') }}"
                                                    required
                                                    class="form-control @error('billing_email') is-invalid @enderror">
                                             @error('billing_email')
@@ -246,6 +246,7 @@
                                         $itemPrice = $item['price'] ?? 0;
                                         $itemTotal = $itemPrice * $quantity;
                                         $itemCurrency = $item['currency'] ?? $currency ?? 'USD';
+                                        $displayCurrency = mb_strtoupper((string) $itemCurrency) === 'FRW' ? 'RWF' : $itemCurrency;
                                     @endphp
                                     <div class="d-flex justify-content-between align-items-start py-3 border-bottom">
                                         <div class="flex-grow-1">
@@ -261,7 +262,7 @@
                                         </div>
                                         <div class="text-end ml-3">
                                             <span class="font-weight-bold text-dark">
-                                                @price($itemTotal, $itemCurrency)
+                                                @price($itemTotal, $displayCurrency)
                                             </span>
                                         </div>
                                     </div>
@@ -274,17 +275,21 @@
                             </div>
 
                             @if(!empty($cartItems))
+                                @php
+                                    $displayCurrency = $currency ?? 'USD';
+                                    $displayCurrency = mb_strtoupper((string) $displayCurrency) === 'FRW' ? 'RWF' : $displayCurrency;
+                                @endphp
                                 <div class="border-top pt-3 mt-3">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <span class="text-muted">Subtotal</span>
                                         <span class="text-muted">
-                                            @price($subtotal ?? $totalAmount, $currency ?? 'USD')
+                                            @price($subtotal ?? $totalAmount, $displayCurrency)
                                         </span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                                         <h5 class="mb-0 font-weight-bold">Total</h5>
                                         <h4 class="mb-0 text-primary font-weight-bold">
-                                            @price($totalAmount, $currency ?? 'USD')
+                                            @price($totalAmount, $displayCurrency)
                                         </h4>
                                     </div>
                                 </div>

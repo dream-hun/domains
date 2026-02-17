@@ -36,8 +36,8 @@ final class HostingPlanPriceController extends Controller
         $currencyId = ($currencyId !== null && $currencyId !== '') ? (int) $currencyId : null;
 
         $prices = $action->handle(10, $categoryUuid, $planUuid, $search, $currencyId);
-        $categories = HostingCategory::query()->select(['uuid', 'name'])->orderBy('name')->get();
-        $currencies = Currency::query()->where('is_active', true)->orderBy('code')->get();
+        $categories = HostingCategory::getActiveCategories();
+        $currencies = Currency::getActiveCurrencies();
 
         $plansQuery = HostingPlan::query()->select(['uuid', 'name', 'category_id'])->orderBy('name');
         if ($categoryUuid !== null) {
@@ -62,9 +62,9 @@ final class HostingPlanPriceController extends Controller
 
     public function create(): View|Factory
     {
-        $categories = HostingCategory::query()->select(['id', 'name'])->orderBy('name')->get();
+        $categories = HostingCategory::getActiveCategories();
         $plans = HostingPlan::query()->select(['id', 'name', 'category_id'])->orderBy('name')->get();
-        $currencies = Currency::query()->where('is_active', true)->orderBy('code')->get();
+        $currencies = Currency::getActiveCurrencies();
 
         return view('admin.hosting-plan-prices.create', [
             'categories' => $categories,
@@ -85,9 +85,9 @@ final class HostingPlanPriceController extends Controller
 
     public function edit(HostingPlanPrice $hostingPlanPrice): View|Factory
     {
-        $categories = HostingCategory::query()->select(['id', 'name'])->orderBy('name')->get();
+        $categories = HostingCategory::getActiveCategories();
         $plans = HostingPlan::query()->select(['id', 'name', 'category_id'])->orderBy('name')->get();
-        $currencies = Currency::query()->where('is_active', true)->orderBy('code')->get();
+        $currencies = Currency::getActiveCurrencies();
         $hostingPlanPrice->load(['plan.category', 'currency']);
 
         $histories = $hostingPlanPrice->hostingPlanPriceHistories()

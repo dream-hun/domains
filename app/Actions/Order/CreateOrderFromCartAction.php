@@ -42,7 +42,7 @@ final readonly class CreateOrderFromCartAction
         float $discountAmount = 0.0
     ): Order {
         return DB::transaction(function () use ($user, $cartItems, $currency, $paymentMethod, $contactIds, $billingData, $coupon, $discountAmount): Order {
-            Currency::query()->where('code', $currency)->firstOrFail();
+            throw_unless(Currency::getActiveCurrencies()->firstWhere('code', $currency), \Illuminate\Database\Eloquent\ModelNotFoundException::class);
             $orderType = $this->determineOrderType($cartItems);
             $subtotal = $this->cartPriceConverter->calculateCartSubtotal($cartItems, $currency);
             $total = max(0, $subtotal - $discountAmount);

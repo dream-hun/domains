@@ -117,6 +117,19 @@
             @enderror
         </div>
 
+        @if ($tldPricing)
+        <div class="form-group">
+            <label for="reason">Reason for change <span id="reason-required-indicator" class="text-danger" style="display: none;">*</span></label>
+            <textarea name="reason" id="reason" rows="2"
+                class="form-control @error('reason') is-invalid @enderror"
+                placeholder="Describe why this price is being changed...">{{ old('reason') }}</textarea>
+            @error('reason')
+                <span class="invalid-feedback">{{ $message }}</span>
+            @enderror
+            <small class="form-text text-muted">Required when changing price fields.</small>
+        </div>
+        @endif
+
         <div class="form-group">
             <label for="effective_date">Effective date <span class="text-danger">*</span></label>
             <input type="date" name="effective_date" id="effective_date"
@@ -145,6 +158,47 @@
             allowClear: true,
             width: '100%'
         });
+
+        // Make reason required when price fields change (edit mode only)
+        var reasonField = document.getElementById('reason');
+        if (reasonField) {
+            var priceFields = ['register_price', 'renew_price', 'redemption_price', 'transfer_price'];
+            var reasonIndicator = document.getElementById('reason-required-indicator');
+            var originalValues = {};
+
+            priceFields.forEach(function(field) {
+                var el = document.getElementById(field);
+                if (el) originalValues[field] = el.value;
+            });
+
+            function checkPriceChanges() {
+                var hasChange = false;
+                priceFields.forEach(function(field) {
+                    var el = document.getElementById(field);
+                    if (el && el.value !== originalValues[field]) hasChange = true;
+                });
+
+                if (hasChange) {
+                    reasonField.setAttribute('required', 'required');
+                    reasonIndicator.style.display = 'inline';
+                    reasonField.classList.add('border-warning');
+                } else {
+                    reasonField.removeAttribute('required');
+                    reasonIndicator.style.display = 'none';
+                    reasonField.classList.remove('border-warning');
+                }
+            }
+
+            priceFields.forEach(function(field) {
+                var el = document.getElementById(field);
+                if (el) {
+                    el.addEventListener('input', checkPriceChanges);
+                    el.addEventListener('change', checkPriceChanges);
+                }
+            });
+
+            checkPriceChanges();
+        }
     });
 </script>
 @endpush

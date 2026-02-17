@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Helpers\DomainSearchHelper;
-use App\Models\DomainPriceCurrency;
 use App\Models\HostingCategory;
 use App\Models\HostingPlanPrice;
 use App\Models\Setting;
-use App\Models\Tld;
-use App\Observers\DomainPriceCurrencyObserver;
-use App\Observers\DomainPriceObserver;
+use App\Models\TldPricing;
 use App\Observers\HostingPlanPriceHistoryObserver;
+use App\Observers\TldPricingObserver;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
@@ -35,11 +33,10 @@ final class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-
+        Model::automaticallyEagerLoadRelationships();
         Model::preventLazyLoading();
-        Tld::observe(DomainPriceObserver::class);
-        DomainPriceCurrency::observe(DomainPriceCurrencyObserver::class);
         HostingPlanPrice::observe(HostingPlanPriceHistoryObserver::class);
+        TldPricing::observe(TldPricingObserver::class);
         try {
             View::share('settings', Setting::query()->first());
         } catch (Exception) {
@@ -47,21 +44,25 @@ final class AppServiceProvider extends ServiceProvider
         }
 
         try {
-            $hostings = HostingCategory::query()->select(['name', 'slug', 'icon'])->where('status', 'active')->get();
+            $hostings = HostingCategory::getActiveCategories();
             View::share('hostings', $hostings);
         } catch (Exception) {
             View::share('hostings', []);
         }
 
-    
         Date::use(CarbonImmutable::class);
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
         );
+
+        Blade::directive('price', function (string $expression): string {
+            $inner = mb_trim($expression, ' ()');
+
+            return "<?php \$__p = [{$inner}]; echo \\App\\Helpers\\CurrencyHelper::formatMoney((float) (\$__p[0] ?? 0), (string) (mb_strtoupper((string) (\$__p[1] ?? 'USD')) === 'FRW' ? 'RWF' : (\$__p[1] ?? 'USD'))); ?>";
+        });
     }
 
-  
     private function registerDomainServices(): void
     {
         $this->app->singleton(fn ($app): DomainSearchHelper => new DomainSearchHelper(

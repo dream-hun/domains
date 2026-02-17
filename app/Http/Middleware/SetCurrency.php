@@ -26,7 +26,7 @@ final readonly class SetCurrency
 
         if ($request->has('currency')) {
             $currencyCode = $request->get('currency');
-            $currency = Currency::query()->where('code', $currencyCode)->where('is_active', true)->first();
+            $currency = Currency::getActiveCurrencies()->firstWhere('code', $currencyCode);
 
             if ($currency) {
                 session(['selected_currency' => $currency->code]);
@@ -35,7 +35,7 @@ final readonly class SetCurrency
 
         if (! session()->has('selected_currency')) {
             $currencyCode = $this->geolocationService->isUserFromRwanda() ? 'RWF' : 'USD';
-            $currency = Currency::query()->where('code', $currencyCode)->where('is_active', true)->first();
+            $currency = Currency::getActiveCurrencies()->firstWhere('code', $currencyCode);
 
             if ($currency) {
                 session(['selected_currency' => $currency->code]);

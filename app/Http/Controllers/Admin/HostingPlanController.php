@@ -97,9 +97,6 @@ final class HostingPlanController extends Controller
 
     private function categories(): Collection
     {
-        return HostingCategory::query()
-            ->select(['id', 'name'])
-            ->orderBy('name')
-            ->get();
+        return HostingCategory::getActiveCategories();
     }
 }

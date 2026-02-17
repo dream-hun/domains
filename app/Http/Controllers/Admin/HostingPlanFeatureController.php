@@ -33,7 +33,7 @@ final class HostingPlanFeatureController extends Controller
         $selectedPlanId = $request->filled('hosting_plan_id') ? (int) $request->input('hosting_plan_id') : null;
 
         $hostingPlanFeatures = $action->handle($selectedCategoryId, $selectedPlanId);
-        $hostingCategories = HostingCategory::query()->orderBy('name')->get();
+        $hostingCategories = HostingCategory::getActiveCategories();
         $hostingPlans = HostingPlan::query()->orderBy('name')->get();
 
         return view('admin.hosting-plan-features.index', [
@@ -53,7 +53,7 @@ final class HostingPlanFeatureController extends Controller
 
         $hostingPlans = HostingPlan::query()->orderBy('name')->get();
         $hostingFeatures = HostingFeature::query()->orderBy('name')->get();
-        $hostingCategories = HostingCategory::query()->orderBy('name')->get();
+        $hostingCategories = HostingCategory::getActiveCategories();
 
         return view('admin.hosting-plan-features.create', [
             'hostingPlans' => $hostingPlans,
@@ -78,7 +78,7 @@ final class HostingPlanFeatureController extends Controller
         $hostingPlanFeature->load(['hostingPlan.category', 'hostingFeature']);
         $hostingPlans = HostingPlan::query()->orderBy('name')->get();
         $hostingFeatures = HostingFeature::query()->orderBy('name')->get();
-        $hostingCategories = HostingCategory::query()->orderBy('name')->get();
+        $hostingCategories = HostingCategory::getActiveCategories();
 
         return view('admin.hosting-plan-features.edit', [
             'hostingPlanFeature' => $hostingPlanFeature,

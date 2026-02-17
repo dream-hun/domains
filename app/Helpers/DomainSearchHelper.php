@@ -27,10 +27,8 @@ final readonly class DomainSearchHelper
             $domainParts = explode('.', $sanitizedDomain);
             $domainBase = $domainParts[0];
             $searchedTld = count($domainParts) > 1 ? end($domainParts) : null;
-
             $error = null;
 
-            // Auto-detect domain type based on TLD or use default
             $domainType = $this->detectDomainType($sanitizedDomain);
 
             $primaryDomainToSearch = $sanitizedDomain;
@@ -167,11 +165,16 @@ final readonly class DomainSearchHelper
         $suggestions = [];
         $primaryTld = explode('.', $primaryDomain)[1] ?? null;
 
+        $allLocalTlds = Tld::query()->localTlds()->pluck('name')->map(fn (string $name): string => mb_ltrim($name, '.'))->all();
+        $suggestionTlds = array_diff($allLocalTlds, [$primaryTld]);
+        $tldsToLoad = array_filter(array_merge([$primaryTld], $suggestionTlds), fn ($t): bool => ! in_array($t, [null, '', '0'], true));
+        $priceInfoMap = $this->findDomainPriceInfoBatch(array_values($tldsToLoad));
+
         if (! in_array($primaryTld, [null, '', '0'], true)) {
             $primaryResult = $this->eppDomainService->searchDomains($domainBase, [$primaryTld]);
             if (isset($primaryResult[$primaryDomain])) {
                 $result = $primaryResult[$primaryDomain];
-                $priceInfo = $this->findDomainPriceInfo($primaryTld);
+                $priceInfo = $priceInfoMap[mb_ltrim($primaryTld, '.')] ?? null;
                 $preferredCurrency = CurrencyHelper::getUserCurrency();
                 $available = $result['available'];
                 $reason = $result['reason'] ?? null;
@@ -190,18 +193,14 @@ final readonly class DomainSearchHelper
             }
         }
 
-        $allLocalTlds = Tld::query()->localTlds()->pluck('name')->map(fn (string $name): string => mb_ltrim($name, '.'))->all();
-        $suggestionTlds = array_diff($allLocalTlds, [$primaryTld]);
-
         if ($suggestionTlds !== []) {
             $suggestionResults = $this->eppDomainService->searchDomains($domainBase, $suggestionTlds);
             unset($suggestionResults[$primaryDomain]);
 
             $preferredCurrency = CurrencyHelper::getUserCurrency();
-            // Normalize the suggestion results
             foreach ($suggestionResults as $domainName => $result) {
                 $tld = explode('.', (string) $domainName)[1] ?? null;
-                $priceInfo = $this->findDomainPriceInfo($tld);
+                $priceInfo = $tld !== null ? ($priceInfoMap[mb_ltrim($tld, '.')] ?? null) : null;
                 $available = $result['available'];
                 $reason = $result['reason'] ?? null;
 
@@ -228,12 +227,22 @@ final readonly class DomainSearchHelper
         $suggestions = [];
         $primaryTld = explode('.', $primaryDomain)[1] ?? null;
 
+        $suggestionTlds = Tld::query()->internationalTlds()
+            ->whereRaw($this->tldNormalizedNotEqualRaw(), [mb_strtolower((string) $primaryTld)])
+            ->latest()
+            ->limit(10)
+            ->pluck('name')->map(fn (string $name): string => mb_ltrim($name, '.'))
+            ->all();
+
+        $tldsToLoad = array_values(array_filter(array_merge([$primaryTld], $suggestionTlds), fn ($t): bool => ! in_array($t, [null, '', '0'], true)));
+        $priceInfoMap = $this->findDomainPriceInfoBatch($tldsToLoad);
+
         try {
             if (! in_array($primaryTld, [null, '', '0'], true)) {
                 $availabilityResults = $this->internationalDomainService->checkAvailability([$primaryDomain]);
                 if (isset($availabilityResults[$primaryDomain])) {
                     $result = $availabilityResults[$primaryDomain];
-                    $priceInfo = $this->findDomainPriceInfo($primaryTld);
+                    $priceInfo = $priceInfoMap[mb_ltrim($primaryTld, '.')] ?? null;
                     $preferredCurrency = CurrencyHelper::getUserCurrency();
 
                     // Debug log the raw result
@@ -258,13 +267,6 @@ final readonly class DomainSearchHelper
                 }
             }
 
-            $suggestionTlds = Tld::query()->internationalTlds()
-                ->whereRaw($this->tldNormalizedNotEqualRaw(), [mb_strtolower((string) $primaryTld)])
-                ->latest()
-                ->limit(10)
-                ->pluck('name')->map(fn (string $name): string => mb_ltrim($name, '.'))
-                ->all();
-
             $domainsToSuggest = array_map(fn (string $tld): string => $domainBase.'.'.$tld, $suggestionTlds);
 
             if ($domainsToSuggest !== []) {
@@ -275,7 +277,7 @@ final readonly class DomainSearchHelper
                     }
 
                     $tld = explode('.', $domainName)[1];
-                    $priceInfo = $this->findDomainPriceInfo($tld);
+                    $priceInfo = $priceInfoMap[mb_ltrim($tld, '.')] ?? null;
                     $preferredCurrency = CurrencyHelper::getUserCurrency();
 
                     Log::debug('International suggestion result', [
@@ -375,6 +377,35 @@ final readonly class DomainSearchHelper
         $domain = preg_replace('/^www\./', '', (string) $domain);
 
         return mb_trim($domain, '/.');
+    }
+
+    /**
+     * Load multiple TLDs with pricing and currency in one query to avoid N+1.
+     *
+     * @param  array<int, string>  $tlds
+     * @return array<string, Tld> map of normalized tld (e.g. 'com') => Tld
+     */
+    private function findDomainPriceInfoBatch(array $tlds): array
+    {
+        if ($tlds === []) {
+            return [];
+        }
+
+        $normalized = array_unique(array_map(fn (string $t): string => mb_ltrim($t, '.'), $tlds));
+        $names = array_map(fn (string $t): string => '.'.$t, $normalized);
+
+        $loaded = Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->whereIn('name', $names)
+            ->get();
+
+        $map = [];
+        foreach ($loaded as $tld) {
+            $key = mb_ltrim($tld->name, '.');
+            $map[$key] = $tld;
+        }
+
+        return $map;
     }
 
     private function findDomainPriceInfo(string $tld): ?Tld
