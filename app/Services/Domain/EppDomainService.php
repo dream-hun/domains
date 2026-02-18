@@ -966,7 +966,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
             // Validate and set required country code
             throw_if(empty($contacts['country_code']), Exception::class, 'Invalid contact data: country_code is required');
 
-            $frame->setCountryCode($contacts['country_code']);
+            $frame->setCountryCode(mb_strtoupper($contacts['country_code']));
 
             // Format phone number to EPP format (+CC.number)
             throw_if(empty($contacts['voice']), Exception::class, 'Invalid contact data: voice (phone) is required');
@@ -976,9 +976,6 @@ class EppDomainService implements DomainRegistrationServiceInterface
 
             if (! str_starts_with($phone, '+')) {
                 // Add country code for Rwanda if not present
-
-                $phone = '+250.'.mb_ltrim($phone, '0');
-
                 $phone = '+250.'.mb_ltrim($phone, '0');
             }
 
@@ -990,9 +987,6 @@ class EppDomainService implements DomainRegistrationServiceInterface
                 throw_unless(is_string($fax), Exception::class, 'Invalid contact data: fax must be a string');
 
                 if (! str_starts_with($fax, '+')) {
-
-                    $fax = '+250.'.mb_ltrim($fax, '0');
-
                     $fax = '+250.'.mb_ltrim($fax, '0');
                 }
 

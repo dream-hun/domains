@@ -26,9 +26,11 @@
                     <a class="btn btn-success" href="{{ route('domains') }}">
                         Register Domain
                     </a>
-                    <a class="btn btn-primary" href="{{ route('admin.domains.custom-register') }}">
-                        Custom Registration
-                    </a>
+                    @can('domain_create')
+                        <a class="btn btn-primary" href="{{ route('admin.domains.custom-register') }}">
+                            Custom Registration
+                        </a>
+                    @endcan
                 </div>
             </div>
 
@@ -40,67 +42,69 @@
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped table-hover datatable datatable-Domain w-100">
                             <thead>
-                                <tr>
-                                    <th>Domain</th>
-                                    <th>Owner</th>
-                                    <th>Status</th>
-                                    <th>Expiry Date</th>
-                                    <th>Actions</th>
-                                </tr>
+                            <tr>
+                                <th>Domain</th>
+                                <th>Owner</th>
+                                <th>Status</th>
+                                <th>Expiry Date</th>
+                                <th>Actions</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                @foreach ($domains as $key => $domain)
-                                    <tr data-entry-id="{{ $domain->id }}">
-                                        <td>{{ $domain->name ?? '' }}</td>
-                                        <td>{{ $domain->owner->name ?? '' }}</td>
-                                        <td>
+                            @foreach ($domains as $key => $domain)
+                                <tr data-entry-id="{{ $domain->id }}">
+                                    <td>{{ $domain->name ?? '' }}</td>
+                                    <td>{{ $domain->owner->name ?? '' }}</td>
+                                    <td>
                                             <span class="badge {{ $domain->status->color() }}">
                                                 {{ $domain->status->label() }}
                                             </span>
-                                        </td>
-                                        <td>{{ $domain->expiresAt() ?? '' }}</td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                @can('domain_edit')
-                                                    <a href="{{ route('admin.domains.edit', $domain->uuid) }}"
-                                                        class="btn btn-sm btn-warning">
-                                                        Manage
-                                                    </a>
-                                                @endcan
+                                    </td>
+                                    <td>{{ $domain->expiresAt() ?? '' }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            @can('domain_edit')
+                                                <a href="{{ route('admin.domains.edit', $domain->uuid) }}"
+                                                   class="btn btn-sm btn-warning">
+                                                    Manage
+                                                </a>
+                                            @endcan
 
-                                                @can('domain_renew')
-                                                    @if ($domain->status !== 'expired')
-                                                        <button onclick="addRenewalToCart(this, '{{ $domain->uuid }}', '{{ $domain->name }}', {{ $domain->id }})"
-                                                            class="btn btn-sm btn-success">
-                                                            Renew
-                                                        </button>
-                                                    @endif
-                                                @endcan
+                                            @can('domain_renew')
+                                                @if ($domain->status !== 'expired')
+                                                    <button
+                                                        onclick="addRenewalToCart(this, '{{ $domain->uuid }}', '{{ $domain->name }}', {{ $domain->id }})"
+                                                        class="btn btn-sm btn-success">
+                                                        Renew
+                                                    </button>
+                                                @endif
+                                            @endcan
 
-                                                @can('domain_edit')
-                                                    @if ($domain->status === 'expired')
-                                                        <form action="{{ route('admin.domains.reactivate', $domain->uuid) }}"
-                                                            method="POST" style="display: inline-block;">
-                                                            @csrf
-                                                            <input type="hidden" name="domain" value="{{ $domain->name }}">
-                                                            <button type="submit" class="btn btn-sm btn-warning"
+                                            @can('domain_edit')
+                                                @if ($domain->status === 'expired')
+                                                    <form
+                                                        action="{{ route('admin.domains.reactivate', $domain->uuid) }}"
+                                                        method="POST" style="display: inline-block;">
+                                                        @csrf
+                                                        <input type="hidden" name="domain" value="{{ $domain->name }}">
+                                                        <button type="submit" class="btn btn-sm btn-warning"
                                                                 onclick="return confirm('Are you sure you want to reactivate this domain? Additional fees may apply.')">
-                                                                Reactivate
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                @endcan
+                                                            Reactivate
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            @endcan
 
-                                                @can('domain_edit')
-                                                    <a href="{{ route('admin.domains.assign', $domain->uuid) }}"
-                                                        class="btn btn-sm btn-primary">
-                                                        Assign Owner
-                                                    </a>
-                                                @endcan
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
+                                            @can('domain_edit')
+                                                <a href="{{ route('admin.domains.assign', $domain->uuid) }}"
+                                                   class="btn btn-sm btn-primary">
+                                                    Assign Owner
+                                                </a>
+                                            @endcan
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
                             </tbody>
                         </table>
                     </div>
@@ -121,7 +125,7 @@
     @section('scripts')
         @parent
         <script>
-            $(function() {
+            $(function () {
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
                 let table = $('.datatable-Domain:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,
@@ -139,7 +143,7 @@
                     }
                 })
 
-                $('a[data-toggle="tab"]').on('shown.bs.tab click', function(e) {
+                $('a[data-toggle="tab"]').on('shown.bs.tab click', function (e) {
                     $($.fn.dataTable.tables(true)).DataTable()
                         .columns.adjust();
                 });
@@ -166,28 +170,28 @@
                         domain_id: domainId
                     })
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => Promise.reject(err));
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        alert(`${domainName} has been added to your cart for renewal!`);
-                        window.location.href = '/shopping-cart';
-                    } else {
-                        alert(data.message || 'Failed to add domain to cart');
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => Promise.reject(err));
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            alert(`${domainName} has been added to your cart for renewal!`);
+                            window.location.href = '/shopping-cart';
+                        } else {
+                            alert(data.message || 'Failed to add domain to cart');
+                            element.disabled = false;
+                            element.innerHTML = originalContent;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
                         element.disabled = false;
                         element.innerHTML = originalContent;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                    element.disabled = false;
-                    element.innerHTML = originalContent;
-                });
+                    });
             }
         </script>
     @endsection

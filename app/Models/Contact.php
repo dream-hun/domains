@@ -75,6 +75,14 @@ final class Contact extends Model
     }
 
     /**
+     * Ensure country_code is always stored as uppercase.
+     */
+    protected function setCountryCodeAttribute(string $value): void
+    {
+        $this->attributes['country_code'] = mb_strtoupper($value);
+    }
+
+    /**
      * Get the contact's full name
      */
     protected function getFullNameAttribute(): string

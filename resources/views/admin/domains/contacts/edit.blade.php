@@ -193,10 +193,9 @@
                                             class="form-control @error('country_code') is-invalid @enderror" required>
                                         <option value="">Select a country</option>
                                         @foreach ($countries as $country)
-                                            @php $code = \Illuminate\Support\Str::substr($country->iso_code, 0, -1); @endphp
-                                            <option value="{{ $code }}"
-                                                {{ old('country_code', $currentContact->country_code ?? '') == $code ? 'selected' : '' }}>
-                                                {{ $country->name }} ({{ $code }})
+                                            <option value="{{ $country->iso_alpha2 }}"
+                                                {{ old('country_code', $currentContact->country_code ?? '') == $country->iso_alpha2 ? 'selected' : '' }}>
+                                                {{ $country->name }} ({{ $country->iso_alpha2 }})
                                             </option>
                                         @endforeach
                                     </select>

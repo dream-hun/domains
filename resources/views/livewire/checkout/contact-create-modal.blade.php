@@ -140,13 +140,17 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="country_code">Country Code <span class="text-danger">*</span></label>
-                                        <input type="text" 
-                                               class="form-control @error('country_code') is-invalid @enderror" 
-                                               id="country_code" 
-                                               wire:model="country_code"
-                                               maxlength="2"
-                                               placeholder="US">
+                                        <label for="country_code">Country <span class="text-danger">*</span></label>
+                                        <select class="form-control @error('country_code') is-invalid @enderror"
+                                                id="country_code"
+                                                wire:model="country_code">
+                                            <option value="">Select a country</option>
+                                            @foreach ($this->countries as $country)
+                                                <option value="{{ $country->iso_alpha2 }}">
+                                                    {{ $country->name }} ({{ $country->iso_alpha2 }})
+                                                </option>
+                                            @endforeach
+                                        </select>
                                         @error('country_code')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror

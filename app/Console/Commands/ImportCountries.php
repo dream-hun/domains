@@ -21,7 +21,7 @@ final class ImportCountries extends Command
     public function handle(): int
     {
         $this->info('Importing countries from https://restcountries.com API');
-        $apiUrl = 'https://restcountries.com/v3.1/all?fields=name,cca3,capital,region,currencies,flags';
+        $apiUrl = 'https://restcountries.com/v3.1/all?fields=name,cca2,cca3,capital,region,currencies,flags';
         $response = Http::timeout(30)->get($apiUrl);
         if ($response->failed()) {
             $this->error('Failed to retrieve Countries from '.$apiUrl);
@@ -45,6 +45,7 @@ final class ImportCountries extends Command
             }
 
             Country::query()->updateOrCreate(['iso_code' => $country['cca3'] ?? null], [
+                'iso_alpha2' => $country['cca2'] ?? null,
                 'name' => $country['name']['common'] ?? null,
                 'capital' => isset($country['capital']) ? implode(', ', $country['capital']) : null,
                 'region' => $country['region'] ?? null,

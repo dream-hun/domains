@@ -113,9 +113,9 @@
                             class="form-control py-2 @error('country_code') is-invalid @enderror" required>
                         <option value="">Select a country</option>
                         @foreach ($countries as $country)
-                            <option value="{{ Str::substr($country->iso_code, 0, -1) }}"
-                                {{ old('country_code', $user->address?->country_code) == Str::substr($country->iso_code, 0, -1) ? 'selected' : '' }}>
-                                {{ $country->name }} ({{ Str::substr($country->iso_code, 0, -1) }})
+                            <option value="{{ $country->iso_alpha2 }}"
+                                {{ old('country_code', $user->address?->country_code) == $country->iso_alpha2 ? 'selected' : '' }}>
+                                {{ $country->name }} ({{ $country->iso_alpha2 }})
                             </option>
                         @endforeach
                     </select>

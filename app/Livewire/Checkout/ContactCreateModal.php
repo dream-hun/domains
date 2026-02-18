@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Livewire\Checkout;
 
 use App\Models\Contact;
+use App\Models\Country;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -34,7 +37,7 @@ final class ContactCreateModal extends Component
 
     public string $postal_code = '';
 
-    public string $country_code = 'US';
+    public string $country_code = '';
 
     public bool $is_primary = false;
 
@@ -65,7 +68,7 @@ final class ContactCreateModal extends Component
             'city' => 'required|string|max:255',
             'state_province' => 'required|string|max:255',
             'postal_code' => 'required|string|max:20',
-            'country_code' => 'required|string|size:2',
+            'country_code' => 'required|string|size:2|exists:countries,iso_alpha2',
             'is_primary' => 'boolean',
         ]);
 
@@ -76,6 +79,18 @@ final class ContactCreateModal extends Component
         $this->closeModal();
 
         session()->flash('success', 'Contact created successfully!');
+    }
+
+    /**
+     * @return Collection<int, Country>
+     */
+    #[Computed]
+    public function countries(): Collection
+    {
+        return Country::query()
+            ->whereNotNull('iso_alpha2')
+            ->orderBy('name')
+            ->get(['iso_alpha2', 'name']);
     }
 
     public function render(): Factory|View
@@ -95,7 +110,7 @@ final class ContactCreateModal extends Component
         $this->city = '';
         $this->state_province = '';
         $this->postal_code = '';
-        $this->country_code = 'US';
+        $this->country_code = '';
         $this->is_primary = false;
         $this->resetErrorBag();
     }
