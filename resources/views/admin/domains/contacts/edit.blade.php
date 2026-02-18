@@ -112,7 +112,7 @@
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="is_organization"
                                                name="is_organization"
-                                            {{ old('is_organization', $currentContact->organization ? 'checked' : '') }}>
+                                            {{ old('is_organization', $currentContact?->organization ? 'checked' : '') }}>
                                         <label class="form-check-label" for="is_organization">
                                             Domain is registered on behalf of a company
                                         </label>
@@ -120,7 +120,7 @@
                                 </div>
 
                                 <div class="form-group mb-3" id="organization_field"
-                                     style="{{ old('is_organization', $currentContact->organization) ? '' : 'display: none;' }}">
+                                     style="{{ old('is_organization', $currentContact?->organization) ? '' : 'display: none;' }}">
                                     <label for="organization" class="form-label">Organization</label>
                                     <input type="text"
                                            class="form-control @error('organization') is-invalid @enderror"
