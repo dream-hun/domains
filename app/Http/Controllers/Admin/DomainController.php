@@ -320,7 +320,7 @@ final class DomainController extends Controller
             }
         }
 
-        $countries = Country::query()->select('name', 'iso_code')->get();
+        $countries = Country::query()->select('name', 'iso_code', 'iso_alpha2')->get();
 
         return view('admin.domains.contacts.edit', [
             'domain' => $domain,

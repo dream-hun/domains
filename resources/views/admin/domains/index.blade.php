@@ -71,7 +71,7 @@
                                             @endcan
 
                                             @can('domain_renew')
-                                                @if ($domain->status !== 'expired')
+                                                @if ($domain->status !== \App\Enums\DomainStatus::Expired)
                                                     <button
                                                         onclick="addRenewalToCart(this, '{{ $domain->uuid }}', '{{ $domain->name }}', {{ $domain->id }})"
                                                         class="btn btn-sm btn-success">
@@ -81,7 +81,7 @@
                                             @endcan
 
                                             @can('domain_edit')
-                                                @if ($domain->status === 'expired')
+                                                @if ($domain->status === \App\Enums\DomainStatus::Expired)
                                                     <form
                                                         action="{{ route('admin.domains.reactivate', $domain->uuid) }}"
                                                         method="POST" style="display: inline-block;">

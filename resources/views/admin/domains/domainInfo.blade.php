@@ -55,8 +55,8 @@
                                             @endforeach
                                         @else
 
-                                            <span class="badge badge-{{ $domainInfo->status === 'active' ? 'success' : 'warning' }}">
-                                                {{ ucfirst($domainInfo->status) }}
+                                            <span class="badge badge-{{ $domainInfo->status === \App\Enums\DomainStatus::Active ? 'success' : 'warning' }}">
+                                                {{ $domainInfo->status->label() }}
                                             </span>
                                         @endif
                                     </td>
@@ -86,7 +86,7 @@
                                 </tr>
                                 <tr>
                                     <th>Registration Date</th>
-                                    <td>{{ $registrarInfo['created_date'] ?? $domainInfo->registered_at->format('M d, Y') }}</td>
+                                    <td>{{ $registrarInfo['created_date'] ?? $domainInfo->registeredAt() ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Expiration Date</th>
@@ -184,7 +184,7 @@
                                             <tr>
                                                 <td>
                                                             <span class="badge badge-info">
-                                                                {{ ucfirst($contact->contact_type->label()) }}
+                                                                {{ ucfirst($contact->pivot->type) }}
                                                             </span>
                                                 </td>
                                                 <td>{{ $contact->first_name }} {{ $contact->last_name }}</td>

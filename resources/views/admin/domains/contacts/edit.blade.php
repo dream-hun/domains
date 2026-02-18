@@ -49,6 +49,9 @@
                                 @endif
 
                                 <!-- Address Book Selection (Hidden by default) -->
+                                <button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="useAddressBookBtn">
+                                    <i class="bi bi-person-lines-fill"></i> Use from Address Book
+                                </button>
                                 <div id="addressBookSection" class="card bg-light mb-4" style="display: none;">
                                     <div class="card-body">
                                         <h6>Select from Address Book:</h6>
@@ -307,6 +310,14 @@
                                                name="use_for_technical"
                                             {{ $contactType == 'technical' ? 'checked' : '' }}>
                                         <label class="form-check-label" for="use_for_technical">
+                                            Use for Technical Contacts
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="use_for_billing"
+                                               name="use_for_billing"
+                                            {{ $contactType == 'billing' ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="use_for_billing">
                                             Use for Billing Contacts
                                         </label>
                                     </div>

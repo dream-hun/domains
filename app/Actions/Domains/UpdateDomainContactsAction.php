@@ -78,6 +78,10 @@ final readonly class UpdateDomainContactsAction
             $currentContacts['technical'] = ['contact_id' => $contact->id];
         }
 
+        if (! empty($contactData['use_for_billing'])) {
+            $currentContacts['billing'] = ['contact_id' => $contact->id];
+        }
+
         // Build a final mapping for required roles ensuring registrant/admin/technical/billing exist
         $requiredRoles = ['registrant', 'admin', 'technical', 'billing'];
         $finalContacts = $currentContacts; // start from existing/current mapping
@@ -101,6 +105,12 @@ final readonly class UpdateDomainContactsAction
             }
 
             if ($role === 'technical' && ! empty($contactData['use_for_technical'])) {
+                $finalContacts[$role] = ['contact_id' => $contact->id];
+
+                continue;
+            }
+
+            if ($role === 'billing' && ! empty($contactData['use_for_billing'])) {
                 $finalContacts[$role] = ['contact_id' => $contact->id];
 
                 continue;
@@ -136,6 +146,10 @@ final readonly class UpdateDomainContactsAction
 
             if (! empty($contactData['use_for_technical']) && $contactType !== 'technical') {
                 $contactsToSync['technical'] = ['contact_id' => $contact->id];
+            }
+
+            if (! empty($contactData['use_for_billing']) && $contactType !== 'billing') {
+                $contactsToSync['billing'] = ['contact_id' => $contact->id];
             }
 
             $this->syncLocalContacts($domain, $contactsToSync);
