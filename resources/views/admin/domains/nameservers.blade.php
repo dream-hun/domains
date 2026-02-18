@@ -60,7 +60,7 @@
                                     <small class="text-muted">{{ $domain->expires_at->diffForHumans() }}</small>
                                 </div>
                                 <div class="col-md-3 text-right">
-                                    <form action="{{ route('admin.domain.fetchContacts', $domain->uuid) }}"
+                                    <form action="{{ route('admin.domains.fetch-contacts', $domain->uuid) }}"
                                         method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-primary btn-sm">
