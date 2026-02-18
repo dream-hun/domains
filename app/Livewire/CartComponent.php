@@ -89,7 +89,7 @@ final class CartComponent extends Component
         session(['selected_currency' => $this->currency]);
     }
 
-    public function updateCartTotal(): string
+    public function updateCartTotal(): void
     {
         // Get cart content and maintain original order
         $cartContent = Cart::getContent();
@@ -194,10 +194,19 @@ final class CartComponent extends Component
                 'message' => 'Unable to convert cart totals to the selected currency. Please try again or switch currencies.',
             ]);
         } catch (Throwable $e) {
-            return $e->getMessage();
-        }
+            Log::error('Unexpected error while updating cart totals', [
+                'currency' => $this->currency,
+                'error' => $e->getMessage(),
+            ]);
 
-        return $this->totalAmount = max(0);
+            $this->subtotalAmount = 0;
+            $this->totalAmount = 0;
+
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Unable to update cart totals. Please try again.',
+            ]);
+        }
     }
 
     /**
