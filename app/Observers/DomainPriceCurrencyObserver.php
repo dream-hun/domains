@@ -32,10 +32,8 @@ final class DomainPriceCurrencyObserver
         foreach (array_keys($changedFields) as $field) {
             $oldValues[$field] = $domainPriceCurrency->getOriginal($field);
         }
-
-        $currencyCode = $domainPriceCurrency->currency?->code ?? 'USD';
-        $changesForHistory = $this->formatChangesForHistory($changedFields, $currencyCode);
-        $oldValuesForHistory = $this->formatChangesForHistory($oldValues, $currencyCode);
+        $changesForHistory = $this->formatChangesForHistory($changedFields);
+        $oldValuesForHistory = $this->formatChangesForHistory($oldValues);
 
         $domainPriceCurrency->domainPrice->domainPriceHistories()->create([
             'domain_price_currency_id' => $domainPriceCurrency->id,
@@ -59,7 +57,7 @@ final class DomainPriceCurrencyObserver
      * @param  array<string, mixed>  $values
      * @return array<string, int|float>
      */
-    private function formatChangesForHistory(array $values, string $currencyCode): array
+    private function formatChangesForHistory(array $values): array
     {
         $map = [
             'registration_price' => 'register_price',
