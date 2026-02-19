@@ -261,7 +261,7 @@
                         <div id="resultsContainer" class="col-lg-12">
                             @if($results && count($results) > 0)
                                 @php
-                                    // Find the primary domain
+                            
                                     $primaryDomain = null;
                                     $primaryResult = null;
                                     $suggestedDomains = [];
