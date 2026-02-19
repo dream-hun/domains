@@ -16,6 +16,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 final class DomainSearch extends Component
@@ -31,11 +32,7 @@ final class DomainSearch extends Component
 
     public string $currentCurrency = 'RWF';
 
-    protected $listeners = [
-        'refreshCart' => '$refresh',
-        'currencyChanged' => 'handleCurrencyChanged',
-        'currency-changed' => 'handleCurrencyChanged',
-    ];
+    protected $listeners = ['refreshCart' => '$refresh'];
 
     private EppDomainService $eppService;
 
@@ -64,17 +61,17 @@ final class DomainSearch extends Component
         $this->currentCurrency = session('selected_currency', 'USD');
     }
 
-    public function handleCurrencyChanged(mixed $currencyOrPayload): void
+    #[On('currencyChanged')]
+    #[On('currency-changed')]
+    public function handleCurrencyChanged(mixed $currency = null): void
     {
-        $currency = is_array($currencyOrPayload)
-            ? ($currencyOrPayload['currency'] ?? $currencyOrPayload[0] ?? '')
-            : (string) $currencyOrPayload;
+        $currency = mb_strtoupper((string) ($currency ?? ''));
 
         if ($currency === '') {
             return;
         }
 
-        $this->currentCurrency = mb_strtoupper((string) $currency);
+        $this->currentCurrency = $currency;
         session(['selected_currency' => $this->currentCurrency]);
 
         if (empty($this->results)) {
