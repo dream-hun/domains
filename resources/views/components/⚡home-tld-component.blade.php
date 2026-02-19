@@ -53,7 +53,7 @@ new class extends Component
             <div class="row">
                 <div class="col-12">
                     <div class="rts-domain-finder__content domain-finder-bg">
-                        <h3 data-sal="slide-down" data-sal-delay="300" data-sal-duration="800">A name that looks good
+                        <h3>A name that looks good
                             on
                             a billboard.</h3>
                         <form action="{{ route('domains.search') }}" class="domain-checker" method="post">
@@ -68,18 +68,18 @@ new class extends Component
                         <div class="compare">
                             <div class="compare__list">
                                 <ul>
-                                    <li data-sal="slide-down">Compare:
+                                    <li>Compare:
                                     </li>
-                                    <li data-sal="slide-down"><span
+                                    <li><span
                                             class="ext">.com</span> {{ $domainComparePrices['com'] ? 'only ' . $domainComparePrices['com'] : '—' }}
                                     </li>
-                                    <li data-sal="slide-down"><span
+                                    <li><span
                                             class="ext">.net</span> {{ $domainComparePrices['net'] ? 'only ' . $domainComparePrices['net'] : '—' }}
                                     </li>
-                                    <li data-sal="slide-down"><span
+                                    <li><span
                                             class="ext">.info</span> {{ $domainComparePrices['info'] ? 'only ' . $domainComparePrices['info'] : '—' }}
                                     </li>
-                                    <li data-sal="slide-down"><span
+                                    <li><span
                                             class="ext">.org</span> {{ $domainComparePrices['org'] ? 'only ' . $domainComparePrices['org'] : '—' }}
                                     </li>
                                 </ul>
