@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Helpers\CurrencyHelper;
-use App\Models\Currency;
 use App\Models\HostingCategory;
 use App\Models\HostingPlan;
 use App\Models\Tld;
@@ -21,15 +20,12 @@ final class LandingController extends Controller
     public function __invoke(Request $request): View|Factory
     {
         $userCurrencyCode = CurrencyHelper::getUserCurrency();
-        $currency = Currency::getActiveCurrencies()->firstWhere('code', $userCurrencyCode);
-        $currencyId = $currency?->id ?? Currency::getBaseCurrency()->id;
 
         $allPlans = HostingPlan::query()
             ->where('status', 'active')
             ->with([
                 'category:id,name,slug',
                 'planPrices' => fn ($q) => $q->where('status', 'active')
-                    ->where('currency_id', $currencyId)
                     ->with('currency'),
                 'planFeatures.hostingFeature',
             ])
