@@ -35,7 +35,7 @@ final readonly class PriceFormatter
      */
     public function formatFromMinorUnits(int $amountInMinorUnits, string $currency): string
     {
-        $majorUnits = $amountInMinorUnits / 100;
+        $majorUnits = $amountInMinorUnits;
 
         return $this->format($majorUnits, $currency);
     }
@@ -45,7 +45,7 @@ final readonly class PriceFormatter
      */
     public function minorToMajorUnits(int $amountInMinorUnits): float
     {
-        return $amountInMinorUnits / 100;
+        return $amountInMinorUnits;
     }
 
     /**
