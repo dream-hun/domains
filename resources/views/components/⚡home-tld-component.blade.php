@@ -56,8 +56,7 @@ new class extends Component
                         <h3 data-sal="slide-down" data-sal-delay="300" data-sal-duration="800">A name that looks good
                             on
                             a billboard.</h3>
-                        <form action="{{ route('domains.search') }}" class="domain-checker" method="post"
-                            data-sal="slide-down" data-sal-delay="400" data-sal-duration="800">
+                        <form action="{{ route('domains.search') }}" class="domain-checker" method="post">
                             @csrf
                             <input type="text" id="domain-name" name="domain"
                                 placeholder="Register a domain name to start" required>
@@ -69,18 +68,18 @@ new class extends Component
                         <div class="compare">
                             <div class="compare__list">
                                 <ul>
-                                    <li data-sal="slide-down" data-sal-delay="500" data-sal-duration="800">Compare:
+                                    <li data-sal="slide-down">Compare:
                                     </li>
-                                    <li data-sal="slide-down" data-sal-delay="600" data-sal-duration="800"><span
+                                    <li data-sal="slide-down"><span
                                             class="ext">.com</span> {{ $domainComparePrices['com'] ? 'only ' . $domainComparePrices['com'] : '—' }}
                                     </li>
-                                    <li data-sal="slide-down" data-sal-delay="700" data-sal-duration="800"><span
+                                    <li data-sal="slide-down"><span
                                             class="ext">.net</span> {{ $domainComparePrices['net'] ? 'only ' . $domainComparePrices['net'] : '—' }}
                                     </li>
-                                    <li data-sal="slide-down" data-sal-delay="800" data-sal-duration="800"><span
+                                    <li data-sal="slide-down"><span
                                             class="ext">.info</span> {{ $domainComparePrices['info'] ? 'only ' . $domainComparePrices['info'] : '—' }}
                                     </li>
-                                    <li data-sal="slide-down" data-sal-delay="900" data-sal-duration="800"><span
+                                    <li data-sal="slide-down"><span
                                             class="ext">.org</span> {{ $domainComparePrices['org'] ? 'only ' . $domainComparePrices['org'] : '—' }}
                                     </li>
                                 </ul>
