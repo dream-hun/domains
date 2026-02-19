@@ -26,7 +26,7 @@
                                 data-sal-duration="800">
                                 <div class="hosting-feature__single">
                                     <div class="icon-image">
-                                        <img src="assets/images/banner/shared/diamond.png" alt="">
+                                        <img src="{{ asset('assets/images/banner/shared/diamond.png')}}" alt="">
                                     </div>
                                     <p class="feature-text">
 
@@ -78,11 +78,7 @@
                                     <button class="tab__price" data-tab="yearly">yearly</button>
                                 </div>
                             </div>
-                            <div class="discount">
-                                <span class="line"><img src="{{ asset('assets/images/pricing/offer__vactor.svg') }}"
-                                        height="20" width="85" alt=""></span>
-                                <p>20% save</p>
-                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -331,9 +327,6 @@
                     @endforeach
                 </div>
             </div>
-        </div>
-        <div class="view-plan-btn">
-            <a href="#" class="btn long-btn">view all plan</a>
         </div>
     </div>
 </div>
