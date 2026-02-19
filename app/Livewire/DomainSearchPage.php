@@ -46,11 +46,13 @@ final class DomainSearchPage extends Component
         }
     }
 
-    public function handleCurrencyChanged(mixed $currencyOrPayload): void
+    public function handleCurrencyChanged(mixed $currencyOrPayload = null): void
     {
-        $currency = is_array($currencyOrPayload)
-            ? ($currencyOrPayload['currency'] ?? $currencyOrPayload[0] ?? '')
-            : (string) $currencyOrPayload;
+        $currency = $currencyOrPayload === null
+            ? ''
+            : (is_array($currencyOrPayload)
+                ? ($currencyOrPayload['currency'] ?? $currencyOrPayload[0] ?? '')
+                : (string) $currencyOrPayload);
 
         if ($currency === '') {
             return;
