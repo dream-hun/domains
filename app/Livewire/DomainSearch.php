@@ -296,6 +296,11 @@ final class DomainSearch extends Component
                         $this->currentCurrency, $cartContent->has($domainName), $isPrimary, false
                     );
                     Log::debug('Local domain check successful', ['domain' => $domainName, 'available' => $result->available]);
+                } elseif ($eppResults !== []) {
+                    Log::warning('EPP returned results but domain key not found', [
+                        'domain' => $domainName,
+                        'result_keys' => array_keys($eppResults),
+                    ]);
                 }
             }
         } catch (Exception $exception) {

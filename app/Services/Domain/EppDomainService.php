@@ -2000,39 +2000,19 @@ class EppDomainService implements DomainRegistrationServiceInterface
     {
         throw_unless($this->client instanceof EPPClient, Exception::class, 'EPP client not initialized');
 
+        if ($this->connected) {
+            return;
+        }
+
         try {
-            if (! $this->connected) {
-                $greeting = $this->connectWithRetry();
-                Log::info('EPP connection established', [
-                    'greeting' => $greeting,
-                    'host' => $this->config['host'],
-                ]);
-            }
-
-            // Test connection with a simple check domain command
-            try {
-                $frame = new CheckDomain;
-                $frame->addDomain('test.rw'); // Use a valid test domain
-                $response = $this->client->request($frame);
-
-                if (! ($response instanceof Response)) {
-                    $this->connected = false;
-                    throw new Exception('EPP connection test failed - invalid response');
-                }
-
-                $result = $response->results()[0];
-
-                Log::debug('EPP connection test successful', [
-                    'code' => $result->code(),
-                    'message' => $result->message(),
-                ]);
-            } catch (Exception $e) {
-                $this->connected = false;
-                throw new Exception('EPP connection test failed: '.$e->getMessage(), $e->getCode(), $e);
-            }
+            $greeting = $this->connectWithRetry();
+            Log::info('EPP connection established', [
+                'greeting' => $greeting,
+                'host' => $this->config['host'],
+            ]);
         } catch (Exception $exception) {
             $this->connected = false;
-            Log::error('EPP connection error: '.$exception->getMessage(), [
+            Log::error('EPP connection failed: '.$exception->getMessage(), [
                 'host' => $this->config['host'],
                 'trace' => $exception->getTraceAsString(),
             ]);
