@@ -13,6 +13,21 @@ use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
+function createTldPricing(Tld $tld, Currency $currency, int $registerPrice, int $renewPrice): TldPricing
+{
+    return TldPricing::query()->create([
+        'uuid' => (string) Str::uuid(),
+        'tld_id' => $tld->id,
+        'currency_id' => $currency->id,
+        'register_price' => $registerPrice,
+        'renew_price' => $renewPrice,
+        'redemption_price' => null,
+        'transfer_price' => null,
+        'is_current' => true,
+        'effective_date' => now(),
+    ]);
+}
+
 test('home TLD component shows prices in session currency', function (): void {
     $usd = Currency::query()->where('code', 'USD')->first();
     expect($usd)->not->toBeNull();
@@ -23,26 +38,16 @@ test('home TLD component shows prices in session currency', function (): void {
         'type' => TldType::International,
         'status' => TldStatus::Active,
     ]);
-    TldPricing::query()->create([
-        'uuid' => (string) Str::uuid(),
-        'tld_id' => $tld->id,
-        'currency_id' => $usd->id,
-        'register_price' => 1200,
-        'renew_price' => 1200,
-        'redemption_price' => null,
-        'transfer_price' => null,
-        'is_current' => true,
-        'effective_date' => now(),
-    ]);
+    createTldPricing($tld, $usd, 1200, 1200);
 
     session(['selected_currency' => 'USD']);
 
     $component = Livewire::test('home-tld-component');
-
     $html = $component->html();
+
     expect($html)->toContain('.com')
         ->and($html)->toContain('only')
-        ->and($html)->toContain('12'); // USD $12.00
+        ->and($html)->toContain('12');
 });
 
 test('home TLD component updates prices when currency changes', function (): void {
@@ -56,38 +61,16 @@ test('home TLD component updates prices when currency changes', function (): voi
         'type' => TldType::International,
         'status' => TldStatus::Active,
     ]);
-    TldPricing::query()->create([
-        'uuid' => (string) Str::uuid(),
-        'tld_id' => $tld->id,
-        'currency_id' => $usd->id,
-        'register_price' => 1200,
-        'renew_price' => 1200,
-        'redemption_price' => null,
-        'transfer_price' => null,
-        'is_current' => true,
-        'effective_date' => now(),
-    ]);
-    TldPricing::query()->create([
-        'uuid' => (string) Str::uuid(),
-        'tld_id' => $tld->id,
-        'currency_id' => $rwf->id,
-        'register_price' => 15_000,
-        'renew_price' => 15_000,
-        'redemption_price' => null,
-        'transfer_price' => null,
-        'is_current' => true,
-        'effective_date' => now(),
-    ]);
+    createTldPricing($tld, $usd, 1200, 1200);
+    createTldPricing($tld, $rwf, 15_000, 15_000);
 
     session(['selected_currency' => 'USD']);
-
     $component = Livewire::test('home-tld-component');
     $htmlUsd = $component->html();
-    expect($htmlUsd)->toContain('12'); // USD $12.00
+    expect($htmlUsd)->toContain('12');
 
     session(['selected_currency' => 'RWF']);
     $component->dispatch('currency-changed', currency: 'RWF');
-
     $htmlRwf = $component->html();
-    expect($htmlRwf)->toContain('15'); // RWF 15000 or formatted
+    expect($htmlRwf)->toContain('15');
 });

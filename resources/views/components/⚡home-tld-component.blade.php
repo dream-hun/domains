@@ -2,20 +2,27 @@
 
 use App\Helpers\CurrencyHelper;
 use App\Models\Tld;
-use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component
 {
+    private const COMPARE_TLDS = ['.com', '.net', '.info', '.org'];
+
+    public array $domainComparePrices = [];
+
     protected $listeners = [
-        'currencyChanged' => '$refresh',
-        'currency-changed' => '$refresh',
+        'currencyChanged' => 'handleCurrencyChanged',
+        'currency-changed' => 'handleCurrencyChanged',
     ];
 
-    #[Computed]
-    public function domainComparePrices(): array
+    public function mount(): void
     {
-        return $this->buildDomainComparePrices();
+        $this->domainComparePrices = $this->buildDomainComparePrices();
+    }
+
+    public function handleCurrencyChanged(string $currency): void
+    {
+        $this->domainComparePrices = $this->buildDomainComparePrices();
     }
 
     private function buildDomainComparePrices(): array
@@ -23,12 +30,13 @@ new class extends Component
         $userCurrencyCode = CurrencyHelper::getUserCurrency();
         $domainCompareTlds = Tld::query()
             ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
-            ->whereIn('name', ['.com', '.net', '.info', '.org'])
+            ->whereIn('name', self::COMPARE_TLDS)
             ->get()
             ->keyBy(fn (Tld $tld): string => mb_ltrim($tld->name, '.'));
 
         $domainComparePrices = [];
-        foreach (['com', 'net', 'info', 'org'] as $ext) {
+        foreach (self::COMPARE_TLDS as $tldName) {
+            $ext = mb_ltrim($tldName, '.');
             $tld = $domainCompareTlds->get($ext);
             $domainComparePrices[$ext] = $tld
                 ? $tld->getFormattedPriceWithFallback('register_price', $userCurrencyCode)
@@ -64,16 +72,16 @@ new class extends Component
                                     <li data-sal="slide-down" data-sal-delay="500" data-sal-duration="800">Compare:
                                     </li>
                                     <li data-sal="slide-down" data-sal-delay="600" data-sal-duration="800"><span
-                                            class="ext">.com</span> {{ $this->domainComparePrices['com'] ? 'only ' . $this->domainComparePrices['com'] : '—' }}
+                                            class="ext">.com</span> {{ $domainComparePrices['com'] ? 'only ' . $domainComparePrices['com'] : '—' }}
                                     </li>
                                     <li data-sal="slide-down" data-sal-delay="700" data-sal-duration="800"><span
-                                            class="ext">.net</span> {{ $this->domainComparePrices['net'] ? 'only ' . $this->domainComparePrices['net'] : '—' }}
+                                            class="ext">.net</span> {{ $domainComparePrices['net'] ? 'only ' . $domainComparePrices['net'] : '—' }}
                                     </li>
                                     <li data-sal="slide-down" data-sal-delay="800" data-sal-duration="800"><span
-                                            class="ext">.info</span> {{ $this->domainComparePrices['info'] ? 'only ' . $this->domainComparePrices['info'] : '—' }}
+                                            class="ext">.info</span> {{ $domainComparePrices['info'] ? 'only ' . $domainComparePrices['info'] : '—' }}
                                     </li>
                                     <li data-sal="slide-down" data-sal-delay="900" data-sal-duration="800"><span
-                                            class="ext">.org</span> {{ $this->domainComparePrices['org'] ? 'only ' . $this->domainComparePrices['org'] : '—' }}
+                                            class="ext">.org</span> {{ $domainComparePrices['org'] ? 'only ' . $domainComparePrices['org'] : '—' }}
                                     </li>
                                 </ul>
                             </div>
