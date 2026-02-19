@@ -1673,8 +1673,9 @@ class EppDomainService implements DomainRegistrationServiceInterface
                                 $available = $this->extractAvailabilityValue($item);
                                 $reason = $this->extractReasonValue($item);
 
-                                // Get pricing information
-                                $tld = $this->extractTld($domainName);
+                                // Get pricing information — extract full TLD (everything after first label)
+                                $domainParts = explode('.', $domainName);
+                                $tld = count($domainParts) > 1 ? implode('.', array_slice($domainParts, 1)) : '';
                                 $priceInfo = Tld::query()
                                     ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
                                     ->where('name', '.'.$tld)

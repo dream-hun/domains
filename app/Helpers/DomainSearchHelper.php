@@ -163,7 +163,8 @@ final readonly class DomainSearchHelper
     {
         $details = null;
         $suggestions = [];
-        $primaryTld = explode('.', $primaryDomain)[1] ?? null;
+        $primaryDomainParts = explode('.', $primaryDomain);
+        $primaryTld = count($primaryDomainParts) > 1 ? implode('.', array_slice($primaryDomainParts, 1)) : null;
 
         $allLocalTlds = Tld::query()->localTlds()->pluck('name')->map(fn (string $name): string => mb_ltrim($name, '.'))->all();
         $suggestionTlds = array_diff($allLocalTlds, [$primaryTld]);
@@ -199,7 +200,8 @@ final readonly class DomainSearchHelper
 
             $preferredCurrency = CurrencyHelper::getUserCurrency();
             foreach ($suggestionResults as $domainName => $result) {
-                $tld = explode('.', (string) $domainName)[1] ?? null;
+                $tldParts = explode('.', (string) $domainName);
+                $tld = count($tldParts) > 1 ? implode('.', array_slice($tldParts, 1)) : null;
                 $priceInfo = $tld !== null ? ($priceInfoMap[mb_ltrim($tld, '.')] ?? null) : null;
                 $available = $result['available'];
                 $reason = $result['reason'] ?? null;
