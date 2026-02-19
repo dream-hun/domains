@@ -45,7 +45,7 @@ final class CurrencyHelper
      * No conversion: returns amount as-is. Use stored prices (e.g. Tld::getPriceForCurrency)
      * when multi-currency pricing exists.
      */
-    public static function convert(float $amount, ?string $fromCurrency = null, ?string $toCurrency = null): float
+    public static function convert(float $amount): float
     {
         return $amount;
     }

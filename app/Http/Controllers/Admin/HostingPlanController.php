@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use Illuminate\Database\Eloquent\Collection;
 use App\Actions\Hosting\Plan\DeletePlanAction;
 use App\Actions\Hosting\Plan\ListPlanAction;
 use App\Actions\Hosting\Plan\StorePlanAction;
@@ -17,7 +18,6 @@ use App\Models\HostingPlan;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 

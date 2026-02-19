@@ -63,7 +63,7 @@ class HostingPlanPrice extends Model
         if (! in_array($targetCurrency, [null, '', '0'], true)) {
             $displayCurrency = $targetCurrency;
         } else {
-            $displayCurrency = $this->getBaseCurrency();
+            $displayCurrency = CurrencyHelper::getUserCurrency();
         }
 
         return CurrencyHelper::formatMoney($priceAmount, $displayCurrency);

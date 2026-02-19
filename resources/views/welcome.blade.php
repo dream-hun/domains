@@ -1,3 +1,7 @@
+@php
+    $selectedCurrency = $selectedCurrency ?? \App\Helpers\CurrencyHelper::getUserCurrency();
+    $domainComparePrices = $domainComparePrices ?? ['com' => null, 'net' => null, 'info' => null, 'org' => null];
+@endphp
 <x-user-layout>
     @section('page-title')
         Home
@@ -211,7 +215,7 @@
                                         @endphp
                                         @if ($lowestPriceModel)
                                             <h6 class="price__start">Starting from
-                                                {{ $lowestPriceModel->getFormattedPrice() }}/month</h6>
+                                                {{ $lowestPriceModel->getFormattedPrice('regular_price', $selectedCurrency) }}/month</h6>
                                         @else
                                             <h6 class="price__start">Contact for pricing</h6>
                                         @endif
@@ -306,16 +310,16 @@
                                     <li data-sal="slide-down" data-sal-delay="500" data-sal-duration="800">Compare:
                                     </li>
                                     <li data-sal="slide-down" data-sal-delay="600" data-sal-duration="800"><span
-                                            class="ext">.com</span> only $6.19
+                                            class="ext">.com</span> {{ $domainComparePrices['com'] ? 'only ' . $domainComparePrices['com'] : '—' }}
                                     </li>
                                     <li data-sal="slide-down" data-sal-delay="700" data-sal-duration="800"><span
-                                            class="ext">.net</span> only $6.19
+                                            class="ext">.net</span> {{ $domainComparePrices['net'] ? 'only ' . $domainComparePrices['net'] : '—' }}
                                     </li>
                                     <li data-sal="slide-down" data-sal-delay="800" data-sal-duration="800"><span
-                                            class="ext">.info</span> only $6.19
+                                            class="ext">.info</span> {{ $domainComparePrices['info'] ? 'only ' . $domainComparePrices['info'] : '—' }}
                                     </li>
                                     <li data-sal="slide-down" data-sal-delay="900" data-sal-duration="800"><span
-                                            class="ext">.org</span> only $6.19
+                                            class="ext">.org</span> {{ $domainComparePrices['org'] ? 'only ' . $domainComparePrices['org'] : '—' }}
                                     </li>
                                 </ul>
                             </div>
@@ -542,7 +546,7 @@
                                                 @endphp
                                                 @if ($lowestPlanPrice)
                                                     <span class="start">Starting at
-                                                        {{ $lowestPlanPrice->getFormattedPrice() }}/mo*</span>
+                                                        {{ $lowestPlanPrice->getFormattedPrice('regular_price', $selectedCurrency) }}/mo*</span>
                                                 @else
                                                     <span class="start">Contact for pricing</span>
                                                 @endif
@@ -551,7 +555,7 @@
                                                         class="price__select">
                                                         @foreach ($plan->planPrices as $price)
                                                             <option value="{{ $price->id }}">
-                                                                {{ $price->getFormattedPrice() }}/mo
+                                                                {{ $price->getFormattedPrice('regular_price', $selectedCurrency) }}/mo
                                                             </option>
                                                         @endforeach
                                                     </select>

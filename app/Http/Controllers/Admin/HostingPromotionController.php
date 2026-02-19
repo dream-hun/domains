@@ -111,7 +111,7 @@ final class HostingPromotionController extends Controller
             ]);
     }
 
-    private function categories(): Collection
+    private function categories(): \Illuminate\Database\Eloquent\Collection
     {
         return HostingCategory::getActiveCategories();
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Contact;
 use App\Models\Currency;
 use App\Models\Order;
@@ -42,7 +43,7 @@ final readonly class CreateOrderFromCartAction
         float $discountAmount = 0.0
     ): Order {
         return DB::transaction(function () use ($user, $cartItems, $currency, $paymentMethod, $contactIds, $billingData, $coupon, $discountAmount): Order {
-            throw_unless(Currency::getActiveCurrencies()->firstWhere('code', $currency), \Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            throw_unless(Currency::getActiveCurrencies()->firstWhere('code', $currency), ModelNotFoundException::class);
             $orderType = $this->determineOrderType($cartItems);
             $subtotal = $this->cartPriceConverter->calculateCartSubtotal($cartItems, $currency);
             $total = max(0, $subtotal - $discountAmount);
