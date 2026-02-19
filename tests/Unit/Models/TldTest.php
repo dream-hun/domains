@@ -98,8 +98,8 @@ test('getPriceForCurrency returns price from current tld pricing', function (): 
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $currency->id,
-        'register_price' => 2000,
-        'renew_price' => 2000,
+        'register_price' => 20,
+        'renew_price' => 20,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -111,7 +111,7 @@ test('getPriceForCurrency returns price from current tld pricing', function (): 
     expect($tld->getPriceForCurrency('EUR', 'register_price'))->toBe(20.0);
 });
 
-test('getPriceForCurrency converts cents to major units for USD', function (): void {
+test('getPriceForCurrency returns major units for USD', function (): void {
     $currency = Currency::query()->where('code', 'USD')->firstOrFail();
     $tld = Tld::query()->create([
         'uuid' => (string) Str::uuid(),
@@ -123,8 +123,8 @@ test('getPriceForCurrency converts cents to major units for USD', function (): v
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $currency->id,
-        'register_price' => 18000,
-        'renew_price' => 18000,
+        'register_price' => 180,
+        'renew_price' => 180,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -136,7 +136,7 @@ test('getPriceForCurrency converts cents to major units for USD', function (): v
     expect($tld->getPriceForCurrency('USD', 'register_price'))->toBe(180.0);
 });
 
-test('getPriceForCurrency does not divide for zero-decimal RWF', function (): void {
+test('getPriceForCurrency returns major units for RWF', function (): void {
     $currency = Currency::query()->where('code', 'RWF')->firstOrFail();
     $tld = Tld::query()->create([
         'uuid' => (string) Str::uuid(),
@@ -173,8 +173,8 @@ test('getBaseCurrency returns currency code from first current pricing', functio
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $currency->id,
-        'register_price' => 1000,
-        'renew_price' => 1000,
+        'register_price' => 10,
+        'renew_price' => 10,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -207,8 +207,8 @@ test('currentTldPricings returns only current pricings', function (): void {
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $currency->id,
-        'register_price' => 1000,
-        'renew_price' => 1000,
+        'register_price' => 10,
+        'renew_price' => 10,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -218,8 +218,8 @@ test('currentTldPricings returns only current pricings', function (): void {
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $currency->id,
-        'register_price' => 2000,
-        'renew_price' => 2000,
+        'register_price' => 20,
+        'renew_price' => 20,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => false,
@@ -229,7 +229,7 @@ test('currentTldPricings returns only current pricings', function (): void {
     $current = $tld->currentTldPricings()->get();
 
     expect($current)->toHaveCount(1)
-        ->and($current->first()->register_price)->toBe(1000);
+        ->and($current->first()->register_price)->toBe(10);
 });
 
 test('getDisplayPriceForCurrency returns preferred currency when it has price', function (): void {
@@ -244,8 +244,8 @@ test('getDisplayPriceForCurrency returns preferred currency when it has price', 
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $eur->id,
-        'register_price' => 1500,
-        'renew_price' => 1500,
+        'register_price' => 15,
+        'renew_price' => 15,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -270,8 +270,8 @@ test('getDisplayPriceForCurrency falls back to app base when preferred has no pr
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $usd->id,
-        'register_price' => 1200,
-        'renew_price' => 1200,
+        'register_price' => 12,
+        'renew_price' => 12,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -351,8 +351,8 @@ test('getFormattedPriceWithFallback returns formatted string in resolved currenc
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $eur->id,
-        'register_price' => 2000,
-        'renew_price' => 2000,
+        'register_price' => 20,
+        'renew_price' => 20,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,

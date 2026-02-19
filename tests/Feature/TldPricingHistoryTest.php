@@ -13,15 +13,15 @@ it('creates a domain price history record when price fields change', function ()
     $this->actingAs($user);
 
     $tldPricing = TldPricing::factory()->create([
-        'register_price' => 1000,
-        'renew_price' => 1200,
-        'transfer_price' => 500,
+        'register_price' => 10,
+        'renew_price' => 12,
+        'transfer_price' => 5,
         'redemption_price' => null,
     ]);
 
     $tldPricing->update([
-        'register_price' => 1500,
-        'renew_price' => 1400,
+        'register_price' => 15,
+        'renew_price' => 14,
     ]);
 
     expect(DomainPriceHistory::query()->count())->toBe(1);
@@ -29,16 +29,16 @@ it('creates a domain price history record when price fields change', function ()
     $history = DomainPriceHistory::query()->first();
 
     expect($history->tld_pricing_id)->toBe($tldPricing->id)
-        ->and($history->register_price)->toBe(1500)
-        ->and($history->renewal_price)->toBe(1400)
+        ->and($history->register_price)->toBe(15)
+        ->and($history->renewal_price)->toBe(14)
         ->and($history->changed_by)->toBe($user->id)
         ->and($history->old_values)->toBe([
-            'register_price' => 1000,
-            'renew_price' => 1200,
+            'register_price' => 10,
+            'renew_price' => 12,
         ])
         ->and($history->changes)->toBe([
-            'register_price' => 1500,
-            'renew_price' => 1400,
+            'register_price' => 15,
+            'renew_price' => 14,
         ]);
 });
 
@@ -125,7 +125,7 @@ it('has domainPriceHistories relationship', function (): void {
 
     expect($tldPricing->domainPriceHistories)->toBeEmpty();
 
-    $tldPricing->update(['register_price' => 9999]);
+    $tldPricing->update(['register_price' => 99]);
 
     $tldPricing->refresh();
 

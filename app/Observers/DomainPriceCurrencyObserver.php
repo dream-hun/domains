@@ -54,7 +54,7 @@ final class DomainPriceCurrencyObserver
     }
 
     /**
-     * Format decimal values for history display (Money expects cents for USD, whole units for RWF).
+     * Format values for history (prices stored in major units).
      *
      * @param  array<string, mixed>  $values
      * @return array<string, int|float>
@@ -74,9 +74,7 @@ final class DomainPriceCurrencyObserver
             }
 
             $val = $values[$from];
-            $result[$to] = $currencyCode === 'RWF'
-                ? (int) round((float) $val)
-                : (int) round((float) $val * 100);
+            $result[$to] = (int) round((float) $val);
         }
 
         return $result;

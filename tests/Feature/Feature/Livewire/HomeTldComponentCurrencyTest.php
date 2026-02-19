@@ -38,7 +38,7 @@ test('home TLD component shows prices in session currency', function (): void {
         'type' => TldType::International,
         'status' => TldStatus::Active,
     ]);
-    createTldPricing($tld, $usd, 1200, 1200);
+    createTldPricing($tld, $usd, 12, 12);
 
     session(['selected_currency' => 'USD']);
 
@@ -61,7 +61,7 @@ test('home TLD component updates prices when currency changes', function (): voi
         'type' => TldType::International,
         'status' => TldStatus::Active,
     ]);
-    createTldPricing($tld, $usd, 1200, 1200);
+    createTldPricing($tld, $usd, 12, 12);
     createTldPricing($tld, $rwf, 15_000, 15_000);
 
     session(['selected_currency' => 'USD']);

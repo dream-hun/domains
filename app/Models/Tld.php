@@ -81,13 +81,7 @@ final class Tld extends Model
             return 0.0;
         }
 
-        // Prices are stored in minor units (cents for USD/EUR/etc.).
-        // Zero-decimal currencies (RWF, JPY, etc.) store the major-unit value directly.
-        if ($this->usesZeroDecimalCurrency($currencyCode)) {
-            return (float) $raw;
-        }
-
-        return (float) $raw / 100;
+        return (float) $raw;
     }
 
     public function getFormattedPriceForCurrency(string $priceType, string $currencyCode): string
@@ -121,7 +115,7 @@ final class Tld extends Model
             }
         } else {
             $pricing = $this->currentTldPricings()->with('currency')->first();
-            if (null) {
+            if ($pricing !== null && $pricing->currency !== null) {
                 return $pricing->currency->code;
             }
         }
@@ -245,15 +239,5 @@ final class Tld extends Model
         }
 
         return null;
-    }
-
-    private function usesZeroDecimalCurrency(string $code): bool
-    {
-        $code = mb_strtoupper($code);
-        if ($code === 'FRW') {
-            $code = 'RWF';
-        }
-
-        return in_array($code, ['RWF', 'JPY', 'KRW', 'VND', 'CLP', 'ISK', 'UGX', 'KES', 'TZS'], true);
     }
 }

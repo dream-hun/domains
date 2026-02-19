@@ -72,8 +72,8 @@ test('store creates tld pricing and redirects', function (): void {
     $response = $this->actingAs($user)->post(route('admin.tld-pricings.store'), [
         'tld_id' => $tld->id,
         'currency_id' => $currency->id,
-        'register_price' => 1000,
-        'renew_price' => 1200,
+        'register_price' => 10,
+        'renew_price' => 12,
         'redemption_price' => '',
         'transfer_price' => '',
         'is_current' => true,
@@ -87,8 +87,8 @@ test('store creates tld pricing and redirects', function (): void {
     $pricing = TldPricing::query()->first();
     expect($pricing->tld_id)->toBe($tld->id)
         ->and($pricing->currency_id)->toBe($currency->id)
-        ->and($pricing->register_price)->toBe(1000)
-        ->and($pricing->renew_price)->toBe(1200)
+        ->and($pricing->register_price)->toBe(10)
+        ->and($pricing->renew_price)->toBe(12)
         ->and($pricing->is_current)->toBeTrue();
 });
 
@@ -105,8 +105,8 @@ test('update modifies tld pricing and redirects', function (): void {
         'uuid' => (string) Str::uuid(),
         'tld_id' => null,
         'currency_id' => $currency->id,
-        'register_price' => 500,
-        'renew_price' => 600,
+        'register_price' => 5,
+        'renew_price' => 6,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -116,8 +116,8 @@ test('update modifies tld pricing and redirects', function (): void {
     $response = $this->actingAs($user)->put(route('admin.tld-pricings.update', $tldPricing), [
         'tld_id' => '',
         'currency_id' => $currency->id,
-        'register_price' => 550,
-        'renew_price' => 650,
+        'register_price' => 6,
+        'renew_price' => 7,
         'redemption_price' => '',
         'transfer_price' => '',
         'is_current' => true,
@@ -128,8 +128,8 @@ test('update modifies tld pricing and redirects', function (): void {
     $response->assertSessionHas('success');
 
     $tldPricing->refresh();
-    expect($tldPricing->register_price)->toBe(550)
-        ->and($tldPricing->renew_price)->toBe(650);
+    expect($tldPricing->register_price)->toBe(6)
+        ->and($tldPricing->renew_price)->toBe(7);
 });
 
 test('destroy deletes tld pricing and redirects', function (): void {
@@ -145,8 +145,8 @@ test('destroy deletes tld pricing and redirects', function (): void {
         'uuid' => (string) Str::uuid(),
         'tld_id' => null,
         'currency_id' => $currency->id,
-        'register_price' => 100,
-        'renew_price' => 100,
+        'register_price' => 10,
+        'renew_price' => 10,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,

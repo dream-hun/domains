@@ -31,54 +31,6 @@ final readonly class PriceFormatter
     }
 
     /**
-     * Format an amount from minor units (cents).
-     */
-    public function formatFromMinorUnits(int $amountInMinorUnits, string $currency): string
-    {
-        $majorUnits = $amountInMinorUnits;
-
-        return $this->format($majorUnits, $currency);
-    }
-
-    /**
-     * Convert minor units (cents) to major units (dollars).
-     */
-    public function minorToMajorUnits(int $amountInMinorUnits): float
-    {
-        return $amountInMinorUnits;
-    }
-
-    /**
-     * Convert and format a price from minor units in source currency to target currency.
-     */
-    public function convertAndFormatFromMinorUnits(
-        int $amountInMinorUnits,
-        string $sourceCurrency,
-        string $targetCurrency,
-        ?callable $converter = null
-    ): string {
-        $sourceCurrency = $this->normalizeCurrency($sourceCurrency);
-        $targetCurrency = $this->normalizeCurrency($targetCurrency);
-        $majorUnits = $this->minorToMajorUnits($amountInMinorUnits);
-
-        if ($sourceCurrency === $targetCurrency) {
-            return $this->format($majorUnits, $targetCurrency);
-        }
-
-        if ($converter !== null) {
-            try {
-                $convertedAmount = $converter($majorUnits, $sourceCurrency, $targetCurrency);
-
-                return $this->format($convertedAmount, $targetCurrency);
-            } catch (Exception) {
-                return $this->format($majorUnits, $sourceCurrency);
-            }
-        }
-
-        return $this->format($majorUnits, $sourceCurrency);
-    }
-
-    /**
      * Get the currency symbol for a currency code.
      */
     public function getSymbol(string $currency): string
