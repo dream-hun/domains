@@ -65,30 +65,6 @@
             }
         }
 
-        /* Custom height for hero section */
-        .rts-hero-three {
-            max-height: 550px !important;
-            height: 550px !important;
-            min-height: 550px !important;
-            padding-top: 250px !important;
-            padding-bottom: 70px !important;
-            overflow: hidden;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .results-wrapper {
-            position: relative;
-            min-height: 200px;
-        }
-
         .domain-badge {
             padding: 6px 12px;
             border-radius: 20px;
@@ -299,14 +275,18 @@
                                                 </div>
                                                 <div class="col-md-3 text-end">
                                                     @if ($primaryResult['available'])
+                                                        @php
+                                                            $displayCurrency = $primaryResult['display_currency_code'] ?? $this->currentCurrency;
+                                                            $wireTarget = $primaryResult['in_cart']
+                                                                ? "removeFromCart('{$primaryDomain}')"
+                                                                : "addToCart('{$primaryDomain}', {$primaryResult['register_price']}, '{$displayCurrency}')";
+                                                        @endphp
                                                         <button
-                                                            wire:click="{{ $primaryResult['in_cart'] ? 'removeFromCart(\'' . $primaryDomain . '\')' : 'addToCart(\'' . $primaryDomain . '\', ' . $primaryResult['register_price'] . ', \'' . ($primaryResult['display_currency_code'] ?? $this->currentCurrency) . '\')' }}"
+                                                            wire:click="{{ $wireTarget }}"
                                                             wire:loading.class="opacity-75"
-                                                            wire:target="{{ $primaryResult['in_cart'] ? 'removeFromCart(\'' . $primaryDomain . '\')' : 'addToCart(\'' . $primaryDomain . '\', ' . $primaryResult['register_price'] . ', \'' . ($primaryResult['display_currency_code'] ?? $this->currentCurrency) . '\')' }}"
+                                                            wire:target="{{ $wireTarget }}"
                                                             class="btn btn-lg text-white {{ $primaryResult['in_cart'] ? 'bg-danger' : 'bg-success' }} w-50">
-                                                            <span wire:loading
-                                                                  wire:target="{{ $primaryResult['in_cart'] ? 'removeFromCart(\'' . $primaryDomain . '\')' : 'addToCart(\'' . $primaryDomain . '\', ' . $primaryResult['register_price'] . ', \'' . ($primaryResult['display_currency_code'] ?? $this->currentCurrency) . '\')' }}"
-                                                                  class="btn-spinner"></span>
+                                                            <span wire:loading wire:target="{{ $wireTarget }}" class="btn-spinner"></span>
                                                             {{ $primaryResult['in_cart'] ? 'Remove from cart' : 'Add to Cart' }}
                                                         </button>
                                                     @endif
@@ -323,6 +303,12 @@
                                         <table class="table table-borderless">
                                             <tbody>
                                             @foreach ($suggestedDomains as $domain => $result)
+                                                @php
+                                                    $displayCurrency = $result['display_currency_code'] ?? $this->currentCurrency;
+                                                    $wireTarget = $result['in_cart']
+                                                        ? "removeFromCart('{$domain}')"
+                                                        : "addToCart('{$domain}', {$result['register_price']}, '{$displayCurrency}')";
+                                                @endphp
                                                 <tr class="pricing-wrapper {{ $result['available'] ? 'available' : 'unavailable' }}">
                                                     <td class="align-middle" style="width: 40%">
                                                         <strong>{{ $domain }}</strong>
@@ -341,14 +327,12 @@
                                                     <td class="align-middle text-end" style="width: 30%">
                                                         @if ($result['available'])
                                                             <button
-                                                                wire:click="{{ $result['in_cart'] ? 'removeFromCart(\'' . $domain . '\')' : 'addToCart(\'' . $domain . '\', ' . $result['register_price'] . ', \'' . ($result['display_currency_code'] ?? $this->currentCurrency) . '\')' }}"
+                                                                wire:click="{{ $wireTarget }}"
                                                                 wire:loading.class="opacity-75"
-                                                                wire:target="{{ $result['in_cart'] ? 'removeFromCart(\'' . $domain . '\')' : 'addToCart(\'' . $domain . '\', ' . $result['register_price'] . ', \'' . ($result['display_currency_code'] ?? $this->currentCurrency) . '\')' }}"
+                                                                wire:target="{{ $wireTarget }}"
                                                                 class="btn btn-lg text-white {{ $result['in_cart'] ? 'bg-danger' : 'bg-success' }} w-50"
                                                             >
-                                                                <span wire:loading
-                                                                      wire:target="{{ $result['in_cart'] ? 'removeFromCart(\'' . $domain . '\')' : 'addToCart(\'' . $domain . '\', ' . $result['register_price'] . ', \'' . ($result['display_currency_code'] ?? $this->currentCurrency) . '\')' }}"
-                                                                      class="btn-spinner"></span>
+                                                                <span wire:loading wire:target="{{ $wireTarget }}" class="btn-spinner"></span>
                                                                 {{ $result['in_cart'] ? 'Remove from cart' : 'Add to Cart' }}
                                                             </button>
                                                         @endif

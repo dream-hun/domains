@@ -13,29 +13,29 @@ use Darryldecode\Cart\CartCollection;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 final class DomainSearch extends Component
 {
-    public $domain = '';
+    public string $domain = '';
 
-    public $extension = '';
+    public string $extension = '';
 
-    public $results = [];
+    /** @var array<string, array<string, mixed>> */
+    public array $results = [];
 
-    public $error = '';
-
-    public $isSearching = false;
-
-    public $cartTotal = 0;
-
-    public $quantity = 1;
+    public string $error = '';
 
     public string $currentCurrency = 'RWF';
 
-    protected $listeners = ['refreshCart' => '$refresh', 'currencyChanged' => 'handleCurrencyChanged'];
+    protected $listeners = [
+        'refreshCart' => '$refresh',
+        'currencyChanged' => 'handleCurrencyChanged',
+        'currency-changed' => 'handleCurrencyChanged',
+    ];
 
     private EppDomainService $eppService;
 
@@ -55,17 +55,12 @@ final class DomainSearch extends Component
 
     public function mount(): void
     {
-        // Set default extension to first TLD
-        $firstTld = Cache::remember('active_tld', 3600, fn () => Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
-            ->where('status', 'active')
-            ->first());
+        $firstTld = $this->getActiveTlds()->first();
 
         if ($firstTld) {
             $this->extension = $firstTld->tld;
         }
 
-        // Get current currency from session
         $this->currentCurrency = session('selected_currency', 'USD');
     }
 
@@ -86,11 +81,7 @@ final class DomainSearch extends Component
             return;
         }
 
-        $tlds = Cache::remember('active_tlds', 3600, fn () => Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
-            ->where('status', 'active')
-            ->get());
-
+        $tlds = $this->getActiveTlds();
         $cartContent = Cart::getContent();
 
         foreach ($this->results as $domainName => $result) {
@@ -119,13 +110,8 @@ final class DomainSearch extends Component
 
     public function render(): View
     {
-        $tlds = Cache::remember('active_tlds', 3600, fn () => Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
-            ->where('status', 'active')
-            ->get());
-
         return view('livewire.domain-search', [
-            'tlds' => $tlds,
+            'tlds' => $this->getActiveTlds(),
         ]);
     }
 
@@ -144,14 +130,9 @@ final class DomainSearch extends Component
         ]);
 
         $this->resetExcept('domain', 'extension');
-        $this->isSearching = true;
 
         try {
-            // Get cached TLDs
-            $tlds = Cache::remember('active_tlds', 3600, fn () => Tld::query()
-                ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
-                ->where('status', 'active')
-                ->get());
+            $tlds = $this->getActiveTlds();
 
             if ($tlds->isEmpty()) {
                 $this->error = 'No TLDs configured in the system.';
@@ -159,7 +140,6 @@ final class DomainSearch extends Component
                 return;
             }
 
-            // Get the selected primary TLD
             $primaryTld = $tlds->where('tld', $this->extension)->first();
             if (! $primaryTld) {
                 $this->error = 'Selected extension is not available.';
@@ -170,11 +150,9 @@ final class DomainSearch extends Component
             $results = [];
             $cartContent = Cart::getContent();
 
-            // Check primary domain
             $primaryDomainName = mb_strtolower($this->domain.'.'.mb_ltrim($primaryTld->tld, '.'));
             $this->checkAndAddDomain($results, $primaryDomainName, $primaryTld, $cartContent, true);
 
-            // Check all other TLDs
             foreach ($tlds->where('tld', '!=', $primaryTld->tld) as $tld) {
                 $domainWithTld = mb_strtolower($this->domain.'.'.mb_ltrim($tld->tld, '.'));
                 $this->checkAndAddDomain($results, $domainWithTld, $tld, $cartContent, false);
@@ -191,8 +169,6 @@ final class DomainSearch extends Component
 
             $this->error = 'An error occurred while searching for domains.';
         } finally {
-            $this->isSearching = false;
-
             $this->dispatch('searchComplete');
         }
     }
@@ -263,14 +239,11 @@ final class DomainSearch extends Component
         try {
             $this->removeLinkedHosting($domain);
 
-            // Remove from cart
             Cart::remove($domain);
 
-            // Dispatch cart update event
             $this->dispatch('update-cart')->to(CartTotal::class);
             $this->dispatch('refreshCart');
 
-            // Update the in_cart status for this domain in results
             if (isset($this->results[$domain])) {
                 $this->results[$domain]['in_cart'] = false;
             }
@@ -296,8 +269,13 @@ final class DomainSearch extends Component
     /**
      * Check a domain and add it to results if check succeeds
      */
-    private function checkAndAddDomain(array &$results, string $domainName, Tld $tld, $cartContent, bool $isPrimary): void
-    {
+    private function checkAndAddDomain(
+        array &$results,
+        string $domainName,
+        Tld $tld,
+        CartCollection $cartContent,
+        bool $isPrimary
+    ): void {
         try {
             $isInternational = ! $tld->isLocalTld();
 
@@ -306,14 +284,20 @@ final class DomainSearch extends Component
                 $checkResult = $this->internationalService->checkAvailability([$domainName]);
                 $available = $checkResult['available'] ?? false;
                 $reason = $checkResult['reason'] ?? 'Unknown status';
-                $results[$domainName] = $this->buildDomainResult($tld, $domainName, $available, $reason, $cartContent, $isPrimary, true);
+                $results[$domainName] = $this->buildDomainSearchResult->handle(
+                    $tld, $domainName, $available, $reason,
+                    $this->currentCurrency, $cartContent->has($domainName), $isPrimary, true
+                );
                 Log::debug('International domain check processed', ['domain' => $domainName, 'available' => $available]);
             } else {
                 $eppResults = $this->eppService->checkDomain([$domainName]);
 
                 if ($eppResults !== [] && isset($eppResults[$domainName])) {
                     $result = $eppResults[$domainName];
-                    $results[$domainName] = $this->buildDomainResult($tld, $domainName, $result->available, $result->reason, $cartContent, $isPrimary, false);
+                    $results[$domainName] = $this->buildDomainSearchResult->handle(
+                        $tld, $domainName, $result->available, $result->reason,
+                        $this->currentCurrency, $cartContent->has($domainName), $isPrimary, false
+                    );
                     Log::debug('Local domain check successful', ['domain' => $domainName, 'available' => $result->available]);
                 }
             }
@@ -326,22 +310,13 @@ final class DomainSearch extends Component
         }
     }
 
-    /**
-     * @param  CartCollection  $cartContent
-     * @return array<string, mixed>
-     */
-    private function buildDomainResult(Tld $tld, string $domainName, bool $available, string $reason, $cartContent, bool $isPrimary, bool $isInternational): array
+    /** @return Collection<int, Tld> */
+    private function getActiveTlds(): Collection
     {
-        return $this->buildDomainSearchResult->handle(
-            $tld,
-            $domainName,
-            $available,
-            $reason,
-            $this->currentCurrency,
-            $cartContent->has($domainName),
-            $isPrimary,
-            $isInternational
-        );
+        return Cache::remember('active_tlds', 3600, fn () => Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->where('status', 'active')
+            ->get());
     }
 
     private function removeLinkedHosting(string $domain): void
