@@ -49,7 +49,7 @@ Route::get('/hosting/{slug}', CategoryShowController::class)->name('hosting.cate
 
 Route::get('/shopping-cart', CartController::class)->name('cart.index');
 Route::get('/domains', [SearchDomainController::class, 'index'])->name('domains');
-Route::post('/domains/search', [SearchDomainController::class, 'search'])->name('domains.search');
+Route::post('/domains/search', [SearchDomainController::class, 'search'])->name('domains.search'); // redirects to GET /domains?domain=...
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 

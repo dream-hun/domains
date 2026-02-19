@@ -32,6 +32,7 @@ final class DomainPriceCurrencyObserver
         foreach (array_keys($changedFields) as $field) {
             $oldValues[$field] = $domainPriceCurrency->getOriginal($field);
         }
+
         $changesForHistory = $this->formatChangesForHistory($changedFields);
         $oldValuesForHistory = $this->formatChangesForHistory($oldValues);
 
