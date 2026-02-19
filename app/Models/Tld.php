@@ -114,6 +114,7 @@ final class Tld extends Model
                 if (! $pricing->relationLoaded('currency')) {
                     $pricing->loadMissing('currency');
                 }
+
                 if ($pricing->currency) {
                     return $pricing->currency->code;
                 }
@@ -237,6 +238,7 @@ final class Tld extends Model
             if (! $pricing->relationLoaded('currency')) {
                 $pricing->loadMissing('currency');
             }
+
             if ($pricing->currency && mb_strtoupper((string) $pricing->currency->code) === $currencyCode) {
                 return $pricing;
             }

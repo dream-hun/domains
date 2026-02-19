@@ -78,6 +78,7 @@ test('index filters by currency', function (): void {
         ->get(route('admin.hosting-plan-prices.index', ['currency_id' => $currencyA->id]));
 
     $response->assertSuccessful();
+
     $prices = $response->viewData('prices');
     expect($prices->pluck('id')->toArray())->toContain($priceA->id)
         ->and($prices->pluck('id')->toArray())->not->toContain($priceB->id);

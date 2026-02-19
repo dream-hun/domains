@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Contact;
 use App\Models\Currency;
 use App\Models\Order;
@@ -13,6 +12,7 @@ use App\Models\User;
 use App\Services\CartPriceConverter;
 use Darryldecode\Cart\CartCollection;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;

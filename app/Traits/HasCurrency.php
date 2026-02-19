@@ -23,7 +23,7 @@ trait HasCurrency
 
     protected function convertCurrency(float $amount, string $fromCurrency, string $toCurrency): float
     {
-        return CurrencyHelper::convert($amount, $fromCurrency, $toCurrency);
+        return CurrencyHelper::convert($amount);
     }
 
     protected function formatCurrency(float $amount, string $currencyCode): string

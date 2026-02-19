@@ -80,9 +80,7 @@ final readonly class SubscriptionRenewalService
 
             if ($orderItemCurrency !== 'USD') {
                 $paidAmount = CurrencyHelper::convert(
-                    $paidAmount,
-                    $orderItemCurrency,
-                    'USD'
+                    $paidAmount
                 );
             }
 

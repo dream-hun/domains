@@ -310,7 +310,7 @@ final class CartComponent extends Component
             // For domain/registration items, check domain price max_years if available
             $maxQuantity = match ($itemType) {
                 'subscription_renewal', 'hosting' => 48, // Maximum 4 years (48 months)
-                'domain', 'registration' => $this->getDomainMaxYears($currentItem),
+                'domain', 'registration' => $this->getDomainMaxYears(),
                 default => 10,
             };
 
@@ -825,7 +825,7 @@ final class CartComponent extends Component
                     'error' => $exception->getMessage(),
                 ]);
                 throw $exception;
-            } catch (Throwable $e) {
+            } catch (Throwable) {
             }
 
             $metadata = $item->attributes->get('metadata', []);
@@ -1012,7 +1012,7 @@ final class CartComponent extends Component
     /**
      * Get the maximum registration years for a domain based on its TLD's domain price
      */
-    private function getDomainMaxYears(object $cartItem): int
+    private function getDomainMaxYears(): int
     {
         return 10;
     }

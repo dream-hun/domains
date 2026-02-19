@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Helpers\CurrencyHelper;
 use App\Helpers\DomainSearchHelper;
 use App\Models\HostingCategory;
 use App\Models\HostingPlanPrice;
@@ -59,7 +60,7 @@ final class AppServiceProvider extends ServiceProvider
         Blade::directive('price', function (string $expression): string {
             $inner = mb_trim($expression, ' ()');
 
-            return "<?php \$__p = [{$inner}]; echo \\App\\Helpers\\CurrencyHelper::formatMoney((float) (\$__p[0] ?? 0), (string) (mb_strtoupper((string) (\$__p[1] ?? 'USD')) === 'FRW' ? 'RWF' : (\$__p[1] ?? 'USD'))); ?>";
+            return sprintf('<?php $__p = [%s]; echo '.CurrencyHelper::class.'::formatMoney((float) ($__p[0] ?? 0), (string) (mb_strtoupper((string) ($__p[1] ?? \'USD\')) === \'FRW\' ? \'RWF\' : ($__p[1] ?? \'USD\'))); ?>', $inner);
         });
     }
 

@@ -528,7 +528,7 @@ final class CheckoutWizard extends Component
             $this->selectedAdminId,
             $this->selectedTechId,
             $this->selectedBillingId,
-        ], fn ($id): bool => $id !== null);
+        ], fn (?int $id): bool => $id !== null);
 
         if ($contactIds === []) {
             return [];

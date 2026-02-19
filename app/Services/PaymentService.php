@@ -57,7 +57,7 @@ final readonly class PaymentService
 
             if ($currency !== $kpayCurrency) {
                 try {
-                    $amount = CurrencyHelper::convert($amount, $currency, $kpayCurrency);
+                    $amount = CurrencyHelper::convert($amount);
                     $currency = $kpayCurrency;
                 } catch (Exception $e) {
                     Log::error('Currency conversion to RWF failed for KPay payment', [
@@ -436,7 +436,7 @@ final readonly class PaymentService
             // Convert order amount to USD to check against Stripe's minimum
             $amountInUsd = $currency === 'USD'
                 ? $amount
-                : CurrencyHelper::convert($amount, $currency, 'USD');
+                : CurrencyHelper::convert($amount);
 
             // If amount meets the minimum, use original currency
             if ($amountInUsd >= $minUsdAmount) {

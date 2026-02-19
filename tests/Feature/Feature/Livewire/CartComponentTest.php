@@ -27,5 +27,6 @@ test('dispatching currencyChanged does not throw on empty cart', function (): vo
     $component->dispatch('currencyChanged', 'USD');
 
     $component->assertHasNoErrors();
+
     expect($component->get('totalAmount'))->toEqual(0);
 });

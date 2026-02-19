@@ -14,6 +14,7 @@ use App\Models\Payment;
 use App\Models\Subscription;
 use App\Notifications\SubscriptionAutoRenewalFailedNotification;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -596,7 +597,7 @@ final class StripeWebhookController extends Controller
 
         throw_unless($user, Exception::class, 'Subscription has no associated user');
 
-        throw_unless(Currency::getActiveCurrencies()->firstWhere('code', 'USD'), \Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        throw_unless(Currency::getActiveCurrencies()->firstWhere('code', 'USD'), ModelNotFoundException::class);
 
         $order = Order::query()->create([
             'user_id' => $user->id,

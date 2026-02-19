@@ -58,7 +58,7 @@ final class LandingController extends Controller
             ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
             ->whereIn('name', ['.com', '.net', '.info', '.org'])
             ->get()
-            ->keyBy(fn (Tld $tld) => mb_ltrim($tld->name, '.'));
+            ->keyBy(fn (Tld $tld): string => mb_ltrim($tld->name, '.'));
 
         $domainComparePrices = [];
         foreach (['com', 'net', 'info', 'org'] as $ext) {

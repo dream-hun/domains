@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('domains', function (Blueprint $table) {
+        Schema::table('domains', function (Blueprint $table): void {
             $table->foreignId('subscription_id')->nullable()->after('created_by_admin_id')
                 ->constrained('subscriptions')->nullOnDelete();
         });

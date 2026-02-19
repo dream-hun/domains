@@ -62,7 +62,7 @@ readonly class RegisterDomainAction
 
             if ($result['success']) {
                 // Use original processed contacts (with database IDs) for domain record creation
-                $domain = $this->createDomainRecord($domainName, $years, $processedContacts, $serviceName, $userId);
+                $domain = $this->createDomainRecord($domainName, $years, $processedContacts, $userId);
                 $this->processNameservers($domain, $nameservers);
                 $nsToSet = $domain->nameservers->pluck('name')->toArray();
                 $updateResult = $domainService->updateNameservers($domainName, $nsToSet);
@@ -272,7 +272,7 @@ readonly class RegisterDomainAction
      *
      * @throws Exception|Throwable
      */
-    private function createDomainRecord(string $domainName, int $years, array $contacts, string $service, ?int $userId = null): Domain
+    private function createDomainRecord(string $domainName, int $years, array $contacts, ?int $userId = null): Domain
     {
         $tldString = $this->extractTld($domainName);
         $tld = Tld::query()
@@ -306,6 +306,7 @@ readonly class RegisterDomainAction
             if (empty($contactId)) {
                 throw new Exception(sprintf('Missing or invalid contact ID for type: %s', $type));
             }
+
             $contactId = (int) $contactId;
 
             $domain->contacts()->attach($contactId, [

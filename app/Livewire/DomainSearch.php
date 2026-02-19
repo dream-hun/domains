@@ -79,7 +79,7 @@ final class DomainSearch extends Component
             return;
         }
 
-        $this->currentCurrency = mb_strtoupper($currency);
+        $this->currentCurrency = mb_strtoupper((string) $currency);
         session(['selected_currency' => $this->currentCurrency]);
 
         if (empty($this->results)) {
@@ -98,10 +98,12 @@ final class DomainSearch extends Component
             if ($tldString === null) {
                 continue;
             }
+
             $tld = $tlds->firstWhere('tld', $tldString);
             if (! $tld instanceof Tld) {
                 continue;
             }
+
             $this->results[$domainName] = $this->buildDomainSearchResult->handle(
                 $tld,
                 $domainName,

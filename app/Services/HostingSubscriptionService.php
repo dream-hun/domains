@@ -24,8 +24,8 @@ final class HostingSubscriptionService
             ->get();
 
         // Batch-load hosting plans and prices
-        $planIds = $hostingItems->map(fn (OrderItem $item) => (int) (($item->metadata ?? [])['hosting_plan_id'] ?? 0))->filter()->unique();
-        $planPriceIds = $hostingItems->map(fn (OrderItem $item) => (int) (($item->metadata ?? [])['hosting_plan_pricing_id'] ?? ($item->metadata ?? [])['hosting_plan_price_id'] ?? 0))->filter()->unique();
+        $planIds = $hostingItems->map(fn (OrderItem $item): int => (int) (($item->metadata ?? [])['hosting_plan_id'] ?? 0))->filter()->unique();
+        $planPriceIds = $hostingItems->map(fn (OrderItem $item): int => (int) (($item->metadata ?? [])['hosting_plan_pricing_id'] ?? ($item->metadata ?? [])['hosting_plan_price_id'] ?? 0))->filter()->unique();
 
         $plans = $planIds->isNotEmpty() ? HostingPlan::query()->findMany($planIds)->keyBy('id') : collect();
         $planPrices = $planPriceIds->isNotEmpty() ? HostingPlanPrice::query()->with('currency')->findMany($planPriceIds)->keyBy('id') : collect();

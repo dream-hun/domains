@@ -73,7 +73,7 @@ test('dispatchJobsForOrder dispatches both domain and subscription renewal jobs 
         'metadata' => ['subscription_id' => 1, 'billing_cycle' => 'monthly'],
     ]);
 
-    $service = app(OrderJobDispatcherService::class);
+    $service = resolve(OrderJobDispatcherService::class);
     $service->dispatchJobsForOrder($order, []);
 
     Bus::assertDispatched(ProcessDomainRenewalJob::class);
@@ -103,10 +103,10 @@ test('dispatchJobsForOrder dispatches only domain renewal job when order has onl
         ],
     ]);
 
-    $orderProcessingService = app(OrderProcessingService::class);
+    $orderProcessingService = resolve(OrderProcessingService::class);
     $orderProcessingService->createOrderItemsFromJson($order);
 
-    $service = app(OrderJobDispatcherService::class);
+    $service = resolve(OrderJobDispatcherService::class);
     $service->dispatchJobsForOrder($order, []);
 
     Bus::assertDispatched(ProcessDomainRenewalJob::class);
@@ -135,10 +135,10 @@ test('dispatchJobsForOrder dispatches only subscription renewal job when order h
         ],
     ]);
 
-    $orderProcessingService = app(OrderProcessingService::class);
+    $orderProcessingService = resolve(OrderProcessingService::class);
     $orderProcessingService->createOrderItemsFromJson($order);
 
-    $service = app(OrderJobDispatcherService::class);
+    $service = resolve(OrderJobDispatcherService::class);
     $service->dispatchJobsForOrder($order, []);
 
     Bus::assertNotDispatched(ProcessDomainRenewalJob::class);

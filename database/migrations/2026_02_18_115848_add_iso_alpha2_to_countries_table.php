@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('countries', function (Blueprint $table) {
+        Schema::table('countries', function (Blueprint $table): void {
             $table->string('iso_alpha2', 2)->nullable()->unique()->after('iso_code');
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('countries', function (Blueprint $table) {
+        Schema::table('countries', function (Blueprint $table): void {
             $table->dropColumn('iso_alpha2');
         });
     }
