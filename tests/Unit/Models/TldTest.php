@@ -98,8 +98,8 @@ test('getPriceForCurrency returns price from current tld pricing', function (): 
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $currency->id,
-        'register_price' => 20,
-        'renew_price' => 20,
+        'register_price' => 2000,
+        'renew_price' => 2000,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -109,6 +109,56 @@ test('getPriceForCurrency returns price from current tld pricing', function (): 
     $tld->load(['tldPricings' => fn ($q) => $q->current()->with('currency')]);
 
     expect($tld->getPriceForCurrency('EUR', 'register_price'))->toBe(20.0);
+});
+
+test('getPriceForCurrency converts cents to major units for USD', function (): void {
+    $currency = Currency::query()->where('code', 'USD')->firstOrFail();
+    $tld = Tld::query()->create([
+        'uuid' => (string) Str::uuid(),
+        'name' => '.com',
+        'type' => TldType::International,
+        'status' => TldStatus::Active,
+    ]);
+    TldPricing::query()->create([
+        'uuid' => (string) Str::uuid(),
+        'tld_id' => $tld->id,
+        'currency_id' => $currency->id,
+        'register_price' => 18000,
+        'renew_price' => 18000,
+        'redemption_price' => null,
+        'transfer_price' => null,
+        'is_current' => true,
+        'effective_date' => now(),
+    ]);
+
+    $tld->load(['tldPricings' => fn ($q) => $q->current()->with('currency')]);
+
+    expect($tld->getPriceForCurrency('USD', 'register_price'))->toBe(180.0);
+});
+
+test('getPriceForCurrency does not divide for zero-decimal RWF', function (): void {
+    $currency = Currency::query()->where('code', 'RWF')->firstOrFail();
+    $tld = Tld::query()->create([
+        'uuid' => (string) Str::uuid(),
+        'name' => '.rw',
+        'type' => TldType::Local,
+        'status' => TldStatus::Active,
+    ]);
+    TldPricing::query()->create([
+        'uuid' => (string) Str::uuid(),
+        'tld_id' => $tld->id,
+        'currency_id' => $currency->id,
+        'register_price' => 10000,
+        'renew_price' => 10000,
+        'redemption_price' => null,
+        'transfer_price' => null,
+        'is_current' => true,
+        'effective_date' => now(),
+    ]);
+
+    $tld->load(['tldPricings' => fn ($q) => $q->current()->with('currency')]);
+
+    expect($tld->getPriceForCurrency('RWF', 'register_price'))->toBe(10000.0);
 });
 
 test('getBaseCurrency returns currency code from first current pricing', function (): void {
@@ -194,8 +244,8 @@ test('getDisplayPriceForCurrency returns preferred currency when it has price', 
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $eur->id,
-        'register_price' => 15,
-        'renew_price' => 15,
+        'register_price' => 1500,
+        'renew_price' => 1500,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -220,8 +270,8 @@ test('getDisplayPriceForCurrency falls back to app base when preferred has no pr
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $usd->id,
-        'register_price' => 12,
-        'renew_price' => 12,
+        'register_price' => 1200,
+        'renew_price' => 1200,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,
@@ -301,8 +351,8 @@ test('getFormattedPriceWithFallback returns formatted string in resolved currenc
         'uuid' => (string) Str::uuid(),
         'tld_id' => $tld->id,
         'currency_id' => $eur->id,
-        'register_price' => 20,
-        'renew_price' => 20,
+        'register_price' => 2000,
+        'renew_price' => 2000,
         'redemption_price' => null,
         'transfer_price' => null,
         'is_current' => true,

@@ -1,3 +1,4 @@
+@php use App\Enums\DomainStatus; @endphp
 <x-admin-layout>
     @section('page-title')
         Domains
@@ -71,7 +72,7 @@
                                             @endcan
 
                                             @can('domain_renew')
-                                                @if ($domain->status !== \App\Enums\DomainStatus::Expired)
+                                                @if ($domain->status !== DomainStatus::Expired)
                                                     <button
                                                         onclick="addRenewalToCart(this, '{{ $domain->uuid }}', '{{ $domain->name }}', {{ $domain->id }})"
                                                         class="btn btn-sm btn-success">
@@ -81,7 +82,7 @@
                                             @endcan
 
                                             @can('domain_edit')
-                                                @if ($domain->status === \App\Enums\DomainStatus::Expired)
+                                                @if ($domain->status === DomainStatus::Expired)
                                                     <form
                                                         action="{{ route('admin.domains.reactivate', $domain->uuid) }}"
                                                         method="POST" style="display: inline-block;">

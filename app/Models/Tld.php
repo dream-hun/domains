@@ -30,7 +30,7 @@ final class Tld extends Model
 {
     use HasFactory;
 
-    private const  PRICE_TYPE_TO_COLUMN = [
+    private const PRICE_TYPE_TO_COLUMN = [
         'register_price' => 'register_price',
         'renewal_price' => 'renew_price',
         'renew_price' => 'renew_price',
@@ -39,7 +39,7 @@ final class Tld extends Model
 
     protected $table = 'tld';
 
-    protected $with=['tldPricings'];
+    protected $with = ['tldPricings'];
 
     protected $guarded = [];
 
@@ -81,8 +81,13 @@ final class Tld extends Model
             return 0.0;
         }
 
-        // Prices are stored as major units (e.g. 15 for $15), not cents.
-        return (float) $raw;
+        // Prices are stored in minor units (cents for USD/EUR/etc.).
+        // Zero-decimal currencies (RWF, JPY, etc.) store the major-unit value directly.
+        if ($this->usesZeroDecimalCurrency($currencyCode)) {
+            return (float) $raw;
+        }
+
+        return (float) $raw / 100;
     }
 
     public function getFormattedPriceForCurrency(string $priceType, string $currencyCode): string
