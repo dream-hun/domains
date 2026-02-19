@@ -115,14 +115,6 @@
             box-shadow: 0 2px 4px rgba(23, 162, 184, 0.2);
         }
 
-        .domain-type-indicator {
-            display: block;
-            font-size: 0.7rem;
-            color: #17a2b8;
-            font-weight: 600;
-            margin-top: 2px;
-        }
-
         .cart-button {
             padding: 10px 20px;
             border-radius: 8px;
@@ -205,9 +197,6 @@
                                     <li>
                                         <span>{{ $tld->tld }}</span>
                                         <span>{{ $tld->getFormattedPriceWithFallback('register_price', $this->currentCurrency) }}</span>
-                                        @if(!$tld->isLocalTld())
-                                            <small class="domain-type-indicator">International</small>
-                                        @endif
                                     </li>
                                 @endforeach
                             </ul>
@@ -299,10 +288,6 @@
                                                         class="domain-badge {{ $primaryResult['available'] ? 'available' : 'unavailable' }}">
                                                     {{ $primaryResult['available'] ? 'Available!' : 'Not Available' }}
                                                 </span>
-                                                    @if(isset($primaryResult['is_international']) && $primaryResult['is_international'])
-                                                        <span class="domain-badge bg-info">International</span>
-                                                    @endif
-
                                                 </div>
                                                 <div class="col-md-3 text-center">
                                                     @if ($primaryResult['available'])
@@ -346,10 +331,6 @@
                                                                 class="status {{ $result['available'] ? 'available' : 'unavailable' }}">
                                                                 {{ $result['available'] ? 'Available!' : 'Not Available' }}
                                                             </span>
-                                                            @if(isset($result['is_international']) && $result['is_international'])
-                                                                <span class="domain-badge bg-info" style="font-size: 0.8rem; padding: 3px 8px; margin-left: 5px;">International</span>
-                                                            @endif
-
                                                         </div>
                                                     </td>
                                                     <td class="align-middle text-center" style="width: 30%">
