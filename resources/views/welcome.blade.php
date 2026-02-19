@@ -317,7 +317,7 @@
                                             <img src="assets/images/service/managed__wordpress__hosting.svg" alt="">
                                         @elseif ($category->slug == 'dedicated-hosting')
                                             <img src="assets/images/service/dedicated__hosting.svg" alt="">
-                                        @elseif ($category->slug p== 'vps-hosting')
+                                        @elseif ($category->slug == 'vps-hosting')
                                             <img src="assets/images/service/vps__hosting.svg" alt="">
                                         @elseif ($category->slug == 'reseller-hosting')
                                             <img src="assets/images/service/resseller__hosting.svg" alt="">
