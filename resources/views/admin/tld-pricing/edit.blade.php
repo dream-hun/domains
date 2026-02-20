@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
             <div class="row mb-2">
                 <div class="col-sm-6">
                     <h1 class="m-0">
-                        <i class="fas fa-edit mr-2"></i>Edit TLD Pricing
+                        Edit TLD Pricing
                     </h1>
                 </div>
                 <div class="col-sm-6">
