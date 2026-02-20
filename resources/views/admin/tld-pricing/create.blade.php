@@ -3,7 +3,9 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Add TLD Pricing</h1>
+                    <h1 class="m-0">
+                        <i class="fas fa-plus mr-2"></i>Add TLD Pricing
+                    </h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -18,15 +20,17 @@
 
     <section class="content">
         <div class="container-fluid">
-            <div class="col-md-12">
-                @include('admin.tld-pricing._form', [
-                    'tldPricing' => null,
-                    'tlds' => $tlds,
-                    'currencies' => $currencies,
-                    'action' => route('admin.tld-pricings.store'),
-                    'method' => 'POST',
-                    'submitLabel' => 'Create',
-                ])
+            <div class="row">
+                <div class="col-lg-8">
+                    @include('admin.tld-pricing._form', [
+                        'tldPricing' => null,
+                        'tlds' => $tlds,
+                        'currencies' => $currencies,
+                        'action' => route('admin.tld-pricings.store'),
+                        'method' => 'POST',
+                        'submitLabel' => 'Create',
+                    ])
+                </div>
             </div>
         </div>
     </section>
