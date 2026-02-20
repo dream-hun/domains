@@ -5,15 +5,15 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="UTF-8">
     <title>@isset($pageTitle){{ $pageTitle }}@else @yield('page-title') @endisset - {{ config('app.name') }}</title>
-    <link rel="stylesheet" href="{{ asset('css/adminlte.min.css') }}">
-    <link href="{{ asset('plugins/select2/css/select2.min.css') }}" rel="stylesheet" />
-     <!-- Select2 -->
-  <link rel="stylesheet" href="{{ asset('plugins/select2/css/select2.min.css') }}">
-  <link rel="stylesheet" href="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
+    <!-- AdminLTE 3 + Bootstrap 4 -->
+    <link rel="stylesheet" href="{{ asset('css/adminlte.css') }}">
+    <!-- Select2 (optional plugin) -->
+    <link rel="stylesheet" href="{{ asset('plugins/select2/css/select2.css') }}">
+    <link rel="stylesheet" href="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.css') }}">
     <link href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet" />
     <link href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}" rel="stylesheet">
     <link href="{{ asset('plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css') }}"
+    <link href="{{ asset('plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.css') }}"
         rel="stylesheet" />
     <link href="{{ asset('font/bootstrap-icons.min.css') }}" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}" rel="stylesheet" />
@@ -52,11 +52,12 @@
 
     </div>
 
-    <script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
-    <script src="{{ asset('plugins/bootstrap/js/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('plugins/select2/js/select2.min.js') }}"></script>
-    <script src="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.min.js') }}"></script>
-    <script src="{{ asset('plugins/moment/moment.min.js') }}"></script>
+    <!-- Core: jQuery then Bootstrap (bundle includes Popper for dropdowns/tooltips) -->
+    <script src="{{ asset('plugins/jquery/jquery.js') }}"></script>
+    <script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.js') }}"></script>
+    <!-- Select2 (theme is CSS-only; no JS file for select2-bootstrap4-theme) -->
+    <script src="{{ asset('plugins/select2/js/select2.full.js') }}"></script>
+    <script src="{{ asset('plugins/moment/moment-with-locales.js') }}"></script>
     <script src="{{ asset('plugins/datatables/jquery.dataTables.js') }}"></script>
     <script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
     <script src="{{ asset('plugins/datatables-buttons/js/dataTables.buttons.min.js') }}"></script>
@@ -67,11 +68,12 @@
     <script src="{{ asset('plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
     <script src="{{ asset('plugins/pdfmake/pdfmake.min.js') }}"></script>
     <script src="{{ asset('plugins/pdfmake/vfs_fonts.js') }}"></script>
-    <script src="{{ asset('plugins/jszip/jszip.min.js') }}"></script>
+    <script src="{{ asset('plugins/jszip/jszip.js') }}"></script>
 
-    <!-- Tempus Dominus JavaScript -->
-    <script src="{{ asset('plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
-    <script src="{{ asset('js/adminlte.min.js') }}"></script>
+    <!-- Tempus Dominus -->
+    <script src="{{ asset('plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.js') }}"></script>
+    <!-- AdminLTE app -->
+    <script src="{{ asset('js/adminlte.js') }}"></script>
     <script src="{{ asset('js/main.js') }}"></script>
     <script>
         $(function() {
