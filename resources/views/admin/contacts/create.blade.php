@@ -5,8 +5,7 @@
             <div class="card-body">
                 <form id="contactForm" method="POST" action="{{ route('admin.contacts.store') }}">
                     @csrf
-                    <div class="row">
-                        <div class="form-group col-md-6">
+
                             <label class="required">First Name</label>
                             <input type="text" name="first_name"
                                 class="form-control @error('first_name') is-invalid @enderror"
@@ -14,8 +13,7 @@
                             @error('first_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                        <div class="form-group col-md-6">
+
                             <label class="required">Last Name</label>
                             <input type="text" name="last_name"
                                 class="form-control @error('last_name') is-invalid @enderror"
@@ -23,18 +21,15 @@
                             @error('last_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-md-6">
+
+
                             <label>Title</label>
                             <input type="text" name="title"
                                 class="form-control @error('title') is-invalid @enderror" value="{{ old('title') }}">
                             @error('title')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                        <div class="form-group col-md-6">
+
                             <label>Organization</label>
                             <input type="text" name="organization"
                                 class="form-control @error('organization') is-invalid @enderror"
@@ -42,26 +37,7 @@
                             @error('organization')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-md-6">
-                            <label class="required">Contact Type</label>
-                            <select name="contact_type" class="form-control select2bs4 @error('contact_type') is-invalid @enderror"
-                                required>
-                                <option value="">Select contact type</option>
-                                @foreach ($contactTypes as $contactType)
-                                    <option value="{{ $contactType->value }}"
-                                        {{ old('contact_type') == $contactType->value ? 'selected' : '' }}>
-                                        {{ ucfirst($contactType->value) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('contact_type')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="form-group col-md-6">
+
                             <label class="required">Address Line 1</label>
                             <input type="text" name="address_one"
                                 class="form-control @error('address_one') is-invalid @enderror"
@@ -69,10 +45,7 @@
                             @error('address_one')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-md-6">
+
                             <label>Address Line 2 (Optional)</label>
                             <input type="text" name="address_two"
                                 class="form-control @error('address_two') is-invalid @enderror"
@@ -80,8 +53,7 @@
                             @error('address_two')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                        <div class="form-group col-md-6">
+
                             <label class="required">City</label>
                             <input type="text" name="city"
                                 class="form-control @error('city') is-invalid @enderror" value="{{ old('city') }}"
@@ -89,10 +61,8 @@
                             @error('city')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+
+
                             <label class="form-label required">State/Province</label>
                             <input type="text" name="state_province"
                                 class="form-control @error('state_province') is-invalid @enderror"
@@ -100,8 +70,7 @@
                             @error('state_province')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                        <div class="col-md-6 mb-3">
+
                             <label class="form-label required">Postal Code</label>
                             <input type="text" name="postal_code"
                                 class="form-control @error('postal_code') is-invalid @enderror"
@@ -109,10 +78,7 @@
                             @error('postal_code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+
                             <label class="form-label required">Country</label>
                             <select name="country_code"
                                 class="form-control select2bs4 @error('country_code') is-invalid @enderror" required>
@@ -127,8 +93,8 @@
                             @error('country_code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                        <div class="col-md-6 mb-3">
+
+
                             <label class="form-label required">Phone</label>
                             <input type="tel" name="phone"
                                 class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}"
@@ -137,9 +103,8 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+
+
                             <label class="form-label">Phone Extension</label>
                             <input type="text" name="phone_extension"
                                 class="form-control @error('phone_extension') is-invalid @enderror"
@@ -147,8 +112,7 @@
                             @error('phone_extension')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                        <div class="col-md-6 mb-3">
+
                             <label class="form-label">Fax Number</label>
                             <input type="tel" name="fax_number"
                                 class="form-control @error('fax_number') is-invalid @enderror"
@@ -156,9 +120,7 @@
                             @error('fax_number')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
-                    </div>
-                    <div class="mb-3">
+
                         <label class="form-label required">Email</label>
                         <input type="email" name="email"
                             class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}"
@@ -166,9 +128,7 @@
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                    </div>
 
-                    <div class="mb-3">
                         <div class="form-check">
                             <input type="checkbox" name="is_primary" id="is_primary"
                                 class="form-check-input @error('is_primary') is-invalid @enderror" value="1"
