@@ -54,88 +54,69 @@
                         Currencies
                     </x-admin.sidebar-link>
                 @endcan
-                @can('tld_access')
-                    <x-admin.sidebar-link route="admin.tlds.index" icon="bi bi-globe">
-                        Tld
-                    </x-admin.sidebar-link>
-                @endcan
-                @can('tld_pricing_access')
-                    <x-admin.sidebar-link route="admin.tld-pricings.index" icon="bi bi-currency-exchange">
-                        TLD Pricing
-                    </x-admin.sidebar-link>
-                @endcan
-                @can('domain_access')
-                    <x-admin.sidebar-link route="admin.domains.index" icon="bi bi-globe2">
-                        Domains
-                    </x-admin.sidebar-link>
-                @endcan
-                @can('domain_access')
-                    <x-admin.sidebar-link route="admin.domain-price-history.index" icon="bi bi-clock-history">
-                        Domain Price History
-                    </x-admin.sidebar-link>
-                @endcan
-                @can('failed_registration_access')
-                    <x-admin.sidebar-link route="admin.failed-registrations.index" icon="bi bi-exclamation-triangle">
-                        Failed Registrations
-
-                    </x-admin.sidebar-link>
-                @endcan
+                @if(auth()->user()->can('tld_access') || auth()->user()->can('tld_pricing_access') || auth()->user()->can('domain_access') || auth()->user()->can('failed_registration_access'))
+                    <x-admin.sidebar-group 
+                        title="Domain Management" 
+                        icon="bi bi-globe"
+                        :routes="['admin.tlds.*', 'admin.tld-pricings.*', 'admin.domains.*', 'admin.domain-price-history.*', 'admin.failed-registrations.*']">
+                        @can('tld_access')
+                            <x-admin.sidebar-link route="admin.tlds.index" icon="bi bi-globe">
+                                TLD
+                            </x-admin.sidebar-link>
+                        @endcan
+                        @can('tld_pricing_access')
+                            <x-admin.sidebar-link route="admin.tld-pricings.index" icon="bi bi-currency-exchange">
+                                TLD Pricing
+                            </x-admin.sidebar-link>
+                        @endcan
+                        @can('domain_access')
+                            <x-admin.sidebar-link route="admin.domains.index" icon="bi bi-globe2">
+                                Domains
+                            </x-admin.sidebar-link>
+                        @endcan
+                        @can('domain_access')
+                            <x-admin.sidebar-link route="admin.domain-price-history.index" icon="bi bi-clock-history">
+                                Domain Price History
+                            </x-admin.sidebar-link>
+                        @endcan
+                        @can('failed_registration_access')
+                            <x-admin.sidebar-link route="admin.failed-registrations.index" icon="bi bi-exclamation-triangle">
+                                Failed Registrations
+                            </x-admin.sidebar-link>
+                        @endcan
+                    </x-admin.sidebar-group>
+                @endif
                 @can('hosting_management_access')
-                    <li
-                        class="nav-item {{ request()->is('admin/hosting-categories') || request()->is('admin/hosting-plans') || request()->is('admin/hosting-plan-prices') || request()->is('admin/hosting-plan-price-history') || request()->is('admin/hosting-promotions*') || request()->is('admin/hosting-features') || request()->is('admin/hosting-plan-features') ? 'menu-open' : '' }}">
-                        <a href="#" class="nav-link">
-                            <i class="bi bi-hdd"></i>
-                            <p>
-                                Hosting Management
-                            </p>
-                            <i class="bi bi-chevron-down right"></i>
-                        </a>
-
-                        <ul class="nav nav-treeview">
-                            <x-admin.sidebar-link route="admin.hosting-categories.index" icon="bi bi-hdd">
-                                Hosting Categories
-                            </x-admin.sidebar-link>
-                        </ul>
-                        <ul class="nav nav-treeview">
-                            <x-admin.sidebar-link route="admin.hosting-plans.index" icon="bi bi-hdd">
-                                Hosting Plans
-                            </x-admin.sidebar-link>
-                        </ul>
-                        <ul class="nav nav-treeview">
-                            <x-admin.sidebar-link route="admin.hosting-plan-prices.index" icon="bi bi-hdd">
-                                Hosting Plan Prices
-                            </x-admin.sidebar-link>
-                        </ul>
+                    <x-admin.sidebar-group 
+                        title="Hosting Management" 
+                        icon="bi bi-hdd"
+                        :routes="['admin.hosting-categories.*', 'admin.hosting-plans.*', 'admin.hosting-plan-prices.*', 'admin.hosting-plan-price-history.*', 'admin.hosting-promotions.*', 'admin.hosting-features.*', 'admin.hosting-plan-features.*']">
+                        <x-admin.sidebar-link route="admin.hosting-categories.index" icon="bi bi-hdd">
+                            Hosting Categories
+                        </x-admin.sidebar-link>
+                        <x-admin.sidebar-link route="admin.hosting-plans.index" icon="bi bi-hdd">
+                            Hosting Plans
+                        </x-admin.sidebar-link>
+                        <x-admin.sidebar-link route="admin.hosting-plan-prices.index" icon="bi bi-hdd">
+                            Hosting Plan Prices
+                        </x-admin.sidebar-link>
                         @can('hosting_plan_price_access')
-                            <ul class="nav nav-treeview">
-                                <x-admin.sidebar-link route="admin.hosting-plan-price-history.index" icon="bi bi-clock-history">
-                                    Hosting Plan Price History
-                                </x-admin.sidebar-link>
-                            </ul>
+                            <x-admin.sidebar-link route="admin.hosting-plan-price-history.index" icon="bi bi-clock-history">
+                                Hosting Plan Price History
+                            </x-admin.sidebar-link>
                         @endcan
                         @can('hosting_promotion_access')
-                            <ul class="nav nav-treeview">
-                                <x-admin.sidebar-link route="admin.hosting-promotions.index" icon="bi bi-hdd">
-                                    <p>Hosting Promotions</p>
-                                </x-admin.sidebar-link>
-                            </ul>
-                        @endcan
-                        <ul class="nav nav-treeview">
-                            <x-admin.sidebar-link route="admin.hosting-features.index" icon="bi bi-hdd">
-                                Hosting Features
+                            <x-admin.sidebar-link route="admin.hosting-promotions.index" icon="bi bi-hdd">
+                                Hosting Promotions
                             </x-admin.sidebar-link>
-
-                        </ul>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.hosting-plan-features.index') }}"
-                                   class="nav-link {{ request()->is('admin/hosting-plan-features*') ? 'active' : '' }}">
-                                    <i class="bi bi-hdd"></i>
-                                    <p>Hosting Plan Features</p>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                        @endcan
+                        <x-admin.sidebar-link route="admin.hosting-features.index" icon="bi bi-hdd">
+                            Hosting Features
+                        </x-admin.sidebar-link>
+                        <x-admin.sidebar-link route="admin.hosting-plan-features.index" icon="bi bi-hdd">
+                            Hosting Plan Features
+                        </x-admin.sidebar-link>
+                    </x-admin.sidebar-group>
                 @endcan
                 @can('subscription_access')
                     <li class="nav-item">
@@ -160,74 +141,39 @@
                     </li>
                 @endcan
                 @can('product_access')
-                    <li class="nav-item">
-                        <a href="{{ route('admin.products.domains') }}"
-                           class="nav-link {{ request()->is('admin/products/domains*') ? 'active' : '' }}">
-                            <i class="bi bi-globe2"></i>
-                            <p>My Products</p>
-                            <i class="bi bi-chevron-down right"></i>
-                        </a>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.products.domains') }}"
-                                   class="nav-link {{ request()->is('admin/products/domains*') ? 'active' : '' }}">
-                                    <i class="bi bi-globe2"></i>
-                                    <p>Domains</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.products.hosting') }}"
-                                   class="nav-link {{ request()->is('admin/products/hosting*') ? 'active' : '' }}">
-                                    <i class="bi bi-hdd"></i>
-                                    <p>Hosting</p>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                    <x-admin.sidebar-group 
+                        title="My Products" 
+                        icon="bi bi-globe2"
+                        :routes="['admin.products.*']">
+                        <x-admin.sidebar-link route="admin.products.domains" icon="bi bi-globe2">
+                            Domains
+                        </x-admin.sidebar-link>
+                        <x-admin.sidebar-link route="admin.products.hosting" icon="bi bi-hdd">
+                            Hosting
+                        </x-admin.sidebar-link>
+                    </x-admin.sidebar-group>
                 @endcan
                 @can('user_management_access')
-                    <li
-                        class="nav-item {{ request()->is('admin/permissions*') || request()->is('admin/roles*') || request()->is('admin/users*') ? 'menu-open' : '' }}">
-                        <a href="#"
-                           class="nav-link {{ request()->is('admin/permissions*') || request()->is('admin/roles*') || request()->is('admin/users*') ? 'active' : '' }}">
-                            <i class="bi bi-people-fill"></i>
-                            <p>
-                                {{ trans('cruds.userManagement.title') }}
-                                <i class="bi bi-chevron-down right"></i>
-                            </p>
-                        </a>
-
-                        <ul class="nav nav-treeview"
-                            style="{{ request()->is('admin/permissions*') || request()->is('admin/roles*') || request()->is('admin/users*') ? 'display: block;' : 'display: none;' }}">
-                            @can('permission_access')
-                                <li class="nav-item">
-                                    <a href="{{ route('admin.permissions.index') }}"
-                                       class="nav-link {{ request()->is('admin/permissions*') ? 'active' : '' }}">
-                                        <i class="bi bi-lock-fill"></i>
-                                        <p>{{ trans('cruds.permission.title') }}</p>
-                                    </a>
-                                </li>
-                            @endcan
-                            @can('role_access')
-                                <li class="nav-item">
-                                    <a href="{{ route('admin.roles.index') }}"
-                                       class="nav-link {{ request()->is('admin/roles*') ? 'active' : '' }}">
-                                        <i class="bi bi-gear-wide-connected"></i>
-                                        <p>{{ trans('cruds.role.title') }}</p>
-                                    </a>
-                                </li>
-                            @endcan
-                            @can('user_access')
-                                <li class="nav-item">
-                                    <a href="{{ route('admin.users.index') }}"
-                                       class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}">
-                                        <i class="bi bi-people"></i>
-                                        <p>{{ trans('cruds.user.title') }}</p>
-                                    </a>
-                                </li>
-                            @endcan
-                        </ul>
-                    </li>
+                    <x-admin.sidebar-group 
+                        :title="trans('cruds.userManagement.title')" 
+                        icon="bi bi-people-fill"
+                        :routes="['admin.permissions.*', 'admin.roles.*', 'admin.users.*']">
+                        @can('permission_access')
+                            <x-admin.sidebar-link route="admin.permissions.index" icon="bi bi-lock-fill">
+                                {{ trans('cruds.permission.title') }}
+                            </x-admin.sidebar-link>
+                        @endcan
+                        @can('role_access')
+                            <x-admin.sidebar-link route="admin.roles.index" icon="bi bi-gear-wide-connected">
+                                {{ trans('cruds.role.title') }}
+                            </x-admin.sidebar-link>
+                        @endcan
+                        @can('user_access')
+                            <x-admin.sidebar-link route="admin.users.index" icon="bi bi-people">
+                                {{ trans('cruds.user.title') }}
+                            </x-admin.sidebar-link>
+                        @endcan
+                    </x-admin.sidebar-group>
                 @endcan
                 @can('audit_log_access')
                     <li class="nav-item">
