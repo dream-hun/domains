@@ -148,7 +148,7 @@
                     ordering: true,
                     info: false,
                     lengthChange: false,
-                    dom: 'Brtip',
+                    dom: 'Bfrtip',
                     autoWidth: false,
                     language: {
                         search: "Search:",
