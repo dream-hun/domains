@@ -97,7 +97,7 @@
 
                     <div class="mb-3">
                         <label class="form-label required">Country</label>
-                        <select name="country_code"
+                        <select name="country_code" id="country_code"
                             class="form-control select2bs4 @error('country_code') is-invalid @enderror" required>
                             <option value="">Select a country</option>
                             @foreach ($countries as $country)
@@ -176,9 +176,10 @@
 @push('scripts')
 <script>
     $(function () {
-        $('.select2bs4').select2({
+        $('#country_code').select2({
             theme: 'bootstrap4',
-            width: '100%'
+            width: '100%',
+            minimumResultsForSearch: -1
         });
     });
 </script>
