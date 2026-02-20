@@ -74,8 +74,8 @@ test('store creates tld pricing and redirects', function (): void {
         'currency_id' => $currency->id,
         'register_price' => 10,
         'renew_price' => 12,
-        'redemption_price' => '',
-        'transfer_price' => '',
+        'redemption_price' => 0,
+        'transfer_price' => 0,
         'is_current' => true,
         'effective_date' => now()->format('Y-m-d'),
     ]);
@@ -118,8 +118,8 @@ test('update modifies tld pricing and redirects', function (): void {
         'currency_id' => $currency->id,
         'register_price' => 6,
         'renew_price' => 7,
-        'redemption_price' => '',
-        'transfer_price' => '',
+        'redemption_price' => 0,
+        'transfer_price' => 0,
         'is_current' => true,
         'effective_date' => $tldPricing->effective_date->format('Y-m-d'),
     ]);
