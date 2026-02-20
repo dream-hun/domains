@@ -69,6 +69,11 @@
                         Domains
                     </x-admin.sidebar-link>
                 @endcan
+                @can('domain_access')
+                    <x-admin.sidebar-link route="admin.domain-price-history.index" icon="bi bi-clock-history">
+                        Domain Price History
+                    </x-admin.sidebar-link>
+                @endcan
                 @can('failed_registration_access')
                     <x-admin.sidebar-link route="admin.failed-registrations.index" icon="bi bi-exclamation-triangle">
                         Failed Registrations
