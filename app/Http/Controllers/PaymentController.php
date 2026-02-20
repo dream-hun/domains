@@ -249,7 +249,9 @@ final class PaymentController extends Controller
             }
         }
 
-        return view('payment.success', ['order' => $order->fresh()]);
+        $order->load('user.address');
+
+        return view('payment.success', ['order' => $order]);
     }
 
     /**
