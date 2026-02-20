@@ -18,3 +18,6 @@ Schedule::command('subscriptions:generate-renewal-invoices --days=7')->daily()->
 
 // Schedule pending jobs processing (every 15 minutes)
 Schedule::command('app:process-pending-jobs --limit=50 --older-than=30')->everyFifteenMinutes();
+
+// Schedule hosting plan price activation (daily at 00:05)
+Schedule::command('hosting-prices:activate-effective')->dailyAt('00:05');
