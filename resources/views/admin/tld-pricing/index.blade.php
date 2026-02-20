@@ -66,16 +66,17 @@
                                 </div>
                             @else
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped table-hover">
+                                    <table
+                                        class="table table-bordered table-striped table-hover datatable-TldPricing w-100">
                                         <thead>
                                             <tr>
-                                                <th>TLD</th>
-                                                <th>Currency</th>
-                                                <th>Register</th>
-                                                <th>Renew</th>
-                                                <th>Current</th>
-                                                <th>Effective date</th>
-                                                <th>Actions</th>
+                                                <th style="width: 12%">TLD</th>
+                                                <th style="width: 10%">Currency</th>
+                                                <th style="width: 12%">Register</th>
+                                                <th style="width: 12%">Renew</th>
+                                                <th style="width: 10%">Current</th>
+                                                <th style="width: 12%">Effective date</th>
+                                                <th style="width: 12%">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -91,7 +92,7 @@
                                                         </span>
                                                     </td>
                                                     <td>{{ $tldPricing->effective_date?->format('Y-m-d') }}</td>
-                                                    <td>
+                                                    <td class="text-nowrap">
                                                         <div class="btn-group">
                                                             <a href="{{ route('admin.tld-pricings.edit', $tldPricing) }}"
                                                                 class="btn btn-warning btn-sm" title="Edit">
@@ -116,14 +117,49 @@
                                 </div>
                             @endif
                         </div>
-                        @if ($tldPricings->hasPages())
-                            <div class="card-footer clearfix">
-                                {{ $tldPricings->links('pagination.adminlte') }}
-                            </div>
-                        @endif
                     </div>
                 </div>
             </div>
         </div>
     </section>
+    @section('styles')
+        @parent
+        <style>
+            .datatable-TldPricing {
+                width: 100% !important;
+                table-layout: fixed;
+            }
+        </style>
+    @endsection
+
+    @section('scripts')
+        @parent
+        <script>
+            $(function() {
+                let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
+                let table = $('.datatable-TldPricing:not(.ajaxTable)').DataTable({
+                    buttons: dtButtons,
+                    columnDefs: [
+                        { targets: 0, orderable: true },
+                        { targets: -1, orderable: false, searchable: false }
+                    ],
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    info: false,
+                    lengthChange: false,
+                    dom: 'Brtip',
+                    autoWidth: false,
+                    language: {
+                        search: "Search:",
+                        searchPlaceholder: "Search TLD pricing..."
+                    }
+                })
+
+                $('a[data-toggle="tab"]').on('shown.bs.tab click', function(e) {
+                    $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+                });
+            })
+        </script>
+    @endsection
 </x-admin-layout>

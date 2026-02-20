@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\Actions\TldPricing;
 
 use App\Models\TldPricing;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 final class ListTldPricingAction
 {
-    public function handle(): LengthAwarePaginator
+    public function handle(): Collection
     {
         return TldPricing::query()
             ->with(['tld', 'currency'])
             ->latest()
-            ->paginate(10);
+            ->get();
     }
 }
