@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CurrencyController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DomainController;
 use App\Http\Controllers\Admin\DomainOperationsController;
+use App\Http\Controllers\Admin\DomainPriceHistoryController;
 use App\Http\Controllers\Admin\FailedDomainRegistrationController;
 use App\Http\Controllers\Admin\FeatureCategoryController;
 use App\Http\Controllers\Admin\HostingCategoryController;
@@ -114,6 +115,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::delete('notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
 
     Route::get('audit-logs', AuditLogController::class)->name('audit-logs.index');
+    Route::get('domain-price-history', [DomainPriceHistoryController::class, 'index'])->name('domain-price-history.index');
     Route::get('products/domains', [ProductController::class, 'domains'])->name('products.domains');
     Route::get('products/hosting', [ProductController::class, 'hosting'])->name('products.hosting');
     Route::get('products/subscriptions/{subscription}', [ProductController::class, 'showSubscription'])->name('products.subscription.show');
