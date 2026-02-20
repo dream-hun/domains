@@ -4,10 +4,15 @@
 <head>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@isset($pageTitle){{ $pageTitle }}@else @yield('page-title') @endisset - {{ config('app.name') }}</title>
-    <!-- AdminLTE 3 + Bootstrap 4 -->
+    <!-- AdminLTE 3 core: Bootstrap 4 is bundled in adminlte.css -->
     <link rel="stylesheet" href="{{ asset('css/adminlte.css') }}">
-    <!-- Select2 (optional plugin) -->
+    <!-- Font Awesome (required by AdminLTE for icons) -->
+    <link rel="stylesheet" href="{{ asset('plugins/fontawesome-free/css/all.min.css') }}">
+    <!-- OverlayScrollbars (required by AdminLTE for sidebar/control-sidebar scroll) -->
+    <link rel="stylesheet" href="{{ asset('plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
+    <!-- Select2 -->
     <link rel="stylesheet" href="{{ asset('plugins/select2/css/select2.css') }}">
     <link rel="stylesheet" href="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.css') }}">
     <link href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet" />
@@ -55,7 +60,10 @@
     <!-- Core: jQuery then Bootstrap (bundle includes Popper for dropdowns/tooltips) -->
     <script src="{{ asset('plugins/jquery/jquery.js') }}"></script>
     <script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.js') }}"></script>
-    <!-- Select2 (theme is CSS-only; no JS file for select2-bootstrap4-theme) -->
+    <!-- OverlayScrollbars (required by AdminLTE for sidebar scroll) -->
+    <script src="{{ asset('plugins/overlayScrollbars/js/OverlayScrollbars.min.js') }}"></script>
+    <script src="{{ asset('plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
+    <!-- Select2 -->
     <script src="{{ asset('plugins/select2/js/select2.full.js') }}"></script>
     <script src="{{ asset('plugins/moment/moment-with-locales.js') }}"></script>
     <script src="{{ asset('plugins/datatables/jquery.dataTables.js') }}"></script>
