@@ -82,7 +82,7 @@
                 @endcan
                 @can('hosting_management_access')
                     <li
-                        class="nav-item {{ request()->is('admin/hosting-categories') || request()->is('admin/hosting-plans') || request()->is('admin/hosting-plan-prices') || request()->is('admin/hosting-promotions*') || request()->is('admin/hosting-features') || request()->is('admin/hosting-plan-features') ? 'menu-open' : '' }}">
+                        class="nav-item {{ request()->is('admin/hosting-categories') || request()->is('admin/hosting-plans') || request()->is('admin/hosting-plan-prices') || request()->is('admin/hosting-plan-price-history') || request()->is('admin/hosting-promotions*') || request()->is('admin/hosting-features') || request()->is('admin/hosting-plan-features') ? 'menu-open' : '' }}">
                         <a href="#" class="nav-link">
                             <i class="bi bi-hdd"></i>
                             <p>
@@ -106,6 +106,13 @@
                                 Hosting Plan Prices
                             </x-admin.sidebar-link>
                         </ul>
+                        @can('hosting_plan_price_access')
+                            <ul class="nav nav-treeview">
+                                <x-admin.sidebar-link route="admin.hosting-plan-price-history.index" icon="bi bi-clock-history">
+                                    Hosting Plan Price History
+                                </x-admin.sidebar-link>
+                            </ul>
+                        @endcan
                         @can('hosting_promotion_access')
                             <ul class="nav nav-treeview">
                                 <x-admin.sidebar-link route="admin.hosting-promotions.index" icon="bi bi-hdd">

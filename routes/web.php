@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\HostingFeatureController;
 use App\Http\Controllers\Admin\HostingPlanController;
 use App\Http\Controllers\Admin\HostingPlanFeatureController;
 use App\Http\Controllers\Admin\HostingPlanPriceController;
+use App\Http\Controllers\Admin\HostingPlanPriceHistoryController;
 use App\Http\Controllers\Admin\HostingPromotionController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PermissionsController;
@@ -116,6 +117,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
 
     Route::get('audit-logs', AuditLogController::class)->name('audit-logs.index');
     Route::get('domain-price-history', [DomainPriceHistoryController::class, 'index'])->name('domain-price-history.index');
+    Route::get('hosting-plan-price-history', [HostingPlanPriceHistoryController::class, 'index'])->name('hosting-plan-price-history.index');
     Route::get('products/domains', [ProductController::class, 'domains'])->name('products.domains');
     Route::get('products/hosting', [ProductController::class, 'hosting'])->name('products.hosting');
     Route::get('products/subscriptions/{subscription}', [ProductController::class, 'showSubscription'])->name('products.subscription.show');
