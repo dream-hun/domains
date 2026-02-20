@@ -7,6 +7,9 @@
     <title>@isset($pageTitle){{ $pageTitle }}@else @yield('page-title') @endisset - {{ config('app.name') }}</title>
     <link rel="stylesheet" href="{{ asset('css/adminlte.min.css') }}">
     <link href="{{ asset('plugins/select2/css/select2.min.css') }}" rel="stylesheet" />
+     <!-- Select2 -->
+  <link rel="stylesheet" href="{{ asset('plugins/select2/css/select2.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
     <link href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet" />
     <link href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}" rel="stylesheet">
     <link href="{{ asset('plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}" rel="stylesheet">
@@ -50,8 +53,9 @@
     </div>
 
     <script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="{{ asset('plugins/bootstrap/js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('plugins/select2/js/select2.min.js') }}"></script>
+    <script src="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.min.js') }}"></script>
     <script src="{{ asset('plugins/moment/moment.min.js') }}"></script>
     <script src="{{ asset('plugins/datatables/jquery.dataTables.js') }}"></script>
     <script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
