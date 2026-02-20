@@ -27,7 +27,7 @@ final class UpdateContactRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'contact_type' => ['required', new Enum(ContactType::class)],
+            'contact_type' => ['nullable', new Enum(ContactType::class)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'title' => ['nullable', 'string', 'max:255'],
@@ -54,7 +54,6 @@ final class UpdateContactRequest extends FormRequest
     {
         return [
             'contact_type.enum' => 'The selected contact type is invalid.',
-            'contact_type.required' => 'Please select a contact type.',
             'first_name.required' => 'First name is required.',
             'last_name.required' => 'Last name is required.',
             'address_one.required' => 'Address line 1 is required.',
@@ -68,5 +67,15 @@ final class UpdateContactRequest extends FormRequest
             'email.required' => 'Email address is required.',
             'email.email' => 'Please enter a valid email address.',
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->contact_type === '') {
+            $this->merge(['contact_type' => null]);
+        }
     }
 }

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->uuid();
             $table->string('contact_id')->nullable();
-            $table->string('contact_type')->default('registrant');
+            $table->string('contact_type')->nullable();
             $table->string('first_name');
             $table->string('last_name');
             $table->string('title')->nullable();
