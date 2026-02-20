@@ -171,16 +171,16 @@
             </div>
         </div>
     </div>
-</x-admin-layout>
 
-@push('scripts')
-<script>
-    $(function () {
-        $('#country_code').select2({
-            theme: 'bootstrap4',
-            width: '100%',
-            minimumResultsForSearch: -1
+    @push('scripts')
+    <script>
+        $(function () {
+            $('#country_code').select2({
+                theme: 'bootstrap4',
+                width: '100%',
+                placeholder: 'Select a country'
+            });
         });
-    });
-</script>
-@endpush
+    </script>
+    @endpush
+</x-admin-layout>
