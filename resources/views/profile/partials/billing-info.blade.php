@@ -1,4 +1,4 @@
-<div class="card shadow-md" style=" margin-left: 1.2rem; margin-right:1.2rem;">
+<div class="card shadow-md" style="margin-left: 1.2rem; margin-right: 1.2rem;">
     <div class="py-4">
          @if (session('billing_status') === 'success')
                 <div class="alert alert-success">
@@ -99,7 +99,7 @@
             </div>
             <div class="row">
                 <div class="form-group col-6">
-                    <label for="postal_code" class="form-label">Postal Code </label>
+                    <label for="postal_code" class="form-label">Postal Code</label>
                     <input id="postal_code" type="text" name="postal_code"
                            class="form-control @error('postal_code') is-invalid @enderror"
                            value="{{ old('postal_code', $user->address?->postal_code) }}">
@@ -108,27 +108,57 @@
                     @enderror
                 </div>
                 <div class="form-group col-6">
-                    <label class="form-label required">Country</label>
-                    <select name="country_code"
-                            class="form-control py-2 @error('country_code') is-invalid @enderror" required>
+                    <label for="country_code" class="form-label required">Country</label>
+                    <select name="country_code" id="country_code"
+                            class="form-control select2bs4 py-2 @error('country_code') is-invalid @enderror" required>
                         <option value="">Select a country</option>
                         @foreach ($countries as $country)
-                            <option value="{{ $country->iso_alpha2 }}"
-                                {{ old('country_code', $user->address?->country_code) == $country->iso_alpha2 ? 'selected' : '' }}>
-                                {{ $country->name }} ({{ $country->iso_alpha2 }})
+                            <option value="{{ $country->iso_code }}"
+                                {{ old('country_code', $user->address?->country_code) == $country->iso_code ? 'selected' : '' }}>
+                                {{ $country->name }}
                             </option>
                         @endforeach
                     </select>
                     @error('country_code')
-                    <div class="invalid-feedback">{{ $message }}</div>
+                    <div class="text-danger">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
 
+            <div class="form-group">
+                <label for="preferred_currency" class="form-label">Preferred Currency</label>
+                <select name="preferred_currency" id="preferred_currency"
+                        class="form-control select2bs4 py-2 @error('preferred_currency') is-invalid @enderror">
+                    <option value="">Select a currency</option>
+                    @foreach ($currencies as $currency)
+                        <option value="{{ $currency->code }}"
+                            {{ old('preferred_currency', $user->address?->preferred_currency) == $currency->code ? 'selected' : '' }}>
+                            {{ $currency->code }} - {{ $currency->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('preferred_currency')
+                <div class="text-danger">{{ $message }}</div>
+                @enderror
+                <small class="form-text text-muted">
+                    This currency will be used for your invoices.
+                </small>
+            </div>
+
             <div class="flex items-center gap-4">
                 <x-primary-button>{{ __('Update Billing') }}</x-primary-button>
-                
-               
+            </div>
         </form>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    $(function () {
+        $('.select2bs4').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+@endpush

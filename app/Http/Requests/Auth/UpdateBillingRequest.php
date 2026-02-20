@@ -31,7 +31,7 @@ final class UpdateBillingRequest extends FormRequest
             'state' => ['required', 'string', 'max:255'],
             'postal_code' => ['nullable', 'string', 'max:255'],
             'country_code' => ['required', 'string', 'max:255'],
-
+            'preferred_currency' => ['nullable', 'string', 'size:3'],
         ];
     }
 

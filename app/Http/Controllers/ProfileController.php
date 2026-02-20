@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Auth\UpdateBillingRequest;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Country;
+use App\Models\Currency;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,9 +23,12 @@ final class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $countries = Country::query()->select(['iso_code', 'name'])->get();
+        $currencies = Currency::getActiveCurrencies();
 
         return view('profile.edit', [
-            'user' => $request->user(), 'countries' => $countries,
+            'user' => $request->user(),
+            'countries' => $countries,
+            'currencies' => $currencies,
         ]);
     }
 

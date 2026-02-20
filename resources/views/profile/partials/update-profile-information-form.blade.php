@@ -1,5 +1,5 @@
 @php use Illuminate\Contracts\Auth\MustVerifyEmail; @endphp
-<div class="card mt-4" style=" margin-left: 1.2rem; margin-right:1.2rem;">
+<div class="card shadow-md mt-4" style="margin-left: 1.2rem; margin-right: 1.2rem;">
     <div class="card-header" style="border: none !important;">
 
         <h4 class="h4">
