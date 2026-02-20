@@ -113,8 +113,15 @@ test('update modifies tld pricing and redirects', function (): void {
         'effective_date' => now(),
     ]);
 
+    $tld = Tld::query()->create([
+        'uuid' => (string) Str::uuid(),
+        'name' => '.net',
+        'type' => TldType::International,
+        'status' => TldStatus::Active,
+    ]);
+
     $response = $this->actingAs($user)->put(route('admin.tld-pricings.update', $tldPricing), [
-        'tld_id' => '',
+        'tld_id' => $tld->id,
         'currency_id' => $currency->id,
         'register_price' => 6,
         'renew_price' => 7,

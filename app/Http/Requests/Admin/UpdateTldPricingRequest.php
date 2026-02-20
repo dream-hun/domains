@@ -20,7 +20,7 @@ final class UpdateTldPricingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tld_id' => ['nullable', 'integer', 'exists:tld,id'],
+            'tld_id' => ['required', 'integer', 'exists:tld,id'],
             'currency_id' => ['required', 'integer', 'exists:currencies,id'],
             'register_price' => ['required', 'integer', 'min:0'],
             'renew_price' => ['required', 'integer', 'min:0'],

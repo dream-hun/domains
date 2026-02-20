@@ -14,9 +14,9 @@
         @endif
 
         <div class="form-group">
-            <label for="tld_id">TLD</label>
-            <select name="tld_id" id="tld_id" class="form-control select2bs4 @error('tld_id') is-invalid @enderror" data-placeholder="— None —">
-                <option value="">— None —</option>
+            <label for="tld_id">TLD <span class="text-danger">*</span></label>
+            <select name="tld_id" id="tld_id" class="form-control select2bs4 @error('tld_id') is-invalid @enderror" data-placeholder="Select TLD" required>
+                <option value="">Select TLD</option>
                 @foreach ($tlds as $tld)
                     <option value="{{ $tld->id }}"
                         {{ old('tld_id', $tldPricing?->tld_id) == $tld->id ? 'selected' : '' }}>
@@ -27,9 +27,6 @@
             @error('tld_id')
                 <span class="invalid-feedback">{{ $message }}</span>
             @enderror
-            @if (!$tldPricing)
-                <small class="form-text text-muted">Leave empty for global pricing.</small>
-            @endif
         </div>
 
         <div class="form-group">
