@@ -26,19 +26,59 @@ new class extends Component
     {
         $this->selectedCurrency = $currency;
     }
+
+    public function updatedSelectedCurrency(): void
+    {
+        $this->dispatch('hosting-slider-updated');
+    }
 };
 ?>
 
-<div>
-<div class="rts-hosting-type">
+<div wire:key="hosting-option-{{ $selectedCurrency }}">
+<div class="rts-hosting-type"
+     x-data="{ 
+         swiperInstance: null,
+         initSwiper() {
+             if (this.swiperInstance) {
+                 this.swiperInstance.destroy(true, true);
+                 this.swiperInstance = null;
+             }
+             const sliderEl = this.$el.querySelector('.rts-hosting-type__slider');
+             if (sliderEl) {
+                 this.swiperInstance = new Swiper(sliderEl, {
+                     slidesPerView: 4,
+                     spaceBetween: 30,
+                     speed: 1000,
+                     navigation: {
+                         nextEl: this.$el.querySelector('.rts-next'),
+                         prevEl: this.$el.querySelector('.rts-prev'),
+                     },
+                     loop: true,
+                     breakpoints: {
+                         1200: { slidesPerView: 4 },
+                         992: { slidesPerView: 3 },
+                         768: { slidesPerView: 2 },
+                         600: { slidesPerView: 2 },
+                         0: { slidesPerView: 1 }
+                     },
+                 });
+             }
+         }
+     }"
+     x-init="
+         initSwiper();
+         $wire.on('hosting-slider-updated', () => {
+             setTimeout(() => initSwiper(), 150);
+         });
+     ">
         <div class="container">
             <div class="row">
                 <div class="col-12">
                     <div class="rts-hosting-type__section">
-                        <h3 class="title" data-sal="slide-down" data-sal-delay="300" data-sal-duration="800">
+                        <h3 class="title">
                             Multiple
                             Hosting Options</h3>
-                        <p data-sal="slide-down" data-sal-delay="400" data-sal-duration="800">No matter your hosting
+                        <p>No matter your hosting
                             requirements, our platform will fit your needs.</p>
                         <div class="rts-slider__btn hosting-slider">
                             <div class="slide__btn rts-prev"><i class="fa-light fa-arrow-left"></i></div>
