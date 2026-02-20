@@ -31,7 +31,7 @@ class HostingCategory extends Model
      */
     public static function getActiveCategories(): Collection
     {
-        return Cache::remember('active_hosting_categories', 3600, fn () => self::query()->where('status', 'active')->orderBy('name')->get());
+        return Cache::remember('active_hosting_categories', 3600, fn () => self::query()->where('status', CategoryStatus::Active)->orderBy('name')->get());
     }
 
     public function getRouteKeyName(): string
@@ -67,6 +67,14 @@ class HostingCategory extends Model
         self::creating(function ($category): void {
             $category->uuid = (string) Str::uuid();
             $category->slug = Str::slug($category->name);
+        });
+
+        self::saved(function (): void {
+            Cache::forget('active_hosting_categories');
+        });
+
+        self::deleted(function (): void {
+            Cache::forget('active_hosting_categories');
         });
     }
 }

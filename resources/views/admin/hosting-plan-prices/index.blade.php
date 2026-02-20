@@ -211,11 +211,12 @@
         @parent
         <script>
             $(function() {
+                // Initialize select2 for filter dropdowns
                 $('.select2bs4').select2({
                     theme: 'bootstrap4',
                     width: '100%'
                 });
-
+            
                 const filterForm = $('#category_id').closest('form');
 
                 // Clear plan filter when category changes, then submit

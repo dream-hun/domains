@@ -35,8 +35,7 @@
                                 class="form-inline float-right">
                                 <div class="form-group mr-2">
                                     <label for="filter_category" class="mr-2">Category:</label>
-                                    <select name="category_id" id="filter_category" class="form-control select2bs4"
-                                        onchange="this.form.submit()">
+                                    <select name="category_id" id="filter_category" class="form-control select2bs4">
                                         <option value="">All Categories</option>
                                         @foreach ($categories as $category)
                                             <option value="{{ $category->id }}"
@@ -48,8 +47,7 @@
                                 </div>
                                 <div class="form-group mr-2">
                                     <label for="filter_plan" class="mr-2">Plan:</label>
-                                    <select name="plan_id" id="filter_plan" class="form-control select2bs4"
-                                        onchange="this.form.submit()">
+                                    <select name="plan_id" id="filter_plan" class="form-control select2bs4">
                                         <option value="">All Plans</option>
                                         @foreach ($plans as $plan)
                                             <option value="{{ $plan['id'] }}"
@@ -171,7 +169,7 @@
                         </div>
                     </div>
                     <div class="d-flex justify-content-center mt-3 float-right">
-                        {{ $promotions->links('vendor.pagination.adminlte') }}
+                        {{ $promotions->links('pagination.adminlte') }}
                     </div>
                 </div>
             </div>
@@ -198,9 +196,23 @@
         @parent
         <script>
             $(function() {
+                // Initialize select2 for filter dropdowns
                 $('.select2bs4').select2({
                     theme: 'bootstrap4',
                     width: '100%'
+                });
+
+                const filterForm = $('#filter_category').closest('form');
+
+                // Clear plan filter when category changes, then submit
+                $('#filter_category').on('change', function() {
+                    $('#filter_plan').val('');
+                    filterForm.submit();
+                });
+
+                // Submit form when plan changes
+                $('#filter_plan').on('change', function() {
+                    filterForm.submit();
                 });
 
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons);

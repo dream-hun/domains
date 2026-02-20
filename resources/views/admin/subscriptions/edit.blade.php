@@ -178,15 +178,17 @@
             </div>
         </div>
     </section>
-</x-admin-layout>
 
-@push('scripts')
-<script>
-    $(function () {
-        $('.select2bs4').select2({
-            theme: 'bootstrap4',
-            width: '100%'
-        });
-    });
-</script>
-@endpush
+    @section('scripts')
+        @parent
+        <script>
+            $(function () {
+                // Initialize select2 for form dropdowns
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+            });
+        </script>
+    @endsection
+</x-admin-layout>

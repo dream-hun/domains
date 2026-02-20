@@ -1,22 +1,23 @@
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    $(function () {
         $('.select2bs4').select2({
             theme: 'bootstrap4',
             width: '100%'
         });
 
-        const categorySelect = document.getElementById('hosting_category_id');
-        const planSelect = document.getElementById('hosting_plan_id');
+        const categorySelect = $('#hosting_category_id');
+        const planSelect = $('#hosting_plan_id');
 
-        if (!categorySelect || !planSelect) {
+        if (!categorySelect.length || !planSelect.length) {
             return;
         }
 
-        const planOptions = Array.from(planSelect.options).filter(option => option.value !== '');
+        const planSelectElement = planSelect[0];
+        const planOptions = Array.from(planSelectElement.options).filter(option => option.value !== '');
 
         const filterPlans = function (categoryId, preserveSelection = true) {
             const hasCategory = Boolean(categoryId);
-            planSelect.disabled = !hasCategory;
+            planSelect.prop('disabled', !hasCategory);
 
             planOptions.forEach(option => {
                 const matchesCategory = hasCategory && option.dataset.category === categoryId;
@@ -28,20 +29,24 @@
             });
 
             if (!hasCategory) {
-                planSelect.value = '';
+                planSelect.val('');
                 planOptions.forEach(option => option.hidden = true);
+                planSelect.trigger('change.select2');
                 return;
             }
 
             if (!preserveSelection) {
-                planSelect.value = '';
+                planSelect.val('');
             }
+
+            // Trigger select2 update to reflect filtered options
+            planSelect.trigger('change.select2');
         };
 
-        filterPlans(categorySelect.value || '', true);
+        filterPlans(categorySelect.val() || '', true);
 
-        categorySelect.addEventListener('change', function (event) {
-            filterPlans(event.target.value, false);
+        categorySelect.on('change', function () {
+            filterPlans($(this).val(), false);
         });
     });
 </script>

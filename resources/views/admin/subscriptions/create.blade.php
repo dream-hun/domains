@@ -234,7 +234,8 @@
         </div>
     </section>
 
-    @push('styles')
+    @section('styles')
+        @parent
         <style>
             /* Form Alignment */
             .form-group {
@@ -258,38 +259,40 @@
                 font-size: 0.875rem;
             }
         </style>
-    @endpush
+    @endsection
 
-    @push('scripts')
+    @section('scripts')
+        @parent
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
+            $(function () {
+                // Initialize select2 for form dropdowns
                 $('.select2bs4').select2({
                     theme: 'bootstrap4',
                     width: '100%'
                 });
 
-                const billingCycleSelect = document.getElementById('billing_cycle');
-                const startsAtInput = document.getElementById('starts_at');
-                const expiresAtInput = document.getElementById('expires_at');
+                const billingCycleSelect = $('#billing_cycle');
+                const startsAtInput = $('#starts_at');
+                const expiresAtInput = $('#expires_at');
 
                 function updateExpiryDate() {
-                    if (startsAtInput.value && billingCycleSelect.value) {
-                        const startDate = new Date(startsAtInput.value);
+                    if (startsAtInput.val() && billingCycleSelect.val()) {
+                        const startDate = new Date(startsAtInput.val());
                         const expiryDate = new Date(startDate);
 
-                        if (billingCycleSelect.value === 'annually') {
+                        if (billingCycleSelect.val() === 'annually') {
                             expiryDate.setFullYear(expiryDate.getFullYear() + 1);
                         } else {
                             expiryDate.setMonth(expiryDate.getMonth() + 1);
                         }
 
-                        expiresAtInput.value = expiryDate.toISOString().split('T')[0];
+                        expiresAtInput.val(expiryDate.toISOString().split('T')[0]);
                     }
                 }
 
-                billingCycleSelect.addEventListener('change', updateExpiryDate);
-                startsAtInput.addEventListener('change', updateExpiryDate);
+                billingCycleSelect.on('change', updateExpiryDate);
+                startsAtInput.on('change', updateExpiryDate);
             });
         </script>
-    @endpush
+    @endsection
 </x-admin-layout>

@@ -70,15 +70,10 @@
                     </x-admin.sidebar-link>
                 @endcan
                 @can('failed_registration_access')
-                    <li class="nav-item">
-                        <a href="{{ route('admin.failed-registrations.index') }}"
-                           class="nav-link {{ request()->is('admin/failed-registrations*') ? 'active' : '' }}">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <p>
-                                Failed Registrations
-                            </p>
-                        </a>
-                    </li>
+                    <x-admin.sidebar-link route="admin.failed-registrations.index" icon="bi bi-exclamation-triangle">
+                        Failed Registrations
+
+                    </x-admin.sidebar-link>
                 @endcan
                 @can('hosting_management_access')
                     <li
@@ -90,52 +85,34 @@
                             </p>
                             <i class="bi bi-chevron-down right"></i>
                         </a>
+
                         <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.hosting-categories.index') }}"
-                                   class="nav-link {{ request()->is('admin/hosting-categories*') ? 'active' : '' }}">
-                                    <i class="bi bi-hdd"></i>
-                                    <p>Hosting Categories</p>
-                                </a>
-                            </li>
+                            <x-admin.sidebar-link route="admin.hosting-categories.index" icon="bi bi-hdd">
+                                Hosting Categories
+                            </x-admin.sidebar-link>
                         </ul>
                         <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.hosting-plans.index') }}"
-                                   class="nav-link {{ request()->is('admin/hosting-plans*') ? 'active' : '' }}">
-                                    <i class="bi bi-hdd"></i>
-                                    <p>Hosting Plans</p>
-                                </a>
-                            </li>
+                            <x-admin.sidebar-link route="admin.hosting-plans.index" icon="bi bi-hdd">
+                                Hosting Plans
+                            </x-admin.sidebar-link>
                         </ul>
                         <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.hosting-plan-prices.index') }}"
-                                   class="nav-link {{ request()->is('admin/hosting-plan-prices*') ? 'active' : '' }}">
-                                    <i class="bi bi-hdd"></i>
-                                    <p>Hosting Plan Prices</p>
-                                </a>
-                            </li>
+                            <x-admin.sidebar-link route="admin.hosting-plan-prices.index" icon="bi bi-hdd">
+                                Hosting Plan Prices
+                            </x-admin.sidebar-link>
                         </ul>
                         @can('hosting_promotion_access')
                             <ul class="nav nav-treeview">
-                                <li class="nav-item">
-                                    <a href="{{ route('admin.hosting-promotions.index') }}"
-                                       class="nav-link {{ request()->is('admin/hosting-promotions*') ? 'active' : '' }}">
-                                        <i class="bi bi-hdd"></i>
-                                        <p>Hosting Promotions</p>
-                                    </a>
-                                </li>
+                                <x-admin.sidebar-link route="admin.hosting-promotions.index" icon="bi bi-hdd">
+                                    <p>Hosting Promotions</p>
+                                </x-admin.sidebar-link>
                             </ul>
                         @endcan
                         <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.hosting-features.index') }}"
-                                   class="nav-link {{ request()->is('admin/hosting-features*') ? 'active' : '' }}">
-                                    <i class="bi bi-hdd"></i>
-                                    <p>Hosting Features</p>
-                                </a>
-                            </li>
+                            <x-admin.sidebar-link route="admin.hosting-features.index" icon="bi bi-hdd">
+                                Hosting Features
+                            </x-admin.sidebar-link>
+
                         </ul>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
