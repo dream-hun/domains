@@ -19,13 +19,25 @@ final class CurrencySwitcher extends Component
 
     public function mount(GeolocationService $geolocationService): void
     {
+        $userPreference = $this->getCurrencyFromUserPreference();
+
+        if ($userPreference !== null) {
+            $this->setCurrency($userPreference);
+
+            Log::info('Using authenticated user preferred currency', [
+                'currency' => $userPreference,
+            ]);
+
+            return;
+        }
+
         $sessionCurrency = session('selected_currency');
 
         if (is_string($sessionCurrency) && $this->isValidCurrency($sessionCurrency)) {
             $this->setCurrency($sessionCurrency);
 
             Log::info('Using existing session currency', [
-                'currency' => $this->selectedCurrency,
+                'currency' => $sessionCurrency,
             ]);
 
             return;
@@ -35,9 +47,7 @@ final class CurrencySwitcher extends Component
             session()->forget('selected_currency');
         }
 
-        $currencyCode = $this->getCurrencyFromUserPreference()
-            ?? $this->getCurrencyFromGeolocation($geolocationService);
-
+        $currencyCode = $this->getCurrencyFromGeolocation($geolocationService);
         $this->setCurrency($currencyCode);
     }
 
