@@ -15,7 +15,7 @@
 
         <div class="form-group">
             <label for="tld_id">TLD</label>
-            <select name="tld_id" id="tld_id" class="form-control select2-tld @error('tld_id') is-invalid @enderror" data-placeholder="— None —">
+            <select name="tld_id" id="tld_id" class="form-control select2 @error('tld_id') is-invalid @enderror" data-placeholder="— None —">
                 <option value="">— None —</option>
                 @foreach ($tlds as $tld)
                     <option value="{{ $tld->id }}"
@@ -34,7 +34,7 @@
 
         <div class="form-group">
             <label for="currency_id">Currency <span class="text-danger">*</span></label>
-            <select name="currency_id" id="currency_id" class="form-control select2-currency @error('currency_id') is-invalid @enderror" required
+            <select name="currency_id" id="currency_id" class="form-control select2 @error('currency_id') is-invalid @enderror" required
                 data-placeholder="Select currency">
                 @if (!$tldPricing)
                     <option value="">Select currency</option>
@@ -109,7 +109,7 @@
 
         <div class="form-group">
             <label for="is_current">Current <span class="text-danger">*</span></label>
-            <select name="is_current" id="is_current" class="form-control select2-current @error('is_current') is-invalid @enderror" required>
+            <select name="is_current" id="is_current" class="form-control select2 @error('is_current') is-invalid @enderror" required>
                 <option value="1" {{ old('is_current', $tldPricing?->is_current ?? true) ? 'selected' : '' }}>Yes</option>
                 <option value="0" {{ !old('is_current', $tldPricing?->is_current ?? true) ? 'selected' : '' }}>No</option>
             </select>
@@ -154,18 +154,17 @@
 @push('scripts')
 <script>
     $(function () {
+        // Select2 minimal style: form-control select2, width 100%
         $('#tld_id').select2({
             placeholder: '— None —',
             allowClear: true,
             width: '100%'
         });
-
         $('#currency_id').select2({
             placeholder: 'Select currency',
             allowClear: false,
             width: '100%'
         });
-
         $('#is_current').select2({
             minimumResultsForSearch: -1,
             width: '100%'
