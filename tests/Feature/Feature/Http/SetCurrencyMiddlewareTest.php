@@ -131,7 +131,9 @@ it('prioritizes query parameter over user preferred currency', function (): void
     expect(session('selected_currency'))->toBe('EUR');
 });
 
-it('prioritizes session currency over user preferred currency', function (): void {
+it('prioritizes user preferred currency over session currency', function (): void {
+    config(['app.local_default_country' => 'US']);
+
     $user = User::factory()->create();
     Address::factory()->create([
         'user_id' => $user->id,
@@ -145,7 +147,7 @@ it('prioritizes session currency over user preferred currency', function (): voi
         fn ($req) => response()->make('OK')
     );
 
-    expect(session('selected_currency'))->toBe('USD');
+    expect(session('selected_currency'))->toBe('RWF');
 });
 
 it('prioritizes user preferred currency over geolocation', function (): void {
@@ -163,4 +165,30 @@ it('prioritizes user preferred currency over geolocation', function (): void {
     );
 
     expect(session('selected_currency'))->toBe('EUR');
+});
+
+it('updates currency when geolocation changes and session currency does not match', function (): void {
+    config(['app.local_default_country' => 'US']);
+
+    Session::put('selected_currency', 'RWF');
+
+    createMiddleware()->handle(
+        createRequestWithUser(),
+        fn ($req) => response()->make('OK')
+    );
+
+    expect(session('selected_currency'))->toBe('USD');
+});
+
+it('keeps session currency when it matches geolocation', function (): void {
+    config(['app.local_default_country' => 'RW']);
+
+    Session::put('selected_currency', 'RWF');
+
+    createMiddleware()->handle(
+        createRequestWithUser(),
+        fn ($req) => response()->make('OK')
+    );
+
+    expect(session('selected_currency'))->toBe('RWF');
 });

@@ -25,13 +25,23 @@ final readonly class SetCurrency
     {
         if ($request->has('currency')) {
             $this->setCurrencyIfValid($request->get('currency'));
+
+            return $next($request);
         }
 
-        if (! session()->has('selected_currency')) {
-            $currencyCode = $this->getCurrencyFromUserPreference($request)
-                ?? $this->getCurrencyFromGeolocation();
+        $userPreference = $this->getCurrencyFromUserPreference($request);
 
-            $this->setCurrencyIfValid($currencyCode);
+        if ($userPreference !== null) {
+            $this->setCurrencyIfValid($userPreference);
+
+            return $next($request);
+        }
+
+        $geolocationCurrency = $this->getCurrencyFromGeolocation();
+        $sessionCurrency = session('selected_currency');
+
+        if ($sessionCurrency === null || $sessionCurrency !== $geolocationCurrency) {
+            $this->setCurrencyIfValid($geolocationCurrency);
         }
 
         return $next($request);
