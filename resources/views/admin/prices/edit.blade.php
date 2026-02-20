@@ -521,6 +521,11 @@ $baseCurrency = $price->getBaseCurrency();
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            $('.select2bs4').select2({
+                theme: 'bootstrap4',
+                width: '100%'
+            });
+
             const priceFields = ['register_price', 'renewal_price', 'transfer_price', 'redemption_price'];
             const reasonField = document.getElementById('reason');
             const reasonRequiredIndicator = document.getElementById('reason-required-indicator');

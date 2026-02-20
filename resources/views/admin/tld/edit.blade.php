@@ -79,4 +79,15 @@
         </div>
     </section>
 
+    @section('scripts')
+        @parent
+        <script>
+            $(function () {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                })
+            })
+        </script>
+    @endsection
 </x-admin-layout>

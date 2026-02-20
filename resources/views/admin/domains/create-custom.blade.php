@@ -537,6 +537,11 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+
                 // Subscription option toggle
                 const subscriptionNone = document.getElementById('subscription_none');
                 const subscriptionCreate = document.getElementById('subscription_create');

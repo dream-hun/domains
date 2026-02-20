@@ -173,6 +173,11 @@
         @parent
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+
                 const categorySelect = document.getElementById('hosting_category_id')
                 const planSelect = document.getElementById('hosting_plan_id')
 
