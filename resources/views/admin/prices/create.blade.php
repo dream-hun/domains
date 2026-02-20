@@ -42,7 +42,7 @@
                             <label for="currency">Currency <span class="text-danger">*</span></label>
                             <select name="currency"
                                     id="currency"
-                                    class="form-control @error('currency') is-invalid @enderror"
+                                    class="form-control select2bs4 @error('currency') is-invalid @enderror"
                                     required>
                                 <option value="USD" {{ old('currency', 'USD') === 'USD' ? 'selected' : '' }}>USD</option>
                                 <option value="RWF" {{ old('currency') === 'RWF' ? 'selected' : '' }}>RWF</option>
@@ -55,7 +55,7 @@
                             <label for="status">Status <span class="text-danger">*</span></label>
                             <select name="status"
                                     id="status"
-                                    class="form-control @error('status') is-invalid @enderror">
+                                    class="form-control select2bs4 @error('status') is-invalid @enderror">
                                 <option
                                     value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>
                                     Active
@@ -166,3 +166,14 @@
     </section>
 
 </x-admin-layout>
+
+@push('scripts')
+<script>
+    $(function () {
+        $('.select2bs4').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+@endpush

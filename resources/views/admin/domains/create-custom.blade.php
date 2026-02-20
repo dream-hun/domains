@@ -50,7 +50,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="user_id" class="required">Domain Owner</label>
-                                    <select class="form-control select2-custom @error('user_id') is-invalid @enderror"
+                                    <select class="form-control select2bs4 @error('user_id') is-invalid @enderror"
                                             id="user_id"
                                             name="user_id"
                                             required>
@@ -95,7 +95,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="registrant_contact_id" class="required">Registrant Contact</label>
-                                    <select class="form-control select2-custom @error('registrant_contact_id') is-invalid @enderror"
+                                    <select class="form-control select2bs4 @error('registrant_contact_id') is-invalid @enderror"
                                             id="registrant_contact_id"
                                             name="registrant_contact_id"
                                             required>
@@ -115,7 +115,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="admin_contact_id" class="required">Admin Contact</label>
-                                    <select class="form-control select2-custom @error('admin_contact_id') is-invalid @enderror"
+                                    <select class="form-control select2bs4 @error('admin_contact_id') is-invalid @enderror"
                                             id="admin_contact_id"
                                             name="admin_contact_id"
                                             required>
@@ -137,7 +137,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="technical_contact_id" class="required">Technical Contact</label>
-                                    <select class="form-control select2-custom @error('technical_contact_id') is-invalid @enderror"
+                                    <select class="form-control select2bs4 @error('technical_contact_id') is-invalid @enderror"
                                             id="technical_contact_id"
                                             name="technical_contact_id"
                                             required>
@@ -157,7 +157,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="billing_contact_id" class="required">Billing Contact</label>
-                                    <select class="form-control select2-custom @error('billing_contact_id') is-invalid @enderror"
+                                    <select class="form-control select2bs4 @error('billing_contact_id') is-invalid @enderror"
                                             id="billing_contact_id"
                                             name="billing_contact_id"
                                             required>
@@ -273,7 +273,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="domain_custom_price_currency">Currency</label>
-                                    <select class="form-control @error('domain_custom_price_currency') is-invalid @enderror"
+                                    <select class="form-control select2bs4 @error('domain_custom_price_currency') is-invalid @enderror"
                                             id="domain_custom_price_currency"
                                             name="domain_custom_price_currency">
                                         <option value="">Select currency...</option>
@@ -348,7 +348,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="hosting_plan_id">Hosting Plan</label>
-                                        <select class="form-control @error('hosting_plan_id') is-invalid @enderror"
+                                        <select class="form-control select2bs4 @error('hosting_plan_id') is-invalid @enderror"
                                                 id="hosting_plan_id"
                                                 name="hosting_plan_id">
                                             <option value="">Select a hosting plan...</option>
@@ -367,7 +367,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="billing_cycle">Billing Cycle</label>
-                                        <select class="form-control @error('billing_cycle') is-invalid @enderror"
+                                        <select class="form-control select2bs4 @error('billing_cycle') is-invalid @enderror"
                                                 id="billing_cycle"
                                                 name="billing_cycle">
                                             <option value="monthly" @selected(old('billing_cycle') === 'monthly')>Monthly</option>
@@ -452,7 +452,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="hosting_custom_price_currency">Currency</label>
-                                        <select class="form-control @error('hosting_custom_price_currency') is-invalid @enderror"
+                                        <select class="form-control select2bs4 @error('hosting_custom_price_currency') is-invalid @enderror"
                                                 id="hosting_custom_price_currency"
                                                 name="hosting_custom_price_currency">
                                             <option value="">Select currency...</option>
@@ -496,7 +496,7 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="existing_subscription_id">Select Subscription</label>
-                                        <select class="form-control select2-custom @error('existing_subscription_id') is-invalid @enderror"
+                                        <select class="form-control select2bs4 @error('existing_subscription_id') is-invalid @enderror"
                                                 id="existing_subscription_id"
                                                 name="existing_subscription_id">
                                             <option value="">Select a subscription...</option>
@@ -534,48 +534,12 @@
         </div>
     </section>
 
-    @push('styles')
-        <style>
-            .select2-custom + .select2-container {
-                width: 100% !important;
-            }
-
-            .select2-custom + .select2-container .select2-selection--single {
-                height: calc(2.25rem + 2px);
-                border: 1px solid #ced4da;
-                border-radius: 0.25rem;
-            }
-
-            .select2-custom + .select2-container.select2-container--focus .select2-selection--single,
-            .select2-custom + .select2-container.select2-container--open .select2-selection--single {
-                border-color: #80bdff;
-                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-            }
-
-            .select2-custom + .select2-container .select2-dropdown {
-                border: 1px solid #ced4da;
-                border-radius: 0.25rem;
-            }
-
-            .select2-custom + .select2-container .select2-results__option--highlighted {
-                background-color: #007bff;
-                color: #fff;
-            }
-        </style>
-    @endpush
-
     @push('scripts')
         <script>
             $(document).ready(function() {
-                // Initialize Select2 for all select2-custom elements
-                $('.select2-custom').each(function() {
-                    if (!$(this).hasClass('select2-hidden-accessible')) {
-                        $(this).select2({
-                            placeholder: $(this).find('option[value=""]').text() || 'Select an option...',
-                            allowClear: true,
-                            width: '100%'
-                        });
-                    }
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
                 });
 
                 // Subscription option toggle
@@ -591,24 +555,20 @@
                     if (subscriptionCreate && subscriptionCreate.checked) {
                         createSection.style.display = 'block';
                         linkSection.style.display = 'none';
-                        // Initialize select2 for elements in the newly shown section
                         setTimeout(function() {
-                            $('#existing_subscription_id').select2({
-                                placeholder: 'Select a subscription...',
-                                allowClear: true,
-                                width: '100%'
+                            $('#hosting_plan_id, #billing_cycle').each(function() {
+                                if ($(this).hasClass('select2-hidden-accessible')) $(this).select2('destroy');
                             });
+                            $('#hosting_plan_id, #billing_cycle').select2({ theme: 'bootstrap4', width: '100%' });
                         }, 100);
                     } else if (subscriptionLink && subscriptionLink.checked) {
                         createSection.style.display = 'none';
                         linkSection.style.display = 'block';
-                        // Initialize select2 for elements in the newly shown section
                         setTimeout(function() {
-                            $('#existing_subscription_id').select2({
-                                placeholder: 'Select a subscription...',
-                                allowClear: true,
-                                width: '100%'
-                            });
+                            if ($('#existing_subscription_id').hasClass('select2-hidden-accessible')) {
+                                $('#existing_subscription_id').select2('destroy');
+                            }
+                            $('#existing_subscription_id').select2({ theme: 'bootstrap4', width: '100%' });
                         }, 100);
                     } else {
                         createSection.style.display = 'none';

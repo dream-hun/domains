@@ -35,7 +35,7 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="hosting_category_id" class="form-label required">Hosting Category <span class="text-danger">*</span></label>
                                     <select name="hosting_category_id" id="hosting_category_id"
-                                        class="form-control @error('hosting_category_id') is-invalid @enderror" required>
+                                        class="form-control select2bs4 @error('hosting_category_id') is-invalid @enderror" required>
                                         <option value="">Select Hosting Category</option>
                                         @foreach ($hostingCategories as $category)
                                             <option value="{{ $category->id }}"
@@ -52,7 +52,7 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="hosting_plan_id" class="form-label required">Hosting Plan <span class="text-danger">*</span></label>
                                     <select name="hosting_plan_id" id="hosting_plan_id"
-                                        class="form-control @error('hosting_plan_id') is-invalid @enderror" required>
+                                        class="form-control select2bs4 @error('hosting_plan_id') is-invalid @enderror" required>
                                         <option value="">Select Hosting Plan</option>
                                         @foreach ($hostingPlans as $plan)
                                             <option value="{{ $plan->id }}"
@@ -70,7 +70,7 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="hosting_feature_id" class="form-label required">Hosting Feature <span class="text-danger">*</span></label>
                                     <select name="hosting_feature_id" id="hosting_feature_id"
-                                        class="form-control @error('hosting_feature_id') is-invalid @enderror" required>
+                                        class="form-control select2bs4 @error('hosting_feature_id') is-invalid @enderror" required>
                                         <option value="">Select Hosting Feature</option>
                                         @foreach ($hostingFeatures as $feature)
                                             <option value="{{ $feature->id }}"
@@ -173,6 +173,11 @@
         @parent
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+
                 const categorySelect = document.getElementById('hosting_category_id')
                 const planSelect = document.getElementById('hosting_plan_id')
 

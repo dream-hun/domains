@@ -37,7 +37,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="status" class="required">Status</label>
-                                            <select class="form-control @error('status') is-invalid @enderror"
+                                            <select class="form-control select2bs4 @error('status') is-invalid @enderror"
                                                     id="status"
                                                     name="status"
                                                     required>
@@ -179,3 +179,14 @@
         </div>
     </section>
 </x-admin-layout>
+
+@push('scripts')
+<script>
+    $(function () {
+        $('.select2bs4').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+@endpush

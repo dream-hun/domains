@@ -41,7 +41,7 @@
                         </div>
                         <div class="form-group">
                             <label for="type">Type <span class="text-danger">*</span></label>
-                            <select name="type" id="type" class="form-control select2 @error('type') is-invalid @enderror" required>
+                            <select name="type" id="type" class="form-control select2bs4 @error('type') is-invalid @enderror" required>
                                 @foreach (TldType::cases() as $case)
                                     <option value="{{ $case->value }}" {{ old('type', $tld->type->value) === $case->value ? 'selected' : '' }}>
                                         {{ $case->label() }}
@@ -54,7 +54,7 @@
                         </div>
                         <div class="form-group">
                             <label for="status">Status <span class="text-danger">*</span></label>
-                            <select name="status" id="status" class="form-control select2 @error('status') is-invalid @enderror" required>
+                            <select name="status" id="status" class="form-control select2bs4 @error('status') is-invalid @enderror" required>
                                 @foreach (TldStatus::cases() as $case)
                                     <option value="{{ $case->value }}" {{ old('status', $tld->status->value) === $case->value ? 'selected' : '' }}>
                                         {{ $case->label() }}
@@ -83,7 +83,7 @@
         @parent
         <script>
             $(function () {
-                $('.select2').select2({
+                $('.select2bs4').select2({
                     theme: 'bootstrap4',
                     width: '100%'
                 })

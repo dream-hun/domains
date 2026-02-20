@@ -7,7 +7,7 @@
     {{-- Category (always first) --}}
     <div class="col-md-6 mb-3">
         <label for="category_id" class="form-label required">Category</label>
-        <select name="category_id" id="category_id" class="form-control @error('category_id') is-invalid @enderror" required>
+        <select name="category_id" id="category_id" class="form-control select2bs4 @error('category_id') is-invalid @enderror" required>
             <option value="">Select Category</option>
             @foreach ($categories as $category)
                 <option value="{{ $category->id }}" @selected((int) old('category_id', $plan?->category_id) === $category->id)>
@@ -70,7 +70,7 @@
     {{-- Status --}}
     <div class="col-md-6 mb-3">
         <label for="status" class="form-label required">Status</label>
-        <select name="status" id="status" class="form-control @error('status') is-invalid @enderror" required>
+        <select name="status" id="status" class="form-control select2bs4 @error('status') is-invalid @enderror" required>
             <option value="">Select Status</option>
             @foreach ($statuses as $status)
                 <option value="{{ $status->value }}" @selected(old('status', $plan?->status?->value) === $status->value)>

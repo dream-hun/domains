@@ -35,7 +35,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="user_id" class="required">User</label>
-                                            <select class="form-control select2 @error('user_id') is-invalid @enderror"
+                                            <select class="form-control select2bs4 @error('user_id') is-invalid @enderror"
                                                     id="user_id"
                                                     name="user_id"
                                                     required>
@@ -55,7 +55,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="hosting_plan_id" class="required">Hosting Plan</label>
-                                            <select class="form-control @error('hosting_plan_id') is-invalid @enderror"
+                                            <select class="form-control select2bs4 @error('hosting_plan_id') is-invalid @enderror"
                                                     id="hosting_plan_id"
                                                     name="hosting_plan_id"
                                                     required>
@@ -77,7 +77,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="billing_cycle" class="required">Billing Cycle</label>
-                                            <select class="form-control @error('billing_cycle') is-invalid @enderror"
+                                            <select class="form-control select2bs4 @error('billing_cycle') is-invalid @enderror"
                                                     id="billing_cycle"
                                                     name="billing_cycle"
                                                     required>
@@ -133,7 +133,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="custom_price_currency">Currency</label>
-                                            <select class="form-control @error('custom_price_currency') is-invalid @enderror"
+                                            <select class="form-control select2bs4 @error('custom_price_currency') is-invalid @enderror"
                                                     id="custom_price_currency"
                                                     name="custom_price_currency">
                                                 <option value="">Select currency...</option>
@@ -236,48 +236,6 @@
 
     @push('styles')
         <style>
-            /* Select2 Custom Styles */
-            .select2-container--default .select2-selection--single {
-                height: 38px;
-                border: 1px solid #ced4da;
-                border-radius: 0.25rem;
-            }
-
-            .select2-container--default .select2-selection--single .select2-selection__rendered {
-                line-height: 38px;
-                padding-left: 12px;
-                color: #495057;
-            }
-
-            .select2-container--default .select2-selection--single .select2-selection__arrow {
-                height: 36px;
-                right: 10px;
-            }
-
-            .select2-container--default .select2-results__option--highlighted[aria-selected] {
-                background-color: #007bff;
-            }
-
-            .select2-container--default .select2-results__option[aria-selected=true] {
-                background-color: #e9ecef;
-            }
-
-            .select2-dropdown {
-                border: 1px solid #ced4da;
-                border-radius: 0.25rem;
-            }
-
-            .select2-container--default .select2-search--dropdown .select2-search__field {
-                border: 1px solid #ced4da;
-                border-radius: 0.25rem;
-            }
-
-            .select2-container--default .select2-search--dropdown .select2-search__field:focus {
-                border-color: #80bdff;
-                outline: 0;
-                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-            }
-
             /* Form Alignment */
             .form-group {
                 margin-bottom: 1.5rem;
@@ -305,9 +263,8 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                $('#user_id').select2({
-                    placeholder: 'Select a user...',
-                    allowClear: true,
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
                     width: '100%'
                 });
 

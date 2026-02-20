@@ -98,7 +98,7 @@
                                                 <!-- Renewal Period -->
                                                 <div class="form-group">
                                                     <label for="years">Renewal Period <span class="text-danger">*</span></label>
-                                                    <select class="form-control @error('years') is-invalid @enderror"
+                                                    <select class="form-control select2bs4 @error('years') is-invalid @enderror"
                                                             id="years" name="years" required>
                                                         <option value="">Select renewal period</option>
                                                         @for($i = 1; $i <= 10; $i++)
@@ -200,6 +200,17 @@
             </div>
         </div>
     </section>
+
+    @push('scripts')
+    <script>
+        $(function() {
+            $('.select2bs4').select2({
+                theme: 'bootstrap4',
+                width: '100%'
+            });
+        });
+    </script>
+    @endpush
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

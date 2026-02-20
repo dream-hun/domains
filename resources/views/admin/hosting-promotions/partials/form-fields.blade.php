@@ -10,7 +10,7 @@
         <div class="form-group">
             <label for="hosting_plan_id">Hosting Plan <span class="text-danger">*</span></label>
             <select name="hosting_plan_id" id="hosting_plan_id"
-                    class="form-control @error('hosting_plan_id') is-invalid @enderror" required>
+                    class="form-control select2bs4 @error('hosting_plan_id') is-invalid @enderror" required>
                 <option value="">Select a plan</option>
                 @foreach ($plans as $plan)
                     <option value="{{ $plan['id'] }}" {{ (int) old('hosting_plan_id', $editing ? $promotion->hosting_plan_id : '') === $plan['id'] ? 'selected' : '' }}>
@@ -27,7 +27,7 @@
         <div class="form-group">
             <label for="billing_cycle">Billing Cycle <span class="text-danger">*</span></label>
             <select name="billing_cycle" id="billing_cycle"
-                    class="form-control @error('billing_cycle') is-invalid @enderror" required>
+                    class="form-control select2bs4 @error('billing_cycle') is-invalid @enderror" required>
                 <option value="">Select billing cycle</option>
                 @foreach ($billingCycles as $cycle)
                     <option value="{{ $cycle->value }}" {{ old('billing_cycle', $editing ? $promotion->billing_cycle : '') === $cycle->value ? 'selected' : '' }}>

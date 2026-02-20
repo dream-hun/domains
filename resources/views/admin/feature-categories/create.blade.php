@@ -84,7 +84,7 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="status" class="form-label required">Status <span class="text-danger">*</span></label>
                                     <select name="status" id="status"
-                                        class="form-control @error('status') is-invalid @enderror" required>
+                                        class="form-control select2bs4 @error('status') is-invalid @enderror" required>
                                         <option value="">Select Status</option>
                                         @foreach ($statuses as $status)
                                             <option value="{{ $status->value }}"
@@ -125,3 +125,13 @@
     </div>
 </x-admin-layout>
 
+@push('scripts')
+<script>
+    $(function () {
+        $('.select2bs4').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+@endpush

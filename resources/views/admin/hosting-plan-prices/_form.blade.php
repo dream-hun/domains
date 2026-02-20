@@ -14,7 +14,7 @@
                     <label for="hosting_category_id">Hosting Category <span class="text-danger">*</span></label>
                     <select name="hosting_category_id"
                             id="hosting_category_id"
-                            class="form-control @error('hosting_category_id') is-invalid @enderror"
+                            class="form-control select2bs4 @error('hosting_category_id') is-invalid @enderror"
                             required>
                         <option value="">Select a category</option>
                         @foreach($categories as $category)
@@ -33,7 +33,7 @@
                     <label for="hosting_plan_id">Hosting Plan <span class="text-danger">*</span></label>
                     <select name="hosting_plan_id"
                             id="hosting_plan_id"
-                            class="form-control @error('hosting_plan_id') is-invalid @enderror"
+                            class="form-control select2bs4 @error('hosting_plan_id') is-invalid @enderror"
                             required>
                         <option value="">Select a plan</option>
                         @foreach($plans as $plan)
@@ -57,7 +57,7 @@
                     <label for="currency_id">Currency <span class="text-danger">*</span></label>
                     <select name="currency_id"
                             id="currency_id"
-                            class="form-control @error('currency_id') is-invalid @enderror"
+                            class="form-control select2bs4 @error('currency_id') is-invalid @enderror"
                             required>
                         @if (!$price)
                             <option value="">Select currency</option>
@@ -79,7 +79,7 @@
                     <label for="billing_cycle">Billing Cycle <span class="text-danger">*</span></label>
                     <select name="billing_cycle"
                             id="billing_cycle"
-                            class="form-control @error('billing_cycle') is-invalid @enderror"
+                            class="form-control select2bs4 @error('billing_cycle') is-invalid @enderror"
                             required>
                         @foreach(BillingCycle::cases() as $cycle)
                             <option value="{{ $cycle->value }}" {{ old('billing_cycle', $price?->billing_cycle) === $cycle->value ? 'selected' : '' }}>
@@ -135,7 +135,7 @@
                     <label for="status">Status</label>
                     <select name="status"
                             id="status"
-                            class="form-control @error('status') is-invalid @enderror">
+                            class="form-control select2bs4 @error('status') is-invalid @enderror">
                         <option value="active" {{ old('status', $price?->status?->value ?? 'active') === 'active' ? 'selected' : '' }}>
                             Active
                         </option>
@@ -153,7 +153,7 @@
                     <label for="is_current">Current <span class="text-danger">*</span></label>
                     <select name="is_current"
                             id="is_current"
-                            class="form-control @error('is_current') is-invalid @enderror"
+                            class="form-control select2bs4 @error('is_current') is-invalid @enderror"
                             required>
                         <option value="1" {{ old('is_current', $price?->is_current ?? true) ? 'selected' : '' }}>Yes</option>
                         <option value="0" {{ !old('is_current', $price?->is_current ?? true) ? 'selected' : '' }}>No</option>

@@ -48,7 +48,7 @@
                         <span class="btn btn-info btn-xs deselect-all"
                               style="border-radius: 0">{{ trans('global.deselect_all') }}</span>
                     </div>
-                    <select class="form-control select2 {{ $errors->has('roles') ? 'is-invalid' : '' }}" name="roles[]"
+                    <select class="form-control select2bs4 {{ $errors->has('roles') ? 'is-invalid' : '' }}" name="roles[]"
                             id="roles" multiple required>
                         @foreach ($roles as $id => $role)
                             <option value="{{ $id }}"
@@ -72,5 +72,15 @@
     </div>
 </x-admin-layout>
 
+@push('scripts')
+<script>
+    $(function () {
+        $('.select2bs4').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+@endpush
 
 

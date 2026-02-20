@@ -55,7 +55,7 @@
                                 <div id="addressBookSection" class="card bg-light mb-4" style="display: none;">
                                     <div class="card-body">
                                         <h6>Select from Address Book:</h6>
-                                        <select id="contact_select" class="form-control mb-3">
+                                        <select id="contact_select" class="form-control select2bs4 mb-3">
                                             <option value="">Choose a contact...</option>
                                             @foreach ($availableContacts as $contact)
                                                 <option value="{{ $contact->id }}"
@@ -193,7 +193,7 @@
                                 <div class="form-group mb-3">
                                     <label for="country_code" class="form-label">Country</label>
                                     <select name="country_code"
-                                            class="form-control @error('country_code') is-invalid @enderror" required>
+                                            class="form-control select2bs4 @error('country_code') is-invalid @enderror" required>
                                         <option value="">Select a country</option>
                                         @foreach ($countries as $country)
                                             <option value="{{ $country->iso_alpha2 }}"
@@ -211,7 +211,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group mb-3">
                                             <label for="phone_country" class="form-label">Phone Number</label>
-                                            <select class="form-control" id="phone_country" name="phone_country">
+                                            <select class="form-control select2bs4" id="phone_country" name="phone_country">
                                                 <option value="+250"
                                                     {{ old('phone_country', '+250') == '+250' ? 'selected' : '' }}>+250
                                                 </option>
@@ -255,7 +255,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group mb-3">
                                             <label for="fax_country" class="form-label">Fax Number</label>
-                                            <select class="form-control" id="fax_country" name="fax_country">
+                                            <select class="form-control select2bs4" id="fax_country" name="fax_country">
                                                 <option value="+1">+1</option>
                                                 <option value="+250">+250</option>
                                                 <option value="+44">+44</option>
@@ -410,6 +410,11 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+
                 const useAddressBookBtn = document.getElementById('useAddressBookBtn');
                 const hideAddressBookBtn = document.getElementById('hideAddressBookBtn');
                 const addressBookSection = document.getElementById('addressBookSection');

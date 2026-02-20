@@ -143,7 +143,7 @@
                                     <div class="form-group">
                                         <label for="country_code">Country <span class="text-danger">*</span></label>
                                         <select name="country_code" id="country_code"
-                                            class="form-control @error('country_code') is-invalid @enderror" required>
+                                            class="form-control select2bs4 @error('country_code') is-invalid @enderror" required>
                                             <option value="">Select Country</option>
                                             @foreach ($countries as $country)
                                                 <option value="{{ $country->iso_alpha2 }}"
@@ -224,7 +224,7 @@
                                     <div class="form-group">
                                         <label for="contact_type">Contact Type</label>
                                         <select name="contact_type" id="contact_type"
-                                            class="form-control @error('contact_type') is-invalid @enderror">
+                                            class="form-control select2bs4 @error('contact_type') is-invalid @enderror">
                                             <option value="">Select Type</option>
                                             @foreach ($contactTypes as $type)
                                                 <option value="{{ $type->value }}"
@@ -274,3 +274,14 @@
         </div>
     </div>
 </x-admin-layout>
+
+@push('scripts')
+<script>
+    $(function () {
+        $('.select2bs4').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+@endpush

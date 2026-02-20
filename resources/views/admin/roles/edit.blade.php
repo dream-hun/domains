@@ -24,7 +24,7 @@
                     <label for="permissions">{{ trans('cruds.role.fields.permissions') }}*
                         <span class="btn btn-info btn-xs select-all">{{ trans('global.select_all') }}</span>
                         <span class="btn btn-info btn-xs deselect-all">{{ trans('global.deselect_all') }}</span></label>
-                    <select name="permissions[]" id="permissions" class="form-control select2" multiple="multiple" required>
+                    <select name="permissions[]" id="permissions" class="form-control select2bs4" multiple="multiple" required>
                         @foreach($permissions as $id => $permissions)
                             <option value="{{ $id }}" {{ (in_array($id, old('permissions', [])) || isset($role) && $role->permissions->contains($id)) ? 'selected' : '' }}>{{ $permissions }}</option>
                         @endforeach
@@ -47,3 +47,14 @@
         </div>
     </div>
 </x-admin-layout>
+
+@push('scripts')
+<script>
+    $(function () {
+        $('.select2bs4').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+@endpush

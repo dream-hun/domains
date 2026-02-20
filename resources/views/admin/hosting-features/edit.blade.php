@@ -59,7 +59,7 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="feature_category_id" class="form-label">Feature Category</label>
                                     <select name="feature_category_id" id="feature_category_id"
-                                        class="form-control @error('feature_category_id') is-invalid @enderror">
+                                        class="form-control select2bs4 @error('feature_category_id') is-invalid @enderror">
                                         <option value="">Select Category</option>
                                         @foreach ($featureCategories as $category)
                                             <option value="{{ $category->id }}"
@@ -90,7 +90,7 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="value_type" class="form-label">Value Type <span class="text-danger">*</span></label>
                                     <select name="value_type" id="value_type"
-                                        class="form-control @error('value_type') is-invalid @enderror" required>
+                                        class="form-control select2bs4 @error('value_type') is-invalid @enderror" required>
                                         <option value="">Select Value Type</option>
                                         <option value="boolean" {{ old('value_type', $hostingFeature->value_type) == 'boolean' ? 'selected' : '' }}>Boolean</option>
                                         <option value="numeric" {{ old('value_type', $hostingFeature->value_type) == 'numeric' ? 'selected' : '' }}>Numeric</option>
@@ -182,3 +182,13 @@
     </div>
 </x-admin-layout>
 
+@push('scripts')
+<script>
+    $(function () {
+        $('.select2bs4').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+@endpush

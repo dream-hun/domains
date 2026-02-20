@@ -48,7 +48,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="user_id">Domain Owner <span class="text-danger">*</span></label>
-                            <select class="form-control select2 @error('user_id') is-invalid @enderror" id="user_id" name="user_id" required>
+                            <select class="form-control select2bs4 @error('user_id') is-invalid @enderror" id="user_id" name="user_id" required>
                                 <option value="">Select User</option>
                                 @foreach ($users as $user)
                                     <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
@@ -84,7 +84,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="registrant_contact_id">Registrant Contact <span class="text-danger">*</span></label>
-                            <select class="form-control select2 @error('registrant_contact_id') is-invalid @enderror" id="registrant_contact_id" name="registrant_contact_id" required>
+                            <select class="form-control select2bs4 @error('registrant_contact_id') is-invalid @enderror" id="registrant_contact_id" name="registrant_contact_id" required>
                                 <option value="">Select Contact</option>
                                 @foreach ($contacts as $contact)
                                     <option value="{{ $contact->id }}" {{ old('registrant_contact_id') == $contact->id ? 'selected' : '' }}>
@@ -101,7 +101,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="admin_contact_id">Admin Contact <span class="text-danger">*</span></label>
-                            <select class="form-control select2 @error('admin_contact_id') is-invalid @enderror" id="admin_contact_id" name="admin_contact_id" required>
+                            <select class="form-control select2bs4 @error('admin_contact_id') is-invalid @enderror" id="admin_contact_id" name="admin_contact_id" required>
                                 <option value="">Select Contact</option>
                                 @foreach ($contacts as $contact)
                                     <option value="{{ $contact->id }}" {{ old('admin_contact_id') == $contact->id ? 'selected' : '' }}>
@@ -120,7 +120,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="technical_contact_id">Technical Contact <span class="text-danger">*</span></label>
-                            <select class="form-control select2 @error('technical_contact_id') is-invalid @enderror" id="technical_contact_id" name="technical_contact_id" required>
+                            <select class="form-control select2bs4 @error('technical_contact_id') is-invalid @enderror" id="technical_contact_id" name="technical_contact_id" required>
                                 <option value="">Select Contact</option>
                                 @foreach ($contacts as $contact)
                                     <option value="{{ $contact->id }}" {{ old('technical_contact_id') == $contact->id ? 'selected' : '' }}>
@@ -137,7 +137,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="billing_contact_id">Billing Contact <span class="text-danger">*</span></label>
-                            <select class="form-control select2 @error('billing_contact_id') is-invalid @enderror" id="billing_contact_id" name="billing_contact_id" required>
+                            <select class="form-control select2bs4 @error('billing_contact_id') is-invalid @enderror" id="billing_contact_id" name="billing_contact_id" required>
                                 <option value="">Select Contact</option>
                                 @foreach ($contacts as $contact)
                                     <option value="{{ $contact->id }}" {{ old('billing_contact_id') == $contact->id ? 'selected' : '' }}>
@@ -217,8 +217,9 @@
         @parent
         <script>
             $(function() {
-                $('.select2').select2({
-                    theme: 'bootstrap4'
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
                 });
             });
         </script>
