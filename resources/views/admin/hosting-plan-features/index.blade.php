@@ -31,7 +31,7 @@
                         <form method="GET" action="{{ route('admin.hosting-plan-features.index') }}" class="form-inline">
                         <div class="form-group mr-2">
                             <label for="filter_category" class="mr-2">Filter by Category:</label>
-                            <select name="hosting_category_id" id="filter_category" class="form-control">
+                            <select name="hosting_category_id" id="filter_category" class="form-control select2bs4">
                                 <option value="">All Categories</option>
                                 @foreach ($hostingCategories as $category)
                                     <option value="{{ $category->id }}"
@@ -43,7 +43,7 @@
                         </div>
                         <div class="form-group mr-2">
                             <label for="filter_plan" class="mr-2">Filter by Plan:</label>
-                            <select name="hosting_plan_id" id="filter_plan" class="form-control">
+                            <select name="hosting_plan_id" id="filter_plan" class="form-control select2bs4">
                                 <option value="">All Plans</option>
                                 @foreach ($hostingPlans as $plan)
                                     <option value="{{ $plan->id }}"
@@ -179,6 +179,11 @@
         @parent
         <script>
             $(function() {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+
                 const filterForm = $('#filter_category').closest('form');
 
                 // Clear plan filter when category changes, then submit

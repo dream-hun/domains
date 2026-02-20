@@ -48,7 +48,7 @@
                             </div>
                             <div class="form-group col-md-2">
                                 <label for="status">Status</label>
-                                <select id="status" name="status" class="form-control realtime-filter">
+                                <select id="status" name="status" class="form-control select2bs4 realtime-filter">
                                     <option value="">All statuses</option>
                                     @foreach ($statusOptions as $status)
                                         <option value="{{ $status }}" @selected($filters['status'] === $status)>
@@ -59,7 +59,7 @@
                             </div>
                             <div class="form-group col-md-2">
                                 <label for="billing_cycle">Billing Cycle</label>
-                                <select id="billing_cycle" name="billing_cycle" class="form-control realtime-filter">
+                                <select id="billing_cycle" name="billing_cycle" class="form-control select2bs4 realtime-filter">
                                     <option value="">All cycles</option>
                                     @foreach ($billingCycleOptions as $cycle)
                                         <option value="{{ $cycle }}" @selected($filters['billing_cycle'] === $cycle)>
@@ -239,6 +239,12 @@
         @parent
         <script>
             $(document).ready(function() {
+                $('#status, #billing_cycle').select2({
+                    theme: 'bootstrap4',
+                    width: '100%',
+                    minimumResultsForSearch: -1
+                });
+
                 let searchTimeout;
 
                 // Real-time filtering for select inputs and date inputs

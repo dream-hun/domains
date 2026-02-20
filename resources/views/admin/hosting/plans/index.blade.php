@@ -36,7 +36,7 @@
                                 class="form-inline float-right">
                                 <div class="form-group mr-2">
                                     <label for="filter_category" class="mr-2">Filter by Category:</label>
-                                    <select name="category_id" id="filter_category" class="form-control">
+                                    <select name="category_id" id="filter_category" class="form-control select2bs4">
                                         <option value="">All Categories</option>
                                         @foreach ($categories as $category)
                                             <option value="{{ $category->id }}"
@@ -196,6 +196,11 @@
         @parent
         <script>
             $(function() {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+
                 // Auto-submit form when category filter changes
                 $('#filter_category').on('change', function() {
                     $(this).closest('form').submit();

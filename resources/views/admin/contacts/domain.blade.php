@@ -41,7 +41,7 @@
                                     <label for="contact_type" class="form-label">
                                         Contact Type <span class="text-danger">*</span>
                                     </label>
-                                    <select name="contact_type" id="contact_type" class="form-select" required>
+                                    <select name="contact_type" id="contact_type" class="form-select select2bs4" required>
                                         <option value="">Select Contact Type</option>
                                         <option
                                             value="registrant" {{ old('contact_type') == 'registrant' ? 'selected' : '' }}>
@@ -181,7 +181,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="country_id" class="form-label">Country</label>
-                                    <select name="country_id" id="country_id" class="form-select">
+                                    <select name="country_id" id="country_id" class="form-select select2bs4">
                                         <option value="">Select Country</option>
                                         @foreach(\App\Models\Country::orderBy('name')->get() as $country)
                                             <option
@@ -210,6 +210,23 @@
     </div>
 
 
+
+    @section('scripts')
+        @parent
+        <script>
+            $(function () {
+                $('#country_id').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+                $('#contact_type').select2({
+                    theme: 'bootstrap4',
+                    width: '100%',
+                    minimumResultsForSearch: -1
+                });
+            });
+        </script>
+    @endsection
 </x-admin-layout>
 
 

@@ -34,7 +34,7 @@
                 <span>Failed Registrations</span>
                 <form method="GET" action="{{ route('admin.failed-registrations.index') }}" class="form-inline">
                     <label for="status" class="mr-2">Filter by Status:</label>
-                    <select name="status" id="status" class="form-control form-control-sm mr-2"
+                    <select name="status" id="status" class="form-control form-control-sm select2bs4 mr-2"
                         onchange="this.form.submit()">
                         <option value="">All</option>
                         <option value="pending" {{ $selectedStatus === 'pending' ? 'selected' : '' }}>Pending</option>
@@ -147,6 +147,12 @@
         @parent
         <script>
             $(function() {
+                $('#status').select2({
+                    theme: 'bootstrap4',
+                    width: '100%',
+                    minimumResultsForSearch: -1
+                });
+
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
                 let table = $('.datatable-FailedRegistration:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,

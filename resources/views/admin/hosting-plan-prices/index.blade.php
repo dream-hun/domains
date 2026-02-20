@@ -39,7 +39,7 @@
                             </div>
                             <div class="form-group mb-0 mr-2">
                                 <label for="category_id" class="sr-only">Filter by Category</label>
-                                <select name="category_id" id="category_id" class="form-control">
+                                <select name="category_id" id="category_id" class="form-control select2bs4">
                                     <option value="">All Categories</option>
                                     @foreach ($categories as $category)
                                         <option value="{{ $category->uuid }}"
@@ -51,7 +51,7 @@
                             </div>
                             <div class="form-group mb-0 mr-2">
                                 <label for="plan_id" class="sr-only">Filter by Plan</label>
-                                <select name="plan_id" id="plan_id" class="form-control">
+                                <select name="plan_id" id="plan_id" class="form-control select2bs4">
                                     <option value="">All Plans</option>
                                     @foreach ($plans as $plan)
                                         <option value="{{ $plan->uuid }}"
@@ -63,7 +63,7 @@
                             </div>
                             <div class="form-group mb-0 mr-2">
                                 <label for="currency_id" class="sr-only">Filter by Currency</label>
-                                <select name="currency_id" id="currency_id_filter" class="form-control">
+                                <select name="currency_id" id="currency_id_filter" class="form-control select2bs4">
                                     <option value="">All Currencies</option>
                                     @foreach ($currencies as $currency)
                                         <option value="{{ $currency->id }}"
@@ -211,6 +211,11 @@
         @parent
         <script>
             $(function() {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+
                 const filterForm = $('#category_id').closest('form');
 
                 // Clear plan filter when category changes, then submit

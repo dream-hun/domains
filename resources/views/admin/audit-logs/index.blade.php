@@ -34,7 +34,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label for="event" class="form-label text-uppercase small text-muted">Event</label>
-                                <select id="event" name="event" class="form-control">
+                                <select id="event" name="event" class="form-control select2bs4">
                                     <option value="">All events</option>
                                     @foreach ($eventOptions as $option)
                                         <option value="{{ $option }}" @selected(($filters['event'] ?? null) === $option)>
@@ -45,7 +45,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label for="subject_type" class="form-label text-uppercase small text-muted">Subject</label>
-                                <select id="subject_type" name="subject_type" class="form-control">
+                                <select id="subject_type" name="subject_type" class="form-control select2bs4">
                                     <option value="">All models</option>
                                     @foreach ($subjectOptions as $value => $label)
                                         <option value="{{ $value }}" @selected(($filters['subject_type'] ?? null) === $value)>
@@ -174,3 +174,14 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(function () {
+        $('.select2bs4').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+@endpush

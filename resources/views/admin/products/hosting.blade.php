@@ -17,7 +17,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group mb-0">
                                             <label for="category_slug">Filter by Category:</label>
-                                            <select name="category_slug" id="category_slug" class="form-control" onchange="this.form.submit()">
+                                            <select name="category_slug" id="category_slug" class="form-control select2bs4" onchange="this.form.submit()">
                                                 <option value="">All Categories</option>
                                                 @foreach($categories as $category)
                                                     <option value="{{ $category->slug }}" {{ $selectedCategorySlug == $category->slug ? 'selected' : '' }}>
@@ -124,4 +124,17 @@
             </div>
         </div>
     </div>
+
+    @section('scripts')
+        @parent
+        <script>
+            $(function () {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%',
+                    minimumResultsForSearch: -1
+                });
+            });
+        </script>
+    @endsection
 </x-admin-layout>

@@ -35,7 +35,7 @@
                                 class="form-inline float-right">
                                 <div class="form-group mr-2">
                                     <label for="filter_category" class="mr-2">Category:</label>
-                                    <select name="category_id" id="filter_category" class="form-control"
+                                    <select name="category_id" id="filter_category" class="form-control select2bs4"
                                         onchange="this.form.submit()">
                                         <option value="">All Categories</option>
                                         @foreach ($categories as $category)
@@ -48,7 +48,7 @@
                                 </div>
                                 <div class="form-group mr-2">
                                     <label for="filter_plan" class="mr-2">Plan:</label>
-                                    <select name="plan_id" id="filter_plan" class="form-control"
+                                    <select name="plan_id" id="filter_plan" class="form-control select2bs4"
                                         onchange="this.form.submit()">
                                         <option value="">All Plans</option>
                                         @foreach ($plans as $plan)
@@ -198,6 +198,11 @@
         @parent
         <script>
             $(function() {
+                $('.select2bs4').select2({
+                    theme: 'bootstrap4',
+                    width: '100%'
+                });
+
                 let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons);
                 let table = $('.datatable-HostingPromotions:not(.ajaxTable)').DataTable({
                     buttons: dtButtons,

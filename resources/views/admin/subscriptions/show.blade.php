@@ -236,7 +236,7 @@
                                                         </div>
                                                         <div class="form-group">
                                                             <label for="billing_cycle">Billing cycle for this renewal</label>
-                                                            <select name="billing_cycle" id="billing_cycle" class="form-control">
+                                                            <select name="billing_cycle" id="billing_cycle" class="form-control select2bs4">
                                                                 <option value="{{ $subscription->billing_cycle }}" selected>{{ ucfirst($subscription->billing_cycle) }}</option>
                                                                 @if($subscription->billing_cycle !== 'monthly')
                                                                     <option value="monthly">Monthly</option>
@@ -263,4 +263,20 @@
             </div>
         </div>
     </section>
+
+    @section('scripts')
+        @parent
+        <script>
+            $(function () {
+                $('#renewSubscriptionModal').on('shown.bs.modal', function () {
+                    $('#billing_cycle').select2({
+                        theme: 'bootstrap4',
+                        width: '100%',
+                        minimumResultsForSearch: -1,
+                        dropdownParent: $('#renewSubscriptionModal')
+                    });
+                });
+            });
+        </script>
+    @endsection
 </x-admin-layout>
