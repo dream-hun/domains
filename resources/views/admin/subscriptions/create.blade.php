@@ -263,11 +263,6 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                $('.select2bs4').select2({
-                    theme: 'bootstrap4',
-                    width: '100%'
-                });
-
                 const billingCycleSelect = document.getElementById('billing_cycle');
                 const startsAtInput = document.getElementById('starts_at');
                 const expiresAtInput = document.getElementById('expires_at');

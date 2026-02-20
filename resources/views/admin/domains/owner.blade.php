@@ -57,15 +57,4 @@
             </div>
         </div>
     </section>
-
-    @push('scripts')
-    <script>
-        $(function () {
-            $('.select2bs4').select2({
-                theme: 'bootstrap4',
-                width: '100%'
-            });
-        });
-    </script>
-    @endpush
 </x-admin-layout>

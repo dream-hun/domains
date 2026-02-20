@@ -151,10 +151,6 @@
 @push('scripts')
 <script>
     $(function () {
-        $('.select2bs4').select2({
-            theme: 'bootstrap4',
-            width: '100%'
-        });
         $('#is_current').select2('destroy').select2({
             theme: 'bootstrap4',
             width: '100%',

@@ -65,6 +65,10 @@ table.dataTable thead .sorting_desc {
     z-index: 9999;
 }
 
+.select2-container--bootstrap4.select2-container--open {
+    z-index: 9999;
+}
+
 .searchable-fields {
     padding-left: 5px;
 }

@@ -201,17 +201,6 @@
         </div>
     </section>
 
-    @push('scripts')
-    <script>
-        $(function() {
-            $('.select2bs4').select2({
-                theme: 'bootstrap4',
-                width: '100%'
-            });
-        });
-    </script>
-    @endpush
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const yearsSelect = document.getElementById('years');

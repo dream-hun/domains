@@ -65,6 +65,11 @@
     <script src="{{ asset('plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
     <!-- Select2 -->
     <script src="{{ asset('plugins/select2/js/select2.full.js') }}"></script>
+    <script>
+        $(function () {
+            $('.select2bs4').select2({ theme: 'bootstrap4', width: '100%' });
+        });
+    </script>
     <script src="{{ asset('plugins/moment/moment-with-locales.js') }}"></script>
     <script src="{{ asset('plugins/datatables/jquery.dataTables.js') }}"></script>
     <script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
