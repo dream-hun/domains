@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Invoice - {{ $order->order_number }}</title>
+    @php
+        $invoiceCurrency = $order->user->address?->preferred_currency ?? $order->currency;
+    @endphp
     <style>
         body {
             font-family: 'DejaVu Sans', sans-serif;
@@ -299,9 +302,9 @@
                                 {{ $item->years }} {{ $item->years == 1 ? 'year' : 'years' }}
                             @endif
                         </td>
-                        <td class="text-right">@price($item->price, $item->currency)</td>
+                        <td class="text-right">@price($item->price, $invoiceCurrency)</td>
                         <td class="text-center">{{ $item->quantity }}</td>
-                        <td class="text-right">@price($item->total_amount, $item->currency)</td>
+                        <td class="text-right">@price($item->total_amount, $invoiceCurrency)</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -320,23 +323,23 @@
             <table>
                 <tr>
                     <td><strong>Subtotal:</strong></td>
-                    <td class="text-right">@price($order->subtotal ?? $order->total_amount, $order->currency)</td>
+                    <td class="text-right">@price($order->subtotal ?? $order->total_amount, $invoiceCurrency)</td>
                 </tr>
                 @if (($order->tax ?? 0) > 0)
                     <tr>
                         <td><strong>Tax:</strong></td>
-                        <td class="text-right">@price($order->tax, $order->currency)</td>
+                        <td class="text-right">@price($order->tax, $invoiceCurrency)</td>
                     </tr>
                 @endif
                 @if (($order->discount_amount ?? 0) > 0)
                     <tr>
                         <td><strong>Discount:</strong></td>
-                        <td class="text-right">-@price($order->discount_amount, $order->currency)</td>
+                        <td class="text-right">-@price($order->discount_amount, $invoiceCurrency)</td>
                     </tr>
                 @endif
                 <tr style="background-color: #f8f9fa;">
                     <td><strong>Total:</strong></td>
-                    <td class="text-right"><strong>@price($order->total_amount, $order->currency)</strong></td>
+                    <td class="text-right"><strong>@price($order->total_amount, $invoiceCurrency)</strong></td>
                 </tr>
             </table>
         </div>

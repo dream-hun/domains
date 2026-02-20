@@ -48,32 +48,16 @@ final class BillingController extends Controller
 
     public function invoice(Order $order): View
     {
-        $user = Auth::user();
-
-        $user->loadMissing('roles');
-
-        // Check authorization: either admin or order owner
-        abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
-
-        $order->load(['orderItems', 'user', 'payments']);
-
-        $this->preloadSubscriptionsAndPlans($order);
+        $this->authorizeInvoiceAccess($order);
+        $this->loadInvoiceData($order);
 
         return view('admin.billing.invoice', ['order' => $order]);
     }
 
     public function downloadInvoice(Order $order): Response
     {
-        $user = Auth::user();
-
-        $user->loadMissing('roles');
-
-        // Check authorization: either admin or order owner
-        abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
-
-        $order->load(['orderItems', 'user', 'payments']);
-
-        $this->preloadSubscriptionsAndPlans($order);
+        $this->authorizeInvoiceAccess($order);
+        $this->loadInvoiceData($order);
 
         $pdf = Pdf::loadView('admin.billing.invoice-pdf', ['order' => $order]);
 
@@ -82,19 +66,33 @@ final class BillingController extends Controller
 
     public function viewInvoicePdf(Order $order): Response
     {
-        $user = Auth::user();
-
-        $user->loadMissing('roles');
-
-        abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
-
-        $order->load(['orderItems', 'user', 'payments']);
-
-        $this->preloadSubscriptionsAndPlans($order);
+        $this->authorizeInvoiceAccess($order);
+        $this->loadInvoiceData($order);
 
         $pdf = Pdf::loadView('admin.billing.invoice-pdf', ['order' => $order]);
 
         return $pdf->stream('invoice-'.$order->order_number.'.pdf');
+    }
+
+    /**
+     * Authorize access to invoice.
+     */
+    private function authorizeInvoiceAccess(Order $order): void
+    {
+        $user = Auth::user();
+        $user->loadMissing('roles');
+
+        abort_if(! $user->isAdmin() && $order->user_id !== $user->id, 403);
+    }
+
+    /**
+     * Load required relationships for invoice generation.
+     */
+    private function loadInvoiceData(Order $order): void
+    {
+        $order->load(['orderItems', 'user.address', 'payments']);
+
+        $this->preloadSubscriptionsAndPlans($order);
     }
 
     private function preloadSubscriptionsAndPlans(Order $order): void

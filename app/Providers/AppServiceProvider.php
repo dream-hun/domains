@@ -8,9 +8,11 @@ use App\Helpers\CurrencyHelper;
 use App\Helpers\DomainSearchHelper;
 use App\Models\HostingCategory;
 use App\Models\HostingPlanPrice;
+use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\TldPricing;
 use App\Observers\HostingPlanPriceHistoryObserver;
+use App\Observers\PaymentObserver;
 use App\Observers\TldPricingObserver;
 use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\DomainServiceInterface;
@@ -38,6 +40,7 @@ final class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading();
         HostingPlanPrice::observe(HostingPlanPriceHistoryObserver::class);
         TldPricing::observe(TldPricingObserver::class);
+        Payment::observe(PaymentObserver::class);
         try {
             View::share('settings', Setting::query()->first());
         } catch (Exception) {

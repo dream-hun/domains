@@ -3,6 +3,10 @@
         Invoice - {{ $order->order_number }}
     @endsection
 
+    @php
+        $invoiceCurrency = $order->user->address?->preferred_currency ?? $order->currency;
+    @endphp
+
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
@@ -169,9 +173,9 @@
                                                         {{ $item->years }} {{ $item->years == 1 ? 'year' : 'years' }}
                                                     @endif
                                                 </td>
-                                                <td class="text-end">@price($item->price, $item->currency)</td>
+                                                <td class="text-end">@price($item->price, $invoiceCurrency)</td>
                                                 <td class="text-center">{{ $item->quantity }}</td>
-                                                <td class="text-end">@price($item->total_amount, $item->currency)</td>
+                                                <td class="text-end">@price($item->total_amount, $invoiceCurrency)</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -190,23 +194,23 @@
                                 <table class="table">
                                     <tr>
                                         <td class="text-end"><strong>Subtotal:</strong></td>
-                                        <td class="text-end">@price($order->subtotal ?? $order->total_amount, $order->currency)</td>
+                                        <td class="text-end">@price($order->subtotal ?? $order->total_amount, $invoiceCurrency)</td>
                                     </tr>
                                     @if (($order->tax ?? 0) > 0)
                                         <tr>
                                             <td class="text-end"><strong>Tax:</strong></td>
-                                            <td class="text-end">@price($order->tax, $order->currency)</td>
+                                            <td class="text-end">@price($order->tax, $invoiceCurrency)</td>
                                         </tr>
                                     @endif
                                     @if (($order->discount_amount ?? 0) > 0)
                                         <tr>
                                             <td class="text-end"><strong>Discount:</strong></td>
-                                            <td class="text-end">-@price($order->discount_amount, $order->currency)</td>
+                                            <td class="text-end">-@price($order->discount_amount, $invoiceCurrency)</td>
                                         </tr>
                                     @endif
                                     <tr class="table-light">
                                         <td class="text-end"><strong>Total:</strong></td>
-                                        <td class="text-end"><strong>@price($order->total_amount, $order->currency)</strong></td>
+                                        <td class="text-end"><strong>@price($order->total_amount, $invoiceCurrency)</strong></td>
                                     </tr>
                                 </table>
                             </div>
