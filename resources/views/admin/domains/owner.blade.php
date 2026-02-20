@@ -45,7 +45,7 @@
                         </div>
                         <div class="form-group">
                             <label for="owner_id">Owner</label>
-                            <select name="owner_id" id="owner_id" class="form-control select2">
+                            <select name="owner_id" id="owner_id" class="form-control select2bs4">
                                 @foreach($users as $user)
                                 <option value="{{ $user->id }}">{{ $user->name }}</option>
                                 @endforeach
@@ -57,4 +57,15 @@
             </div>
         </div>
     </section>
+
+    @push('scripts')
+    <script>
+        $(function () {
+            $('.select2bs4').select2({
+                theme: 'bootstrap4',
+                width: '100%'
+            });
+        });
+    </script>
+    @endpush
 </x-admin-layout>
