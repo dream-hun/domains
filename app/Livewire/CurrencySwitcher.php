@@ -19,35 +19,26 @@ final class CurrencySwitcher extends Component
 
     public function mount(GeolocationService $geolocationService): void
     {
+        $sessionCurrency = session('selected_currency');
 
-        if (session()->has('selected_currency')) {
-            $sessionCurrency = session('selected_currency');
+        if (is_string($sessionCurrency) && $this->isValidCurrency($sessionCurrency)) {
+            $this->setCurrency($sessionCurrency);
 
-            if (is_string($sessionCurrency)) {
-                $this->selectedCurrency = $sessionCurrency;
+            Log::info('Using existing session currency', [
+                'currency' => $this->selectedCurrency,
+            ]);
 
-                Log::info('Using existing session currency', [
-                    'currency' => $this->selectedCurrency,
-                ]);
+            return;
+        }
 
-                return;
-            }
-
+        if ($sessionCurrency !== null) {
             session()->forget('selected_currency');
         }
 
-        $isFromRwanda = $geolocationService->isUserFromRwanda();
-        $userCountry = $geolocationService->getUserCountryCode();
+        $currencyCode = $this->getCurrencyFromUserPreference()
+            ?? $this->getCurrencyFromGeolocation($geolocationService);
 
-        Log::info('Initializing currency from geolocation', [
-            'ip' => request()->ip(),
-            'country_code' => $userCountry,
-            'is_from_rwanda' => $isFromRwanda,
-        ]);
-
-        $this->selectedCurrency = $isFromRwanda ? 'RWF' : 'USD';
-
-        session(['selected_currency' => $this->selectedCurrency]);
+        $this->setCurrency($currencyCode);
     }
 
     public function selectCurrency(string $currencyCode): void
@@ -56,9 +47,7 @@ final class CurrencySwitcher extends Component
             'currency_code' => $currencyCode,
         ]);
 
-        $currency = Currency::getActiveCurrencies()->firstWhere('code', $currencyCode);
-
-        if (! $currency) {
+        if (! $this->isValidCurrency($currencyCode)) {
             Log::error('Currency not found or inactive', [
                 'currency_code' => $currencyCode,
             ]);
@@ -66,17 +55,15 @@ final class CurrencySwitcher extends Component
             return;
         }
 
-        $this->selectedCurrency = $currency->code;
+        $this->setCurrency($currencyCode);
         $this->showDropdown = false;
 
-        session(['selected_currency' => $currency->code]);
-
         Log::info('Dispatching currency change events', [
-            'currency_code' => $currency->code,
+            'currency_code' => $currencyCode,
         ]);
 
-        $this->dispatch('currency-changed', currency: $currency->code);
-        $this->dispatch('currencyChanged', currency: $currency->code);
+        $this->dispatch('currency-changed', currency: $currencyCode);
+        $this->dispatch('currencyChanged', currency: $currencyCode);
         $this->dispatch('refreshCart');
     }
 
@@ -87,19 +74,83 @@ final class CurrencySwitcher extends Component
 
     public function render(): Factory|View|\Illuminate\View\View
     {
-        $currencies = Currency::getActiveCurrencies();
-
-        $availableCurrencies = [];
-        foreach ($currencies as $currency) {
-            $availableCurrencies[$currency->code] = [
-                'name' => $currency->name,
-                'symbol' => $currency->symbol,
-                'code' => $currency->code,
-            ];
-        }
+        $availableCurrencies = Currency::getActiveCurrencies()
+            ->mapWithKeys(fn (Currency $currency) => [
+                $currency->code => [
+                    'name' => $currency->name,
+                    'symbol' => $currency->symbol,
+                    'code' => $currency->code,
+                ],
+            ])
+            ->all();
 
         return view('livewire.currency-switcher', [
             'availableCurrencies' => $availableCurrencies,
         ]);
+    }
+
+    /**
+     * Get currency from authenticated user's address preferred currency.
+     */
+    private function getCurrencyFromUserPreference(): ?string
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return null;
+        }
+
+        $address = $user->address;
+
+        if (! $address || ! $address->preferred_currency) {
+            return null;
+        }
+
+        $preferredCurrency = Currency::getActiveCurrencies()
+            ->firstWhere('code', $address->preferred_currency);
+
+        return $preferredCurrency?->code;
+    }
+
+    /**
+     * Get currency based on user's geolocation.
+     */
+    private function getCurrencyFromGeolocation(GeolocationService $geolocationService): string
+    {
+        $isFromRwanda = $geolocationService->isUserFromRwanda();
+        $userCountry = $geolocationService->getUserCountryCode();
+
+        Log::info('Initializing currency from geolocation', [
+            'ip' => request()->ip(),
+            'country_code' => $userCountry,
+            'is_from_rwanda' => $isFromRwanda,
+        ]);
+
+        return match ($isFromRwanda) {
+            true => 'RWF',
+            false => 'USD',
+        };
+    }
+
+    /**
+     * Check if currency code is valid and active.
+     */
+    private function isValidCurrency(string $currencyCode): bool
+    {
+        return Currency::getActiveCurrencies()
+            ->contains('code', $currencyCode);
+    }
+
+    /**
+     * Set the selected currency and update session.
+     */
+    private function setCurrency(string $currencyCode): void
+    {
+        if (! $this->isValidCurrency($currencyCode)) {
+            return;
+        }
+
+        $this->selectedCurrency = $currencyCode;
+        session(['selected_currency' => $currencyCode]);
     }
 }
