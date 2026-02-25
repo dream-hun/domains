@@ -1,0 +1,546 @@
+import { Form, Head, Link, router } from '@inertiajs/react';
+import { CirclePlusIcon, MoreHorizontal, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import GameController, {
+    index,
+} from '@/actions/App/Http/Controllers/Admin/GameController';
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
+
+type User = { id: number; name: string };
+type Court = { id: number; name: string };
+
+type Game = {
+    id: number;
+    uuid: string;
+    title: string;
+    format: string;
+    court_id: number | null;
+    player_id: number;
+    played_at: string;
+    status: string;
+    vimeo_status: string | null;
+    court: Court | null;
+    player: User | null;
+};
+
+type PaginationLink = { url: string | null; label: string; active: boolean };
+
+type PaginatedGames = {
+    data: Game[];
+    links: PaginationLink[];
+    current_page: number;
+    last_page: number;
+    total: number;
+};
+
+const formats = ['1v1', '2v2', '3v3', '4v4', '5v5'];
+
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Games', href: index().url }];
+
+function statusBadge(status: string) {
+    const colors: Record<string, string> = {
+        pending: 'bg-yellow-500',
+        approved: 'bg-green-500',
+        rejected: 'bg-red-500',
+        flagged: 'bg-orange-500',
+    };
+    return (
+        <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${colors[status] ?? 'bg-gray-400'}`}
+        >
+            {status}
+        </span>
+    );
+}
+
+function vimeoStatusBadge(status: string | null) {
+    if (!status) {
+        return <span className="text-xs text-muted-foreground">No video</span>;
+    }
+    const colors: Record<string, string> = {
+        pending: 'bg-yellow-500',
+        complete: 'bg-green-500',
+    };
+    return (
+        <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${colors[status] ?? 'bg-gray-400'}`}
+        >
+            {status}
+        </span>
+    );
+}
+
+function GameFormFields({
+    game,
+    users,
+    courts,
+    errors,
+}: {
+    game?: Game;
+    users: User[];
+    courts: Court[];
+    errors: Record<string, string>;
+}) {
+    return (
+        <>
+            <div className="grid gap-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                    id="title"
+                    name="title"
+                    defaultValue={game?.title}
+                    placeholder="Game title"
+                    required
+                />
+                <InputError message={errors.title} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="format">Format</Label>
+                <Select
+                    name="format"
+                    defaultValue={game?.format ?? '5v5'}
+                    required
+                >
+                    <SelectTrigger id="format">
+                        <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {formats.map((f) => (
+                            <SelectItem key={f} value={f}>
+                                {f}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.format} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="court_id">Court</Label>
+                <Select
+                    name="court_id"
+                    defaultValue={game?.court_id ? String(game.court_id) : ''}
+                >
+                    <SelectTrigger id="court_id">
+                        <SelectValue placeholder="Select a court (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {courts.map((court) => (
+                            <SelectItem key={court.id} value={String(court.id)}>
+                                {court.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.court_id} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="player_id">Player</Label>
+                <Select
+                    name="player_id"
+                    defaultValue={game?.player_id ? String(game.player_id) : ''}
+                    required
+                >
+                    <SelectTrigger id="player_id">
+                        <SelectValue placeholder="Select a player" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {users.map((user) => (
+                            <SelectItem key={user.id} value={String(user.id)}>
+                                {user.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.player_id} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="played_at">Played At</Label>
+                <Input
+                    id="played_at"
+                    name="played_at"
+                    type="datetime-local"
+                    defaultValue={
+                        game?.played_at
+                            ? new Date(game.played_at)
+                                  .toISOString()
+                                  .slice(0, 16)
+                            : ''
+                    }
+                    required
+                />
+                <InputError message={errors.played_at} />
+            </div>
+        </>
+    );
+}
+
+export default function GamesIndex({
+    games,
+    filters,
+    users,
+    courts,
+}: {
+    games: PaginatedGames;
+    filters: { search: string | null };
+    users: User[];
+    courts: Court[];
+}) {
+    const [createOpen, setCreateOpen] = useState(false);
+    const [editGame, setEditGame] = useState<Game | null>(null);
+    const [deleteGame, setDeleteGame] = useState<Game | null>(null);
+    const [search, setSearch] = useState(filters.search ?? '');
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            router.get(
+                index().url,
+                { search: search || undefined },
+                { preserveState: true, replace: true },
+            );
+        }, 300);
+
+        return () => clearTimeout(timeout);
+    }, [search]);
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Games" />
+
+            <div className="flex flex-col gap-6 p-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-semibold">Games</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Manage all games ({games.total} total)
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Input
+                            placeholder="Search games..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-64"
+                        />
+                        <Button onClick={() => setCreateOpen(true)}>
+                            <CirclePlusIcon></CirclePlusIcon>
+                            Add Game
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Player</TableHead>
+                                <TableHead>Format</TableHead>
+                                <TableHead>Played At</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Video</TableHead>
+                                <TableHead className="text-right">
+                                    Actions
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {games.data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={7}
+                                        className="py-8 text-center text-muted-foreground"
+                                    >
+                                        No games found.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                games.data.map((game) => (
+                                    <TableRow key={game.id}>
+                                        <TableCell className="font-medium">
+                                            {game.title}
+                                        </TableCell>
+                                        <TableCell>
+                                            {game.player?.name ?? '—'}
+                                        </TableCell>
+                                        <TableCell>{game.format}</TableCell>
+                                        <TableCell>
+                                            {new Date(
+                                                game.played_at,
+                                            ).toLocaleDateString()}
+                                        </TableCell>
+                                        <TableCell>
+                                            {statusBadge(game.status)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {vimeoStatusBadge(
+                                                game.vimeo_status,
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                    >
+                                                        <MoreHorizontal className="size-4" />
+                                                        <span className="sr-only">
+                                                            Actions
+                                                        </span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setEditGame(game)
+                                                        }
+                                                    >
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem asChild>
+                                                        <Link
+                                                            href={
+                                                                GameController.showUpload(
+                                                                    game.uuid,
+                                                                ).url
+                                                            }
+                                                        >
+                                                            Upload Video
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem
+                                                        variant="destructive"
+                                                        onClick={() =>
+                                                            setDeleteGame(game)
+                                                        }
+                                                    >
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {games.last_page > 1 && (
+                    <div className="flex items-center justify-center gap-1">
+                        {games.links.map((link, i) => (
+                            <Button
+                                key={i}
+                                variant={link.active ? 'default' : 'outline'}
+                                size="sm"
+                                disabled={link.url === null}
+                                asChild={link.url !== null}
+                            >
+                                {link.url !== null ? (
+                                    <Link
+                                        href={link.url}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
+                                ) : (
+                                    <span
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
+                                )}
+                            </Button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Create Game Modal */}
+            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Create Game</DialogTitle>
+                        <DialogDescription>
+                            Add a new game record.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <Form
+                        {...GameController.store.form()}
+                        key={createOpen ? 'open' : 'closed'}
+                        resetOnSuccess
+                        onSuccess={() => setCreateOpen(false)}
+                        className="space-y-4"
+                    >
+                        {({ processing, errors }) => (
+                            <>
+                                <GameFormFields
+                                    users={users}
+                                    courts={courts}
+                                    errors={errors}
+                                />
+
+                                <DialogFooter className="gap-2">
+                                    <DialogClose asChild>
+                                        <Button variant="secondary">
+                                            Cancel
+                                        </Button>
+                                    </DialogClose>
+                                    <Button disabled={processing} asChild>
+                                        <button type="submit">
+                                            Create Game
+                                        </button>
+                                    </Button>
+                                </DialogFooter>
+                            </>
+                        )}
+                    </Form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Game Modal */}
+            <Dialog
+                open={editGame !== null}
+                onOpenChange={(open) => {
+                    if (!open) setEditGame(null);
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Game</DialogTitle>
+                        <DialogDescription>
+                            Update game details.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {editGame && (
+                        <Form
+                            {...GameController.update.form(editGame.uuid)}
+                            key={editGame.id}
+                            onSuccess={() => setEditGame(null)}
+                            className="space-y-4"
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <GameFormFields
+                                        game={editGame}
+                                        users={users}
+                                        courts={courts}
+                                        errors={errors}
+                                    />
+
+                                    <DialogFooter className="gap-2">
+                                        <DialogClose asChild>
+                                            <Button variant="secondary">
+                                                Cancel
+                                            </Button>
+                                        </DialogClose>
+                                        <Button disabled={processing} asChild>
+                                            <button type="submit">
+                                                Update Game
+                                            </button>
+                                        </Button>
+                                    </DialogFooter>
+                                </>
+                            )}
+                        </Form>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Game Modal */}
+            <Dialog
+                open={deleteGame !== null}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteGame(null);
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Game</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete{' '}
+                            <span className="font-medium">
+                                {deleteGame?.title}
+                            </span>
+                            ? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {deleteGame && (
+                        <Form
+                            {...GameController.destroy.form(deleteGame.uuid)}
+                            onSuccess={() => setDeleteGame(null)}
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <InputError message={errors.game} />
+
+                                    <DialogFooter className="gap-2">
+                                        <DialogClose asChild>
+                                            <Button variant="secondary">
+                                                Cancel
+                                            </Button>
+                                        </DialogClose>
+                                        <Button
+                                            variant="destructive"
+                                            disabled={processing}
+                                            asChild
+                                        >
+                                            <button type="submit">
+                                                Delete
+                                            </button>
+                                        </Button>
+                                    </DialogFooter>
+                                </>
+                            )}
+                        </Form>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </AppLayout>
+    );
+}

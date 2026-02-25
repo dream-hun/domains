@@ -1,0 +1,29 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+    - phar://phpstan.phar/conf/bleedingEdge.neon
+
+parameters:
+
+    paths:
+        - app
+        - bootstrap/app.php
+        - config
+        - database
+        - public
+        - routes
+
+
+    level: max
+
+    tmpDir: /tmp/phpstan
+
+    ignoreErrors:
+        # Larastan infers BelongsTo<TRelated, $this(TDeclaring)> while annotations use the concrete class.
+        # In final classes these are equivalent; suppress the invariance mismatch.
+        -
+            identifier: return.type
+            message: '#should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo.+but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo.+\$this#'
+            paths:
+                - app/Models
+            reportUnmatched: false
