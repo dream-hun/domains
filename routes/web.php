@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-Route::get('/', fn () => Inertia::render('auth.login', [
+Route::get('/', fn () => Inertia::render('auth/login', [
     'canRegister' => Features::enabled(Features::registration()),
 ]))->name('home');
 
