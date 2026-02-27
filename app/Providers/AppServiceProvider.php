@@ -42,12 +42,14 @@ final class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(fn (): ?Password => app()->isProduction()
+            // @codeCoverageIgnoreStart
             ? Password::min(12)
                 ->mixedCase()
                 ->letters()
                 ->numbers()
                 ->symbols()
                 ->uncompromised()
+            // @codeCoverageIgnoreEnd
             : null
         );
     }

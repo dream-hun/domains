@@ -1,11 +1,17 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { CirclePlusIcon, MoreHorizontal, Search } from 'lucide-react';
+import {
+    CalendarIcon,
+    CirclePlusIcon,
+    MoreHorizontal,
+    Search,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import GameController, {
     index,
 } from '@/actions/App/Http/Controllers/Admin/GameController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
     Dialog,
     DialogClose,
@@ -25,6 +31,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -40,6 +51,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };
@@ -108,15 +120,22 @@ function vimeoStatusBadge(status: string | null) {
 
 function GameFormFields({
     game,
-    users,
     courts,
     errors,
 }: {
     game?: Game;
-    users: User[];
     courts: Court[];
     errors: Record<string, string>;
 }) {
+    const [date, setDate] = useState<Date | undefined>(
+        game?.played_at ? new Date(game.played_at) : undefined,
+    );
+    const [calendarOpen, setCalendarOpen] = useState(false);
+
+    const playedAtValue = date
+        ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+        : '';
+
     return (
         <>
             <div className="grid gap-2">
@@ -173,41 +192,39 @@ function GameFormFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="player_id">Player</Label>
-                <Select
-                    name="player_id"
-                    defaultValue={game?.player_id ? String(game.player_id) : ''}
-                    required
-                >
-                    <SelectTrigger id="player_id">
-                        <SelectValue placeholder="Select a player" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {users.map((user) => (
-                            <SelectItem key={user.id} value={String(user.id)}>
-                                {user.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <InputError message={errors.player_id} />
-            </div>
-
-            <div className="grid gap-2">
-                <Label htmlFor="played_at">Played At</Label>
-                <Input
-                    id="played_at"
-                    name="played_at"
-                    type="datetime-local"
-                    defaultValue={
-                        game?.played_at
-                            ? new Date(game.played_at)
-                                  .toISOString()
-                                  .slice(0, 16)
-                            : ''
-                    }
-                    required
-                />
+                <Label>Played At</Label>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            type="button"
+                            className={cn(
+                                'justify-start font-normal',
+                                !date && 'text-muted-foreground',
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 size-4" />
+                            {date
+                                ? date.toLocaleDateString('default', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                  })
+                                : 'Pick a date'}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start">
+                        <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={(d) => {
+                                setDate(d);
+                                setCalendarOpen(false);
+                            }}
+                        />
+                    </PopoverContent>
+                </Popover>
+                <input type="hidden" name="played_at" value={playedAtValue} />
                 <InputError message={errors.played_at} />
             </div>
         </>
@@ -217,12 +234,10 @@ function GameFormFields({
 export default function GamesIndex({
     games,
     filters,
-    users,
     courts,
 }: {
     games: PaginatedGames;
     filters: { search: string | null };
-    users: User[];
     courts: Court[];
 }) {
     const [createOpen, setCreateOpen] = useState(false);
@@ -421,7 +436,6 @@ export default function GamesIndex({
                         {({ processing, errors }) => (
                             <>
                                 <GameFormFields
-                                    users={users}
                                     courts={courts}
                                     errors={errors}
                                 />
@@ -470,7 +484,6 @@ export default function GamesIndex({
                                 <>
                                     <GameFormFields
                                         game={editGame}
-                                        users={users}
                                         courts={courts}
                                         errors={errors}
                                     />

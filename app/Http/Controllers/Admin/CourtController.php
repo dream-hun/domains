@@ -14,6 +14,7 @@ use App\Http\Requests\Admin\Court\DeleteCourtRequest;
 use App\Http\Requests\Admin\Court\StoreCourtRequest;
 use App\Http\Requests\Admin\Court\UpdateCourtRequest;
 use App\Models\Court;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -55,7 +56,9 @@ final class CourtController extends Controller
 
     public function store(StoreCourtRequest $request, StoreAction $action): RedirectResponse
     {
-        $action->handle($request->validated(), $request->user());
+        /** @var User $user */
+        $user = $request->user();
+        $action->handle($request->validated(), $user);
 
         return to_route('admin.courts.index')->with('success', 'Court created successfully.');
     }

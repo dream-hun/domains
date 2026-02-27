@@ -1,7 +1,9 @@
 import { Form, Head, router } from '@inertiajs/react';
 import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import UserController, { index } from '@/actions/App/Http/Controllers/Admin/UserController';
+import UserController, {
+    index,
+} from '@/actions/App/Http/Controllers/Admin/UserController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -77,7 +79,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: index().url }];
 
 function roleBadge(role: string | undefined, roles: RoleOption[]) {
     if (!role) {
-        return <span className="text-muted-foreground text-xs">No role</span>;
+        return <span className="text-xs text-muted-foreground">No role</span>;
     }
     const option = roles.find((r) => r.value === role);
     return (
@@ -142,7 +144,9 @@ function UserFormFields({
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirm Password</Label>
+                        <Label htmlFor="password_confirmation">
+                            Confirm Password
+                        </Label>
                         <Input
                             id="password_confirmation"
                             name="password_confirmation"
@@ -212,7 +216,7 @@ export default function UsersIndex({
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold">Users</h1>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-sm text-muted-foreground">
                             Manage all users ({users.total} total)
                         </p>
                     </div>
@@ -224,7 +228,10 @@ export default function UsersIndex({
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-64"
                         />
-                        <Button variant="default" onClick={() => setCreateOpen(true)}>
+                        <Button
+                            variant="default"
+                            onClick={() => setCreateOpen(true)}
+                        >
                             Add User
                         </Button>
                     </div>
@@ -238,7 +245,9 @@ export default function UsersIndex({
                                 <TableHead>Email</TableHead>
                                 <TableHead>Role</TableHead>
                                 <TableHead>Created At</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="text-right">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -246,7 +255,7 @@ export default function UsersIndex({
                                 <TableRow>
                                     <TableCell
                                         colSpan={5}
-                                        className="text-muted-foreground py-8 text-center"
+                                        className="py-8 text-center text-muted-foreground"
                                     >
                                         No users found.
                                     </TableCell>
@@ -254,32 +263,48 @@ export default function UsersIndex({
                             ) : (
                                 users.data.map((user) => (
                                     <TableRow key={user.id}>
-                                        <TableCell className="font-medium">{user.name}</TableCell>
+                                        <TableCell className="font-medium">
+                                            {user.name}
+                                        </TableCell>
                                         <TableCell>{user.email}</TableCell>
                                         <TableCell>
-                                            {roleBadge(user.roles[0]?.name, roles)}
+                                            {roleBadge(
+                                                user.roles[0]?.name,
+                                                roles,
+                                            )}
                                         </TableCell>
                                         <TableCell>
-                                            {new Date(user.created_at).toLocaleDateString()}
+                                            {new Date(
+                                                user.created_at,
+                                            ).toLocaleDateString()}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                    >
                                                         <MoreHorizontal className="size-4" />
-                                                        <span className="sr-only">Actions</span>
+                                                        <span className="sr-only">
+                                                            Actions
+                                                        </span>
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem
-                                                        onClick={() => setEditUser(user)}
+                                                        onClick={() =>
+                                                            setEditUser(user)
+                                                        }
                                                     >
                                                         Edit
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem
                                                         variant="destructive"
-                                                        onClick={() => setDeleteUser(user)}
+                                                        onClick={() =>
+                                                            setDeleteUser(user)
+                                                        }
                                                     >
                                                         Delete
                                                     </DropdownMenuItem>
@@ -306,10 +331,16 @@ export default function UsersIndex({
                                 {link.url !== null ? (
                                     <a
                                         href={link.url}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 ) : (
-                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    <span
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
                                 )}
                             </Button>
                         ))}
@@ -322,7 +353,9 @@ export default function UsersIndex({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Create User</DialogTitle>
-                        <DialogDescription>Add a new user to the system.</DialogDescription>
+                        <DialogDescription>
+                            Add a new user to the system.
+                        </DialogDescription>
                     </DialogHeader>
 
                     <Form
@@ -334,14 +367,22 @@ export default function UsersIndex({
                     >
                         {({ processing, errors }) => (
                             <>
-                                <UserFormFields roles={roles} errors={errors} includePassword />
+                                <UserFormFields
+                                    roles={roles}
+                                    errors={errors}
+                                    includePassword
+                                />
 
                                 <DialogFooter className="gap-2">
                                     <DialogClose asChild>
-                                        <Button variant="secondary">Cancel</Button>
+                                        <Button variant="secondary">
+                                            Cancel
+                                        </Button>
                                     </DialogClose>
                                     <Button disabled={processing} asChild>
-                                        <button type="submit">Create User</button>
+                                        <button type="submit">
+                                            Create User
+                                        </button>
                                     </Button>
                                 </DialogFooter>
                             </>
@@ -362,7 +403,9 @@ export default function UsersIndex({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit User</DialogTitle>
-                        <DialogDescription>Update user details.</DialogDescription>
+                        <DialogDescription>
+                            Update user details.
+                        </DialogDescription>
                     </DialogHeader>
 
                     {editUser && (
@@ -382,10 +425,14 @@ export default function UsersIndex({
 
                                     <DialogFooter className="gap-2">
                                         <DialogClose asChild>
-                                            <Button variant="secondary">Cancel</Button>
+                                            <Button variant="secondary">
+                                                Cancel
+                                            </Button>
                                         </DialogClose>
                                         <Button disabled={processing} asChild>
-                                            <button type="submit">Update User</button>
+                                            <button type="submit">
+                                                Update User
+                                            </button>
                                         </Button>
                                     </DialogFooter>
                                 </>
@@ -409,8 +456,10 @@ export default function UsersIndex({
                         <DialogTitle>Delete User</DialogTitle>
                         <DialogDescription>
                             Are you sure you want to delete{' '}
-                            <span className="font-medium">{deleteUser?.name}</span>? This action
-                            cannot be undone.
+                            <span className="font-medium">
+                                {deleteUser?.name}
+                            </span>
+                            ? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -425,10 +474,18 @@ export default function UsersIndex({
 
                                     <DialogFooter className="gap-2">
                                         <DialogClose asChild>
-                                            <Button variant="secondary">Cancel</Button>
+                                            <Button variant="secondary">
+                                                Cancel
+                                            </Button>
                                         </DialogClose>
-                                        <Button variant="destructive" disabled={processing} asChild>
-                                            <button type="submit">Delete</button>
+                                        <Button
+                                            variant="destructive"
+                                            disabled={processing}
+                                            asChild
+                                        >
+                                            <button type="submit">
+                                                Delete
+                                            </button>
                                         </Button>
                                     </DialogFooter>
                                 </>

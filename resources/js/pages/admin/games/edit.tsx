@@ -25,9 +25,13 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
-type Court = {
+type Game = {
     id: number;
-    name: string;
+    uuid: string;
+    title: string;
+    format: string;
+    court_id: number | null;
+    played_at: string;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -36,15 +40,16 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: index().url,
     },
     {
-        title: 'Create Game',
-        href: GameController.create().url,
+        title: 'Edit Game',
+        href: '#',
     },
 ];
 
 const formats = ['1v1', '2v2', '3v3', '4v4', '5v5'];
 
-export default function CreateGame({ courts }: { courts: Court[] }) {
-    const [date, setDate] = useState<Date | undefined>(undefined);
+export default function EditGame({ game }: { game: Game }) {
+    const initialDate = game.played_at ? new Date(game.played_at) : undefined;
+    const [date, setDate] = useState<Date | undefined>(initialDate);
     const [calendarOpen, setCalendarOpen] = useState(false);
 
     const playedAtValue = date
@@ -53,18 +58,18 @@ export default function CreateGame({ courts }: { courts: Court[] }) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Game" />
+            <Head title="Edit Game" />
 
             <div className="flex flex-col gap-6 p-6">
                 <div>
-                    <h1 className="text-2xl font-semibold">Create Game</h1>
+                    <h1 className="text-2xl font-semibold">Edit Game</h1>
                     <p className="text-sm text-muted-foreground">
-                        Add a new game record.
+                        Update the game record.
                     </p>
                 </div>
 
                 <Form
-                    {...GameController.store.form()}
+                    {...GameController.update.patch(game)}
                     className="max-w-lg space-y-4"
                 >
                     {({ processing, errors }) => (
@@ -75,6 +80,7 @@ export default function CreateGame({ courts }: { courts: Court[] }) {
                                     id="title"
                                     name="title"
                                     placeholder="Game title"
+                                    defaultValue={game.title}
                                     required
                                 />
                                 <InputError message={errors.title} />
@@ -84,7 +90,7 @@ export default function CreateGame({ courts }: { courts: Court[] }) {
                                 <Label htmlFor="format">Format</Label>
                                 <Select
                                     name="format"
-                                    defaultValue="5v5"
+                                    defaultValue={game.format}
                                     required
                                 >
                                     <SelectTrigger id="format">
@@ -99,26 +105,6 @@ export default function CreateGame({ courts }: { courts: Court[] }) {
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.format} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="court_id">Court</Label>
-                                <Select name="court_id">
-                                    <SelectTrigger id="court_id">
-                                        <SelectValue placeholder="Select a court (optional)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {courts.map((court) => (
-                                            <SelectItem
-                                                key={court.id}
-                                                value={String(court.id)}
-                                            >
-                                                {court.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={errors.court_id} />
                             </div>
 
                             <div className="grid gap-2">
@@ -178,7 +164,7 @@ export default function CreateGame({ courts }: { courts: Court[] }) {
                                     Cancel
                                 </Button>
                                 <Button disabled={processing} asChild>
-                                    <button type="submit">Create Game</button>
+                                    <button type="submit">Update Game</button>
                                 </Button>
                             </div>
                         </>

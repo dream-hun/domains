@@ -1,6 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
 import { MoreHorizontal } from 'lucide-react';
-import { index, show } from '@/actions/App/Http/Controllers/Admin/ModerationController';
+import {
+    index,
+    show,
+} from '@/actions/App/Http/Controllers/Admin/ModerationController';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -51,11 +54,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Moderation Queue', href: index().url },
 ];
 
-export default function ModerationIndex({
-    games,
-}: {
-    games: PaginatedGames;
-}) {
+export default function ModerationIndex({ games }: { games: PaginatedGames }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Moderation Queue" />

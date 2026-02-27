@@ -10,7 +10,6 @@ import AuthSplitLayout from '@/layouts/auth/auth-split-layout';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
 
-
 export default function ForgotPassword({ status }: { status?: string }) {
     return (
         <AuthSplitLayout

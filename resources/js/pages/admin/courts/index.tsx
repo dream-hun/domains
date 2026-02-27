@@ -2,7 +2,9 @@ import { Form, Head, router } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 import { MoreHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import CourtController, { index } from '@/actions/App/Http/Controllers/Admin/CourtController';
+import CourtController, {
+    index,
+} from '@/actions/App/Http/Controllers/Admin/CourtController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -219,7 +221,7 @@ export default function CourtsIndex({
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold">Courts</h1>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-sm text-muted-foreground">
                             Manage all courts ({courts.total} total)
                         </p>
                     </div>
@@ -231,7 +233,9 @@ export default function CourtsIndex({
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-64"
                         />
-                        <Button onClick={() => setCreateOpen(true)}>Add Court</Button>
+                        <Button onClick={() => setCreateOpen(true)}>
+                            Add Court
+                        </Button>
                     </div>
                 </div>
 
@@ -244,7 +248,9 @@ export default function CourtsIndex({
                                 <TableHead>City</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Created By</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="text-right">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -252,7 +258,7 @@ export default function CourtsIndex({
                                 <TableRow>
                                     <TableCell
                                         colSpan={6}
-                                        className="text-muted-foreground py-8 text-center"
+                                        className="py-8 text-center text-muted-foreground"
                                     >
                                         No courts found.
                                     </TableCell>
@@ -266,7 +272,9 @@ export default function CourtsIndex({
                                             <TableCell className="font-medium">
                                                 {court.name}
                                             </TableCell>
-                                            <TableCell>{court.country}</TableCell>
+                                            <TableCell>
+                                                {court.country}
+                                            </TableCell>
                                             <TableCell>{court.city}</TableCell>
                                             <TableCell>
                                                 {status && (
@@ -278,26 +286,42 @@ export default function CourtsIndex({
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                {court.created_by_user?.name ?? '—'}
+                                                {court.created_by_user?.name ??
+                                                    '—'}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon">
+                                                    <DropdownMenuTrigger
+                                                        asChild
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                        >
                                                             <MoreHorizontal className="size-4" />
-                                                            <span className="sr-only">Actions</span>
+                                                            <span className="sr-only">
+                                                                Actions
+                                                            </span>
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuItem
-                                                            onClick={() => setEditCourt(court)}
+                                                            onClick={() =>
+                                                                setEditCourt(
+                                                                    court,
+                                                                )
+                                                            }
                                                         >
                                                             Edit
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem
                                                             variant="destructive"
-                                                            onClick={() => setDeleteCourt(court)}
+                                                            onClick={() =>
+                                                                setDeleteCourt(
+                                                                    court,
+                                                                )
+                                                            }
                                                         >
                                                             Delete
                                                         </DropdownMenuItem>
@@ -325,10 +349,16 @@ export default function CourtsIndex({
                                 {link.url !== null ? (
                                     <Link
                                         href={link.url}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 ) : (
-                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    <span
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
                                 )}
                             </Button>
                         ))}
@@ -341,7 +371,9 @@ export default function CourtsIndex({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Create Court</DialogTitle>
-                        <DialogDescription>Add a new court to the system.</DialogDescription>
+                        <DialogDescription>
+                            Add a new court to the system.
+                        </DialogDescription>
                     </DialogHeader>
 
                     <Form
@@ -353,15 +385,22 @@ export default function CourtsIndex({
                     >
                         {({ processing, errors }) => (
                             <>
-                                <CourtFormFields statuses={statuses} errors={errors} />
+                                <CourtFormFields
+                                    statuses={statuses}
+                                    errors={errors}
+                                />
 
                                 <DialogFooter className="gap-2">
                                     <DialogClose asChild>
-                                        <Button variant="secondary">Cancel</Button>
+                                        <Button variant="secondary">
+                                            Cancel
+                                        </Button>
                                     </DialogClose>
 
                                     <Button disabled={processing} asChild>
-                                        <button type="submit">Create Court</button>
+                                        <button type="submit">
+                                            Create Court
+                                        </button>
                                     </Button>
                                 </DialogFooter>
                             </>
@@ -382,7 +421,9 @@ export default function CourtsIndex({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit Court</DialogTitle>
-                        <DialogDescription>Update court details.</DialogDescription>
+                        <DialogDescription>
+                            Update court details.
+                        </DialogDescription>
                     </DialogHeader>
 
                     {editCourt && (
@@ -402,11 +443,15 @@ export default function CourtsIndex({
 
                                     <DialogFooter className="gap-2">
                                         <DialogClose asChild>
-                                            <Button variant="secondary">Cancel</Button>
+                                            <Button variant="secondary">
+                                                Cancel
+                                            </Button>
                                         </DialogClose>
 
                                         <Button disabled={processing} asChild>
-                                            <button type="submit">Update Court</button>
+                                            <button type="submit">
+                                                Update Court
+                                            </button>
                                         </Button>
                                     </DialogFooter>
                                 </>
@@ -430,8 +475,10 @@ export default function CourtsIndex({
                         <DialogTitle>Delete Court</DialogTitle>
                         <DialogDescription>
                             Are you sure you want to delete{' '}
-                            <span className="font-medium">{deleteCourt?.name}</span>? This action
-                            cannot be undone.
+                            <span className="font-medium">
+                                {deleteCourt?.name}
+                            </span>
+                            ? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -446,11 +493,19 @@ export default function CourtsIndex({
 
                                     <DialogFooter className="gap-2">
                                         <DialogClose asChild>
-                                            <Button variant="secondary">Cancel</Button>
+                                            <Button variant="secondary">
+                                                Cancel
+                                            </Button>
                                         </DialogClose>
 
-                                        <Button variant="destructive" disabled={processing} asChild>
-                                            <button type="submit">Delete</button>
+                                        <Button
+                                            variant="destructive"
+                                            disabled={processing}
+                                            asChild
+                                        >
+                                            <button type="submit">
+                                                Delete
+                                            </button>
                                         </Button>
                                     </DialogFooter>
                                 </>

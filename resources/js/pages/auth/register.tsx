@@ -89,7 +89,7 @@ export default function Register() {
                                 />
                             </div>
 
-                            <Button 
+                            <Button
                                 type="submit"
                                 className="mt-2 w-full"
                                 tabIndex={5}

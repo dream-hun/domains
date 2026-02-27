@@ -10,6 +10,7 @@ use App\Enums\GameStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Game\ModerateGameRequest;
 use App\Models\Game;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,11 +33,17 @@ final class ModerationController extends Controller
 
     public function update(ModerateGameRequest $request, ModerateAction $action, Game $game): RedirectResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+        /** @var string $status */
+        $status = $request->validated('status');
+        /** @var string $reason */
+        $reason = $request->validated('reason');
         $action->handle(
             $game,
-            GameStatus::from($request->validated('status')),
-            $request->validated('reason'),
-            $request->user()->id,
+            GameStatus::from($status),
+            $reason,
+            $user->id,
         );
 
         return to_route('admin.moderation.index')->with('success', 'Game moderation decision saved.');

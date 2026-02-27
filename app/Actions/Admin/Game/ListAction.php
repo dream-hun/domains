@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Admin\Game;
 
 use App\Models\Game;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class ListAction
@@ -14,7 +15,7 @@ final class ListAction
     {
         return Game::query()
             ->with(['court', 'player'])
-            ->when($search, function ($query, string $search): void {
+            ->when($search, function (Builder $query, string $search): void {
                 $query->where('title', 'like', sprintf('%%%s%%', $search));
             })
             ->latest()

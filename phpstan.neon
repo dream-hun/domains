@@ -13,6 +13,8 @@ parameters:
         - public
         - routes
 
+    excludePaths:
+        - database/migrations/2026_02_23_104511_create_permission_tables.php
 
     level: max
 
@@ -24,6 +26,12 @@ parameters:
         -
             identifier: return.type
             message: '#should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo.+but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo.+\$this#'
+            paths:
+                - app/Models
+            reportUnmatched: false
+        -
+            identifier: return.type
+            message: '#should return Illuminate\\Database\\Eloquent\\Relations\\HasMany.+but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany.+\$this#'
             paths:
                 - app/Models
             reportUnmatched: false

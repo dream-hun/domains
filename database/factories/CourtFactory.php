@@ -22,6 +22,9 @@ final class CourtFactory extends Factory
      */
     public function definition(): array
     {
+        /** @var CourtStatus $status */
+        $status = fake()->randomElement(CourtStatus::cases());
+
         return [
             'uuid' => Str::uuid(),
             'name' => fake()->company().' Court',
@@ -29,7 +32,7 @@ final class CourtFactory extends Factory
             'city' => fake()->city(),
             'latitude' => fake()->latitude(),
             'longitude' => fake()->longitude(),
-            'status' => fake()->randomElement(CourtStatus::cases())->value,
+            'status' => $status->value,
             'created_by' => User::factory(),
         ];
     }

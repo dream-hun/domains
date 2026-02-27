@@ -110,3 +110,27 @@ test('authenticated users can delete a court', function (): void {
         'id' => $court->id,
     ]);
 });
+
+test('authenticated users can view the create court form', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('admin.courts.create'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->component('admin/courts/create'));
+});
+
+test('authenticated users can view the edit court form', function (): void {
+    $user = User::factory()->create();
+    $court = Court::factory()->create(['created_by' => $user->id]);
+    $this->actingAs($user);
+
+    $response = $this->get(route('admin.courts.edit', $court));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('admin/courts/edit')
+        ->where('court.id', $court->id)
+    );
+});

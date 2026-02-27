@@ -7,12 +7,7 @@ import {
 } from '@/actions/App/Http/Controllers/Admin/ModerationController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -52,7 +47,13 @@ function extractVimeoId(uri: string): string | null {
     return uri.match(/\/(\d+)$/)?.[1] ?? null;
 }
 
-function VimeoPlayer({ vimeoUri, subtitle }: { vimeoUri: string | null; subtitle: string }) {
+function VimeoPlayer({
+    vimeoUri,
+    subtitle,
+}: {
+    vimeoUri: string | null;
+    subtitle: string;
+}) {
     const containerRef = useRef<HTMLDivElement>(null);
     const vimeoId = vimeoUri ? extractVimeoId(vimeoUri) : null;
 
@@ -61,13 +62,9 @@ function VimeoPlayer({ vimeoUri, subtitle }: { vimeoUri: string | null; subtitle
 
         const player = new Player(containerRef.current, {
             id: Number(vimeoId),
-            badge: 0,
             byline: false,
             portrait: false,
             title: false,
-            share: false,
-            watch_later: false,
-            like: false,
             dnt: true,
             responsive: true,
         });
@@ -80,14 +77,19 @@ function VimeoPlayer({ vimeoUri, subtitle }: { vimeoUri: string | null; subtitle
     if (!vimeoId) {
         return (
             <div className="flex aspect-video w-full items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30">
-                <p className="text-sm text-muted-foreground">No video available</p>
+                <p className="text-sm text-muted-foreground">
+                    No video available
+                </p>
             </div>
         );
     }
 
     return (
         <div className="flex flex-col gap-2">
-            <div ref={containerRef} className="w-full overflow-hidden rounded-lg" />
+            <div
+                ref={containerRef}
+                className="w-full overflow-hidden rounded-lg"
+            />
             <p className="text-base text-muted-foreground">{subtitle}</p>
         </div>
     );
@@ -106,7 +108,10 @@ export default function ModerationShow({ game }: { game: Game }) {
             <div className="grid gap-6 p-6 lg:grid-cols-3">
                 {/* Video — spans 2 columns */}
                 <div className="lg:col-span-2">
-                    <VimeoPlayer vimeoUri={game.vimeo_uri} subtitle={game.title} />
+                    <VimeoPlayer
+                        vimeoUri={game.vimeo_uri}
+                        subtitle={game.title}
+                    />
                 </div>
 
                 {/* Sidebar */}
@@ -118,25 +123,39 @@ export default function ModerationShow({ game }: { game: Game }) {
                         </CardHeader>
                         <CardContent className="grid gap-3 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Title</span>
-                                <span className="font-medium">{game.title}</span>
+                                <span className="text-muted-foreground">
+                                    Title
+                                </span>
+                                <span className="font-medium">
+                                    {game.title}
+                                </span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Player</span>
+                                <span className="text-muted-foreground">
+                                    Player
+                                </span>
                                 <span>{game.player?.name ?? '—'}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Format</span>
+                                <span className="text-muted-foreground">
+                                    Format
+                                </span>
                                 <span>{game.format}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Court</span>
+                                <span className="text-muted-foreground">
+                                    Court
+                                </span>
                                 <span>{game.court?.name ?? '—'}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Played</span>
+                                <span className="text-muted-foreground">
+                                    Played
+                                </span>
                                 <span>
-                                    {new Date(game.played_at).toLocaleDateString()}
+                                    {new Date(
+                                        game.played_at,
+                                    ).toLocaleDateString()}
                                 </span>
                             </div>
                         </CardContent>
@@ -167,7 +186,9 @@ export default function ModerationShow({ game }: { game: Game }) {
                                                         (opt) => (
                                                             <SelectItem
                                                                 key={opt.value}
-                                                                value={opt.value}
+                                                                value={
+                                                                    opt.value
+                                                                }
                                                             >
                                                                 {opt.label}
                                                             </SelectItem>
@@ -190,7 +211,7 @@ export default function ModerationShow({ game }: { game: Game }) {
                                                 placeholder="Provide a reason for this decision..."
                                                 rows={4}
                                                 required
-                                                className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive flex w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                                className="flex w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:ring-destructive/40"
                                             />
                                             <InputError
                                                 message={errors.reason}

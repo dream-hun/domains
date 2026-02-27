@@ -17,7 +17,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read int $id
  * @property-read string $name
  * @property-read string $email
- * @property-read ?CarbonInterface $email_verified_at
+ * @property ?CarbonInterface $email_verified_at
  * @property-read ?string $two_factor_secret
  * @property-read ?string $two_factor_recovery_codes
  * @property-read ?CarbonInterface $two_factor_confirmed_at

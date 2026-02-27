@@ -34,7 +34,6 @@ final class GameController extends Controller
         return Inertia::render('admin/games/index', [
             'games' => $action->handle($search),
             'filters' => ['search' => $search],
-            'users' => User::query()->select(['id', 'name'])->orderBy('name')->get(),
             'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
         ]);
     }
@@ -42,14 +41,17 @@ final class GameController extends Controller
     public function create(): Response
     {
         return Inertia::render('admin/games/create', [
-            'users' => User::query()->select(['id', 'name'])->orderBy('name')->get(),
             'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
         ]);
     }
 
     public function store(StoreGameRequest $request, StoreAction $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        /** @var User $user */
+        $user = $request->user();
+        $action->handle(array_merge($request->validated(), [
+            'player_id' => $user->id,
+        ]));
 
         return to_route('admin.games.index')->with('success', 'Game created successfully.');
     }
@@ -84,7 +86,9 @@ final class GameController extends Controller
 
     public function initiateUpload(UploadGameRequest $request, InitiateVimeoUploadAction $action, Game $game): JsonResponse
     {
-        $result = $action->handle($game, $request->validated('file_size'));
+        /** @var int $fileSize */
+        $fileSize = $request->validated('file_size');
+        $result = $action->handle($game, $fileSize);
 
         return response()->json($result);
     }

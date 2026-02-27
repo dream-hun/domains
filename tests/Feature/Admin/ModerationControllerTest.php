@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Game;
+use App\Models\GameModeration;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
 
@@ -208,4 +209,34 @@ test('update redirects to moderation index on success', function (): void {
     ]);
 
     $response->assertRedirect(route('admin.moderation.index'));
+});
+
+test('game moderation belongs to a game', function (): void {
+    $moderator = User::factory()->create()->givePermissionTo('moderate-games');
+    $game = Game::factory()->create(['status' => 'pending']);
+
+    $moderation = GameModeration::query()->create([
+        'game_id' => $game->id,
+        'moderator_id' => $moderator->id,
+        'status' => 'approved',
+        'reason' => 'Looks good.',
+    ]);
+
+    expect($moderation->game)->toBeInstanceOf(Game::class)
+        ->and($moderation->game->id)->toBe($game->id);
+});
+
+test('game moderation belongs to a moderator', function (): void {
+    $moderator = User::factory()->create()->givePermissionTo('moderate-games');
+    $game = Game::factory()->create(['status' => 'pending']);
+
+    $moderation = GameModeration::query()->create([
+        'game_id' => $game->id,
+        'moderator_id' => $moderator->id,
+        'status' => 'rejected',
+        'reason' => 'Poor quality.',
+    ]);
+
+    expect($moderation->moderator)->toBeInstanceOf(User::class)
+        ->and($moderation->moderator->id)->toBe($moderator->id);
 });

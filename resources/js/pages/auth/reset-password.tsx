@@ -76,7 +76,8 @@ export default function ResetPassword({ token, email }: Props) {
                             />
                         </div>
 
-                        <Button variant={'bounce'}
+                        <Button
+                            variant="default"
                             type="submit"
                             className="mt-4 w-full"
                             disabled={processing}

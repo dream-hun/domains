@@ -41,14 +41,18 @@ final class UserController extends Controller
 
     public function store(StoreUserRequest $request, StoreAction $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        /** @var array{name: string, email: string, password: string, role: string} $data */
+        $data = $request->validated();
+        $action->handle($data);
 
         return to_route('admin.users.index')->with('success', 'User created successfully.');
     }
 
     public function update(UpdateUserRequest $request, UpdateAction $action, User $user): RedirectResponse
     {
-        $action->handle($user, $request->validated());
+        /** @var array{name: string, email: string, role: string} $data */
+        $data = $request->validated();
+        $action->handle($user, $data);
 
         return to_route('admin.users.index');
     }

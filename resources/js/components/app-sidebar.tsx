@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, MapPin, Users, Video } from 'lucide-react';
+import { LayoutGrid, MapPin, Users, Video } from 'lucide-react';
 import { index as courtsIndex } from '@/actions/App/Http/Controllers/Admin/CourtController';
 import { index as gamesIndex } from '@/actions/App/Http/Controllers/Admin/GameController';
 import { index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';
@@ -24,20 +24,10 @@ export function AppSidebar() {
     const { auth } = usePage().props;
 
     const footerNavItems: NavItem[] = [
-        {
-            title: 'Repository',
-            href: 'https://github.com/laravel/react-starter-kit',
-            icon: Folder,
-        },
-        {
-            title: 'Documentation',
-            href: 'https://laravel.com/docs/starter-kits#react',
-            icon: BookOpen,
-        },
         ...(auth.roles.includes('administrator')
             ? [
                   {
-                      title: 'Users',
+                      title: 'Users Management',
                       href: usersIndex().url,
                       icon: Users,
                   },
@@ -61,7 +51,6 @@ export function AppSidebar() {
             href: gamesIndex().url,
             icon: Video,
         },
-
     ];
 
     return (

@@ -7,7 +7,6 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthSplitLayout from '@/layouts/auth/auth-split-layout';
 import { store } from '@/routes/password/confirm';
 
-
 export default function ConfirmPassword() {
     return (
         <AuthSplitLayout

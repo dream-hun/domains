@@ -20,16 +20,33 @@ test('authenticated users can view games index', function (): void {
     $response->assertInertia(fn ($page) => $page->component('admin/games/index'));
 });
 
+test('games index can be filtered by search term', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $matching = Game::factory()->create(['title' => 'Championship Finals', 'player_id' => $user->id]);
+    Game::factory()->create(['title' => 'Friendly Match', 'player_id' => $user->id]);
+
+    $response = $this->get(route('admin.games.index', ['search' => 'Championship']));
+
+    $response->assertOk();
+    $response->assertInertia(
+        fn ($page) => $page
+            ->component('admin/games/index')
+            ->where('filters.search', 'Championship')
+            ->has('games.data', 1)
+            ->where('games.data.0.id', $matching->id)
+    );
+});
+
 test('authenticated users can create a game', function (): void {
     $user = User::factory()->create();
-    $player = User::factory()->create();
     $this->actingAs($user);
 
     $response = $this->post(route('admin.games.store'), [
         'title' => 'Test Game',
         'format' => '5v5',
         'court_id' => null,
-        'player_id' => $player->id,
         'played_at' => '2026-01-15 10:00:00',
     ]);
 
@@ -38,7 +55,7 @@ test('authenticated users can create a game', function (): void {
     $this->assertDatabaseHas('games', [
         'title' => 'Test Game',
         'format' => '5v5',
-        'player_id' => $player->id,
+        'player_id' => $user->id,
     ]);
 });
 
@@ -48,7 +65,7 @@ test('create game validates required fields', function (): void {
 
     $response = $this->post(route('admin.games.store'), []);
 
-    $response->assertInvalid(['title', 'format', 'player_id', 'played_at']);
+    $response->assertInvalid(['title', 'format', 'played_at']);
 });
 
 test('authenticated users can update a game', function (): void {
@@ -57,13 +74,10 @@ test('authenticated users can update a game', function (): void {
     $game = Game::factory()->create(['player_id' => $player->id]);
     $this->actingAs($user);
 
-    $newPlayer = User::factory()->create();
-
     $response = $this->patch(route('admin.games.update', $game), [
         'title' => 'Updated Game',
         'format' => '3v3',
         'court_id' => null,
-        'player_id' => $newPlayer->id,
         'played_at' => '2026-02-01 14:00:00',
     ]);
 
@@ -73,7 +87,7 @@ test('authenticated users can update a game', function (): void {
         'id' => $game->id,
         'title' => 'Updated Game',
         'format' => '3v3',
-        'player_id' => $newPlayer->id,
+        'player_id' => $player->id,
     ]);
 });
 
@@ -145,4 +159,42 @@ test('complete upload sets vimeo status to complete', function (): void {
         'id' => $game->id,
         'vimeo_status' => 'complete',
     ]);
+});
+
+test('authenticated users can view the create game form', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('admin.games.create'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->component('admin/games/create'));
+});
+
+test('authenticated users can view the edit game form', function (): void {
+    $user = User::factory()->create();
+    $game = Game::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('admin.games.edit', $game));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('admin/games/edit')
+        ->where('game.id', $game->id)
+    );
+});
+
+test('authenticated users can view the upload game page', function (): void {
+    $user = User::factory()->create();
+    $game = Game::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get(route('admin.games.upload', $game));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('admin/games/upload')
+        ->where('game.id', $game->id)
+    );
 });

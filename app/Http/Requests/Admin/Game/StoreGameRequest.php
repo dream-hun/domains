@@ -23,7 +23,6 @@ final class StoreGameRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'format' => ['required', 'string'],
             'court_id' => ['nullable', 'exists:courts,id'],
-            'player_id' => ['required', 'exists:users,id'],
             'played_at' => ['required', 'date'],
         ];
     }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin\User;
 
 use App\Enums\Role;
-use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule as ValidationRule;
 
@@ -17,7 +16,7 @@ final class StoreUserRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, Rule|array<mixed>|string>>
+     * @return array<string, array<mixed>>
      */
     public function rules(): array
     {

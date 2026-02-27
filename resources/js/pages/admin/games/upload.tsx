@@ -2,7 +2,9 @@ import { Head, router } from '@inertiajs/react';
 import { Upload, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import * as tus from 'tus-js-client';
-import GameController, { index } from '@/actions/App/Http/Controllers/Admin/GameController';
+import GameController, {
+    index,
+} from '@/actions/App/Http/Controllers/Admin/GameController';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -18,15 +20,18 @@ export default function UploadGame({ game }: { game: Game }) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Games', href: index().url },
         { title: game.title, href: '#' },
-        { title: 'Upload Video', href: GameController.showUpload(game.uuid).url },
+        {
+            title: 'Upload Video',
+            href: GameController.showUpload(game.uuid).url,
+        },
     ];
 
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [progress, setProgress] = useState(0);
-    const [status, setStatus] = useState<'idle' | 'uploading' | 'paused' | 'done' | 'error'>(
-        'idle',
-    );
+    const [status, setStatus] = useState<
+        'idle' | 'uploading' | 'paused' | 'done' | 'error'
+    >('idle');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const uploadRef = useRef<tus.Upload | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -73,23 +78,32 @@ export default function UploadGame({ game }: { game: Game }) {
 
         let uploadLink: string;
         try {
-            const response = await fetch(GameController.initiateUpload(game.uuid).url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-XSRF-TOKEN': xsrfToken,
-                    Accept: 'application/json',
+            const response = await fetch(
+                GameController.initiateUpload(game.uuid).url,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-XSRF-TOKEN': xsrfToken,
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({
+                        file_size: file.size,
+                        file_name: file.name,
+                    }),
                 },
-                body: JSON.stringify({ file_size: file.size, file_name: file.name }),
-            });
+            );
 
-            if (!response.ok) throw new Error('Failed to create upload session.');
+            if (!response.ok)
+                throw new Error('Failed to create upload session.');
 
             const data = await response.json();
             uploadLink = data.upload_link;
         } catch (err) {
             setStatus('error');
-            setErrorMessage(err instanceof Error ? err.message : 'Unknown error occurred.');
+            setErrorMessage(
+                err instanceof Error ? err.message : 'Unknown error occurred.',
+            );
             return;
         }
 
@@ -136,8 +150,9 @@ export default function UploadGame({ game }: { game: Game }) {
             <div className="flex flex-col gap-6 p-6">
                 <div>
                     <h1 className="text-2xl font-semibold">Upload Video</h1>
-                    <p className="text-muted-foreground text-sm">
-                        Upload a video for <span className="font-medium">{game.title}</span>.
+                    <p className="text-sm text-muted-foreground">
+                        Upload a video for{' '}
+                        <span className="font-medium">{game.title}</span>.
                         {game.vimeo_status === 'complete' && (
                             <span className="ml-2 font-medium text-green-600">
                                 A video has already been uploaded.
@@ -153,7 +168,9 @@ export default function UploadGame({ game }: { game: Game }) {
                         type="file"
                         accept="video/*"
                         className="hidden"
-                        onChange={(e) => selectFile(e.target.files?.[0] ?? null)}
+                        onChange={(e) =>
+                            selectFile(e.target.files?.[0] ?? null)
+                        }
                         disabled={isUploading}
                     />
 
@@ -171,23 +188,25 @@ export default function UploadGame({ game }: { game: Game }) {
                                     : 'border-border hover:border-primary/50 hover:bg-muted/50'
                             }`}
                         >
-                            <Upload className="text-muted-foreground size-10" />
+                            <Upload className="size-10 text-muted-foreground" />
                             <div>
                                 <p className="text-sm font-medium">
                                     Drop a video file here, or{' '}
                                     <span className="text-primary">browse</span>
                                 </p>
-                                <p className="text-muted-foreground mt-1 text-xs">
+                                <p className="mt-1 text-xs text-muted-foreground">
                                     MP4, MOV, AVI, MKV and other video formats
                                 </p>
                             </div>
                         </button>
                     ) : (
-                        <div className="bg-muted/50 flex items-center gap-3 rounded-lg border px-4 py-3">
-                            <Upload className="text-muted-foreground size-5 shrink-0" />
+                        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-3">
+                            <Upload className="size-5 shrink-0 text-muted-foreground" />
                             <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium">{file.name}</p>
-                                <p className="text-muted-foreground text-xs">
+                                <p className="truncate text-sm font-medium">
+                                    {file.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
                                     {(file.size / 1024 / 1024).toFixed(2)} MB
                                 </p>
                             </div>
@@ -195,7 +214,7 @@ export default function UploadGame({ game }: { game: Game }) {
                                 <button
                                     type="button"
                                     onClick={() => selectFile(null)}
-                                    className="text-muted-foreground hover:text-foreground shrink-0"
+                                    className="shrink-0 text-muted-foreground hover:text-foreground"
                                 >
                                     <X className="size-4" />
                                 </button>
@@ -216,7 +235,7 @@ export default function UploadGame({ game }: { game: Game }) {
                                 </span>
                                 <span className="font-medium">{progress}%</span>
                             </div>
-                            <div className="bg-secondary h-2 w-full overflow-hidden rounded-full">
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                                 <div
                                     className={`h-full rounded-full transition-all duration-300 ${status === 'done' ? 'bg-green-500' : 'bg-primary'}`}
                                     style={{ width: `${progress}%` }}
@@ -225,7 +244,9 @@ export default function UploadGame({ game }: { game: Game }) {
                         </div>
                     )}
 
-                    {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
+                    {errorMessage && (
+                        <p className="text-sm text-red-600">{errorMessage}</p>
+                    )}
 
                     {status === 'done' && (
                         <p className="text-sm font-medium text-green-600">
@@ -254,7 +275,10 @@ export default function UploadGame({ game }: { game: Game }) {
                                 Resume
                             </Button>
                         )}
-                        <Button variant="secondary" onClick={() => router.visit(index().url)}>
+                        <Button
+                            variant="secondary"
+                            onClick={() => router.visit(index().url)}
+                        >
                             Back to Games
                         </Button>
                     </div>
