@@ -53,6 +53,11 @@ final class Game extends Model
         return $this->hasMany(GameModeration::class);
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     protected function casts(): array
     {
         return [
@@ -61,10 +66,5 @@ final class Game extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
     }
 }

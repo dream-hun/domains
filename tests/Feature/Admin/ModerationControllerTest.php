@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Enums\GameStatus;
 use App\Models\Game;
 use App\Models\User;
+use Spatie\Permission\Models\Permission;
 
 beforeEach(function (): void {
-    Spatie\Permission\Models\Permission::query()->firstOrCreate(['name' => 'moderate-games']);
+    Permission::query()->firstOrCreate(['name' => 'moderate-games']);
 });
 
 test('moderator can view the moderation queue', function (): void {
