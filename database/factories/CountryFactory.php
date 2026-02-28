@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
+use App\Models\Country;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Country>
+ * @extends Factory<Country>
  */
-class CountryFactory extends Factory
+final class CountryFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -16,8 +20,15 @@ class CountryFactory extends Factory
      */
     public function definition(): array
     {
+        $continents=['Asia','Europe','Africa','America','Atlantic'];
         return [
-            //
+            'uuid' => Str::uuid(),
+            'iso_code' => fake()->unique()->lexify('???'),
+            'iso_alpha2' => fake()->unique()->lexify('??'),
+            'name' => fake()->country(),
+            'capital' => fake()->city(),
+            'region' =>fake()->randomElement($continents),
+            'flag' => fake()->imageUrl(),
         ];
     }
 }

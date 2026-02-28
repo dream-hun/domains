@@ -7,6 +7,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,6 +16,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property-read int $id
+ * @property-read string $uuid
  * @property-read string $name
  * @property-read string $email
  * @property ?CarbonInterface $email_verified_at
@@ -29,21 +31,13 @@ final class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
-
+    use HasUuids;
     use HasRoles;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -56,6 +50,12 @@ final class User extends Authenticatable
         'two_factor_recovery_codes',
         'remember_token',
     ];
+
+    /** @return list<string> */
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
 
     /**
      * Get the attributes that should be cast.

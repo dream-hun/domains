@@ -15,7 +15,11 @@ final class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(RolesAndPermissionsSeeder::class);
+        $this->call([
+            CountrySeeder::class,
+            RolesAndPermissionsSeeder::class]
+        );
+
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
