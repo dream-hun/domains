@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
-import { LayoutGrid, MapPin, Users, Video } from 'lucide-react';
+import { ClipboardList, LayoutGrid, MapPin, Users, Video } from 'lucide-react';
 import { index as courtsIndex } from '@/actions/App/Http/Controllers/Admin/CourtController';
 import { index as gamesIndex } from '@/actions/App/Http/Controllers/Admin/GameController';
 import { index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';
@@ -17,6 +17,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import moderation from '@/routes/admin/moderation';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 
@@ -50,6 +51,11 @@ export function AppSidebar() {
             title: 'Games',
             href: gamesIndex().url,
             icon: Video,
+        },
+        {
+            title: 'Moderation Queues',
+            href: moderation.index().url,
+            icon: ClipboardList,
         },
     ];
 

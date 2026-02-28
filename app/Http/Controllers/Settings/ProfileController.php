@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\Country;
 use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -29,6 +30,8 @@ final class ProfileController extends Controller
             /** @phpstan-ignore instanceof.alwaysFalse */
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'countries' => Country::query()->orderBy('name')->get(['id', 'name']),
+            'playerProfile' => $user->profile,
         ]);
     }
 

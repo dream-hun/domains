@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Profile extends Model
 {
-    /** @use HasFactory<ProfileFactory> */
-    use HasFactory, HasUuids;
+    use HasFactory;
+    use HasUuids;
 
     protected $guarded = [];
+
+    /** @return list<string> */
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
 
     /** @return BelongsTo<User,self> */
     public function player(): BelongsTo
@@ -32,9 +36,10 @@ final class Profile extends Model
 
     /**
      * Get the attributes that should be cast.
+     *
      * @return array<string,string>
      */
-    public function casts(): array
+    protected function casts(): array
     {
         return [
             'country_id' => 'integer',

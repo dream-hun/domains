@@ -20,14 +20,15 @@ final class CountryFactory extends Factory
      */
     public function definition(): array
     {
-        $continents=['Asia','Europe','Africa','America','Atlantic'];
+        $continents = ['Asia', 'Europe', 'Africa', 'America', 'Atlantic'];
+
         return [
             'uuid' => Str::uuid(),
             'iso_code' => fake()->unique()->lexify('???'),
             'iso_alpha2' => fake()->unique()->lexify('??'),
             'name' => fake()->country(),
             'capital' => fake()->city(),
-            'region' =>fake()->randomElement($continents),
+            'region' => fake()->randomElement($continents),
             'flag' => fake()->imageUrl(),
         ];
     }
