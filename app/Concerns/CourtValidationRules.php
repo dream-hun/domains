@@ -12,7 +12,7 @@ trait CourtValidationRules
     /**
      * Get the validation rules used to validate courts.
      *
-     * @return array<string, array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>>
+     * @return array<string, array<int, \Illuminate\Contracts\Validation\Rule|array|string>>
      */
     protected function courtRules(): array
     {

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -26,16 +27,18 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read ?string $remember_token
  * @property-read ?CarbonInterface $created_at
  * @property-read ?CarbonInterface $updated_at
+ * @property-read ?Profile $profile
  */
-final class User extends Authenticatable
+final class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
-    use HasUuids;
+
     use HasRoles;
+    use HasUuids;
     use Notifiable;
     use TwoFactorAuthenticatable;
-    
+
 
     protected $guarded = [];
 
@@ -55,6 +58,12 @@ final class User extends Authenticatable
     public function uniqueIds(): array
     {
         return ['uuid'];
+    }
+
+    /** @return HasOne<Profile,self> */
+    public function profile(): HasOne
+    {
+        return $this->hasOne(Profile::class, 'player_id');
     }
 
     /**

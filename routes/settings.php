@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Settings\PasswordController;
+use App\Http\Controllers\Settings\PlayerProfileController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TwoFactorAuthenticationController;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,7 @@ Route::middleware(['auth'])->group(function (): void {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::match(['patch', 'post'], 'settings/player-profile', [PlayerProfileController::class, 'update'])->name('player-profile.update');
 });
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
