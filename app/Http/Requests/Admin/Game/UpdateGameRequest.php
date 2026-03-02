@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Game;
 
-use Illuminate\Contracts\Validation\Rule;
+use App\Enums\ResultStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class UpdateGameRequest extends FormRequest
 {
@@ -15,7 +16,7 @@ final class UpdateGameRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, Rule|array<mixed>|string>>
+     * @return array<string, array<int, Rule|array|string>>
      */
     public function rules(): array
     {
@@ -24,6 +25,10 @@ final class UpdateGameRequest extends FormRequest
             'format' => ['required', 'string'],
             'court_id' => ['nullable', 'exists:courts,id'],
             'played_at' => ['required', 'date'],
+            'points' => ['nullable', 'integer'],
+            'comments' => ['nullable', 'string', 'max:500'],
+            'result' => ['nullable', Rule::enum(ResultStatus::class)],
+
         ];
     }
 }

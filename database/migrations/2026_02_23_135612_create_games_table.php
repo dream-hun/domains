@@ -19,14 +19,14 @@ return new class extends Migration
             $table->string('format')->default('5v5');
             $table->foreignId('court_id')->nullable()->constrained();
             $table->foreignId('player_id')->references('id')->on('users');
-            $table->foreignId('moderator_id')->nullable()->references('id')->on('users');
             $table->string('title');
             $table->string('vimeo_uri')->nullable();
             $table->string('vimeo_status')->nullable();
             $table->dateTime('played_at');
             $table->string('status')->default('pending');
-            $table->longText('moderator_note')->nullable();
-            $table->dateTime('moderation_date')->nullable();
+            $table->string('result')->nullable();
+            $table->unsignedInteger('points')->nullable();
+            $table->longText('comments')->nullable();
             $table->timestamps();
         });
     }

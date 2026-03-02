@@ -169,6 +169,42 @@ export default function CreateGame({ courts }: { courts: Court[] }) {
                                 <InputError message={errors.played_at} />
                             </div>
 
+                            <div className="grid gap-2">
+                                <Label htmlFor="result">Result</Label>
+                                <Select name="result">
+                                    <SelectTrigger id="result">
+                                        <SelectValue placeholder="Select result (optional)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="win">Win</SelectItem>
+                                        <SelectItem value="lost">Lost</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.result} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="points">Points</Label>
+                                <Input
+                                    id="points"
+                                    name="points"
+                                    type="number"
+                                    min={0}
+                                    placeholder="Points scored (optional)"
+                                />
+                                <InputError message={errors.points} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="comments">Comments</Label>
+                                <Input
+                                    id="comments"
+                                    name="comments"
+                                    placeholder="Comments (optional)"
+                                />
+                                <InputError message={errors.comments} />
+                            </div>
+
                             <div className="flex gap-2">
                                 <Button
                                     type="button"

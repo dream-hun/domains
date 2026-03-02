@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\GameStatus;
+use App\Enums\ResultStatus;
 use Carbon\CarbonInterface;
 use Database\Factories\GameFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,6 +24,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read ?string $vimeo_status
  * @property-read CarbonInterface $played_at
  * @property-read GameStatus $status
+ * @property-read ?ResultStatus $result
+ * @property-read ?int $points
+ * @property-read ?string $comments
  * @property-read ?CarbonInterface $created_at
  * @property-read ?CarbonInterface $updated_at
  * @property-read ?Court $court
@@ -62,6 +66,7 @@ final class Game extends Model
     {
         return [
             'status' => GameStatus::class,
+            'result' => ResultStatus::class,
             'played_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
