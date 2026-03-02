@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Actions\Admin\Game;
 
 use App\Enums\GameStatus;
+use App\Jobs\RecalculateRankingsJob;
 use App\Models\Game;
+use App\Models\RankingConfiguration;
 
 final class ModerateAction
 {
@@ -18,5 +20,10 @@ final class ModerateAction
         ]);
 
         $game->update(['status' => $status]);
+
+        if ($status === GameStatus::Approved) {
+            $config = RankingConfiguration::query()->latest()->firstOrFail();
+            dispatch(new RecalculateRankingsJob($config->id));
+        }
     }
 }

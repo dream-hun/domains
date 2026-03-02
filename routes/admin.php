@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\CourtController;
 use App\Http\Controllers\Admin\GameController;
 use App\Http\Controllers\Admin\ModerationController;
+use App\Http\Controllers\Admin\RankingConfigurationController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,9 @@ Route::middleware(['auth', 'verified', 'role:administrator'])->group(function ()
     Route::resource('admin/users', UserController::class)
         ->names('admin.users')
         ->only(['index', 'store', 'update', 'destroy']);
+
+    Route::get('admin/ranking', [RankingConfigurationController::class, 'edit'])->name('admin.ranking.edit');
+    Route::post('admin/ranking', [RankingConfigurationController::class, 'update'])->name('admin.ranking.update');
 });
 
 Route::middleware(['auth', 'verified', 'permission:moderate-games'])->group(function (): void {

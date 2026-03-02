@@ -4,11 +4,21 @@ declare(strict_types=1);
 
 use App\Models\Game;
 use App\Models\GameModeration;
+use App\Models\RankingConfiguration;
 use App\Models\User;
+use Illuminate\Support\Facades\Queue;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function (): void {
     Permission::query()->firstOrCreate(['name' => 'moderate-games']);
+    Queue::fake();
+
+    RankingConfiguration::query()->create([
+        'win_weight' => 3.0,
+        'loss_weight' => 1.0,
+        'game_count_weight' => 0.5,
+        'frequency_weight' => 2.0,
+    ]);
 });
 
 test('moderator can view the moderation queue', function (): void {

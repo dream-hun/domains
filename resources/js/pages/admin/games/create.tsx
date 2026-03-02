@@ -8,6 +8,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
     Popover,
@@ -197,7 +198,7 @@ export default function CreateGame({ courts }: { courts: Court[] }) {
 
                             <div className="grid gap-2">
                                 <Label htmlFor="comments">Comments</Label>
-                                <Input
+                                <Textarea
                                     id="comments"
                                     name="comments"
                                     placeholder="Comments (optional)"

@@ -17,8 +17,9 @@ final class DatabaseSeeder extends Seeder
     {
         $this->call([
             CountrySeeder::class,
-            RolesAndPermissionsSeeder::class]
-        );
+            RolesAndPermissionsSeeder::class,
+            RankingConfigurationSeeder::class,
+        ]);
 
         User::factory()->create([
             'name' => 'Test User',
