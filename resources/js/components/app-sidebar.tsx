@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
-import { ClipboardList, LayoutGrid, MapPin, Users, Video } from 'lucide-react';
+import { ClipboardList, LayoutGrid, MapPin, Settings2, Trophy, Users, Video } from 'lucide-react';
 import { index as courtsIndex } from '@/actions/App/Http/Controllers/Admin/CourtController';
 import { index as gamesIndex } from '@/actions/App/Http/Controllers/Admin/GameController';
 import { index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';
@@ -16,8 +16,9 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard, leaderboard } from '@/routes';
 import moderation from '@/routes/admin/moderation';
+import ranking from '@/routes/admin/ranking';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 
@@ -32,6 +33,11 @@ export function AppSidebar() {
                       href: usersIndex().url,
                       icon: Users,
                   },
+                  {
+                      title: 'Ranking Config',
+                      href: ranking.edit().url,
+                      icon: Settings2,
+                  },
               ]
             : []),
     ];
@@ -41,6 +47,11 @@ export function AppSidebar() {
             title: 'Dashboard',
             href: dashboard(),
             icon: LayoutGrid,
+        },
+        {
+            title: 'Leaderboard',
+            href: leaderboard().url,
+            icon: Trophy,
         },
         {
             title: 'Courts',

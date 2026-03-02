@@ -87,7 +87,7 @@ export default function Profile({
         if (status === 'player-profile-updated') {
             setToast({ type: 'success', message: 'Your player profile has been saved successfully.' });
         }
-    }, []);
+    }, [status]);
 
     React.useEffect(() => {
         if (!toast) return;

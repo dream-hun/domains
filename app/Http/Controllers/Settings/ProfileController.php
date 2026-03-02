@@ -27,7 +27,7 @@ final class ProfileController extends Controller
         $user = $request->user();
 
         return Inertia::render('settings/profile', [
-            /** @phpstan-ignore instanceof.alwaysFalse */
+            /** @phpstan-ignore instanceof.alwaysTrue */
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'countries' => Country::query()->orderBy('name')->get(['id', 'name']),

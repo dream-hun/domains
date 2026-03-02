@@ -16,6 +16,7 @@ final class PlayerProfileController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        /** @var array<string, mixed> $data */
         $data = $request->safe()->except('profile_image');
 
         if ($request->hasFile('profile_image')) {

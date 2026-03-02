@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -39,7 +40,6 @@ final class User extends Authenticatable implements MustVerifyEmail
     use Notifiable;
     use TwoFactorAuthenticatable;
 
-
     protected $guarded = [];
 
     /**
@@ -60,10 +60,17 @@ final class User extends Authenticatable implements MustVerifyEmail
         return ['uuid'];
     }
 
-    /** @return HasOne<Profile,self> */
+    /** @return HasOne<Profile, User> */
     public function profile(): HasOne
     {
+        // @phpstan-ignore-next-line return.type
         return $this->hasOne(Profile::class, 'player_id');
+    }
+
+    /** @return HasMany<PlayerRanking,self> */
+    public function rankings(): HasMany
+    {
+        return $this->hasMany(PlayerRanking::class, 'player_id');
     }
 
     /**

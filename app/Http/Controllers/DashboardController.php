@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Ranking\GetPlayerRankingsAction;
 use App\Enums\GameStatus;
 use App\Models\Court;
 use App\Models\Game;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -14,8 +16,11 @@ use Inertia\Response;
 
 final class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, GetPlayerRankingsAction $rankingsAction): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+
         $gamesPerMonth = $this->buildGamesPerMonth();
 
         return Inertia::render('dashboard', [
@@ -40,6 +45,7 @@ final class DashboardController extends Controller
                     'player' => ['name' => $game->player->name],
                 ]),
             'games_per_month' => $gamesPerMonth,
+            'player_rankings' => $rankingsAction->handle($user->id),
         ]);
     }
 

@@ -16,7 +16,7 @@ final class UpdateGameRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, Rule|array|string>>
+     * @return array<string, array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>>
      */
     public function rules(): array
     {

@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { CheckCircle2, Clock, Gamepad2, MapPin } from 'lucide-react';
+import { CheckCircle2, Clock, Gamepad2, MapPin, Trophy } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,10 +42,19 @@ interface MonthlyData {
     count: number;
 }
 
+interface PlayerRankingEntry {
+    format: string;
+    rank: number;
+    score: number;
+    wins: number;
+    losses: number;
+}
+
 interface Props {
     stats: GameStats;
     recent_games: RecentGame[];
     games_per_month: MonthlyData[];
+    player_rankings: Record<string, PlayerRankingEntry>;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -87,11 +96,14 @@ export default function Dashboard({
     stats,
     recent_games,
     games_per_month,
+    player_rankings,
 }: Props) {
     const chartData = games_per_month.map((item) => ({
         month: formatMonth(item.month),
         games: item.count,
     }));
+
+    const rankingEntries = Object.values(player_rankings);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -155,6 +167,47 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* My Rankings */}
+                {rankingEntries.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                        <h2 className="flex items-center gap-2 text-lg font-semibold">
+                            <Trophy className="h-5 w-5 text-yellow-500" />
+                            My Rankings
+                        </h2>
+                        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                            {rankingEntries.map((entry) => (
+                                <Card key={entry.format}>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-medium uppercase text-muted-foreground">
+                                            {entry.format}
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="flex flex-col gap-1">
+                                        <div className="text-3xl font-bold">
+                                            #{entry.rank}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                            Score:{' '}
+                                            <span className="font-mono">
+                                                {entry.score.toFixed(2)}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                            <span className="text-green-600">
+                                                {entry.wins}W
+                                            </span>{' '}
+                                            /{' '}
+                                            <span className="text-red-500">
+                                                {entry.losses}L
+                                            </span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Chart + Recent Games */}
                 <div className="grid gap-4 md:grid-cols-2">

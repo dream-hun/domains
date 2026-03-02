@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class Profile extends Model
 {
+    /** @use HasFactory<\Database\Factories\ProfileFactory> */
     use HasFactory;
+
     use HasUuids;
 
     protected $guarded = [];
