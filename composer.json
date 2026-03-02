@@ -13,6 +13,7 @@
         "inertiajs/inertia-laravel": "^2.0.20",
         "laravel/fortify": "^1.35.0",
         "laravel/framework": "^12.53",
+        "laravel/nightwatch": "^1.24",
         "laravel/tinker": "^2.11.1",
         "laravel/wayfinder": "^0.1.14",
         "opcodesio/log-viewer": "^3.21.1",
