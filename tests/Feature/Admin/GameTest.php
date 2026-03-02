@@ -79,6 +79,9 @@ test('authenticated users can update a game', function (): void {
         'format' => '3v3',
         'court_id' => null,
         'played_at' => '2026-02-01 14:00:00',
+        'result' => 'win',
+        'points' => 42,
+        'comments' => 'Great game!',
     ]);
 
     $response->assertRedirect(route('admin.games.index'));
@@ -88,6 +91,34 @@ test('authenticated users can update a game', function (): void {
         'title' => 'Updated Game',
         'format' => '3v3',
         'player_id' => $player->id,
+        'result' => 'win',
+        'points' => 42,
+        'comments' => 'Great game!',
+    ]);
+});
+
+test('authenticated users can create a game with result and points', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->post(route('admin.games.store'), [
+        'title' => 'Scored Game',
+        'format' => '3v3',
+        'court_id' => null,
+        'played_at' => '2026-01-20 10:00:00',
+        'result' => 'lost',
+        'points' => 10,
+        'comments' => 'Tough match.',
+    ]);
+
+    $response->assertRedirect(route('admin.games.index'));
+
+    $this->assertDatabaseHas('games', [
+        'title' => 'Scored Game',
+        'result' => 'lost',
+        'points' => 10,
+        'comments' => 'Tough match.',
+        'player_id' => $user->id,
     ]);
 });
 

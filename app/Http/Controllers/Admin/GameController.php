@@ -60,6 +60,7 @@ final class GameController extends Controller
     {
         return Inertia::render('admin/games/edit', [
             'game' => $game,
+            'courts' => Court::query()->select(['id', 'name'])->orderBy('name')->get(),
         ]);
     }
 

@@ -31,6 +31,9 @@ final class GameFactory extends Factory
             'status' => 'pending',
             'vimeo_uri' => null,
             'vimeo_status' => null,
+            'result' => null,
+            'points' => null,
+            'comments' => null,
         ];
     }
 }

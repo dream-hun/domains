@@ -66,6 +66,9 @@ type Game = {
     player_id: number;
     played_at: string;
     status: string;
+    result: 'win' | 'lost' | null;
+    points: number | null;
+    comments: string | null;
     vimeo_status: string | null;
     court: Court | null;
     player: User | null;
@@ -227,6 +230,47 @@ function GameFormFields({
                 <input type="hidden" name="played_at" value={playedAtValue} />
                 <InputError message={errors.played_at} />
             </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="result">Result</Label>
+                <Select
+                    name="result"
+                    defaultValue={game?.result ?? ''}
+                >
+                    <SelectTrigger id="result">
+                        <SelectValue placeholder="Select result (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="win">Win</SelectItem>
+                        <SelectItem value="lost">Lost</SelectItem>
+                    </SelectContent>
+                </Select>
+                <InputError message={errors.result} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="points">Points</Label>
+                <Input
+                    id="points"
+                    name="points"
+                    type="number"
+                    min={0}
+                    defaultValue={game?.points ?? ''}
+                    placeholder="Points scored (optional)"
+                />
+                <InputError message={errors.points} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="comments">Comments</Label>
+                <Input
+                    id="comments"
+                    name="comments"
+                    defaultValue={game?.comments ?? ''}
+                    placeholder="Comments (optional)"
+                />
+                <InputError message={errors.comments} />
+            </div>
         </>
     );
 }
@@ -296,6 +340,8 @@ export default function GamesIndex({
                                 <TableHead>Format</TableHead>
                                 <TableHead>Played At</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Result</TableHead>
+                                <TableHead>Points</TableHead>
                                 <TableHead>Video</TableHead>
                                 <TableHead className="text-right">
                                     Actions
@@ -306,7 +352,7 @@ export default function GamesIndex({
                             {games.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={7}
+                                        colSpan={9}
                                         className="py-8 text-center text-muted-foreground"
                                     >
                                         No games found.
@@ -329,6 +375,20 @@ export default function GamesIndex({
                                         </TableCell>
                                         <TableCell>
                                             {statusBadge(game.status)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {game.result ? (
+                                                <span
+                                                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${game.result === 'win' ? 'bg-green-500' : 'bg-red-500'}`}
+                                                >
+                                                    {game.result === 'win' ? 'Win' : 'Lost'}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">—</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {game.points ?? <span className="text-xs text-muted-foreground">—</span>}
                                         </TableCell>
                                         <TableCell>
                                             {vimeoStatusBadge(

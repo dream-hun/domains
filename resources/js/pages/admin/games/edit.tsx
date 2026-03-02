@@ -25,6 +25,8 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
+type Court = { id: number; name: string };
+
 type Game = {
     id: number;
     uuid: string;
@@ -32,6 +34,9 @@ type Game = {
     format: string;
     court_id: number | null;
     played_at: string;
+    result: 'win' | 'lost' | null;
+    points: number | null;
+    comments: string | null;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -47,7 +52,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const formats = ['1v1', '2v2', '3v3', '4v4', '5v5'];
 
-export default function EditGame({ game }: { game: Game }) {
+export default function EditGame({ game, courts }: { game: Game; courts: Court[] }) {
     const initialDate = game.played_at ? new Date(game.played_at) : undefined;
     const [date, setDate] = useState<Date | undefined>(initialDate);
     const [calendarOpen, setCalendarOpen] = useState(false);
@@ -108,6 +113,26 @@ export default function EditGame({ game }: { game: Game }) {
                             </div>
 
                             <div className="grid gap-2">
+                                <Label htmlFor="court_id">Court</Label>
+                                <Select
+                                    name="court_id"
+                                    defaultValue={game.court_id ? String(game.court_id) : ''}
+                                >
+                                    <SelectTrigger id="court_id">
+                                        <SelectValue placeholder="Select a court (optional)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {courts.map((court) => (
+                                            <SelectItem key={court.id} value={String(court.id)}>
+                                                {court.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.court_id} />
+                            </div>
+
+                            <div className="grid gap-2">
                                 <Label>Played At</Label>
                                 <Popover
                                     open={calendarOpen}
@@ -153,6 +178,47 @@ export default function EditGame({ game }: { game: Game }) {
                                     value={playedAtValue}
                                 />
                                 <InputError message={errors.played_at} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="result">Result</Label>
+                                <Select
+                                    name="result"
+                                    defaultValue={game.result ?? ''}
+                                >
+                                    <SelectTrigger id="result">
+                                        <SelectValue placeholder="Select result (optional)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="win">Win</SelectItem>
+                                        <SelectItem value="lost">Lost</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.result} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="points">Points</Label>
+                                <Input
+                                    id="points"
+                                    name="points"
+                                    type="number"
+                                    min={0}
+                                    defaultValue={game.points ?? ''}
+                                    placeholder="Points scored (optional)"
+                                />
+                                <InputError message={errors.points} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="comments">Comments</Label>
+                                <Input
+                                    id="comments"
+                                    name="comments"
+                                    defaultValue={game.comments ?? ''}
+                                    placeholder="Comments (optional)"
+                                />
+                                <InputError message={errors.comments} />
                             </div>
 
                             <div className="flex gap-2">
