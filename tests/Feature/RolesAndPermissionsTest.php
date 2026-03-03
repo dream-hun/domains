@@ -80,6 +80,18 @@ test('administrator can access ranking', function (): void {
     $this->actingAs($user)->get(route('admin.ranking.edit'))->assertOk();
 });
 
+test('super admin can access override', function (): void {
+    $user = User::factory()->create()->assignRole(Role::SuperAdmin->value);
+
+    $this->actingAs($user)->get(route('admin.override.index'))->assertOk();
+});
+
+test('administrator can access override', function (): void {
+    $user = User::factory()->create()->assignRole(Role::Administrator->value);
+
+    $this->actingAs($user)->get(route('admin.override.index'))->assertOk();
+});
+
 // Moderator access
 test('moderator can access moderation', function (): void {
     $user = User::factory()->create()->assignRole(Role::Moderator->value);
@@ -97,6 +109,12 @@ test('moderator cannot access ranking', function (): void {
     $user = User::factory()->create()->assignRole(Role::Moderator->value);
 
     $this->actingAs($user)->get(route('admin.ranking.edit'))->assertForbidden();
+});
+
+test('moderator cannot access override', function (): void {
+    $user = User::factory()->create()->assignRole(Role::Moderator->value);
+
+    $this->actingAs($user)->get(route('admin.override.index'))->assertForbidden();
 });
 
 test('moderator cannot access users', function (): void {
@@ -134,4 +152,10 @@ test('player cannot access ranking', function (): void {
     $user = User::factory()->create()->assignRole(Role::Player->value);
 
     $this->actingAs($user)->get(route('admin.ranking.edit'))->assertForbidden();
+});
+
+test('player cannot access override', function (): void {
+    $user = User::factory()->create()->assignRole(Role::Player->value);
+
+    $this->actingAs($user)->get(route('admin.override.index'))->assertForbidden();
 });

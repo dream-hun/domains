@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\CourtController;
 use App\Http\Controllers\Admin\GameController;
 use App\Http\Controllers\Admin\ModerationController;
+use App\Http\Controllers\Admin\OverrideController;
 use App\Http\Controllers\Admin\RankingConfigurationController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
@@ -46,4 +47,13 @@ Route::middleware(['auth', 'verified', 'permission:moderate-games'])->group(func
         ->name('admin.moderation.show');
     Route::patch('admin/moderation/{game}', [ModerationController::class, 'update'])
         ->name('admin.moderation.update');
+});
+
+Route::middleware(['auth', 'verified', 'permission:override-moderation'])->group(function (): void {
+    Route::get('admin/override', [OverrideController::class, 'index'])
+        ->name('admin.override.index');
+    Route::get('admin/override/{game}', [OverrideController::class, 'show'])
+        ->name('admin.override.show');
+    Route::patch('admin/override/{game}', [OverrideController::class, 'update'])
+        ->name('admin.override.update');
 });

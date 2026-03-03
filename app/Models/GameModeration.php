@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read int $moderator_id
  * @property-read GameStatus $status
  * @property-read string $reason
+ * @property-read bool $is_override
  * @property-read ?CarbonInterface $created_at
  * @property-read ?CarbonInterface $updated_at
  * @property-read Game $game
@@ -45,6 +46,7 @@ final class GameModeration extends Model
     {
         return [
             'status' => GameStatus::class,
+            'is_override' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

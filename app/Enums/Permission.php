@@ -18,6 +18,7 @@ enum Permission: string
     case EditGames = 'edit-games';
     case DeleteGames = 'delete-games';
     case ModerateGames = 'moderate-games';
+    case OverrideModeration = 'override-moderation';
 
     // Users
     case ViewUsers = 'view-users';
@@ -44,6 +45,7 @@ enum Permission: string
             self::EditGames => 'Edit Games',
             self::DeleteGames => 'Delete Games',
             self::ModerateGames => 'Moderate Games',
+            self::OverrideModeration => 'Override Moderation',
             self::ViewUsers => 'View Users',
             self::ManageUsers => 'Manage Users',
             self::ManageRankingConfiguration => 'Manage Ranking Configuration',
