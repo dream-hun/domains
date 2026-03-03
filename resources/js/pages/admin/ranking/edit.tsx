@@ -1,5 +1,8 @@
 import { Form, Head } from '@inertiajs/react';
-import { edit, update } from '@/actions/App/Http/Controllers/Admin/RankingConfigurationController';
+import {
+    edit,
+    update,
+} from '@/actions/App/Http/Controllers/Admin/RankingConfigurationController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +38,7 @@ export default function RankingEdit({ config }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Ranking Configuration" />
 
-            <div className="flex flex-col gap-6 p-6 max-w-2xl">
+            <div className="flex max-w-2xl flex-col gap-6 p-6">
                 <div>
                     <h1 className="text-2xl font-semibold">
                         Ranking Configuration
@@ -51,13 +54,16 @@ export default function RankingEdit({ config }: Props) {
                     <CardHeader>
                         <CardTitle>Score Formula</CardTitle>
                         <CardDescription>
-                            score = (wins × win_weight) + (losses ×
-                            loss_weight) + (total_games × game_count_weight) +
+                            score = (wins × win_weight) + (losses × loss_weight)
+                            + (total_games × game_count_weight) +
                             (recent_30d_games × frequency_weight)
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Form {...update.form()} className="flex flex-col gap-4">
+                        <Form
+                            {...update.form()}
+                            className="flex flex-col gap-4"
+                        >
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-2">

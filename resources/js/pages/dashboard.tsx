@@ -179,7 +179,7 @@ export default function Dashboard({
                             {rankingEntries.map((entry) => (
                                 <Card key={entry.format}>
                                     <CardHeader className="pb-2">
-                                        <CardTitle className="text-sm font-medium uppercase text-muted-foreground">
+                                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase">
                                             {entry.format}
                                         </CardTitle>
                                     </CardHeader>

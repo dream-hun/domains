@@ -53,7 +53,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const formats = ['1v1', '2v2', '3v3', '4v4', '5v5'];
 
-export default function EditGame({ game, courts }: { game: Game; courts: Court[] }) {
+export default function EditGame({
+    game,
+    courts,
+}: {
+    game: Game;
+    courts: Court[];
+}) {
     const initialDate = game.played_at ? new Date(game.played_at) : undefined;
     const [date, setDate] = useState<Date | undefined>(initialDate);
     const [calendarOpen, setCalendarOpen] = useState(false);
@@ -117,14 +123,21 @@ export default function EditGame({ game, courts }: { game: Game; courts: Court[]
                                 <Label htmlFor="court_id">Court</Label>
                                 <Select
                                     name="court_id"
-                                    defaultValue={game.court_id ? String(game.court_id) : ''}
+                                    defaultValue={
+                                        game.court_id
+                                            ? String(game.court_id)
+                                            : ''
+                                    }
                                 >
                                     <SelectTrigger id="court_id">
                                         <SelectValue placeholder="Select a court (optional)" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {courts.map((court) => (
-                                            <SelectItem key={court.id} value={String(court.id)}>
+                                            <SelectItem
+                                                key={court.id}
+                                                value={String(court.id)}
+                                            >
                                                 {court.name}
                                             </SelectItem>
                                         ))}
@@ -192,7 +205,9 @@ export default function EditGame({ game, courts }: { game: Game; courts: Court[]
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="win">Win</SelectItem>
-                                        <SelectItem value="lost">Lost</SelectItem>
+                                        <SelectItem value="lost">
+                                            Lost
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.result} />

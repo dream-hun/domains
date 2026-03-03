@@ -1,1 +1,246 @@
-import{c as j,j as e,F as g,H as f}from"./app-C_M1-u2r.js";import{C as x,A as y,i as C}from"./app-layout-CZPTXx4s.js";import{I as r}from"./input-error-CkKI5kvP.js";import{B as u}from"./app-logo-icon-BcSq9Noa.js";import{I as i}from"./input-Cn0z7F4k.js";import{L as a}from"./label-CKqDLf1o.js";import{S as b,a as v,b as N,c as S,d as _}from"./select-BLt20f7s.js";/* empty css            */import"./index-m3SvSfPp.js";import"./index-DAou6nP7.js";import"./index-CSEUMRIG.js";import"./index-x0I2YQpJ.js";import"./index-2rmVfgAx.js";import"./check-zt7p40bQ.js";const F=[{title:"Courts",href:C().url},{title:"Create Court",href:x.create().url}];function J(l){const t=j.c(5),{statuses:m}=l;let o;t[0]===Symbol.for("react.memo_cache_sentinel")?(o=e.jsx(f,{title:"Create Court"}),t[0]=o):o=t[0];let n;t[1]===Symbol.for("react.memo_cache_sentinel")?(n=e.jsxs("div",{children:[e.jsx("h1",{className:"text-2xl font-semibold",children:"Create Court"}),e.jsx("p",{className:"text-sm text-muted-foreground",children:"Add a new court to the system."})]}),t[1]=n):n=t[1];let c;t[2]===Symbol.for("react.memo_cache_sentinel")?(c=x.store.form(),t[2]=c):c=t[2];let d;return t[3]!==m?(d=e.jsxs(y,{breadcrumbs:F,children:[o,e.jsxs("div",{className:"flex flex-col gap-6 p-6",children:[n,e.jsx(g,{...c,className:"max-w-lg space-y-4",children:p=>{const{processing:h,errors:s}=p;return e.jsxs(e.Fragment,{children:[e.jsxs("div",{className:"grid gap-2",children:[e.jsx(a,{htmlFor:"name",children:"Name"}),e.jsx(i,{id:"name",name:"name",placeholder:"Court name",required:!0}),e.jsx(r,{message:s.name})]}),e.jsxs("div",{className:"grid gap-2",children:[e.jsx(a,{htmlFor:"country",children:"Country"}),e.jsx(i,{id:"country",name:"country",placeholder:"Country",required:!0}),e.jsx(r,{message:s.country})]}),e.jsxs("div",{className:"grid gap-2",children:[e.jsx(a,{htmlFor:"city",children:"City"}),e.jsx(i,{id:"city",name:"city",placeholder:"City",required:!0}),e.jsx(r,{message:s.city})]}),e.jsxs("div",{className:"grid grid-cols-2 gap-4",children:[e.jsxs("div",{className:"grid gap-2",children:[e.jsx(a,{htmlFor:"latitude",children:"Latitude"}),e.jsx(i,{id:"latitude",name:"latitude",type:"number",step:"any",placeholder:"e.g. 51.5074"}),e.jsx(r,{message:s.latitude})]}),e.jsxs("div",{className:"grid gap-2",children:[e.jsx(a,{htmlFor:"longitude",children:"Longitude"}),e.jsx(i,{id:"longitude",name:"longitude",type:"number",step:"any",placeholder:"e.g. -0.1278"}),e.jsx(r,{message:s.longitude})]})]}),e.jsxs("div",{className:"grid gap-2",children:[e.jsx(a,{htmlFor:"status",children:"Status"}),e.jsxs(b,{name:"status",required:!0,children:[e.jsx(v,{id:"status",children:e.jsx(N,{placeholder:"Select a status"})}),e.jsx(S,{children:m.map(L)})]}),e.jsx(r,{message:s.status})]}),e.jsxs("div",{className:"flex gap-2",children:[e.jsx(u,{type:"button",variant:"secondary",onClick:I,children:"Cancel"}),e.jsx(u,{disabled:h,asChild:!0,children:e.jsx("button",{type:"submit",children:"Create Court"})})]})]})}})]})]}),t[3]=m,t[4]=d):d=t[4],d}function I(){return window.history.back()}function L(l){return e.jsx(_,{value:l.value,children:l.label},l.value)}export{J as default};
+import { c as j, j as e, F as g, H as f } from './app-C_M1-u2r.js';
+import { C as x, A as y, i as C } from './app-layout-CZPTXx4s.js';
+import { I as r } from './input-error-CkKI5kvP.js';
+import { B as u } from './app-logo-icon-BcSq9Noa.js';
+import { I as i } from './input-Cn0z7F4k.js';
+import { L as a } from './label-CKqDLf1o.js';
+import { S as b, a as v, b as N, c as S, d as _ } from './select-BLt20f7s.js';
+/* empty css            */ import './index-m3SvSfPp.js';
+import './index-DAou6nP7.js';
+import './index-CSEUMRIG.js';
+import './index-x0I2YQpJ.js';
+import './index-2rmVfgAx.js';
+import './check-zt7p40bQ.js';
+const F = [
+    { title: 'Courts', href: C().url },
+    { title: 'Create Court', href: x.create().url },
+];
+function J(l) {
+    const t = j.c(5),
+        { statuses: m } = l;
+    let o;
+    t[0] === Symbol.for('react.memo_cache_sentinel')
+        ? ((o = e.jsx(f, { title: 'Create Court' })), (t[0] = o))
+        : (o = t[0]);
+    let n;
+    t[1] === Symbol.for('react.memo_cache_sentinel')
+        ? ((n = e.jsxs('div', {
+              children: [
+                  e.jsx('h1', {
+                      className: 'text-2xl font-semibold',
+                      children: 'Create Court',
+                  }),
+                  e.jsx('p', {
+                      className: 'text-sm text-muted-foreground',
+                      children: 'Add a new court to the system.',
+                  }),
+              ],
+          })),
+          (t[1] = n))
+        : (n = t[1]);
+    let c;
+    t[2] === Symbol.for('react.memo_cache_sentinel')
+        ? ((c = x.store.form()), (t[2] = c))
+        : (c = t[2]);
+    let d;
+    return (
+        t[3] !== m
+            ? ((d = e.jsxs(y, {
+                  breadcrumbs: F,
+                  children: [
+                      o,
+                      e.jsxs('div', {
+                          className: 'flex flex-col gap-6 p-6',
+                          children: [
+                              n,
+                              e.jsx(g, {
+                                  ...c,
+                                  className: 'max-w-lg space-y-4',
+                                  children: (p) => {
+                                      const { processing: h, errors: s } = p;
+                                      return e.jsxs(e.Fragment, {
+                                          children: [
+                                              e.jsxs('div', {
+                                                  className: 'grid gap-2',
+                                                  children: [
+                                                      e.jsx(a, {
+                                                          htmlFor: 'name',
+                                                          children: 'Name',
+                                                      }),
+                                                      e.jsx(i, {
+                                                          id: 'name',
+                                                          name: 'name',
+                                                          placeholder:
+                                                              'Court name',
+                                                          required: !0,
+                                                      }),
+                                                      e.jsx(r, {
+                                                          message: s.name,
+                                                      }),
+                                                  ],
+                                              }),
+                                              e.jsxs('div', {
+                                                  className: 'grid gap-2',
+                                                  children: [
+                                                      e.jsx(a, {
+                                                          htmlFor: 'country',
+                                                          children: 'Country',
+                                                      }),
+                                                      e.jsx(i, {
+                                                          id: 'country',
+                                                          name: 'country',
+                                                          placeholder:
+                                                              'Country',
+                                                          required: !0,
+                                                      }),
+                                                      e.jsx(r, {
+                                                          message: s.country,
+                                                      }),
+                                                  ],
+                                              }),
+                                              e.jsxs('div', {
+                                                  className: 'grid gap-2',
+                                                  children: [
+                                                      e.jsx(a, {
+                                                          htmlFor: 'city',
+                                                          children: 'City',
+                                                      }),
+                                                      e.jsx(i, {
+                                                          id: 'city',
+                                                          name: 'city',
+                                                          placeholder: 'City',
+                                                          required: !0,
+                                                      }),
+                                                      e.jsx(r, {
+                                                          message: s.city,
+                                                      }),
+                                                  ],
+                                              }),
+                                              e.jsxs('div', {
+                                                  className:
+                                                      'grid grid-cols-2 gap-4',
+                                                  children: [
+                                                      e.jsxs('div', {
+                                                          className:
+                                                              'grid gap-2',
+                                                          children: [
+                                                              e.jsx(a, {
+                                                                  htmlFor:
+                                                                      'latitude',
+                                                                  children:
+                                                                      'Latitude',
+                                                              }),
+                                                              e.jsx(i, {
+                                                                  id: 'latitude',
+                                                                  name: 'latitude',
+                                                                  type: 'number',
+                                                                  step: 'any',
+                                                                  placeholder:
+                                                                      'e.g. 51.5074',
+                                                              }),
+                                                              e.jsx(r, {
+                                                                  message:
+                                                                      s.latitude,
+                                                              }),
+                                                          ],
+                                                      }),
+                                                      e.jsxs('div', {
+                                                          className:
+                                                              'grid gap-2',
+                                                          children: [
+                                                              e.jsx(a, {
+                                                                  htmlFor:
+                                                                      'longitude',
+                                                                  children:
+                                                                      'Longitude',
+                                                              }),
+                                                              e.jsx(i, {
+                                                                  id: 'longitude',
+                                                                  name: 'longitude',
+                                                                  type: 'number',
+                                                                  step: 'any',
+                                                                  placeholder:
+                                                                      'e.g. -0.1278',
+                                                              }),
+                                                              e.jsx(r, {
+                                                                  message:
+                                                                      s.longitude,
+                                                              }),
+                                                          ],
+                                                      }),
+                                                  ],
+                                              }),
+                                              e.jsxs('div', {
+                                                  className: 'grid gap-2',
+                                                  children: [
+                                                      e.jsx(a, {
+                                                          htmlFor: 'status',
+                                                          children: 'Status',
+                                                      }),
+                                                      e.jsxs(b, {
+                                                          name: 'status',
+                                                          required: !0,
+                                                          children: [
+                                                              e.jsx(v, {
+                                                                  id: 'status',
+                                                                  children:
+                                                                      e.jsx(N, {
+                                                                          placeholder:
+                                                                              'Select a status',
+                                                                      }),
+                                                              }),
+                                                              e.jsx(S, {
+                                                                  children:
+                                                                      m.map(L),
+                                                              }),
+                                                          ],
+                                                      }),
+                                                      e.jsx(r, {
+                                                          message: s.status,
+                                                      }),
+                                                  ],
+                                              }),
+                                              e.jsxs('div', {
+                                                  className: 'flex gap-2',
+                                                  children: [
+                                                      e.jsx(u, {
+                                                          type: 'button',
+                                                          variant: 'secondary',
+                                                          onClick: I,
+                                                          children: 'Cancel',
+                                                      }),
+                                                      e.jsx(u, {
+                                                          disabled: h,
+                                                          asChild: !0,
+                                                          children: e.jsx(
+                                                              'button',
+                                                              {
+                                                                  type: 'submit',
+                                                                  children:
+                                                                      'Create Court',
+                                                              },
+                                                          ),
+                                                      }),
+                                                  ],
+                                              }),
+                                          ],
+                                      });
+                                  },
+                              }),
+                          ],
+                      }),
+                  ],
+              })),
+              (t[3] = m),
+              (t[4] = d))
+            : (d = t[4]),
+        d
+    );
+}
+function I() {
+    return window.history.back();
+}
+function L(l) {
+    return e.jsx(_, { value: l.value, children: l.label }, l.value);
+}
+export { J as default };

@@ -35,6 +35,7 @@ function createRankedPlayer(RankingConfiguration $config, string $format, int $r
 }
 
 beforeEach(function (): void {
+    $this->freezeTime();
     $this->config = RankingConfiguration::query()->create([
         'win_weight' => 3.0,
         'loss_weight' => 1.0,

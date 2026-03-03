@@ -178,7 +178,9 @@ export default function CreateGame({ courts }: { courts: Court[] }) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="win">Win</SelectItem>
-                                        <SelectItem value="lost">Lost</SelectItem>
+                                        <SelectItem value="lost">
+                                            Lost
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.result} />

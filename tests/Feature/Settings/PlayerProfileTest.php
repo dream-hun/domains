@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\Role;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
     foreach (Role::cases() as $role) {
@@ -81,6 +83,56 @@ test('player profile update requires all fields', function (): void {
         'bio',
         'position',
     ]);
+});
+
+test('guest is redirected when trying to update player profile', function (): void {
+    $response = $this->patch(route('player-profile.update'), []);
+
+    $response->assertRedirect(route('login'));
+});
+
+test('player profile update sets session status to player-profile-updated', function (): void {
+    $user = User::factory()->create();
+    $user->assignRole(Role::Player);
+
+    $country = Country::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('player-profile.update'), [
+            'date_of_birth' => '1995-06-15',
+            'country_id' => $country->id,
+            'city' => 'Lagos',
+            'phone_number' => '+2348012345678',
+            'bio' => 'A player.',
+            'position' => 'Center',
+        ]);
+
+    $response->assertSessionHas('status', 'player-profile-updated');
+});
+
+test('player profile image can be uploaded', function (): void {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $user->assignRole(Role::Player);
+
+    $country = Country::factory()->create();
+
+    $this
+        ->actingAs($user)
+        ->patch(route('player-profile.update'), [
+            'date_of_birth' => '1995-06-15',
+            'country_id' => $country->id,
+            'city' => 'Lagos',
+            'phone_number' => '+2348012345678',
+            'bio' => 'A player.',
+            'position' => 'Center',
+            'profile_image' => UploadedFile::fake()->image('avatar.jpg'),
+        ]);
+
+    expect($user->fresh()->profile->profile_image)->not->toBeNull();
+    Storage::disk('public')->assertExists($user->fresh()->profile->profile_image);
 });
 
 test('player profile is updated when already exists', function (): void {

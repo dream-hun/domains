@@ -16,6 +16,7 @@ test('permission label returns correct string for each case', function (Permissi
     [Permission::EditGames, 'Edit Games'],
     [Permission::DeleteGames, 'Delete Games'],
     [Permission::ModerateGames, 'Moderate Games'],
+    [Permission::OverrideModeration, 'Override Moderation'],
     [Permission::ViewUsers, 'View Users'],
     [Permission::ManageUsers, 'Manage Users'],
     [Permission::ManageRankingConfiguration, 'Manage Ranking Configuration'],
@@ -34,8 +35,9 @@ test('permission values returns all permission strings', function (): void {
         ->toContain('edit-games')
         ->toContain('delete-games')
         ->toContain('moderate-games')
+        ->toContain('override-moderation')
         ->toContain('view-users')
         ->toContain('manage-users')
         ->toContain('manage-ranking-configuration')
-        ->toHaveCount(12);
+        ->toHaveCount(13);
 });

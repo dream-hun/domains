@@ -233,10 +233,7 @@ function GameFormFields({
 
             <div className="grid gap-2">
                 <Label htmlFor="result">Result</Label>
-                <Select
-                    name="result"
-                    defaultValue={game?.result ?? ''}
-                >
+                <Select name="result" defaultValue={game?.result ?? ''}>
                     <SelectTrigger id="result">
                         <SelectValue placeholder="Select result (optional)" />
                     </SelectTrigger>
@@ -381,14 +378,22 @@ export default function GamesIndex({
                                                 <span
                                                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white ${game.result === 'win' ? 'bg-green-500' : 'bg-red-500'}`}
                                                 >
-                                                    {game.result === 'win' ? 'Win' : 'Lost'}
+                                                    {game.result === 'win'
+                                                        ? 'Win'
+                                                        : 'Lost'}
                                                 </span>
                                             ) : (
-                                                <span className="text-xs text-muted-foreground">—</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    —
+                                                </span>
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            {game.points ?? <span className="text-xs text-muted-foreground">—</span>}
+                                            {game.points ?? (
+                                                <span className="text-xs text-muted-foreground">
+                                                    —
+                                                </span>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             {vimeoStatusBadge(

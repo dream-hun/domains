@@ -70,8 +70,8 @@ export default function OverrideIndex({ games }: { games: PaginatedGames }) {
                 <div>
                     <h1 className="text-2xl font-semibold">Flagged Games</h1>
                     <p className="text-sm text-muted-foreground">
-                        {games.total} game{games.total !== 1 ? 's' : ''}{' '}
-                        flagged for review
+                        {games.total} game{games.total !== 1 ? 's' : ''} flagged
+                        for review
                     </p>
                 </div>
 
@@ -114,9 +114,7 @@ export default function OverrideIndex({ games }: { games: PaginatedGames }) {
                                             <TableCell>
                                                 {game.player?.name ?? '—'}
                                             </TableCell>
-                                            <TableCell>
-                                                {game.format}
-                                            </TableCell>
+                                            <TableCell>{game.format}</TableCell>
                                             <TableCell>
                                                 {game.court?.name ?? '—'}
                                             </TableCell>

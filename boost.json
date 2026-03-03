@@ -1,15 +1,10 @@
 {
-    "agents": [
-        "claude_code"
-    ],
+    "agents": ["claude_code"],
     "guidelines": true,
     "herd_mcp": false,
     "mcp": true,
     "nightwatch_mcp": true,
-    "packages": [
-        "laravel/fortify",
-        "spatie/laravel-permission"
-    ],
+    "packages": ["laravel/fortify", "spatie/laravel-permission"],
     "sail": false,
     "skills": [
         "wayfinder-development",

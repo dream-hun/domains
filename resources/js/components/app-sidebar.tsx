@@ -1,6 +1,15 @@
 import { usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
-import { ClipboardList, LayoutGrid, MapPin, Settings2, ShieldAlert, Trophy, Users, Video } from 'lucide-react';
+import {
+    ClipboardList,
+    LayoutGrid,
+    MapPin,
+    Settings2,
+    ShieldAlert,
+    Trophy,
+    Users,
+    Video,
+} from 'lucide-react';
 import { index as courtsIndex } from '@/actions/App/Http/Controllers/Admin/CourtController';
 import { index as gamesIndex } from '@/actions/App/Http/Controllers/Admin/GameController';
 import { index as usersIndex } from '@/actions/App/Http/Controllers/Admin/UserController';

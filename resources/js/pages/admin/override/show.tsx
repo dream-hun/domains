@@ -212,7 +212,8 @@ export default function OverrideShow({ game }: { game: Game }) {
                                             )}
                                         </div>
                                         <p className="text-muted-foreground">
-                                            {record.moderator?.name ?? '—'} &middot;{' '}
+                                            {record.moderator?.name ?? '—'}{' '}
+                                            &middot;{' '}
                                             {new Date(
                                                 record.created_at,
                                             ).toLocaleDateString()}

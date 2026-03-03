@@ -107,7 +107,10 @@ export default function LeaderboardIndex({ entries, filters, formats }: Props) {
                             </SelectTrigger>
                             <SelectContent>
                                 {geoOptions.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value}>
+                                    <SelectItem
+                                        key={opt.value}
+                                        value={opt.value}
+                                    >
                                         {opt.label}
                                     </SelectItem>
                                 ))}

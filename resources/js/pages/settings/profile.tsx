@@ -1,7 +1,13 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { format, parseISO } from 'date-fns';
-import { AlertCircleIcon, CalendarIcon, CheckCircle2, UserCircle, XIcon } from 'lucide-react';
+import {
+    AlertCircleIcon,
+    CalendarIcon,
+    CheckCircle2,
+    UserCircle,
+    XIcon,
+} from 'lucide-react';
 import * as React from 'react';
 import PlayerProfileController from '@/actions/App/Http/Controllers/Settings/PlayerProfileController';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
@@ -13,7 +19,11 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import {
     Select,
     SelectContent,
@@ -69,12 +79,13 @@ export default function Profile({
     const { auth } = usePage().props;
     const isPlayer = auth.roles.includes('player');
 
-    const initialDate =
-        playerProfile?.date_of_birth
-            ? parseISO(playerProfile.date_of_birth)
-            : undefined;
+    const initialDate = playerProfile?.date_of_birth
+        ? parseISO(playerProfile.date_of_birth)
+        : undefined;
 
-    const [dateOfBirth, setDateOfBirth] = React.useState<Date | undefined>(initialDate);
+    const [dateOfBirth, setDateOfBirth] = React.useState<Date | undefined>(
+        initialDate,
+    );
     const [dateOpen, setDateOpen] = React.useState(false);
     const [imagePreview, setImagePreview] = React.useState<string | null>(
         playerProfile?.profile_image
@@ -85,7 +96,10 @@ export default function Profile({
 
     React.useEffect(() => {
         if (status === 'player-profile-updated') {
-            setToast({ type: 'success', message: 'Your player profile has been saved successfully.' });
+            setToast({
+                type: 'success',
+                message: 'Your player profile has been saved successfully.',
+            });
         }
     }, [status]);
 
@@ -127,7 +141,9 @@ export default function Profile({
                             <AlertCircleIcon className="size-4" />
                         )}
                         <AlertTitle>
-                            {toast.type === 'success' ? 'Profile updated' : 'Error'}
+                            {toast.type === 'success'
+                                ? 'Profile updated'
+                                : 'Error'}
                         </AlertTitle>
                         <AlertDescription>{toast.message}</AlertDescription>
                         <button
@@ -167,7 +183,10 @@ export default function Profile({
                                         autoComplete="name"
                                         placeholder="Full name"
                                     />
-                                    <InputError className="mt-2" message={errors.name} />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.name}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -182,27 +201,34 @@ export default function Profile({
                                         autoComplete="username"
                                         placeholder="Email address"
                                     />
-                                    <InputError className="mt-2" message={errors.email} />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.email}
+                                    />
                                 </div>
 
                                 {mustVerifyEmail &&
                                     auth.user.email_verified_at === null && (
                                         <div>
                                             <p className="-mt-4 text-sm text-muted-foreground">
-                                                Your email address is unverified.{' '}
+                                                Your email address is
+                                                unverified.{' '}
                                                 <Link
                                                     href={send()}
                                                     as="button"
                                                     className="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                                                 >
-                                                    Click here to resend the verification email.
+                                                    Click here to resend the
+                                                    verification email.
                                                 </Link>
                                             </p>
 
-                                            {status === 'verification-link-sent' && (
+                                            {status ===
+                                                'verification-link-sent' && (
                                                 <div className="mt-2 text-sm font-medium text-green-600">
-                                                    A new verification link has been sent to your
-                                                    email address.
+                                                    A new verification link has
+                                                    been sent to your email
+                                                    address.
                                                 </div>
                                             )}
                                         </div>
@@ -223,7 +249,9 @@ export default function Profile({
                                         leave="transition ease-in-out"
                                         leaveTo="opacity-0"
                                     >
-                                        <p className="text-sm text-neutral-600">Saved</p>
+                                        <p className="text-sm text-neutral-600">
+                                            Saved
+                                        </p>
                                     </Transition>
                                 </div>
                             </>
@@ -242,20 +270,24 @@ export default function Profile({
                         <Form
                             action={PlayerProfileController.update.url()}
                             method="post"
-                            options={{
-                                preserveScroll: true,
-                                onError: () =>
-                                    setToast({
-                                        type: 'error',
-                                        message: 'Failed to save player profile. Please fix the errors below.',
-                                    }),
-                            }}
+                            options={{ preserveScroll: true }}
+                            onError={() =>
+                                setToast({
+                                    type: 'error',
+                                    message:
+                                        'Failed to save player profile. Please fix the errors below.',
+                                })
+                            }
                             className="space-y-6"
                         >
                             {({ processing, errors }) => (
                                 <>
                                     {/* Method spoofing for file upload via PATCH */}
-                                    <input type="hidden" name="_method" value="patch" />
+                                    <input
+                                        type="hidden"
+                                        name="_method"
+                                        value="patch"
+                                    />
 
                                     {/* Profile image */}
                                     <div className="grid gap-3">
@@ -285,7 +317,9 @@ export default function Profile({
                                                 </p>
                                             </div>
                                         </div>
-                                        <InputError message={errors.profile_image} />
+                                        <InputError
+                                            message={errors.profile_image}
+                                        />
                                     </div>
 
                                     {/* Date of birth */}
@@ -296,28 +330,41 @@ export default function Profile({
                                             name="date_of_birth"
                                             value={
                                                 dateOfBirth
-                                                    ? format(dateOfBirth, 'yyyy-MM-dd')
+                                                    ? format(
+                                                          dateOfBirth,
+                                                          'yyyy-MM-dd',
+                                                      )
                                                     : ''
                                             }
                                             readOnly
                                         />
-                                        <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                                        <Popover
+                                            open={dateOpen}
+                                            onOpenChange={setDateOpen}
+                                        >
                                             <PopoverTrigger asChild>
                                                 <Button
                                                     type="button"
                                                     variant="outline"
                                                     className={cn(
                                                         'w-full justify-start text-left font-normal',
-                                                        !dateOfBirth && 'text-muted-foreground',
+                                                        !dateOfBirth &&
+                                                            'text-muted-foreground',
                                                     )}
                                                 >
                                                     <CalendarIcon className="mr-2 size-4" />
                                                     {dateOfBirth
-                                                        ? format(dateOfBirth, 'PPP')
+                                                        ? format(
+                                                              dateOfBirth,
+                                                              'PPP',
+                                                          )
                                                         : 'Pick a date'}
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
+                                            <PopoverContent
+                                                className="w-auto p-0"
+                                                align="start"
+                                            >
                                                 <Calendar
                                                     mode="single"
                                                     selected={dateOfBirth}
@@ -327,27 +374,38 @@ export default function Profile({
                                                     }}
                                                     disabled={(date) =>
                                                         date >= new Date() ||
-                                                        date < new Date('1900-01-01')
+                                                        date <
+                                                            new Date(
+                                                                '1900-01-01',
+                                                            )
                                                     }
                                                     captionLayout="dropdown"
                                                     fromYear={1930}
-                                                    toYear={new Date().getFullYear() - 5}
+                                                    toYear={
+                                                        new Date().getFullYear() -
+                                                        5
+                                                    }
                                                     defaultMonth={
                                                         dateOfBirth ??
                                                         new Date(
-                                                            new Date().getFullYear() - 25,
+                                                            new Date().getFullYear() -
+                                                                25,
                                                             0,
                                                         )
                                                     }
                                                 />
                                             </PopoverContent>
                                         </Popover>
-                                        <InputError message={errors.date_of_birth} />
+                                        <InputError
+                                            message={errors.date_of_birth}
+                                        />
                                     </div>
 
                                     {/* Country */}
                                     <div className="grid gap-2">
-                                        <Label htmlFor="country_id">Country</Label>
+                                        <Label htmlFor="country_id">
+                                            Country
+                                        </Label>
                                         <Select
                                             name="country_id"
                                             defaultValue={
@@ -369,7 +427,9 @@ export default function Profile({
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <InputError message={errors.country_id} />
+                                        <InputError
+                                            message={errors.country_id}
+                                        />
                                     </div>
 
                                     {/* City */}
@@ -378,7 +438,9 @@ export default function Profile({
                                         <Input
                                             id="city"
                                             name="city"
-                                            defaultValue={playerProfile?.city ?? ''}
+                                            defaultValue={
+                                                playerProfile?.city ?? ''
+                                            }
                                             required
                                             placeholder="Your city"
                                         />
@@ -387,24 +449,35 @@ export default function Profile({
 
                                     {/* Phone number */}
                                     <div className="grid gap-2">
-                                        <Label htmlFor="phone_number">Phone number</Label>
+                                        <Label htmlFor="phone_number">
+                                            Phone number
+                                        </Label>
                                         <Input
                                             id="phone_number"
                                             name="phone_number"
-                                            defaultValue={playerProfile?.phone_number ?? ''}
+                                            defaultValue={
+                                                playerProfile?.phone_number ??
+                                                ''
+                                            }
                                             required
                                             placeholder="+1 234 567 8900"
                                         />
-                                        <InputError message={errors.phone_number} />
+                                        <InputError
+                                            message={errors.phone_number}
+                                        />
                                     </div>
 
                                     {/* Position */}
                                     <div className="grid gap-2">
-                                        <Label htmlFor="position">Position</Label>
+                                        <Label htmlFor="position">
+                                            Position
+                                        </Label>
                                         <Input
                                             id="position"
                                             name="position"
-                                            defaultValue={playerProfile?.position ?? ''}
+                                            defaultValue={
+                                                playerProfile?.position ?? ''
+                                            }
                                             required
                                             placeholder="e.g. Point Guard"
                                         />
@@ -417,11 +490,13 @@ export default function Profile({
                                         <textarea
                                             id="bio"
                                             name="bio"
-                                            defaultValue={playerProfile?.bio ?? ''}
+                                            defaultValue={
+                                                playerProfile?.bio ?? ''
+                                            }
                                             required
                                             rows={4}
                                             placeholder="Tell us about yourself"
-                                            className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                         />
                                         <InputError message={errors.bio} />
                                     </div>

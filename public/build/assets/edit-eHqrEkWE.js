@@ -1,1 +1,229 @@
-import{c as g,j as e,F as f,H as y}from"./app-C_M1-u2r.js";import{C,A as b,i as v}from"./app-layout-CZPTXx4s.js";import{I as i}from"./input-error-CkKI5kvP.js";import{B as x}from"./app-logo-icon-BcSq9Noa.js";import{I as o}from"./input-Cn0z7F4k.js";import{L as d}from"./label-CKqDLf1o.js";import{S as N,a as S,b as F,c as _,d as E}from"./select-BLt20f7s.js";/* empty css            */import"./index-m3SvSfPp.js";import"./index-DAou6nP7.js";import"./index-CSEUMRIG.js";import"./index-x0I2YQpJ.js";import"./index-2rmVfgAx.js";import"./check-zt7p40bQ.js";const V=[{title:"Courts",href:v().url},{title:"Edit Court",href:"#"}];function K(n){const t=g.c(15),{court:s,statuses:p}=n;let c;t[0]===Symbol.for("react.memo_cache_sentinel")?(c=e.jsx(y,{title:"Edit Court"}),t[0]=c):c=t[0];let u;t[1]===Symbol.for("react.memo_cache_sentinel")?(u=e.jsxs("div",{children:[e.jsx("h1",{className:"text-2xl font-semibold",children:"Edit Court"}),e.jsx("p",{className:"text-sm text-muted-foreground",children:"Update the court details."})]}),t[1]=u):u=t[1];let r;t[2]!==s?(r=C.update.patch(s),t[2]=s,t[3]=r):r=t[3];let a;t[4]!==s.city||t[5]!==s.country||t[6]!==s.latitude||t[7]!==s.longitude||t[8]!==s.name||t[9]!==s.status||t[10]!==p?(a=h=>{const{processing:j,errors:l}=h;return e.jsxs(e.Fragment,{children:[e.jsxs("div",{className:"grid gap-2",children:[e.jsx(d,{htmlFor:"name",children:"Name"}),e.jsx(o,{id:"name",name:"name",defaultValue:s.name,placeholder:"Court name",required:!0}),e.jsx(i,{message:l.name})]}),e.jsxs("div",{className:"grid gap-2",children:[e.jsx(d,{htmlFor:"country",children:"Country"}),e.jsx(o,{id:"country",name:"country",defaultValue:s.country,placeholder:"Country",required:!0}),e.jsx(i,{message:l.country})]}),e.jsxs("div",{className:"grid gap-2",children:[e.jsx(d,{htmlFor:"city",children:"City"}),e.jsx(o,{id:"city",name:"city",defaultValue:s.city,placeholder:"City",required:!0}),e.jsx(i,{message:l.city})]}),e.jsxs("div",{className:"grid grid-cols-2 gap-4",children:[e.jsxs("div",{className:"grid gap-2",children:[e.jsx(d,{htmlFor:"latitude",children:"Latitude"}),e.jsx(o,{id:"latitude",name:"latitude",type:"number",step:"any",defaultValue:s.latitude??"",placeholder:"e.g. 51.5074"}),e.jsx(i,{message:l.latitude})]}),e.jsxs("div",{className:"grid gap-2",children:[e.jsx(d,{htmlFor:"longitude",children:"Longitude"}),e.jsx(o,{id:"longitude",name:"longitude",type:"number",step:"any",defaultValue:s.longitude??"",placeholder:"e.g. -0.1278"}),e.jsx(i,{message:l.longitude})]})]}),e.jsxs("div",{className:"grid gap-2",children:[e.jsx(d,{htmlFor:"status",children:"Status"}),e.jsxs(N,{name:"status",defaultValue:s.status,required:!0,children:[e.jsx(S,{id:"status",children:e.jsx(F,{placeholder:"Select a status"})}),e.jsx(_,{children:p.map(L)})]}),e.jsx(i,{message:l.status})]}),e.jsxs("div",{className:"flex gap-2",children:[e.jsx(x,{type:"button",variant:"secondary",onClick:I,children:"Cancel"}),e.jsx(x,{disabled:j,asChild:!0,children:e.jsx("button",{type:"submit",children:"Update Court"})})]})]})},t[4]=s.city,t[5]=s.country,t[6]=s.latitude,t[7]=s.longitude,t[8]=s.name,t[9]=s.status,t[10]=p,t[11]=a):a=t[11];let m;return t[12]!==r||t[13]!==a?(m=e.jsxs(b,{breadcrumbs:V,children:[c,e.jsxs("div",{className:"flex flex-col gap-6 p-6",children:[u,e.jsx(f,{...r,className:"max-w-lg space-y-4",children:a})]})]}),t[12]=r,t[13]=a,t[14]=m):m=t[14],m}function I(){return window.history.back()}function L(n){return e.jsx(E,{value:n.value,children:n.label},n.value)}export{K as default};
+import { c as g, j as e, F as f, H as y } from './app-C_M1-u2r.js';
+import { C, A as b, i as v } from './app-layout-CZPTXx4s.js';
+import { I as i } from './input-error-CkKI5kvP.js';
+import { B as x } from './app-logo-icon-BcSq9Noa.js';
+import { I as o } from './input-Cn0z7F4k.js';
+import { L as d } from './label-CKqDLf1o.js';
+import { S as N, a as S, b as F, c as _, d as E } from './select-BLt20f7s.js';
+/* empty css            */ import './index-m3SvSfPp.js';
+import './index-DAou6nP7.js';
+import './index-CSEUMRIG.js';
+import './index-x0I2YQpJ.js';
+import './index-2rmVfgAx.js';
+import './check-zt7p40bQ.js';
+const V = [
+    { title: 'Courts', href: v().url },
+    { title: 'Edit Court', href: '#' },
+];
+function K(n) {
+    const t = g.c(15),
+        { court: s, statuses: p } = n;
+    let c;
+    t[0] === Symbol.for('react.memo_cache_sentinel')
+        ? ((c = e.jsx(y, { title: 'Edit Court' })), (t[0] = c))
+        : (c = t[0]);
+    let u;
+    t[1] === Symbol.for('react.memo_cache_sentinel')
+        ? ((u = e.jsxs('div', {
+              children: [
+                  e.jsx('h1', {
+                      className: 'text-2xl font-semibold',
+                      children: 'Edit Court',
+                  }),
+                  e.jsx('p', {
+                      className: 'text-sm text-muted-foreground',
+                      children: 'Update the court details.',
+                  }),
+              ],
+          })),
+          (t[1] = u))
+        : (u = t[1]);
+    let r;
+    t[2] !== s ? ((r = C.update.patch(s)), (t[2] = s), (t[3] = r)) : (r = t[3]);
+    let a;
+    t[4] !== s.city ||
+    t[5] !== s.country ||
+    t[6] !== s.latitude ||
+    t[7] !== s.longitude ||
+    t[8] !== s.name ||
+    t[9] !== s.status ||
+    t[10] !== p
+        ? ((a = (h) => {
+              const { processing: j, errors: l } = h;
+              return e.jsxs(e.Fragment, {
+                  children: [
+                      e.jsxs('div', {
+                          className: 'grid gap-2',
+                          children: [
+                              e.jsx(d, { htmlFor: 'name', children: 'Name' }),
+                              e.jsx(o, {
+                                  id: 'name',
+                                  name: 'name',
+                                  defaultValue: s.name,
+                                  placeholder: 'Court name',
+                                  required: !0,
+                              }),
+                              e.jsx(i, { message: l.name }),
+                          ],
+                      }),
+                      e.jsxs('div', {
+                          className: 'grid gap-2',
+                          children: [
+                              e.jsx(d, {
+                                  htmlFor: 'country',
+                                  children: 'Country',
+                              }),
+                              e.jsx(o, {
+                                  id: 'country',
+                                  name: 'country',
+                                  defaultValue: s.country,
+                                  placeholder: 'Country',
+                                  required: !0,
+                              }),
+                              e.jsx(i, { message: l.country }),
+                          ],
+                      }),
+                      e.jsxs('div', {
+                          className: 'grid gap-2',
+                          children: [
+                              e.jsx(d, { htmlFor: 'city', children: 'City' }),
+                              e.jsx(o, {
+                                  id: 'city',
+                                  name: 'city',
+                                  defaultValue: s.city,
+                                  placeholder: 'City',
+                                  required: !0,
+                              }),
+                              e.jsx(i, { message: l.city }),
+                          ],
+                      }),
+                      e.jsxs('div', {
+                          className: 'grid grid-cols-2 gap-4',
+                          children: [
+                              e.jsxs('div', {
+                                  className: 'grid gap-2',
+                                  children: [
+                                      e.jsx(d, {
+                                          htmlFor: 'latitude',
+                                          children: 'Latitude',
+                                      }),
+                                      e.jsx(o, {
+                                          id: 'latitude',
+                                          name: 'latitude',
+                                          type: 'number',
+                                          step: 'any',
+                                          defaultValue: s.latitude ?? '',
+                                          placeholder: 'e.g. 51.5074',
+                                      }),
+                                      e.jsx(i, { message: l.latitude }),
+                                  ],
+                              }),
+                              e.jsxs('div', {
+                                  className: 'grid gap-2',
+                                  children: [
+                                      e.jsx(d, {
+                                          htmlFor: 'longitude',
+                                          children: 'Longitude',
+                                      }),
+                                      e.jsx(o, {
+                                          id: 'longitude',
+                                          name: 'longitude',
+                                          type: 'number',
+                                          step: 'any',
+                                          defaultValue: s.longitude ?? '',
+                                          placeholder: 'e.g. -0.1278',
+                                      }),
+                                      e.jsx(i, { message: l.longitude }),
+                                  ],
+                              }),
+                          ],
+                      }),
+                      e.jsxs('div', {
+                          className: 'grid gap-2',
+                          children: [
+                              e.jsx(d, {
+                                  htmlFor: 'status',
+                                  children: 'Status',
+                              }),
+                              e.jsxs(N, {
+                                  name: 'status',
+                                  defaultValue: s.status,
+                                  required: !0,
+                                  children: [
+                                      e.jsx(S, {
+                                          id: 'status',
+                                          children: e.jsx(F, {
+                                              placeholder: 'Select a status',
+                                          }),
+                                      }),
+                                      e.jsx(_, { children: p.map(L) }),
+                                  ],
+                              }),
+                              e.jsx(i, { message: l.status }),
+                          ],
+                      }),
+                      e.jsxs('div', {
+                          className: 'flex gap-2',
+                          children: [
+                              e.jsx(x, {
+                                  type: 'button',
+                                  variant: 'secondary',
+                                  onClick: I,
+                                  children: 'Cancel',
+                              }),
+                              e.jsx(x, {
+                                  disabled: j,
+                                  asChild: !0,
+                                  children: e.jsx('button', {
+                                      type: 'submit',
+                                      children: 'Update Court',
+                                  }),
+                              }),
+                          ],
+                      }),
+                  ],
+              });
+          }),
+          (t[4] = s.city),
+          (t[5] = s.country),
+          (t[6] = s.latitude),
+          (t[7] = s.longitude),
+          (t[8] = s.name),
+          (t[9] = s.status),
+          (t[10] = p),
+          (t[11] = a))
+        : (a = t[11]);
+    let m;
+    return (
+        t[12] !== r || t[13] !== a
+            ? ((m = e.jsxs(b, {
+                  breadcrumbs: V,
+                  children: [
+                      c,
+                      e.jsxs('div', {
+                          className: 'flex flex-col gap-6 p-6',
+                          children: [
+                              u,
+                              e.jsx(f, {
+                                  ...r,
+                                  className: 'max-w-lg space-y-4',
+                                  children: a,
+                              }),
+                          ],
+                      }),
+                  ],
+              })),
+              (t[12] = r),
+              (t[13] = a),
+              (t[14] = m))
+            : (m = t[14]),
+        m
+    );
+}
+function I() {
+    return window.history.back();
+}
+function L(n) {
+    return e.jsx(E, { value: n.value, children: n.label }, n.value);
+}
+export { K as default };
