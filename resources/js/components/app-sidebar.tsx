@@ -25,14 +25,20 @@ import AppLogo from './app-logo';
 export function AppSidebar() {
     const { auth } = usePage().props;
 
+    const can = (permission: string) => auth.permissions.includes(permission);
+
     const footerNavItems: NavItem[] = [
-        ...(auth.roles.includes('administrator')
+        ...(can('manage-users')
             ? [
                   {
                       title: 'Users Management',
                       href: usersIndex().url,
                       icon: Users,
                   },
+              ]
+            : []),
+        ...(can('manage-ranking-configuration')
+            ? [
                   {
                       title: 'Ranking Config',
                       href: ranking.edit().url,
@@ -53,21 +59,33 @@ export function AppSidebar() {
             href: leaderboard().url,
             icon: Trophy,
         },
-        {
-            title: 'Courts',
-            href: courtsIndex().url,
-            icon: MapPin,
-        },
-        {
-            title: 'Games',
-            href: gamesIndex().url,
-            icon: Video,
-        },
-        {
-            title: 'Moderation Queues',
-            href: moderation.index().url,
-            icon: ClipboardList,
-        },
+        ...(can('edit-courts')
+            ? [
+                  {
+                      title: 'Courts',
+                      href: courtsIndex().url,
+                      icon: MapPin,
+                  },
+              ]
+            : []),
+        ...(can('view-games')
+            ? [
+                  {
+                      title: 'Games',
+                      href: gamesIndex().url,
+                      icon: Video,
+                  },
+              ]
+            : []),
+        ...(can('moderate-games')
+            ? [
+                  {
+                      title: 'Moderation Queues',
+                      href: moderation.index().url,
+                      icon: ClipboardList,
+                  },
+              ]
+            : []),
     ];
 
     return (

@@ -9,11 +9,13 @@ use App\Http\Controllers\Admin\RankingConfigurationController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified'])->group(function (): void {
+Route::middleware(['auth', 'verified', 'permission:edit-courts'])->group(function (): void {
     Route::resource('admin/courts', CourtController::class)
         ->names('admin.courts')
         ->except(['show']);
+});
 
+Route::middleware(['auth', 'verified', 'permission:view-games'])->group(function (): void {
     Route::resource('admin/games', GameController::class)
         ->names('admin.games')
         ->except(['show']);
@@ -26,11 +28,13 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         ->name('admin.games.complete-upload');
 });
 
-Route::middleware(['auth', 'verified', 'role:administrator'])->group(function (): void {
+Route::middleware(['auth', 'verified', 'permission:manage-users'])->group(function (): void {
     Route::resource('admin/users', UserController::class)
         ->names('admin.users')
         ->only(['index', 'store', 'update', 'destroy']);
+});
 
+Route::middleware(['auth', 'verified', 'permission:manage-ranking-configuration'])->group(function (): void {
     Route::get('admin/ranking', [RankingConfigurationController::class, 'edit'])->name('admin.ranking.edit');
     Route::post('admin/ranking', [RankingConfigurationController::class, 'update'])->name('admin.ranking.update');
 });
