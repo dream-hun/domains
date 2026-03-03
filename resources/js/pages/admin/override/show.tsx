@@ -2,7 +2,6 @@ import { Form, Head } from '@inertiajs/react';
 import Player from '@vimeo/player';
 import { ShieldAlert } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { index, update } from '@/routes/admin/override';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { index, update } from '@/routes/admin/override';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };

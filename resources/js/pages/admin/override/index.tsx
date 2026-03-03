@@ -1,6 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
 import { MoreHorizontal } from 'lucide-react';
-import { index, show } from '@/routes/admin/override';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -17,6 +16,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { index, show } from '@/routes/admin/override';
 import type { BreadcrumbItem } from '@/types';
 
 type User = { id: number; name: string };

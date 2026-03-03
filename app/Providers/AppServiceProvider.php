@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Enums\Role;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
@@ -30,7 +31,7 @@ final class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        Gate::before(fn ($user, $ability): ?true => $user->hasRole(Role::SuperAdmin) ? true : null);
+        Gate::before(fn (User $user, string $ability): ?true => $user->hasRole(Role::SuperAdmin) ? true : null);
     }
 
     /**
