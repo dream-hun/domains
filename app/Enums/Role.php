@@ -6,6 +6,7 @@ namespace App\Enums;
 
 enum Role: string
 {
+    case SuperAdmin = 'super-admin';
     case Administrator = 'administrator';
     case Moderator = 'moderator';
     case Player = 'player';
@@ -19,6 +20,7 @@ enum Role: string
     public function label(): string
     {
         return match ($this) {
+            self::SuperAdmin => 'Super Admin',
             self::Administrator => 'Administrator',
             self::Moderator => 'Moderator',
             self::Player => 'Player',
@@ -28,6 +30,7 @@ enum Role: string
     public function color(): string
     {
         return match ($this) {
+            self::SuperAdmin => 'bg-red-500',
             self::Administrator => 'bg-purple-500',
             self::Moderator => 'bg-blue-500',
             self::Player => 'bg-green-500',

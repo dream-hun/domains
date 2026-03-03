@@ -6,14 +6,13 @@ use App\Enums\Role;
 use App\Jobs\RecalculateRankingsJob;
 use App\Models\RankingConfiguration;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function (): void {
-    foreach (Role::cases() as $role) {
-        Spatie\Permission\Models\Role::query()->firstOrCreate(['name' => $role->value]);
-    }
+    $this->seed(RolesAndPermissionsSeeder::class);
 
     RankingConfiguration::query()->create([
         'win_weight' => 3.0,

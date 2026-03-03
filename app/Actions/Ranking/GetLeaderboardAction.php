@@ -6,6 +6,7 @@ namespace App\Actions\Ranking;
 
 use App\Models\PlayerRanking;
 use App\Models\User;
+use Illuminate\Database\Query\Builder;
 
 final class GetLeaderboardAction
 {
@@ -35,7 +36,7 @@ final class GetLeaderboardAction
 
         match ($geo) {
             'local' => $query->where('profiles.city', $viewerProfile?->city),
-            'continental' => $query->where('countries.region', fn (\Illuminate\Database\Query\Builder $q): \Illuminate\Database\Query\Builder => $q->select('region')->from('countries')->join('profiles', 'profiles.country_id', '=', 'countries.id')->where('profiles.player_id', $viewer->id)->limit(1)),
+            'continental' => $query->where('countries.region', fn (Builder $q): Builder => $q->select('region')->from('countries')->join('profiles', 'profiles.country_id', '=', 'countries.id')->where('profiles.player_id', $viewer->id)->limit(1)),
             default => $query->where('profiles.country_id', $viewerProfile?->country_id),
         };
 

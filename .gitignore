@@ -27,6 +27,7 @@ yarn-error.log
 /.zed
 /.claude
 /.cursor
+/.ai
 AGENTS.md
 Blueprint.md
 CLAUDE.md

@@ -5,7 +5,7 @@
     "guidelines": true,
     "herd_mcp": false,
     "mcp": true,
-    "nightwatch_mcp": false,
+    "nightwatch_mcp": true,
     "packages": [
         "laravel/fortify",
         "spatie/laravel-permission"

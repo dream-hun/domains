@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 use App\Models\Game;
 use App\Models\User;
+use Spatie\Permission\Models\Permission;
 use Vimeo\Laravel\Facades\Vimeo;
+
+beforeEach(function (): void {
+    Permission::query()->firstOrCreate(['name' => 'view-games']);
+});
 
 test('guests are redirected from games index', function (): void {
     $response = $this->get(route('admin.games.index'));
@@ -12,7 +17,7 @@ test('guests are redirected from games index', function (): void {
 });
 
 test('authenticated users can view games index', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $this->actingAs($user);
 
     $response = $this->get(route('admin.games.index'));
@@ -21,7 +26,7 @@ test('authenticated users can view games index', function (): void {
 });
 
 test('games index can be filtered by search term', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $this->actingAs($user);
 
     $matching = Game::factory()->create(['title' => 'Championship Finals', 'player_id' => $user->id]);
@@ -40,7 +45,7 @@ test('games index can be filtered by search term', function (): void {
 });
 
 test('authenticated users can create a game', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $this->actingAs($user);
 
     $response = $this->post(route('admin.games.store'), [
@@ -60,7 +65,7 @@ test('authenticated users can create a game', function (): void {
 });
 
 test('create game validates required fields', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $this->actingAs($user);
 
     $response = $this->post(route('admin.games.store'), []);
@@ -69,7 +74,7 @@ test('create game validates required fields', function (): void {
 });
 
 test('authenticated users can update a game', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $player = User::factory()->create();
     $game = Game::factory()->create(['player_id' => $player->id]);
     $this->actingAs($user);
@@ -98,7 +103,7 @@ test('authenticated users can update a game', function (): void {
 });
 
 test('authenticated users can create a game with result and points', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $this->actingAs($user);
 
     $response = $this->post(route('admin.games.store'), [
@@ -123,7 +128,7 @@ test('authenticated users can create a game with result and points', function ()
 });
 
 test('authenticated users can delete a game', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $game = Game::factory()->create();
     $this->actingAs($user);
 
@@ -137,7 +142,7 @@ test('authenticated users can delete a game', function (): void {
 });
 
 test('initiate upload returns json with upload link', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $game = Game::factory()->create(['title' => 'My Game']);
     $this->actingAs($user);
 
@@ -175,7 +180,7 @@ test('initiate upload returns json with upload link', function (): void {
 });
 
 test('complete upload sets vimeo status to complete', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $game = Game::factory()->create([
         'vimeo_uri' => '/videos/123456789',
         'vimeo_status' => 'pending',
@@ -193,7 +198,7 @@ test('complete upload sets vimeo status to complete', function (): void {
 });
 
 test('authenticated users can view the create game form', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $this->actingAs($user);
 
     $response = $this->get(route('admin.games.create'));
@@ -203,7 +208,7 @@ test('authenticated users can view the create game form', function (): void {
 });
 
 test('authenticated users can view the edit game form', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $game = Game::factory()->create();
     $this->actingAs($user);
 
@@ -217,7 +222,7 @@ test('authenticated users can view the edit game form', function (): void {
 });
 
 test('authenticated users can view the upload game page', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('view-games');
     $game = Game::factory()->create();
     $this->actingAs($user);
 

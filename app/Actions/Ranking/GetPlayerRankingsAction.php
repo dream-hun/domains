@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Ranking;
 
 use App\Models\PlayerRanking;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class GetPlayerRankingsAction
@@ -14,7 +15,7 @@ final class GetPlayerRankingsAction
      */
     public function handle(int $playerId): array
     {
-        /** @var \Illuminate\Support\Collection<int, object{format: string, max_calculated_at: string}> $latestPerFormat */
+        /** @var Collection<int, object{format: string, max_calculated_at: string}> $latestPerFormat */
         $latestPerFormat = PlayerRanking::query()
             ->where('player_id', $playerId)
             ->select('format', DB::raw('MAX(calculated_at) as max_calculated_at'))

@@ -23,6 +23,9 @@ enum Permission: string
     case ViewUsers = 'view-users';
     case ManageUsers = 'manage-users';
 
+    // Ranking
+    case ManageRankingConfiguration = 'manage-ranking-configuration';
+
     /** @return list<string> */
     public static function values(): array
     {
@@ -43,6 +46,7 @@ enum Permission: string
             self::ModerateGames => 'Moderate Games',
             self::ViewUsers => 'View Users',
             self::ManageUsers => 'Manage Users',
+            self::ManageRankingConfiguration => 'Manage Ranking Configuration',
         };
     }
 }

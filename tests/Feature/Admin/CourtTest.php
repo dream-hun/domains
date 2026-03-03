@@ -5,6 +5,11 @@ declare(strict_types=1);
 use App\Enums\CourtStatus;
 use App\Models\Court;
 use App\Models\User;
+use Spatie\Permission\Models\Permission;
+
+beforeEach(function (): void {
+    Permission::query()->firstOrCreate(['name' => 'edit-courts']);
+});
 
 test('guests are redirected from courts index', function (): void {
     $response = $this->get(route('admin.courts.index'));
@@ -12,7 +17,7 @@ test('guests are redirected from courts index', function (): void {
 });
 
 test('authenticated users can view courts index', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
     $this->actingAs($user);
 
     $response = $this->get(route('admin.courts.index'));
@@ -21,7 +26,7 @@ test('authenticated users can view courts index', function (): void {
 });
 
 test('authenticated users can create a court', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
     $this->actingAs($user);
 
     $response = $this->post(route('admin.courts.store'), [
@@ -45,7 +50,7 @@ test('authenticated users can create a court', function (): void {
 });
 
 test('create court validates required fields', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
     $this->actingAs($user);
 
     $response = $this->post(route('admin.courts.store'), []);
@@ -54,7 +59,7 @@ test('create court validates required fields', function (): void {
 });
 
 test('authenticated users can update a court', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
     $court = Court::factory()->create(['created_by' => $user->id]);
     $this->actingAs($user);
 
@@ -79,7 +84,7 @@ test('authenticated users can update a court', function (): void {
 });
 
 test('courts index can be filtered by search term', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
     $this->actingAs($user);
 
     $matching = Court::factory()->create(['name' => 'Wimbledon Centre Court', 'created_by' => $user->id]);
@@ -98,7 +103,7 @@ test('courts index can be filtered by search term', function (): void {
 });
 
 test('authenticated users can delete a court', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
     $court = Court::factory()->create(['created_by' => $user->id]);
     $this->actingAs($user);
 
@@ -112,7 +117,7 @@ test('authenticated users can delete a court', function (): void {
 });
 
 test('authenticated users can view the create court form', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
     $this->actingAs($user);
 
     $response = $this->get(route('admin.courts.create'));
@@ -122,7 +127,7 @@ test('authenticated users can view the create court form', function (): void {
 });
 
 test('authenticated users can view the edit court form', function (): void {
-    $user = User::factory()->create();
+    $user = User::factory()->create()->givePermissionTo('edit-courts');
     $court = Court::factory()->create(['created_by' => $user->id]);
     $this->actingAs($user);
 

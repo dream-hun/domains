@@ -25,20 +25,29 @@ final class RolesAndPermissionsSeeder extends Seeder
             SpatieRole::query()->firstOrCreate(['name' => $role->value]);
         }
 
-        SpatieRole::findByName(Role::Administrator->value)
-            ->syncPermissions(Permission::values());
+        // SuperAdmin: no explicit permissions — Gate::before handles it
+        SpatieRole::findByName(Role::SuperAdmin->value)
+            ->syncPermissions([]);
 
+        // Administrator: all permissions except ViewUsers and ManageUsers
+        $adminPermissions = array_filter(
+            Permission::cases(),
+            fn (Permission $p): bool => ! in_array($p, [Permission::ViewUsers, Permission::ManageUsers], true),
+        );
+
+        SpatieRole::findByName(Role::Administrator->value)
+            ->syncPermissions(array_map(fn (Permission $p) => $p->value, $adminPermissions));
+
+        // Moderator: moderation queue only
         SpatieRole::findByName(Role::Moderator->value)
             ->syncPermissions([
-                Permission::ViewCourts->value,
                 Permission::ViewGames->value,
                 Permission::ModerateGames->value,
-                Permission::EditGames->value,
             ]);
 
+        // Player: games + leaderboard
         SpatieRole::findByName(Role::Player->value)
             ->syncPermissions([
-                Permission::ViewCourts->value,
                 Permission::ViewGames->value,
                 Permission::CreateGames->value,
             ]);

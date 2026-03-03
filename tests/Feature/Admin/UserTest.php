@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 use App\Enums\Role;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 
 beforeEach(function (): void {
-    foreach (Role::cases() as $role) {
-        Spatie\Permission\Models\Role::query()->firstOrCreate(['name' => $role->value]);
-    }
+    $this->seed(RolesAndPermissionsSeeder::class);
 });
 
 test('guests are redirected from users index', function (): void {
@@ -17,7 +16,7 @@ test('guests are redirected from users index', function (): void {
 });
 
 test('administrators can view users index', function (): void {
-    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
     $this->actingAs($admin);
 
     $response = $this->get(route('admin.users.index'));
@@ -34,7 +33,7 @@ test('non-administrators cannot view users index', function (): void {
 });
 
 test('administrators can create a user', function (): void {
-    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
     $this->actingAs($admin);
 
     $response = $this->post(route('admin.users.store'), [
@@ -57,7 +56,7 @@ test('administrators can create a user', function (): void {
 });
 
 test('create user validates required fields', function (): void {
-    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
     $this->actingAs($admin);
 
     $response = $this->post(route('admin.users.store'), []);
@@ -66,7 +65,7 @@ test('create user validates required fields', function (): void {
 });
 
 test('administrators can update a user role', function (): void {
-    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
     $user = User::factory()->create()->assignRole(Role::Player->value);
     $this->actingAs($admin);
 
@@ -84,7 +83,7 @@ test('administrators can update a user role', function (): void {
 });
 
 test('administrators can delete a user', function (): void {
-    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
     $user = User::factory()->create()->assignRole(Role::Player->value);
     $this->actingAs($admin);
 
@@ -98,7 +97,7 @@ test('administrators can delete a user', function (): void {
 });
 
 test('administrators cannot delete themselves', function (): void {
-    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
     $this->actingAs($admin);
 
     $response = $this->delete(route('admin.users.destroy', $admin));
@@ -111,7 +110,7 @@ test('administrators cannot delete themselves', function (): void {
 });
 
 test('users index can be filtered by search', function (): void {
-    $admin = User::factory()->create()->assignRole(Role::Administrator->value);
+    $admin = User::factory()->create()->assignRole(Role::SuperAdmin->value);
     $this->actingAs($admin);
 
     $matching = User::factory()->create(['name' => 'Alice Wonderland'])->assignRole(Role::Player->value);
