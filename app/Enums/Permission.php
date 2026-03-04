@@ -27,6 +27,10 @@ enum Permission: string
     // Ranking
     case ManageRankingConfiguration = 'manage-ranking-configuration';
 
+    // Allocation
+    case ViewAllocations = 'view-allocations';
+    case ManageAllocationConfiguration = 'manage-allocation-configuration';
+
     /** @return list<string> */
     public static function values(): array
     {
@@ -49,6 +53,8 @@ enum Permission: string
             self::ViewUsers => 'View Users',
             self::ManageUsers => 'Manage Users',
             self::ManageRankingConfiguration => 'Manage Ranking Configuration',
+            self::ViewAllocations => 'View Allocations',
+            self::ManageAllocationConfiguration => 'Manage Allocation Configuration',
         };
     }
 }

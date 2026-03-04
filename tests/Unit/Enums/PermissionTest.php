@@ -20,6 +20,8 @@ test('permission label returns correct string for each case', function (Permissi
     [Permission::ViewUsers, 'View Users'],
     [Permission::ManageUsers, 'Manage Users'],
     [Permission::ManageRankingConfiguration, 'Manage Ranking Configuration'],
+    [Permission::ViewAllocations, 'View Allocations'],
+    [Permission::ManageAllocationConfiguration, 'Manage Allocation Configuration'],
 ]);
 
 test('permission values returns all permission strings', function (): void {
@@ -39,5 +41,7 @@ test('permission values returns all permission strings', function (): void {
         ->toContain('view-users')
         ->toContain('manage-users')
         ->toContain('manage-ranking-configuration')
-        ->toHaveCount(13);
+        ->toContain('view-allocations')
+        ->toContain('manage-allocation-configuration')
+        ->toHaveCount(15);
 });

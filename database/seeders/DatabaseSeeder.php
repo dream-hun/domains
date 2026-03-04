@@ -19,6 +19,7 @@ final class DatabaseSeeder extends Seeder
             CountrySeeder::class,
             RolesAndPermissionsSeeder::class,
             RankingConfigurationSeeder::class,
+            AllocationConfigurationSeeder::class,
         ]);
 
         User::factory()->create([

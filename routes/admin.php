@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\AllocationConfigurationController;
+use App\Http\Controllers\Admin\AllocationController;
 use App\Http\Controllers\Admin\CourtController;
 use App\Http\Controllers\Admin\GameController;
 use App\Http\Controllers\Admin\ModerationController;
@@ -56,4 +58,14 @@ Route::middleware(['auth', 'verified', 'permission:override-moderation'])->group
         ->name('admin.override.show');
     Route::patch('admin/override/{game}', [OverrideController::class, 'update'])
         ->name('admin.override.update');
+});
+
+Route::middleware(['auth', 'verified', 'permission:view-allocations'])->group(function (): void {
+    Route::get('admin/allocation', [AllocationController::class, 'index'])->name('admin.allocation.index');
+    Route::get('admin/allocation/export', [AllocationController::class, 'export'])->name('admin.allocation.export');
+});
+
+Route::middleware(['auth', 'verified', 'permission:manage-allocation-configuration'])->group(function (): void {
+    Route::get('admin/allocation-configuration', [AllocationConfigurationController::class, 'edit'])->name('admin.allocation-configuration.edit');
+    Route::patch('admin/allocation-configuration', [AllocationConfigurationController::class, 'update'])->name('admin.allocation-configuration.update');
 });
