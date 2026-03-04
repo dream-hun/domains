@@ -18,7 +18,7 @@ final class ActivateTldPricingAction
         DB::transaction(function () use ($tldPricing): void {
             $previousCurrentPricing = $this->findPreviousCurrentPricing($tldPricing);
 
-            if ($previousCurrentPricing !== null) {
+            if ($previousCurrentPricing instanceof TldPricing) {
                 $previousCurrentPricing->update(['is_current' => false]);
             }
 
@@ -41,7 +41,7 @@ final class ActivateTldPricingAction
     private function createHistoryEntry(TldPricing $tldPricing, ?TldPricing $previousPricing): void
     {
         $currentPrices = $this->extractPrices($tldPricing);
-        $oldPrices = $previousPricing ? $this->extractPrices($previousPricing) : [];
+        $oldPrices = $previousPricing instanceof TldPricing ? $this->extractPrices($previousPricing) : [];
 
         $tldPricing->domainPriceHistories()->create([
             'register_price' => $tldPricing->register_price,

@@ -9,10 +9,10 @@ use App\Models\HostingPlanPrice;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Date;
 
-final class UpdatePlanPriceAction
+final readonly class UpdatePlanPriceAction
 {
     public function __construct(
-        private readonly ActivateHostingPlanPriceAction $activateAction
+        private ActivateHostingPlanPriceAction $activateAction
     ) {}
 
     public function handle(string $uuid, array $data): void
@@ -25,7 +25,7 @@ final class UpdatePlanPriceAction
         unset($data['reason']);
 
         $newEffectiveDate = isset($data['effective_date'])
-            ? Carbon::parse($data['effective_date'])
+            ? Date::parse($data['effective_date'])
             : $planPrice->effective_date;
 
         $today = Date::today();
@@ -56,7 +56,7 @@ final class UpdatePlanPriceAction
 
         $delaySeconds = $today->diffInSeconds($effectiveDate, false);
         if ($delaySeconds > 0) {
-            ActivateHostingPlanPriceJob::dispatch($planPrice->uuid)
+            dispatch(new ActivateHostingPlanPriceJob($planPrice->uuid))
                 ->delay(now()->addSeconds($delaySeconds));
         }
     }

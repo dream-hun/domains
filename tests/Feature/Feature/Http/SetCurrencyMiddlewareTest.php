@@ -16,15 +16,15 @@ beforeEach(function (): void {
 
 function createMiddleware(): SetCurrency
 {
-    return new SetCurrency(app(GeolocationService::class));
+    return new SetCurrency(resolve(GeolocationService::class));
 }
 
 function createRequestWithUser(?User $user = null): Request
 {
     $request = Request::create('/');
 
-    if ($user) {
-        $request->setUserResolver(fn () => $user);
+    if ($user instanceof User) {
+        $request->setUserResolver(fn (): User => $user);
     }
 
     return $request;

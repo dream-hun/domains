@@ -18,7 +18,7 @@ final class ActivateHostingPlanPriceAction
         DB::transaction(function () use ($planPrice): void {
             $previousCurrentPrice = $this->findPreviousCurrentPrice($planPrice);
 
-            if ($previousCurrentPrice !== null) {
+            if ($previousCurrentPrice instanceof HostingPlanPrice) {
                 $previousCurrentPrice->update(['is_current' => false]);
             }
 
@@ -48,7 +48,7 @@ final class ActivateHostingPlanPriceAction
                 'regular_price' => $planPrice->regular_price,
                 'renewal_price' => $planPrice->renewal_price,
             ],
-            'old_values' => $previousPrice ? [
+            'old_values' => $previousPrice instanceof HostingPlanPrice ? [
                 'regular_price' => $previousPrice->regular_price,
                 'renewal_price' => $previousPrice->renewal_price,
             ] : [],

@@ -145,9 +145,7 @@ final class CartTotal extends Component
         // Convert discount to current currency if different
         if ($couponCurrency !== $this->selectedCurrency) {
             $discountAmount = CurrencyHelper::convert(
-                $discountAmount,
-                $couponCurrency,
-                $this->selectedCurrency
+                $discountAmount
             );
         }
 

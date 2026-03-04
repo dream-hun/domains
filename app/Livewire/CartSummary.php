@@ -92,9 +92,7 @@ final class CartSummary extends Component
         if ($couponCurrency !== $this->currency) {
             try {
                 $discountAmount = CurrencyHelper::convert(
-                    $discountAmount,
-                    $couponCurrency,
-                    $this->currency
+                    $discountAmount
                 );
             } catch (Exception) {
 
@@ -106,9 +104,7 @@ final class CartSummary extends Component
                 } elseif ($type === 'fixed') {
                     try {
                         $discountAmount = CurrencyHelper::convert(
-                            $value,
-                            $couponCurrency,
-                            $this->currency
+                            $value
                         );
                     } catch (Exception) {
                         $discountAmount = $value;

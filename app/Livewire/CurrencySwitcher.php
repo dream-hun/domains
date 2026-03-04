@@ -88,7 +88,7 @@ final class CurrencySwitcher extends Component
     public function render(): Factory|View|\Illuminate\View\View
     {
         $availableCurrencies = Currency::getActiveCurrencies()
-            ->mapWithKeys(fn (Currency $currency) => [
+            ->mapWithKeys(fn (Currency $currency): array => [
                 $currency->code => [
                     'name' => $currency->name,
                     'symbol' => $currency->symbol,

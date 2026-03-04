@@ -65,12 +65,10 @@ final class DomainPriceHistoryController extends Controller
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get()
-            ->map(function (User $user): array {
-                return [
-                    'id' => $user->id,
-                    'name' => mb_trim(($user->first_name ?? '').' '.($user->last_name ?? '')).' ('.$user->email.')',
-                ];
-            });
+            ->map(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => mb_trim(($user->first_name ?? '').' '.($user->last_name ?? '')).' ('.$user->email.')',
+            ]);
 
         return view('admin.domain-price-history.index', [
             'histories' => $histories,

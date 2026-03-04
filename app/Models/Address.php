@@ -32,7 +32,7 @@ final class Address extends Model
         $payment = Payment::query()
             ->where('user_id', $this->user_id)
             ->where('status', 'succeeded')
-            ->orderByDesc('paid_at')
+            ->latest('paid_at')
             ->orderByDesc('id')
             ->first();
 

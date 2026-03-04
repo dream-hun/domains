@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Actions\Hosting\PlanPrices\ActivateHostingPlanPriceAction;
 use App\Jobs\ActivateHostingPlanPriceJob;
+use App\Models\Currency;
+use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
@@ -11,8 +13,8 @@ use Illuminate\Support\Facades\Log;
 uses(RefreshDatabase::class);
 
 test('job activates price when found', function (): void {
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     $price = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -25,7 +27,7 @@ test('job activates price when found', function (): void {
     $action = Mockery::mock(ActivateHostingPlanPriceAction::class);
     $action->shouldReceive('handle')
         ->once()
-        ->with(Mockery::on(fn ($arg) => $arg->id === $price->id));
+        ->with(Mockery::on(fn ($arg): bool => $arg->id === $price->id));
 
     $job->handle($action);
 
@@ -47,8 +49,8 @@ test('job logs warning when price not found', function (): void {
 });
 
 test('job logs info and returns early when price already current', function (): void {
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     $price = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -70,8 +72,8 @@ test('job logs info and returns early when price already current', function (): 
 });
 
 test('job logs error and throws exception on failure', function (): void {
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     $price = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,

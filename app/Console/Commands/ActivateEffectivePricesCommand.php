@@ -107,8 +107,7 @@ final class ActivateEffectivePricesCommand extends Command
             ->where('effective_date', '<=', $today->toDateString())
             ->where('is_current', false)
             ->where('id', '!=', $price->id)
-            ->orderBy('effective_date', 'desc')
-            ->orderBy('created_at', 'desc')
+            ->latest('effective_date')->latest()
             ->first();
 
         if ($conflictingPrice === null) {
@@ -122,11 +121,7 @@ final class ActivateEffectivePricesCommand extends Command
             return true;
         }
 
-        if ($conflictingEffectiveDate === $priceEffectiveDate &&
-            $conflictingPrice->created_at > $price->created_at) {
-            return true;
-        }
-
-        return false;
+        return $conflictingEffectiveDate === $priceEffectiveDate &&
+            $conflictingPrice->created_at > $price->created_at;
     }
 }

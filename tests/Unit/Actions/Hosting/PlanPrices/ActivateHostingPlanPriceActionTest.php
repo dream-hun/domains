@@ -3,14 +3,16 @@
 declare(strict_types=1);
 
 use App\Actions\Hosting\PlanPrices\ActivateHostingPlanPriceAction;
+use App\Models\Currency;
+use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 test('activate sets is_current to true on the price', function (): void {
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     $price = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -27,8 +29,8 @@ test('activate sets is_current to true on the price', function (): void {
 });
 
 test('activate deactivates previous current price for same plan currency and billing cycle', function (): void {
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     $oldPrice = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -57,9 +59,9 @@ test('activate deactivates previous current price for same plan currency and bil
 });
 
 test('activate does not affect prices for different plan currency or billing cycle', function (): void {
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency1 = App\Models\Currency::factory()->create();
-    $currency2 = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency1 = Currency::factory()->create();
+    $currency2 = Currency::factory()->create();
 
     $price1 = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -83,8 +85,8 @@ test('activate does not affect prices for different plan currency or billing cyc
 });
 
 test('activate creates history entry with automatic activation reason', function (): void {
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     $price = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -104,8 +106,8 @@ test('activate creates history entry with automatic activation reason', function
 });
 
 test('activate does nothing if price is already current', function (): void {
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     $price = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,

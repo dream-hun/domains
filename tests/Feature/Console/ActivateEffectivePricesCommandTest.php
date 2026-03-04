@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Jobs\ActivateHostingPlanPriceJob;
+use App\Models\Currency;
+use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -13,8 +15,8 @@ uses(RefreshDatabase::class);
 test('command finds and dispatches jobs for effective prices', function (): void {
     Bus::fake();
 
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     $effectivePrice = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -29,16 +31,14 @@ test('command finds and dispatches jobs for effective prices', function (): void
         ->expectsOutputToContain('Dispatched activation job for price')
         ->assertSuccessful();
 
-    Bus::assertDispatched(ActivateHostingPlanPriceJob::class, function ($job) use ($effectivePrice) {
-        return $job->planPriceUuid === $effectivePrice->uuid;
-    });
+    Bus::assertDispatched(ActivateHostingPlanPriceJob::class, fn ($job): bool => $job->planPriceUuid === $effectivePrice->uuid);
 });
 
 test('command does not dispatch jobs for prices with future effective dates', function (): void {
     Bus::fake();
 
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -58,8 +58,8 @@ test('command does not dispatch jobs for prices with future effective dates', fu
 test('command does not dispatch jobs for prices that are already current', function (): void {
     Bus::fake();
 
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -79,8 +79,8 @@ test('command does not dispatch jobs for prices that are already current', funct
 test('command does not dispatch jobs for inactive prices', function (): void {
     Bus::fake();
 
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -100,8 +100,8 @@ test('command does not dispatch jobs for inactive prices', function (): void {
 test('command handles multiple effective prices for same plan currency and billing cycle', function (): void {
     Bus::fake();
 
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency = Currency::factory()->create();
 
     $olderPrice = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -127,21 +127,17 @@ test('command handles multiple effective prices for same plan currency and billi
         ->assertSuccessful();
 
     // Should dispatch job for newer price and skip older one
-    Bus::assertDispatched(ActivateHostingPlanPriceJob::class, function ($job) use ($newerPrice) {
-        return $job->planPriceUuid === $newerPrice->uuid;
-    });
+    Bus::assertDispatched(ActivateHostingPlanPriceJob::class, fn ($job): bool => $job->planPriceUuid === $newerPrice->uuid);
 
-    Bus::assertNotDispatched(ActivateHostingPlanPriceJob::class, function ($job) use ($olderPrice) {
-        return $job->planPriceUuid === $olderPrice->uuid;
-    });
+    Bus::assertNotDispatched(ActivateHostingPlanPriceJob::class, fn ($job): bool => $job->planPriceUuid === $olderPrice->uuid);
 });
 
 test('command processes multiple prices for different plan currency billing cycle combinations', function (): void {
     Bus::fake();
 
-    $plan = App\Models\HostingPlan::factory()->create();
-    $currency1 = App\Models\Currency::factory()->create();
-    $currency2 = App\Models\Currency::factory()->create();
+    $plan = HostingPlan::factory()->create();
+    $currency1 = Currency::factory()->create();
+    $currency2 = Currency::factory()->create();
 
     $price1 = HostingPlanPrice::factory()->create([
         'hosting_plan_id' => $plan->id,
@@ -166,10 +162,6 @@ test('command processes multiple prices for different plan currency billing cycl
         ->assertSuccessful();
 
     Bus::assertDispatched(ActivateHostingPlanPriceJob::class, 2);
-    Bus::assertDispatched(ActivateHostingPlanPriceJob::class, function ($job) use ($price1) {
-        return $job->planPriceUuid === $price1->uuid;
-    });
-    Bus::assertDispatched(ActivateHostingPlanPriceJob::class, function ($job) use ($price2) {
-        return $job->planPriceUuid === $price2->uuid;
-    });
+    Bus::assertDispatched(ActivateHostingPlanPriceJob::class, fn ($job): bool => $job->planPriceUuid === $price1->uuid);
+    Bus::assertDispatched(ActivateHostingPlanPriceJob::class, fn ($job): bool => $job->planPriceUuid === $price2->uuid);
 });
