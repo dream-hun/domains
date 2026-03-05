@@ -167,19 +167,6 @@ it('prioritizes user preferred currency over geolocation', function (): void {
     expect(session('selected_currency'))->toBe('EUR');
 });
 
-it('updates currency when geolocation changes and session currency does not match', function (): void {
-    config(['app.local_default_country' => 'US']);
-
-    Session::put('selected_currency', 'RWF');
-
-    createMiddleware()->handle(
-        createRequestWithUser(),
-        fn ($req) => response()->make('OK')
-    );
-
-    expect(session('selected_currency'))->toBe('USD');
-});
-
 it('keeps session currency when it matches geolocation', function (): void {
     config(['app.local_default_country' => 'RW']);
 
@@ -191,4 +178,32 @@ it('keeps session currency when it matches geolocation', function (): void {
     );
 
     expect(session('selected_currency'))->toBe('RWF');
+});
+
+it('preserves valid session currency even when geolocation differs for authenticated user', function (): void {
+    config(['app.local_default_country' => 'RW']);
+
+    $user = User::factory()->create();
+
+    Session::put('selected_currency', 'USD');
+
+    createMiddleware()->handle(
+        createRequestWithUser($user),
+        fn ($req) => response()->make('OK')
+    );
+
+    expect(session('selected_currency'))->toBe('USD');
+});
+
+it('preserves valid non-geolocation session currency for unauthenticated users', function (): void {
+    config(['app.local_default_country' => 'RW']);
+
+    Session::put('selected_currency', 'USD');
+
+    createMiddleware()->handle(
+        createRequestWithUser(),
+        fn ($req) => response()->make('OK')
+    );
+
+    expect(session('selected_currency'))->toBe('USD');
 });

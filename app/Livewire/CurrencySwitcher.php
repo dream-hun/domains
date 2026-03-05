@@ -31,27 +31,19 @@ final class CurrencySwitcher extends Component
             return;
         }
 
-        $geolocationCurrency = $this->getCurrencyFromGeolocation($geolocationService);
         $sessionCurrency = session('selected_currency');
 
         if (is_string($sessionCurrency) && $this->isValidCurrency($sessionCurrency)) {
-            if ($sessionCurrency === $geolocationCurrency) {
-                $this->setCurrency($sessionCurrency);
+            $this->setCurrency($sessionCurrency);
 
-                Log::info('Using existing session currency', [
-                    'currency' => $sessionCurrency,
-                ]);
-
-                return;
-            }
-
-            Log::info('Session currency does not match geolocation, updating', [
-                'session_currency' => $sessionCurrency,
-                'geolocation_currency' => $geolocationCurrency,
+            Log::info('Using existing session currency', [
+                'currency' => $sessionCurrency,
             ]);
+
+            return;
         }
 
-        $this->setCurrency($geolocationCurrency);
+        $this->setCurrency($this->getCurrencyFromGeolocation($geolocationService));
     }
 
     public function selectCurrency(string $currencyCode): void

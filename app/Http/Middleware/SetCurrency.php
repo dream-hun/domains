@@ -37,12 +37,14 @@ final readonly class SetCurrency
             return $next($request);
         }
 
-        $geolocationCurrency = $this->getCurrencyFromGeolocation();
         $sessionCurrency = session('selected_currency');
 
-        if ($sessionCurrency === null || $sessionCurrency !== $geolocationCurrency) {
-            $this->setCurrencyIfValid($geolocationCurrency);
+        // Keep any valid session currency the user has selected
+        if (is_string($sessionCurrency) && Currency::getActiveCurrencies()->contains('code', $sessionCurrency)) {
+            return $next($request);
         }
+
+        $this->setCurrencyIfValid($this->getCurrencyFromGeolocation());
 
         return $next($request);
     }
