@@ -32,7 +32,7 @@ final class Currency extends Model
      *
      * @var array<int, string>
      */
-    private const NO_DECIMAL_CURRENCIES = [
+    private const array NO_DECIMAL_CURRENCIES = [
         'RWF', 'JPY', 'KRW', 'VND', 'CLP', 'ISK', 'UGX', 'KES', 'TZS',
     ];
 

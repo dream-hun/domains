@@ -115,16 +115,16 @@
                                         class="table table-bordered table-striped table-hover datatable-HostingPlanPrice w-100">
                                         <thead>
                                             <tr>
-                                                <th style="width: 12%">Category</th>
-                                                <th style="width: 15%">Plan</th>
-                                                <th style="width: 8%">Currency</th>
-                                                <th style="width: 10%">Billing Cycle</th>
-                                                <th style="width: 12%">Regular Price</th>
-                                                <th style="width: 12%">Renewal Price</th>
-                                                <th style="width: 7%">Status</th>
-                                                <th style="width: 7%">Current</th>
-                                                <th style="width: 9%">Effective Date</th>
-                                                <th style="width: 8%">Actions</th>
+                                                <th>Category</th>
+                                                <th>Plan</th>
+                                                <th>Currency</th>
+                                                <th>Billing Cycle</th>
+                                                <th>Regular Price</th>
+                                                <th>Renewal Price</th>
+                                                <th>Status</th>
+                                                <th>Current</th>
+                                                <th>Effective Date</th>
+                                                <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -163,9 +163,13 @@
                                                         @can('hosting_plan_price_edit')
                                                             <a href="{{ route('admin.hosting-plan-prices.edit', $price->uuid) }}"
                                                                 class="btn btn-warning btn-sm mr-1" title="Edit">
-                                                                <i class="bi bi-pencil"></i>
+                                                                <i class="bi bi-pencil"></i> Edit
                                                             </a>
                                                         @endcan
+                                                        <a href="{{ route('admin.hosting-plan-price-history.index', ['search' => $price->plan?->name]) }}"
+                                                            class="btn btn-info btn-sm mr-1" title="Price History">
+                                                            <i class="bi bi-clock-history"></i> Pricing History
+                                                        </a>
                                                         @can('hosting_plan_price_delete')
                                                             <form
                                                                 action="{{ route('admin.hosting-plan-prices.destroy', $price->uuid) }}"
@@ -175,7 +179,7 @@
                                                                 <button type="submit" class="btn btn-danger btn-sm"
                                                                     onclick="return confirm('Are you sure you want to delete this price?');"
                                                                     title="Delete">
-                                                                    <span class="bi bi-trash"></span>
+                                                                    <span class="bi bi-trash"></span> Delete
                                                                 </button>
                                                             </form>
                                                         @endcan
@@ -202,7 +206,6 @@
         <style>
             .datatable-HostingPlanPrice {
                 width: 100% !important;
-                table-layout: fixed;
             }
         </style>
     @endsection
@@ -216,7 +219,7 @@
                     theme: 'bootstrap4',
                     width: '100%'
                 });
-            
+
                 const filterForm = $('#category_id').closest('form');
 
                 // Clear plan filter when category changes, then submit
