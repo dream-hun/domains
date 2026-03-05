@@ -55,7 +55,7 @@ final class TldPricingController extends Controller
     {
         abort_if(Gate::denies('tld_pricing_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $tldPricing->load(['tld', 'currency']);
+        $tldPricing->load(['tld' => fn ($q) => $q->without('tldPricings'), 'currency']);
 
         $tlds = Tld::query()->orderBy('name')->get();
         $currencies = Currency::getActiveCurrencies();

@@ -168,6 +168,42 @@ test('destroy deletes tld pricing and redirects', function (): void {
     expect(TldPricing::query()->find($tldPricing->id))->toBeNull();
 });
 
+test('edit returns 200 and loads tld and currency without causing N+1', function (): void {
+    $user = User::factory()->create();
+    $role = Role::query()->create(['title' => 'Admin']);
+    $role->permissions()->attach(
+        Permission::query()->whereIn('title', [
+            'tld_pricing_access',
+            'tld_pricing_edit',
+        ])->pluck('id')
+    );
+    $user->roles()->attach($role);
+
+    $currency = Currency::query()->first() ?? Currency::factory()->create();
+    $tld = Tld::query()->create([
+        'uuid' => (string) Str::uuid(),
+        'name' => '.com',
+        'type' => TldType::International,
+        'status' => TldStatus::Active,
+    ]);
+    $tldPricing = TldPricing::factory()->create([
+        'tld_id' => $tld->id,
+        'currency_id' => $currency->id,
+        'register_price' => 10,
+        'renew_price' => 12,
+        'is_current' => true,
+        'effective_date' => now(),
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.tld-pricings.edit', $tldPricing));
+
+    $response->assertOk();
+    $response->assertViewIs('admin.tld-pricing.edit');
+    $response->assertViewHas('tldPricing');
+    expect($response->viewData('tldPricing')->tld->name)->toBe('.com')
+        ->and($response->viewData('tldPricing')->currency->id)->toBe($currency->id);
+});
+
 test('getFormattedPrice formats using the pricing own currency', function (): void {
     $currency = Currency::query()->firstOrCreate(['code' => 'USD'], ['name' => 'US Dollar', 'symbol' => '$', 'is_base' => true, 'is_active' => true]);
     $pricing = TldPricing::factory()->create([

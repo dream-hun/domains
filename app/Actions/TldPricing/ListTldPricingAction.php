@@ -12,7 +12,7 @@ final class ListTldPricingAction
     public function handle(): Collection
     {
         return TldPricing::query()
-            ->with(['tld', 'currency'])
+            ->with(['tld' => fn ($q) => $q->without('tldPricings'), 'currency'])
             ->latest()
             ->get();
     }

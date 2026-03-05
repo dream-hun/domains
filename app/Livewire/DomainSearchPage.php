@@ -36,6 +36,9 @@ final class DomainSearchPage extends Component
         'currencyChanged' => 'handleCurrencyChanged',
     ];
 
+    /** @var array<int, Tld> */
+    private array $tldCache = [];
+
     public function mount(?string $domain = null): void
     {
         $this->selectedCurrency = CurrencyHelper::getUserCurrency();
@@ -136,14 +139,16 @@ final class DomainSearchPage extends Component
     public function getDisplayPriceForItem(array $item): string
     {
         $tldId = $item['tld_id'] ?? null;
-        if ($tldId !== null) {
-            $tld = Tld::query()
-                ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
-                ->find($tldId);
+        if ($tldId === null) {
+            return (string) ($item['price'] ?? '');
+        }
 
-            if ($tld instanceof Tld) {
-                return $tld->getFormattedPriceWithFallback('register_price', $this->selectedCurrency);
-            }
+        $tld = $this->tldCache[(int) $tldId] ?? Tld::query()
+            ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
+            ->find($tldId);
+
+        if ($tld instanceof Tld) {
+            return $tld->getFormattedPriceWithFallback('register_price', $this->selectedCurrency);
         }
 
         return (string) ($item['price'] ?? '');
@@ -151,9 +156,45 @@ final class DomainSearchPage extends Component
 
     public function render(): View
     {
+        $this->preloadTldCache();
+
         return view('livewire.domain-search-page', [
             'popularDomains' => $this->getPopularDomainsForDisplay(),
         ]);
+    }
+
+    private function preloadTldCache(): void
+    {
+        $tldIds = [];
+
+        if ($this->details !== null) {
+            $tldId = $this->details['tld_id'] ?? null;
+            if ($tldId !== null) {
+                $tldIds[] = (int) $tldId;
+            }
+        }
+
+        foreach ($this->suggestions as $suggestion) {
+            $tldId = $suggestion['tld_id'] ?? null;
+            if ($tldId !== null) {
+                $tldIds[] = (int) $tldId;
+            }
+        }
+
+        $tldIds = array_values(array_unique(array_filter($tldIds)));
+
+        if (empty($tldIds)) {
+            $this->tldCache = [];
+
+            return;
+        }
+
+        $this->tldCache = Tld::query()
+            ->whereIn('id', $tldIds)
+            ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
+            ->get()
+            ->keyBy('id')
+            ->all();
     }
 
     /**
