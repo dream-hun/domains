@@ -15,8 +15,6 @@ use Throwable;
 
 final readonly class SubscriptionInvoiceGenerationService
 {
-    public function __construct() {}
-
     /**
      * Generate renewal invoices for subscriptions due for renewal
      *

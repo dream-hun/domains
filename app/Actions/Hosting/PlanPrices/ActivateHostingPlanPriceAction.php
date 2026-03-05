@@ -7,7 +7,7 @@ namespace App\Actions\Hosting\PlanPrices;
 use App\Models\HostingPlanPrice;
 use Illuminate\Support\Facades\DB;
 
-final class ActivateHostingPlanPriceAction
+class ActivateHostingPlanPriceAction
 {
     public function handle(HostingPlanPrice $planPrice): void
     {

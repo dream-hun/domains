@@ -6,7 +6,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\ActivateHostingPlanPriceJob;
 use App\Models\HostingPlanPrice;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Date;
@@ -98,7 +98,7 @@ final class ActivateEffectivePricesCommand extends Command
         return self::SUCCESS;
     }
 
-    private function shouldSkipPrice(HostingPlanPrice $price, Carbon $today): bool
+    private function shouldSkipPrice(HostingPlanPrice $price, CarbonInterface $today): bool
     {
         $conflictingPrice = HostingPlanPrice::query()
             ->where('hosting_plan_id', $price->hosting_plan_id)

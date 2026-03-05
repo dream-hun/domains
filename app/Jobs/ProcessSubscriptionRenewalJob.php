@@ -128,8 +128,6 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
     {
         $this->order->loadMissing('user');
 
-        $this->order->loadMissing('user');
-
         $user = $this->order->user;
 
         if ($user === null) {
