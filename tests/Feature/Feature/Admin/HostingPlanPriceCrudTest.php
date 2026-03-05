@@ -306,6 +306,23 @@ test('model getBaseCurrency falls back to USD when no currency', function (): vo
     expect($price->getBaseCurrency())->toBe('USD');
 });
 
+test('getFormattedPrice uses the price stored currency not the session currency', function (): void {
+    $currency = Currency::query()->firstOrCreate(['code' => 'USD'], ['name' => 'US Dollar', 'symbol' => '$', 'is_base' => true, 'is_active' => true]);
+    $price = HostingPlanPrice::factory()->create([
+        'currency_id' => $currency->id,
+        'regular_price' => 10.00,
+    ]);
+    $price->load('currency');
+
+    session(['selected_currency' => 'RWF']);
+
+    $formatted = $price->getFormattedPrice('regular_price');
+
+    expect($formatted)->toContain('$')
+        ->and($formatted)->not->toContain('RWF')
+        ->and($formatted)->not->toContain('FRW');
+});
+
 // --- Price History Observer ---
 
 test('price history observer fires on price change', function (): void {

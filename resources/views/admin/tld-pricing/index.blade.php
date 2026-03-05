@@ -87,8 +87,8 @@
                                             <tr>
                                                 <td>{{ $tldPricing->tld?->name ?? '—' }}</td>
                                                 <td>{{ $tldPricing->currency?->code ?? '—' }}</td>
-                                                <td>{{ number_format($tldPricing->register_price) }}</td>
-                                                <td>{{ number_format($tldPricing->renew_price) }}</td>
+                                                <td>{{ $tldPricing->getFormattedPrice('register_price') }}</td>
+                                                <td>{{ $tldPricing->getFormattedPrice('renew_price') }}</td>
                                                 <td>
                                                         <span
                                                             class="badge badge-{{ $tldPricing->is_current ? 'success' : 'secondary' }}">

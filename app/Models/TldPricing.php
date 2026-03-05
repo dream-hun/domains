@@ -54,6 +54,13 @@ class TldPricing extends Model
         return $this->hasMany(DomainPriceHistory::class, 'tld_pricing_id');
     }
 
+    public function getFormattedPrice(string $field): string
+    {
+        $amount = (float) ($this->{$field} ?? 0);
+
+        return $this->currency?->format($amount) ?? number_format($amount);
+    }
+
     #[Scope]
     protected function current(Builder $query): Builder
     {

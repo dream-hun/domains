@@ -172,6 +172,16 @@
         </div>
     </div>
 
+    @section('styles')
+    @parent
+    <style>
+        .form-label.required::after {
+            content: " *";
+            color: #dc3545;
+        }
+    </style>
+    @endsection
+
     @push('scripts')
     <script>
         $(function () {

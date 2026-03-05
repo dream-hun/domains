@@ -167,3 +167,15 @@ test('destroy deletes tld pricing and redirects', function (): void {
 
     expect(TldPricing::query()->find($tldPricing->id))->toBeNull();
 });
+
+test('getFormattedPrice formats using the pricing own currency', function (): void {
+    $currency = Currency::query()->firstOrCreate(['code' => 'USD'], ['name' => 'US Dollar', 'symbol' => '$', 'is_base' => true, 'is_active' => true]);
+    $pricing = TldPricing::factory()->create([
+        'currency_id' => $currency->id,
+        'register_price' => 10,
+        'renew_price' => 12,
+    ]);
+
+    expect($pricing->getFormattedPrice('register_price'))->toContain('$')
+        ->and($pricing->getFormattedPrice('renew_price'))->toContain('$');
+});
