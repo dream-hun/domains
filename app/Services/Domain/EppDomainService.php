@@ -31,7 +31,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
-use Throwable;
 
 class EppDomainService implements DomainRegistrationServiceInterface
 {
@@ -54,20 +53,9 @@ class EppDomainService implements DomainRegistrationServiceInterface
         'separators' => ['', '-', '.', '_'],
     ];
 
-    /**
-     * @throws Exception|Throwable
-     */
     public function __construct()
     {
-        $this->config = config('services.epp');
-
-        throw_if($this->config === [], Exception::class, 'EPP configuration not found');
-
-        throw_if(empty($this->config['host']), Exception::class, 'EPP host is not configured. Please set EPP_HOST in your .env file.');
-
-        throw_if(empty($this->config['certificate']) || ! file_exists($this->config['certificate']), Exception::class, 'EPP certificate not found. Please check the certificate path in your configuration.');
-
-        $this->initializeClient();
+        $this->config = config('services.epp', []);
     }
 
     /**
@@ -1265,61 +1253,6 @@ class EppDomainService implements DomainRegistrationServiceInterface
     }
 
     /**
-     * Check if a domain is available or registered
-     *
-     * @return array{available: bool, reason?: string}
-     *
-     * @throws Exception
-     */
-    public function checkSingleDomain(string $domain): array
-    {
-        try {
-            $this->ensureConnection();
-
-            Log::info('Checking domain availability', [
-                'domain' => $domain,
-                'epp_host' => $this->config['host'],
-            ]);
-
-            $frame = new CheckDomain();
-            $frame->addDomain($domain);
-
-            $client = $this->client;
-            $response = $client->request($frame);
-
-            throw_unless($response instanceof Response, Exception::class, 'Invalid response from registry');
-
-            $result = $response->results()[0];
-            $responseData = $response->data();
-
-            throw_if(! is_array($responseData) || ! isset($responseData['chkData']['cd']), Exception::class, 'Unexpected response data format');
-
-            $checkData = $responseData['chkData']['cd'][0];
-            $available = (bool) ($checkData['avail'] ?? false);
-            $reason = $checkData['reason'] ?? null;
-
-            Log::debug('Domain check result', [
-                'domain' => $domain,
-                'available' => $available,
-                'reason' => $reason,
-            ]);
-
-            return [
-                'available' => $available,
-                'reason' => $reason,
-            ];
-        } catch (Exception $exception) {
-            Log::error('Domain check failed: '.$exception->getMessage(), [
-                'domain' => $domain,
-                'epp_host' => $this->config['host'],
-                'trace' => $exception->getTraceAsString(),
-            ]);
-            $this->connected = false;
-            throw $exception;
-        }
-    }
-
-    /**
      * Delete Domain
      *
      * @throws Exception
@@ -1999,10 +1932,14 @@ class EppDomainService implements DomainRegistrationServiceInterface
      */
     private function ensureConnection(): void
     {
-        throw_unless($this->client instanceof EPPClient, Exception::class, 'EPP client not initialized');
-
-        if ($this->connected) {
+        if ($this->connected && $this->client instanceof EPPClient) {
             return;
+        }
+
+        if (! $this->client instanceof EPPClient) {
+            throw_if(empty($this->config['host']), Exception::class, 'EPP host is not configured. Please set EPP_HOST in your .env file.');
+            throw_if(empty($this->config['certificate']) || ! file_exists($this->config['certificate']), Exception::class, 'EPP certificate not found. Please check the certificate path in your configuration.');
+            $this->initializeClient();
         }
 
         try {

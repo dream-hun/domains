@@ -6,7 +6,7 @@ namespace App\Helpers;
 
 use App\Enums\TldType;
 use App\Models\Tld;
-use App\Services\Domain\EppDomainService;
+use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\NamecheapDomainService;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
@@ -17,7 +17,7 @@ final readonly class DomainSearchHelper
 {
     public function __construct(
         private NamecheapDomainService $internationalDomainService,
-        private EppDomainService $eppDomainService
+        private DomainRegistrationServiceInterface $eppDomainService
     ) {}
 
     public function processDomainSearch(string $domain): array
@@ -36,15 +36,6 @@ final readonly class DomainSearchHelper
                 $defaultTld = ($domainType === TldType::Local) ? '.rw' : '.com';
                 $primaryDomainToSearch .= $defaultTld;
                 $domainType = $this->detectDomainType($primaryDomainToSearch);
-            }
-
-            if (app()->environment('testing')) {
-                return $this->simulateTestingResponse(
-                    $primaryDomainToSearch,
-                    $domainType,
-                    $domainBase,
-                    $sanitizedDomain
-                );
             }
 
             // Execute the search using the appropriate service based on detected type
@@ -312,66 +303,6 @@ final readonly class DomainSearchHelper
         return [$details, $suggestions];
     }
 
-    private function simulateTestingResponse(string $primaryDomain, TldType $domainType, string $domainBase, string $searchedDomain): array
-    {
-        $tld = $this->extractTldSegment($primaryDomain);
-        $priceInfo = $tld ? $this->findDomainPriceInfo($tld) : null;
-        $preferredCurrency = CurrencyHelper::getUserCurrency();
-        $displayCurrency = $priceInfo instanceof Tld ? $priceInfo->getDisplayPriceForCurrency($preferredCurrency, 'register_price')['currency_code'] : 'USD';
-
-        $details = [
-            'domain' => $primaryDomain,
-            'available' => true,
-            'price' => $priceInfo?->getFormattedPriceWithFallback('register_price', $preferredCurrency),
-            'service_error' => false,
-            'error_message' => null,
-            'type' => $domainType->value,
-            'currency' => $displayCurrency,
-            'base_currency' => $priceInfo?->getBaseCurrency() ?? 'USD',
-            'tld_id' => $priceInfo instanceof Tld ? $priceInfo->id : null,
-        ];
-
-        $suggestions = Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
-            ->when($domainType === TldType::Local, fn ($q): mixed => $q->localTlds(), fn ($q): mixed => $q->internationalTlds())
-            ->when($tld, fn ($query): mixed => $query->whereRaw($this->tldNormalizedNotEqualRaw(), [mb_strtolower((string) $tld)]))
-            ->limit(5)
-            ->get()
-            ->map(function (Tld $price) use ($domainBase, $domainType, $preferredCurrency): array {
-                $suggestionTld = mb_ltrim($price->tld, '.');
-                $display = $price->getDisplayPriceForCurrency($preferredCurrency, 'register_price');
-
-                return [
-                    'domain' => $domainBase.'.'.$suggestionTld,
-                    'available' => true,
-                    'price' => $price->getFormattedPriceWithFallback('register_price', $preferredCurrency),
-                    'service_error' => false,
-                    'error_message' => null,
-                    'type' => $domainType->value,
-                    'currency' => $display['currency_code'],
-                    'base_currency' => $price->getBaseCurrency(),
-                    'tld_id' => $price->id,
-                ];
-            })
-            ->values()
-            ->all();
-
-        return [
-            'details' => $details,
-            'suggestions' => $suggestions,
-            'domainType' => $domainType,
-            'searchedDomain' => $searchedDomain,
-            'error' => null,
-        ];
-    }
-
-    private function extractTldSegment(string $domain): ?string
-    {
-        $parts = explode('.', $domain);
-
-        return count($parts) > 1 ? end($parts) : null;
-    }
-
     private function sanitizeDomain(string $domain): string
     {
         $domain = mb_trim(mb_strtolower($domain));
@@ -408,16 +339,6 @@ final readonly class DomainSearchHelper
         }
 
         return $map;
-    }
-
-    private function findDomainPriceInfo(string $tld): ?Tld
-    {
-        $cleanTld = mb_ltrim($tld, '.');
-
-        return Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
-            ->where('name', '.'.$cleanTld)
-            ->first();
     }
 
     private function normalizeAvailabilityStatus($available): string

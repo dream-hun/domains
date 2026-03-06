@@ -25,8 +25,6 @@ final class DomainSearchPage extends Component
 
     public ?string $errorMessage = null;
 
-    public bool $searchPerformed = false;
-
     public string $selectedCurrency = '';
 
     public bool $isSearching = false;
@@ -106,7 +104,6 @@ final class DomainSearchPage extends Component
 
         $this->reset(['details', 'suggestions', 'errorMessage']);
         $this->isSearching = true;
-        $this->searchPerformed = true;
 
         try {
             $helper = resolve(DomainSearchHelper::class);
@@ -183,7 +180,7 @@ final class DomainSearchPage extends Component
 
         $tldIds = array_values(array_unique(array_filter($tldIds)));
 
-        if (empty($tldIds)) {
+        if ($tldIds === []) {
             $this->tldCache = [];
 
             return;

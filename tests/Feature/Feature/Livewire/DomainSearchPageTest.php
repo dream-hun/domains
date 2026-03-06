@@ -8,6 +8,7 @@ use App\Livewire\DomainSearchPage;
 use App\Models\Currency;
 use App\Models\Tld;
 use App\Models\TldPricing;
+use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -45,12 +46,15 @@ test('domain search page runs search on mount when domain query param is passed'
         'effective_date' => now(),
     ]);
 
+    $this->mock(NamecheapDomainService::class)
+        ->shouldReceive('checkAvailability')
+        ->andReturn(['example.com' => ['available' => true, 'reason' => 'Domain is available']]);
+
     session(['selected_currency' => 'USD']);
 
     $component = Livewire::test(DomainSearchPage::class, ['domain' => 'example.com']);
 
-    $component->assertSet('searchPerformed', true)
-        ->assertSet('searchedDomain', 'example.com');
+    $component->assertSet('searchedDomain', 'example.com');
     expect($component->get('details'))->not->toBeNull()
         ->and($component->get('details')['domain'])->toBe('example.com');
 });
@@ -108,11 +112,12 @@ test('domain search page getDisplayPriceForItem returns price in selected curren
         ->set('selectedCurrency', 'RWF');
 
     $priceRwf = $component->instance()->getDisplayPriceForItem($item);
-    expect($priceRwf)->not->toBe('');
+    expect($priceRwf)->toContain('15,000');
 
     $component->set('selectedCurrency', 'USD');
     $priceUsd = $component->instance()->getDisplayPriceForItem($item);
-    expect($priceUsd)->not->toBe('')->and($priceUsd)->not->toBe($priceRwf);
+    expect($priceUsd)->toContain('12')
+        ->and($priceUsd)->not->toBe($priceRwf);
 });
 
 test('domain search page handleCurrencyChanged updates selected currency and session', function (): void {

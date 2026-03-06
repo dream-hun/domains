@@ -37,7 +37,6 @@ final class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::automaticallyEagerLoadRelationships();
-        Model::preventLazyLoading();
         HostingPlanPrice::observe(HostingPlanPriceHistoryObserver::class);
         TldPricing::observe(TldPricingObserver::class);
         Payment::observe(PaymentObserver::class);
@@ -71,12 +70,8 @@ final class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(fn ($app): DomainSearchHelper => new DomainSearchHelper(
             $app->make(NamecheapDomainService::class),
-            $app->make(EppDomainService::class)
+            $app->make(DomainRegistrationServiceInterface::class)
         ));
-
-        $this->app->bind(DomainRegistrationServiceInterface::class.'.epp', fn (): EppDomainService => new EppDomainService());
-
-        $this->app->bind(DomainRegistrationServiceInterface::class.'.namecheap', fn (): NamecheapDomainService => new NamecheapDomainService());
 
         $this->app->bind('epp_domain_service', fn (): EppDomainService => new EppDomainService());
 
