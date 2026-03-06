@@ -49,7 +49,10 @@ return [
         'password' => env('EPP_PASSWORD'),
         'port' => env('EPP_PORT'),
         'ssl' => env('EPP_SSL'),
-        'certificate' => storage_path('app/public/certificate.pem'),
+        'certificate' => env('EPP_CERTIFICATE'),
+        'private_key' => env('EPP_PRIVATE_KEY'),
+        'ca_cert' => env('EPP_CA_CERT'),
+        'passphrase' => env('EPP_PASSPHRASE'),
         'connect_timeout' => env('EPP_CONNECT_TIMEOUT', 10),
     ],
 

@@ -19,6 +19,7 @@ use AfriCC\EPP\Frame\Command\Poll;
 use AfriCC\EPP\Frame\Command\Renew\Domain as RenewDomain;
 use AfriCC\EPP\Frame\Command\Transfer\Domain as TransferDomain;
 use AfriCC\EPP\Frame\Command\Update\Domain as UpdateDomain;
+use AfriCC\EPP\Frame\Hello;
 use AfriCC\EPP\Frame\Response;
 use App\Enums\TldType;
 use App\Models\Contact;
@@ -32,6 +33,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
+use Throwable;
 
 class EppDomainService implements DomainRegistrationServiceInterface
 {
@@ -677,6 +679,14 @@ class EppDomainService implements DomainRegistrationServiceInterface
 
                 return $greeting;
             } catch (Exception $e) {
+                // ETIMEDOUT (code 110): host is unreachable — retrying will not help
+                if ($e->getCode() === 110) {
+                    Log::error('EPP host unreachable (connection timed out), aborting retries', [
+                        'host' => $this->config['host'],
+                        'error' => $e->getMessage(),
+                    ]);
+                    throw $e;
+                }
                 $lastException = $e;
                 $attempts++;
                 Log::warning(sprintf('EPP Connection attempt %d failed: ', $attempts).$e->getMessage());
@@ -807,7 +817,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
 
                 foreach ($items as $item) {
                     // Use improved extraction methods for consistency
-                    $domainName = $this->extractDomainValue($item, 'name');
+                    $domainName = $this->extractDomainValue($item);
                     $available = $this->extractAvailabilityValue($item);
                     $reason = $this->extractReasonValue($item);
 
@@ -1603,7 +1613,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                                 : [$data['chkData']['cd']];
 
                             foreach ($items as $item) {
-                                $domainName = $this->extractDomainValue($item, 'name');
+                                $domainName = $this->extractDomainValue($item);
                                 $available = $this->extractAvailabilityValue($item);
                                 $reason = $this->extractReasonValue($item);
 
@@ -1650,6 +1660,12 @@ class EppDomainService implements DomainRegistrationServiceInterface
                                 ];
                             }
                         }
+                    } catch (Throwable $e) {
+                        return [
+                            'attempt' => $attempt,
+                            'domains' => $batch,
+                            'error' => $e->getMessage(),
+                        ];
                     }
                 }
             }
@@ -1736,6 +1752,11 @@ class EppDomainService implements DomainRegistrationServiceInterface
             return [
                 'success' => false,
                 'message' => 'Failed to update domain lock: '.$exception->getMessage(),
+            ];
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
             ];
         }
     }
@@ -1895,14 +1916,27 @@ class EppDomainService implements DomainRegistrationServiceInterface
             'username' => $this->config['username'],
             'password' => $this->config['password'],
             'ssl' => (bool) $this->config['ssl'],
-            'local_cert' => $this->config['certificate'],
-            'verify_peer' => false,
             'verify_peer_name' => false,
-            'verify_host' => false,
             'debug' => (bool) ($this->config['debug'] ?? false),
             'timeout' => 30,
             'connect_timeout' => (int) ($this->config['connect_timeout'] ?? 10),
         ];
+
+        if (! empty($this->config['certificate'])) {
+            $config['local_cert'] = $this->config['certificate'];
+        }
+
+        if (! empty($this->config['private_key'])) {
+            $config['local_pk'] = $this->config['private_key'];
+        }
+
+        if (! empty($this->config['ca_cert'])) {
+            $config['ca_cert'] = $this->config['ca_cert'];
+        }
+
+        if (! empty($this->config['passphrase'])) {
+            $config['passphrase'] = $this->config['passphrase'];
+        }
 
         $attempts = 0;
         $lastException = null;
@@ -1930,17 +1964,41 @@ class EppDomainService implements DomainRegistrationServiceInterface
     /**
      * Check if client is connected and try to reconnect if not
      *
-     * @throws Exception
+     * @throws Exception|Throwable
      */
+    private function isConnectionAlive(): bool
+    {
+        try {
+            $this->client->sendFrame(new Hello());
+            $this->client->getFrame();
+
+            return true;
+        } catch (Exception) {
+            return false;
+        }
+    }
+
     private function ensureConnection(): void
     {
         if ($this->connected && $this->client instanceof EPPClient) {
-            return;
+            if ($this->isConnectionAlive()) {
+                return;
+            }
+            // Socket is dead — reset and reconnect
+            $this->connected = false;
+            $this->client = null;
         }
 
         if (! $this->client instanceof EPPClient) {
             throw_if(empty($this->config['host']), Exception::class, 'EPP host is not configured. Please set EPP_HOST in your .env file.');
-            throw_if(empty($this->config['certificate']) || ! file_exists($this->config['certificate']), Exception::class, 'EPP certificate not found. Please check the certificate path in your configuration.');
+            if (! empty($this->config['certificate']) && ! file_exists($this->config['certificate'])) {
+                throw new Exception('EPP certificate not found. Please check the certificate path in your configuration.');
+            }
+
+            if (! empty($this->config['private_key']) && ! file_exists($this->config['private_key'])) {
+                throw new Exception('EPP private key not found. Please check the private key path in your configuration.');
+            }
+
             $this->initializeClient();
         }
 
@@ -1952,6 +2010,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
             ]);
         } catch (Exception $exception) {
             $this->connected = false;
+            $this->client = null;
             Log::error('EPP connection failed: '.$exception->getMessage(), [
                 'host' => $this->config['host'],
                 'trace' => $exception->getTraceAsString(),
@@ -1963,12 +2022,11 @@ class EppDomainService implements DomainRegistrationServiceInterface
     /**
      * Extract domain name from EPP response item
      */
-    private function extractDomainValue(array $item, string $key): string
-    {
-        // Try multiple possible paths for the domain name
+    private function extractDomainValue(array $item): string
+    {// Try multiple possible paths for the domain name
         $namePaths = [
-            $key.'._text',
-            $key,
+            'name'.'._text',
+            'name',
             '_text',
         ];
 
@@ -1980,13 +2038,13 @@ class EppDomainService implements DomainRegistrationServiceInterface
         }
 
         // If direct path doesn't work, check if the key itself is the domain name
-        if (is_string($item[$key] ?? null)) {
-            return $item[$key];
+        if (is_string($item['name'] ?? null)) {
+            return $item['name'];
         }
 
         Log::warning('Unable to extract domain name from EPP response item', [
             'item' => $item,
-            'key' => $key,
+            'key' => 'name',
         ]);
 
         return '';
