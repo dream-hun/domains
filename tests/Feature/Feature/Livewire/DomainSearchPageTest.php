@@ -8,8 +8,10 @@ use App\Livewire\DomainSearchPage;
 use App\Models\Currency;
 use App\Models\Tld;
 use App\Models\TldPricing;
+use App\Services\Domain\DomainRegistrationServiceInterface;
 use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 
@@ -129,6 +131,23 @@ test('domain search page handleCurrencyChanged updates selected currency and ses
     $component->assertSet('selectedCurrency', 'RWF');
 
     expect(session('selected_currency'))->toBe('RWF');
+});
+
+test('domain search returns connection error message when EPP server is unreachable', function (): void {
+    Tld::query()->create([
+        'uuid' => (string) Str::uuid(),
+        'name' => '.rw',
+        'type' => TldType::Local,
+        'status' => TldStatus::Active,
+    ]);
+
+    $this->mock(DomainRegistrationServiceInterface::class)
+        ->shouldReceive('searchDomains')
+        ->andThrow(new ConnectionException('Connection timed out'));
+
+    $component = Livewire::test(DomainSearchPage::class, ['domain' => 'urwanyarugenge.rw']);
+
+    expect($component->get('errorMessage'))->toBe('Connection error. Please check your internet connection and try again.');
 });
 
 test('get domains route renders domain search page with livewire component', function (): void {

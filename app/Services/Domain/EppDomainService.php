@@ -28,6 +28,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
@@ -1899,7 +1900,8 @@ class EppDomainService implements DomainRegistrationServiceInterface
             'verify_peer_name' => false,
             'verify_host' => false,
             'debug' => (bool) ($this->config['debug'] ?? false),
-            'timeout' => 30, // Add timeout
+            'timeout' => 30,
+            'connect_timeout' => (int) ($this->config['connect_timeout'] ?? 10),
         ];
 
         $attempts = 0;
@@ -1954,7 +1956,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                 'host' => $this->config['host'],
                 'trace' => $exception->getTraceAsString(),
             ]);
-            throw new Exception('Failed to establish EPP connection: '.$exception->getMessage(), $exception->getCode(), $exception);
+            throw new ConnectionException('Failed to establish EPP connection: '.$exception->getMessage(), $exception->getCode(), $exception);
         }
     }
 

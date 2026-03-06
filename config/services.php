@@ -50,6 +50,7 @@ return [
         'port' => env('EPP_PORT'),
         'ssl' => env('EPP_SSL'),
         'certificate' => storage_path('app/public/certificate.pem'),
+        'connect_timeout' => env('EPP_CONNECT_TIMEOUT', 10),
     ],
 
     /*
@@ -96,19 +97,4 @@ return [
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),
         'min_score' => env('RECAPTCHA_MIN_SCORE', .5),
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Exchange Rate API
-    |--------------------------------------------------------------------------
-    */
-    'exchange_rate' => [
-        'api_key' => env('EXCHANGE_RATE_API_KEY'),
-        'base_url' => 'https://v6.exchangerate-api.com/v6',
-        'timeout' => 30,
-        'extended_timeout' => 45,
-        'cache_ttl' => 3600, // 1 hour
-        'staleness_hours' => 24,
-    ],
-
 ];

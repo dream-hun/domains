@@ -35,6 +35,27 @@ function eppServiceWithClient(EPPClient $client): EppDomainService
     return $service;
 }
 
+test('initializeClient uses connect_timeout from config', function (): void {
+    config(['services.epp' => [
+        'host' => 'epp.test.local',
+        'port' => 700,
+        'username' => 'testuser',
+        'password' => 'testpass',
+        'ssl' => true,
+        'certificate' => __FILE__,
+        'connect_timeout' => 5,
+        'debug' => false,
+    ]]);
+
+    $service = new EppDomainService();
+
+    $reflection = new ReflectionClass($service);
+    $configProp = $reflection->getProperty('config');
+    $config = $configProp->getValue($service);
+
+    expect($config['connect_timeout'])->toBe(5);
+});
+
 test('constructor does not throw when EPP config is empty', function (): void {
     config(['services.epp' => []]);
 
