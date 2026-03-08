@@ -6,8 +6,10 @@ namespace App\Models;
 
 use App\Enums\GameStatus;
 use App\Enums\ResultStatus;
+use App\Enums\Role;
 use Carbon\CarbonInterface;
 use Database\Factories\GameFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -60,6 +62,17 @@ final class Game extends Model
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    protected static function booted(): void
+    {
+        self::addGlobalScope('player_scope', function (Builder $query): void {
+            $user = auth()->user();
+
+            if ($user instanceof User && $user->hasRole(Role::Player->value)) {
+                $query->where('player_id', $user->id);
+            }
+        });
     }
 
     protected function casts(): array
