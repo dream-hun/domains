@@ -64,7 +64,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::get('domains/custom-register', [DomainController::class, 'createCustom'])->name('domains.custom-register');
     Route::post('domains/custom-register', [DomainController::class, 'storeCustom'])->name('domains.custom-register.store');
 
-    Route::resource('domains', DomainController::class)->except(['show']);
+    Route::resource('domains', DomainController::class)->except(['show', 'edit']);
 
     Route::get('domains/{domain:uuid}/info', [DomainOperationsController::class, 'domainInfo'])->name('domains.info');
     Route::post('domains/{domain:uuid}/refresh-info', [DomainController::class, 'refreshInfo'])->name('domains.refresh-info');
