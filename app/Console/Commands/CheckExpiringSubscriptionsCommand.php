@@ -66,7 +66,7 @@ final class CheckExpiringSubscriptionsCommand extends Command
                 continue;
             }
 
-            $daysUntilExpiry = (int) $now->diffInDays($subscription->expires_at, false);
+            $daysUntilExpiry = (int) $now->diffInDays($subscription->expires_at);
 
             // Only send notifications for certain milestones: 7, 3, 1, 0 days
             if (! in_array($daysUntilExpiry, [7, 3, 1, 0], true)) {

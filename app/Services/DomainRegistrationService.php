@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Actions\RegisterDomainAction;
+use App\Enums\OrderStatus;
 use App\Jobs\RetryDomainRegistrationJob;
 use App\Models\FailedDomainRegistration;
 use App\Models\Order;
@@ -196,7 +197,7 @@ final readonly class DomainRegistrationService
             $order->update(['status' => 'requires_attention']);
             Log::warning('All domains failed to register', ['order_id' => $order->id]);
         } else {
-            $order->update(['status' => 'partially_completed']);
+            $order->update(['status' => OrderStatus::PARTIAL_COMPLETED->value]);
             Log::warning('Some domains failed to register', [
                 'order_id' => $order->id,
                 'successful_count' => count($results['successful']),

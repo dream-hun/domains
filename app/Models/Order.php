@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -159,7 +160,7 @@ final class Order extends Model
 
     public function isPartiallyCompleted(): bool
     {
-        return $this->status === 'partially_completed';
+        return $this->status === OrderStatus::PARTIAL_COMPLETED->value;
     }
 
     public function getRouteKeyName(): string

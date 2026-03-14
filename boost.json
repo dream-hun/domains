@@ -9,6 +9,10 @@
     "sail": false,
     "skills": [
         "livewire-development",
-        "pest-testing"
+        "pest-testing",
+        "eloquent-best-practices",
+        "laravel-specialist",
+        "php-mcp-server-generator",
+        "php-pro"
     ]
 }

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Actions\RenewDomainAction;
+use App\Enums\OrderStatus;
 use App\Models\Domain;
 use App\Models\Order;
+use App\Notifications\DomainAutoRenewalFailedNotification;
 use App\Notifications\DomainRenewalNotification;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -126,7 +128,7 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                 ]);
             } else {
                 $this->order->update([
-                    'status' => 'partially_completed',
+                    'status' => OrderStatus::PARTIAL_COMPLETED->value,
                     'notes' => 'Some domains failed to renew: '.implode(', ', $failedDomains),
                 ]);
 
@@ -136,8 +138,7 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                     'failed_domains' => $failedDomains,
                 ]);
 
-                // TODO: Send notification to user about failed renewals
-                // TODO: Consider creating support tickets for failed renewals
+                $this->notifyUserRenewalFailed($failedDomains);
             }
 
         } catch (Exception $exception) {
@@ -197,6 +198,31 @@ final class ProcessDomainRenewalJob implements ShouldQueue
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  array<int, string>  $failedDomains
+     */
+    private function notifyUserRenewalFailed(array $failedDomains): void
+    {
+        $this->order->loadMissing('user');
+
+        $user = $this->order->user;
+
+        if ($user === null) {
+            return;
+        }
+
+        foreach ($failedDomains as $domainName) {
+            $domain = Domain::query()->withoutGlobalScopes()->where('name', $domainName)->first();
+
+            if ($domain) {
+                $user->notify(new DomainAutoRenewalFailedNotification(
+                    $domain,
+                    'Automatic renewal processing failed. Please contact support.'
+                ));
+            }
+        }
     }
 
     private function notifyUserRenewalProcessing(): void

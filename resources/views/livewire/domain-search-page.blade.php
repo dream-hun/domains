@@ -122,7 +122,7 @@
                             data-sal-duration="800">
                             <div class="rts-hero__form-area">
                                 <input type="text" placeholder="find your domain name"
-                                    wire:model.defer="searchedDomain"
+                                    wire:model="searchedDomain"
                                     id="domain-input" required>
                                 <div class="select-button-area">
                                     <button type="submit" id="search-button" class="register-btn"

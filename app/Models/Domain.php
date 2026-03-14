@@ -139,6 +139,24 @@ final class Domain extends Model
         return $this->is_custom_price && $this->custom_price !== null;
     }
 
+    public function getRenewalPrice(): float
+    {
+        if ($this->isCustomPriced()) {
+            return (float) $this->custom_price;
+        }
+
+        return (float) $this->tldPricing->renew_price;
+    }
+
+    public function getRenewalCurrency(): string
+    {
+        if ($this->isCustomPriced() && $this->custom_price_currency !== null) {
+            return $this->custom_price_currency;
+        }
+
+        return $this->tldPricing->currency->code;
+    }
+
     public function registeredAt(): ?string
     {
         return $this->registered_at ? $this->registered_at->format('d-m-Y') : null;

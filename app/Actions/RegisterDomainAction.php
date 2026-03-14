@@ -74,7 +74,7 @@ readonly class RegisterDomainAction
                 }
 
                 // Send notification to the domain owner
-                $domain->owner->notify(new DomainRegisteredNotification($domain, $years));
+                $domain->owner?->notify(new DomainRegisteredNotification($domain, $years));
 
                 Log::info('Domain registered successfully with '.$serviceName, [
                     'domain' => $domainName,

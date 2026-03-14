@@ -1085,7 +1085,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
      *
      * @throws Exception
      */
-    public function checkHosts(array $hosts): CheckHost
+    public function checkHosts(array $hosts): array
     {
         try {
             $this->ensureConnection();
@@ -1095,7 +1095,13 @@ class EppDomainService implements DomainRegistrationServiceInterface
                 $frame->addHost($host);
             }
 
-            return $frame;
+            $response = $this->client->request($frame);
+
+            if (! $response->success()) {
+                throw new Exception('Host check failed: '.$response->message());
+            }
+
+            return $response->data() ?? [];
         } catch (Exception $exception) {
             Log::error('Host check failed: '.$exception->getMessage());
             // Try to reconnect on next request
@@ -1191,6 +1197,17 @@ class EppDomainService implements DomainRegistrationServiceInterface
 
             $response = $this->client->request($frame);
 
+            if ($response->success()) {
+                $data = $response->data();
+                $authCode = $data['infData']['authInfo']['pw'] ?? null;
+
+                if ($authCode === null) {
+                    throw new Exception('Auth code not found in EPP InfoDomain response for domain: '.$domain);
+                }
+
+                return $authCode;
+            }
+
             throw new Exception('EPP InfoDomain command failed: '.$response->message());
         } catch (Exception $exception) {
             Log::error('EPP getAuthorizationCode failed: '.$exception->getMessage());
@@ -1215,7 +1232,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
             // Only format if it's a DateTime object (should be avoided for renewals)
             if ($currentExpirationDate instanceof DateTimeImmutable) {
                 // Use ISO 8601 format with timezone to match registry format
-                $currentExpirationDate = $currentExpirationDate->format(DateTimeInterface::class);
+                $currentExpirationDate = $currentExpirationDate->format(DateTimeInterface::ATOM);
                 Log::warning('Converting DateTime to string for EPP renewal - this may cause issues', [
                     'domain' => $domain,
                     'formatted_date' => $currentExpirationDate,
@@ -1226,7 +1243,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                     'domain' => $domain,
                     'date_type' => gettype($currentExpirationDate),
                 ]);
-                $currentExpirationDate = (new DateTimeImmutable)->format(DateTimeInterface::class);
+                $currentExpirationDate = (new DateTimeImmutable)->format(DateTimeInterface::ATOM);
             } else {
                 // It's already a string - log but don't modify at all
                 Log::info('Using exact registry date string for EPP renewal', [

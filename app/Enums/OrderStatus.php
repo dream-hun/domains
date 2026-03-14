@@ -13,6 +13,6 @@ enum OrderStatus: string
     case REFUNDED = 'refunded';
     case COMPLETED = 'completed';
     case ATTENTION = 'requires_attention';
-    case PARTIAL_COMPLETED = 'partial_completed';
+    case PARTIAL_COMPLETED = 'partially_completed';
     case MANUAL = 'manual';
 }

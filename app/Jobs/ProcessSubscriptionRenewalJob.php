@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\Subscription;
+use App\Notifications\SubscriptionAutoRenewalFailedNotification;
 use App\Notifications\SubscriptionRenewedNotification;
 use App\Services\SubscriptionRenewalService;
 use Exception;
@@ -53,6 +55,10 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
                 $this->notifyUserSubscriptionRenewed($results['successful']);
             }
 
+            if ($results['failed'] !== []) {
+                $this->notifyUserSubscriptionRenewalFailed($results['failed']);
+            }
+
             if ($results['failed'] === []) {
                 $this->order->update([
                     'status' => 'completed',
@@ -76,7 +82,7 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
             } else {
                 $failedSubscriptions = array_column($results['failed'], 'subscription');
                 $this->order->update([
-                    'status' => 'partially_completed',
+                    'status' => OrderStatus::PARTIAL_COMPLETED->value,
                     'notes' => 'Some subscriptions failed to renew: '.implode(', ', $failedSubscriptions),
                 ]);
 
@@ -119,6 +125,34 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
             'status' => 'failed',
             'notes' => 'Subscription renewal processing failed after multiple attempts: '.($exception?->getMessage() ?? 'Unknown error'),
         ]);
+    }
+
+    /**
+     * @param  array<int, array{subscription_id: int, error: string}>  $failedResults
+     */
+    private function notifyUserSubscriptionRenewalFailed(array $failedResults): void
+    {
+        $this->order->loadMissing('user');
+
+        $user = $this->order->user;
+
+        if ($user === null) {
+            Log::warning('Skipping subscription renewal failure notification because order has no associated user', [
+                'order_id' => $this->order->id,
+            ]);
+
+            return;
+        }
+
+        $subscriptionIds = array_column($failedResults, 'subscription_id');
+        $subscriptions = Subscription::query()->whereIn('id', $subscriptionIds)->with('plan')->get();
+
+        foreach ($subscriptions as $subscription) {
+            $failureReason = collect($failedResults)
+                ->firstWhere('subscription_id', $subscription->id)['error'] ?? 'Unknown error';
+
+            $user->notify(new SubscriptionAutoRenewalFailedNotification($subscription, $failureReason));
+        }
     }
 
     /**

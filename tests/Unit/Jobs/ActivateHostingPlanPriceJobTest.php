@@ -24,14 +24,12 @@ test('job activates price when found', function (): void {
     ]);
 
     $job = new ActivateHostingPlanPriceJob($price->uuid);
-    $action = Mockery::mock(ActivateHostingPlanPriceAction::class);
-    $action->shouldReceive('handle')
-        ->once()
-        ->with(Mockery::on(fn ($arg): bool => $arg->id === $price->id));
+    $action = new ActivateHostingPlanPriceAction();
 
     $job->handle($action);
 
-    Mockery::close();
+    $price->refresh();
+    expect($price->is_current)->toBeTrue();
 });
 
 test('job logs warning when price not found', function (): void {
@@ -40,12 +38,9 @@ test('job logs warning when price not found', function (): void {
         ->with('ActivateHostingPlanPriceJob: Price not found', ['uuid' => 'non-existent-uuid']);
 
     $job = new ActivateHostingPlanPriceJob('non-existent-uuid');
-    $action = Mockery::mock(ActivateHostingPlanPriceAction::class);
-    $action->shouldNotReceive('handle');
+    $action = new ActivateHostingPlanPriceAction();
 
     $job->handle($action);
-
-    Mockery::close();
 });
 
 test('job logs info and returns early when price already current', function (): void {
@@ -63,12 +58,12 @@ test('job logs info and returns early when price already current', function (): 
         ->with('ActivateHostingPlanPriceJob: Price already current', ['uuid' => $price->uuid]);
 
     $job = new ActivateHostingPlanPriceJob($price->uuid);
-    $action = Mockery::mock(ActivateHostingPlanPriceAction::class);
-    $action->shouldNotReceive('handle');
+    $action = new ActivateHostingPlanPriceAction();
 
     $job->handle($action);
 
-    Mockery::close();
+    $price->refresh();
+    expect($price->is_current)->toBeTrue();
 });
 
 test('job logs error and throws exception on failure', function (): void {

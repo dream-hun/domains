@@ -99,7 +99,7 @@ final readonly class PaymentService
             $missingFields = [];
             foreach ($requiredFields as $field) {
                 $value = $kpayPaymentData[$field] ?? null;
-                if (($value === 0 || ($value === '' || $value === '0')) && $value !== 0 && $value !== '0') {
+                if ($value === null || $value === '') {
                     $missingFields[] = $field;
                 }
             }
