@@ -19,7 +19,7 @@ final readonly class DomainInvoiceGenerationService
      *
      * @return array{generated: int, failed: array<int, array{domain_id: int, error: string}>}
      */
-    public function generateRenewalInvoices(int $daysBeforeRenewal = 7): array
+    public function generateRenewalInvoices(int $daysBeforeRenewal = 90): array
     {
         $now = Date::now();
         $endDate = $now->copy()->addDays($daysBeforeRenewal);
