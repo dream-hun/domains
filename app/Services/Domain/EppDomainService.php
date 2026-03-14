@@ -1944,7 +1944,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
         }
 
         if (! empty($this->config['private_key'])) {
-            $config['local_pk'] = $this->config['private_key'];
+            $config['pk_cert'] = $this->config['private_key'];
         }
 
         if (! empty($this->config['ca_cert'])) {
