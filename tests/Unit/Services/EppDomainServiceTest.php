@@ -256,6 +256,7 @@ test('connectWithRetry fails fast on ETIMEDOUT without retrying', function (): v
     $mockClient->shouldReceive('connect')
         ->once() // must only be called once — no retries
         ->andThrow(new Exception('Connection timed out', 110));
+    $mockClient->shouldReceive('close');
 
     $reflection = new ReflectionClass($service);
     $clientProp = $reflection->getProperty('client');
@@ -280,6 +281,7 @@ test('ensureConnection nulls client after connection failure', function (): void
 
     $mockClient = Mockery::mock(EPPClient::class);
     $mockClient->shouldReceive('connect')->andThrow(new Exception('connection refused', 111));
+    $mockClient->shouldReceive('close');
 
     $reflection = new ReflectionClass($service);
 
@@ -314,6 +316,7 @@ test('ensureConnection reconnects when socket is stale', function (): void {
     $staleClient = Mockery::mock(EPPClient::class);
     $staleClient->shouldReceive('sendFrame')->andThrow(new Exception('broken pipe'));
     $staleClient->shouldReceive('connect')->andThrow(new Exception('reconnect failed'));
+    $staleClient->shouldReceive('close');
 
     $reflection = new ReflectionClass($service);
 
