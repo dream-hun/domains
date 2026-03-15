@@ -126,9 +126,29 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <div class="form-group">
-                                            <div class="form-check">
+                                            <label for="billing_cycle" class="required">Billing Cycle</label>
+                                            <select class="form-control select2bs4 @error('billing_cycle') is-invalid @enderror"
+                                                    id="billing_cycle"
+                                                    name="billing_cycle"
+                                                    required>
+                                                @foreach($billingCycleOptions as $cycle)
+                                                    <option value="{{ $cycle->value }}"
+                                                            @selected(old('billing_cycle', $subscription->billing_cycle) === $cycle->value)>
+                                                        {{ $cycle->label() }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('billing_cycle')
+                                                <span class="error invalid-feedback">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <div class="form-check mt-4">
                                                 <input type="checkbox"
                                                        class="form-check-input"
                                                        id="auto_renew"
@@ -148,12 +168,74 @@
 
                                 <hr>
 
+                                <h5 class="mb-3">Custom Pricing <small class="text-muted">(Optional)</small></h5>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="custom_price">Custom Price</label>
+                                            <input type="number"
+                                                   class="form-control @error('custom_price') is-invalid @enderror"
+                                                   id="custom_price"
+                                                   name="custom_price"
+                                                   value="{{ old('custom_price', $subscription->custom_price) }}"
+                                                   step="0.01"
+                                                   min="0"
+                                                   placeholder="Leave empty to use plan price">
+                                            @error('custom_price')
+                                                <span class="error invalid-feedback">{{ $message }}</span>
+                                            @enderror
+                                            <small class="form-text text-muted">
+                                                If not provided, the plan's renewal price will be used
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="custom_price_currency">Currency</label>
+                                            <select class="form-control select2bs4 @error('custom_price_currency') is-invalid @enderror"
+                                                    id="custom_price_currency"
+                                                    name="custom_price_currency">
+                                                <option value="">Select currency...</option>
+                                                @foreach($currencies as $currency)
+                                                    <option value="{{ $currency->code }}"
+                                                            @selected(old('custom_price_currency', $subscription->custom_price_currency) === $currency->code)>
+                                                        {{ $currency->code }} - {{ $currency->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('custom_price_currency')
+                                                <span class="error invalid-feedback">{{ $message }}</span>
+                                            @enderror
+                                            <small class="form-text text-muted">
+                                                Required if custom price is provided
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="custom_price_notes">Custom Price Notes</label>
+                                            <textarea class="form-control @error('custom_price_notes') is-invalid @enderror"
+                                                      id="custom_price_notes"
+                                                      name="custom_price_notes"
+                                                      rows="3"
+                                                      maxlength="1000"
+                                                      placeholder="Optional notes about the custom pricing...">{{ old('custom_price_notes', $subscription->custom_price_notes) }}</textarea>
+                                            @error('custom_price_notes')
+                                                <span class="error invalid-feedback">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr>
+
                                 <h5 class="mb-3">Read-Only Information</h5>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <p><strong>Customer:</strong> {{ $subscription->user?->name ?? 'N/A' }}</p>
                                         <p><strong>Plan:</strong> {{ $subscription->plan?->name ?? 'N/A' }}</p>
-                                        <p><strong>Billing Cycle:</strong> {{ ucfirst(str_replace('_', ' ', $subscription->billing_cycle)) }}</p>
                                     </div>
                                     <div class="col-md-6">
                                         @if($subscription->planPrice)

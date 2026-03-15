@@ -12,12 +12,14 @@ use App\Actions\Domains\ToggleDomainLockAction;
 use App\Actions\Domains\TransferDomainAction;
 use App\Actions\Domains\UpdateDomainContactsAction;
 use App\Actions\Domains\UpdateNameserversAction;
+use App\Enums\DomainStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AssignDomainOwnerRequest;
 use App\Http\Requests\Admin\CreateCustomDomainRegistrationRequest;
 use App\Http\Requests\Admin\DomainTransferRequest;
 use App\Http\Requests\Admin\ReactivateDomainRequest;
 use App\Http\Requests\Admin\ToggleDomainLockRequest;
+use App\Http\Requests\Admin\UpdateCustomDomainRegistrationRequest;
 use App\Http\Requests\Admin\UpdateDomainContactsRequest;
 use App\Http\Requests\Admin\UpdateNameserversRequest;
 use App\Models\Contact;
@@ -94,6 +96,56 @@ final class DomainController extends Controller
         return back()
             ->withInput()
             ->with('error', $result['message']);
+    }
+
+    public function editCustom(Domain $domain): View|Factory
+    {
+        abort_if(Gate::denies('domain_edit'), 403);
+
+        $domain->load('owner');
+
+        $users = User::query()
+            ->select('id', 'first_name', 'last_name', 'email')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
+
+        $currencies = Currency::getActiveCurrencies();
+
+        return view('admin.domains.edit-custom', [
+            'domain' => $domain,
+            'users' => $users,
+            'currencies' => $currencies,
+            'domainStatuses' => DomainStatus::cases(),
+        ]);
+    }
+
+    public function updateCustom(UpdateCustomDomainRegistrationRequest $request, Domain $domain): RedirectResponse
+    {
+        $customPrice = $request->input('custom_price');
+
+        $domain->update([
+            'owner_id' => $request->input('owner_id'),
+            'years' => $request->integer('years'),
+            'status' => $request->input('status'),
+            'auto_renew' => $request->boolean('auto_renew'),
+            'registered_at' => $request->input('registered_at'),
+            'expires_at' => $request->input('expires_at'),
+            'custom_price' => $customPrice,
+            'custom_price_currency' => $request->input('custom_price_currency'),
+            'is_custom_price' => $customPrice !== null && $customPrice !== '',
+            'custom_price_notes' => $request->input('custom_price_notes'),
+        ]);
+
+        Log::info('Domain registration updated by admin', [
+            'domain_id' => $domain->id,
+            'domain_name' => $domain->name,
+            'admin_user_id' => auth()->id(),
+            'changes' => $request->validated(),
+        ]);
+
+        return to_route('admin.domains.info', $domain)
+            ->with('success', 'Domain registration updated successfully.');
     }
 
     public function domainInfo(Domain $domain, GetDomainInfoAction $action): Factory|View|\Illuminate\View\View

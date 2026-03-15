@@ -187,22 +187,36 @@ final class SubscriptionController extends Controller
         $subscription->load(['user', 'plan', 'planPrice.currency']);
 
         $statusOptions = ['active', 'expired', 'cancelled', 'suspended'];
+        $currencies = Currency::getActiveCurrencies();
+        $billingCycleOptions = BillingCycle::cases();
 
         return view('admin.subscriptions.edit', [
             'subscription' => $subscription,
             'statusOptions' => $statusOptions,
+            'currencies' => $currencies,
+            'billingCycleOptions' => $billingCycleOptions,
         ]);
     }
 
     public function update(UpdateSubscriptionRequest $request, Subscription $subscription): RedirectResponse
     {
+        $customPrice = $request->input('custom_price');
+
+        $newStatus = $request->input('status');
+
         $subscription->update([
-            'status' => $request->input('status'),
+            'status' => $newStatus,
             'starts_at' => $request->input('starts_at'),
             'expires_at' => $request->input('expires_at'),
             'next_renewal_at' => $request->input('next_renewal_at'),
             'domain' => $request->input('domain'),
             'auto_renew' => $request->boolean('auto_renew'),
+            'billing_cycle' => $request->input('billing_cycle'),
+            'custom_price' => $customPrice,
+            'custom_price_currency' => $request->input('custom_price_currency'),
+            'is_custom_price' => $customPrice !== null && $customPrice !== '',
+            'custom_price_notes' => $request->input('custom_price_notes'),
+            'cancelled_at' => $newStatus === 'cancelled' ? now() : null,
         ]);
 
         Log::info('Subscription updated by admin', [
