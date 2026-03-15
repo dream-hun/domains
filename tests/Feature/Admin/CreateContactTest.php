@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Actions\CreateContactAction;
-use App\Actions\CreateDualProviderContactAction;
 use App\Models\Contact;
 use App\Models\Country;
 use App\Models\User;
