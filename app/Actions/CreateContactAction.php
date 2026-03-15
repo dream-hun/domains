@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Country;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 final readonly class CreateContactAction
@@ -43,16 +44,38 @@ final readonly class CreateContactAction
             $preparedData['contact_id'] = 'CON'.mb_strtoupper(Str::random(8));
         }
 
+        $providerResults = null;
+        $providerError = null;
+
         if ($this->shouldUseTestingProviderResults()) {
             $providerResults = $this->createTestingProviderResults($preparedData);
         } else {
-            $providerResults = $this->dualProviderContactAction->handle($preparedData);
+            try {
+                $providerResults = $this->dualProviderContactAction->handle($preparedData);
+            } catch (Exception $exception) {
+                Log::warning('Failed to create contact in providers, saving locally.', [
+                    'contact_id' => $preparedData['contact_id'],
+                    'error' => $exception->getMessage(),
+                ]);
+                $providerError = $exception->getMessage();
+            }
         }
 
         $contactAttributes = $preparedData;
-        $contactAttributes['contact_id'] = $providerResults['epp']->contact_id;
+
+        if ($providerResults !== null) {
+            $contactAttributes['contact_id'] = $providerResults['epp']->contact_id;
+        }
 
         $contact = Contact::query()->create($contactAttributes);
+
+        if ($providerResults === null) {
+            return [
+                'success' => true,
+                'contact' => $contact,
+                'message' => 'Contact saved locally. Provider registration failed: '.$providerError,
+            ];
+        }
 
         return [
             'success' => true,

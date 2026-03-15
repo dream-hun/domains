@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\DomainStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
-final class UpdateSubscriptionRequest extends FormRequest
+final class UpdateCustomDomainRegistrationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return Gate::allows('subscription_edit');
+        return Gate::allows('domain_edit');
     }
 
     /**
@@ -27,13 +28,12 @@ final class UpdateSubscriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', Rule::in(['active', 'expired', 'cancelled', 'suspended'])],
-            'starts_at' => ['required', 'date'],
-            'expires_at' => ['required', 'date', 'after:starts_at'],
-            'next_renewal_at' => ['nullable', 'date'],
-            'domain' => ['nullable', 'string', 'max:255'],
+            'owner_id' => ['required', 'integer', 'exists:users,id'],
+            'years' => ['required', 'integer', 'min:1', 'max:10'],
+            'status' => ['required', 'string', Rule::in(array_column(DomainStatus::cases(), 'value'))],
             'auto_renew' => ['sometimes', 'boolean'],
-            'billing_cycle' => ['required', 'string', Rule::in(['monthly', 'annually'])],
+            'registered_at' => ['required', 'date'],
+            'expires_at' => ['required', 'date', 'after:registered_at'],
             'custom_price' => ['nullable', 'numeric', 'min:0'],
             'custom_price_currency' => [
                 'nullable',
@@ -54,17 +54,18 @@ final class UpdateSubscriptionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'status.required' => 'The subscription status is required.',
+            'owner_id.required' => 'The domain owner is required.',
+            'owner_id.exists' => 'The selected user does not exist.',
+            'years.required' => 'The registration period is required.',
+            'years.min' => 'Minimum registration period is 1 year.',
+            'years.max' => 'Maximum registration period is 10 years.',
+            'status.required' => 'The domain status is required.',
             'status.in' => 'The selected status is invalid.',
-            'starts_at.required' => 'The start date is required.',
-            'starts_at.date' => 'The start date must be a valid date.',
+            'registered_at.required' => 'The registration date is required.',
+            'registered_at.date' => 'The registration date must be a valid date.',
             'expires_at.required' => 'The expiry date is required.',
             'expires_at.date' => 'The expiry date must be a valid date.',
-            'expires_at.after' => 'The expiry date must be after the start date.',
-            'next_renewal_at.date' => 'The next renewal date must be a valid date.',
-            'domain.max' => 'The domain name may not be greater than 255 characters.',
-            'billing_cycle.required' => 'The billing cycle is required.',
-            'billing_cycle.in' => 'The billing cycle must be monthly or annually.',
+            'expires_at.after' => 'The expiry date must be after the registration date.',
             'custom_price.numeric' => 'The custom price must be a number.',
             'custom_price.min' => 'The custom price must be at least 0.',
             'custom_price_currency.required_with' => 'Currency is required when custom price is provided.',

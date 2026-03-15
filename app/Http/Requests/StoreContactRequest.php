@@ -27,7 +27,7 @@ final class StoreContactRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'contact_type' => ['required', new Enum(ContactType::class)],
+            'contact_type' => ['nullable', new Enum(ContactType::class)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'title' => ['nullable', 'string', 'max:255'],
@@ -54,7 +54,6 @@ final class StoreContactRequest extends FormRequest
     {
         return [
             'contact_type.enum' => 'The selected contact type is invalid.',
-            'contact_type.required' => 'Please select a contact type.',
             'first_name.required' => 'First name is required.',
             'last_name.required' => 'Last name is required.',
             'address_one.required' => 'Address line 1 is required.',

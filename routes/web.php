@@ -64,6 +64,10 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::get('domains/custom-register', [DomainController::class, 'createCustom'])->name('domains.custom-register');
     Route::post('domains/custom-register', [DomainController::class, 'storeCustom'])->name('domains.custom-register.store');
 
+    // Custom domain registration edit (must be before resource route)
+    Route::get('domains/{domain:uuid}/edit-registration', [DomainController::class, 'editCustom'])->name('domains.edit-registration');
+    Route::put('domains/{domain:uuid}/edit-registration', [DomainController::class, 'updateCustom'])->name('domains.update-registration');
+
     Route::resource('domains', DomainController::class)->except(['show', 'edit']);
 
     Route::get('domains/{domain:uuid}/info', [DomainOperationsController::class, 'domainInfo'])->name('domains.info');
