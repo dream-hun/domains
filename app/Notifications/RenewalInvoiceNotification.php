@@ -44,7 +44,7 @@ final class RenewalInvoiceNotification extends Notification implements ShouldQue
             $message->line('- '.$item->domain_name.' ('.$item->currency.' '.number_format((float) $item->total_amount, 2).')');
         }
 
-        $message->action('View Invoice', route('orders.show', $this->order->order_number))
+        $message->action('View Invoice', route('billing.show', ['order' => $this->order->order_number]))
             ->line('Please ensure your payment method is up to date.')
             ->line('If you have any questions, please contact our support team.');
 

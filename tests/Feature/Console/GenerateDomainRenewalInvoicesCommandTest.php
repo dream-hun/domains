@@ -24,7 +24,7 @@ test('command generates invoices for domains expiring within window', function (
     ]);
 
     $this->artisan('domains:generate-renewal-invoices --days=7')
-        ->expectsOutput('Generated 1 renewal invoices.')
+        ->expectsOutput('Dispatched 1 renewal invoice jobs (skipped 0).')
         ->assertSuccessful();
 });
 
@@ -32,7 +32,7 @@ test('command reports zero when no domains found', function (): void {
     Date::setTestNow(Date::create(2026, 3, 14));
 
     $this->artisan('domains:generate-renewal-invoices --days=7')
-        ->expectsOutput('Generated 0 renewal invoices.')
+        ->expectsOutput('Dispatched 0 renewal invoice jobs (skipped 0).')
         ->assertSuccessful();
 });
 
@@ -50,7 +50,7 @@ test('command accepts custom days option', function (): void {
     ]);
 
     $this->artisan('domains:generate-renewal-invoices --days=14')
-        ->expectsOutput('Generated 1 renewal invoices.')
+        ->expectsOutput('Dispatched 1 renewal invoice jobs (skipped 0).')
         ->assertSuccessful();
 });
 
@@ -68,6 +68,6 @@ test('command generates invoices for domains expiring within 90-day window', fun
     ]);
 
     $this->artisan('domains:generate-renewal-invoices --days=90')
-        ->expectsOutput('Generated 1 renewal invoices.')
+        ->expectsOutput('Dispatched 1 renewal invoice jobs (skipped 0).')
         ->assertSuccessful();
 });

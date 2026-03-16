@@ -38,7 +38,7 @@ final class OrderConfirmationNotification extends Notification implements Should
             ->greeting('Thank you for your order!')
             ->line('Your order has been successfully processed.')
             ->line('**Order Number:** '.$this->order->order_number)
-            ->line('**Total Amount:** '.$this->order->currency.' '.number_format($this->order->total_amount, 2));
+            ->line('**Total Amount:** '.$this->order->currency.' '.number_format((float) $this->order->total_amount, 2));
 
         // Add domain items
         $message->line('**Domains Purchased:**');
@@ -46,7 +46,7 @@ final class OrderConfirmationNotification extends Notification implements Should
             $message->line('- '.$item->domain_name.' ('.$item->years.' '.($item->years > 1 ? 'years' : 'year').')');
         }
 
-        $message->action('View Order Details', route('orders.show', $this->order->order_number))
+        $message->action('View Order Details', route('billing.show', ['order' => $this->order->order_number]))
             ->line('Your domains are being registered and will be available in your account shortly.')
             ->line('Thank you for choosing our service!');
 
