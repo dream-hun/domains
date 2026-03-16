@@ -102,6 +102,13 @@
                                                     Assign Owner
                                                 </a>
                                             @endcan
+
+                                            @if(auth()->user()->isAdmin())
+                                                <a href="{{ route('admin.domains.edit-registration', $domain) }}"
+                                                   class="btn btn-sm btn-info">
+                                                    Edit Registration
+                                                </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

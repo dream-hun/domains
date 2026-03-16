@@ -12,6 +12,7 @@ use App\Actions\Domains\ToggleDomainLockAction;
 use App\Actions\Domains\TransferDomainAction;
 use App\Actions\Domains\UpdateDomainContactsAction;
 use App\Actions\Domains\UpdateNameserversAction;
+use App\Actions\Subscription\CreateCustomSubscriptionAction;
 use App\Enums\DomainStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AssignDomainOwnerRequest;
@@ -102,7 +103,7 @@ final class DomainController extends Controller
     {
         abort_if(Gate::denies('domain_edit'), 403);
 
-        $domain->load('owner');
+        $domain->load(['owner', 'subscription.plan']);
 
         $users = User::query()
             ->select('id', 'first_name', 'last_name', 'email')
@@ -110,18 +111,34 @@ final class DomainController extends Controller
             ->orderBy('last_name')
             ->get();
 
+        $hostingPlans = HostingPlan::query()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        $subscriptions = Subscription::query()
+            ->with(['user:id,first_name,last_name,email', 'plan:id,name'])
+            ->where('status', 'active')
+            ->latest()
+            ->get();
+
         $currencies = Currency::getActiveCurrencies();
 
         return view('admin.domains.edit-custom', [
             'domain' => $domain,
             'users' => $users,
+            'hostingPlans' => $hostingPlans,
+            'subscriptions' => $subscriptions,
             'currencies' => $currencies,
             'domainStatuses' => DomainStatus::cases(),
         ]);
     }
 
-    public function updateCustom(UpdateCustomDomainRegistrationRequest $request, Domain $domain): RedirectResponse
-    {
+    public function updateCustom(
+        UpdateCustomDomainRegistrationRequest $request,
+        Domain $domain,
+        CreateCustomSubscriptionAction $createCustomSubscriptionAction
+    ): RedirectResponse {
         $customPrice = $request->input('custom_price');
 
         $domain->update([
@@ -136,6 +153,8 @@ final class DomainController extends Controller
             'is_custom_price' => $customPrice !== null && $customPrice !== '',
             'custom_price_notes' => $request->input('custom_price_notes'),
         ]);
+
+        $this->handleSubscriptionOption($domain, $request, $createCustomSubscriptionAction);
 
         Log::info('Domain registration updated by admin', [
             'domain_id' => $domain->id,
@@ -425,5 +444,68 @@ final class DomainController extends Controller
 
             return back()->withErrors(['error' => 'Failed to reactivate domain: '.$exception->getMessage()]);
         }
+    }
+
+    private function handleSubscriptionOption(
+        Domain $domain,
+        UpdateCustomDomainRegistrationRequest $request,
+        CreateCustomSubscriptionAction $createCustomSubscriptionAction
+    ): void {
+        $option = $request->input('subscription_option', 'keep_current');
+
+        match ($option) {
+            'none' => $domain->update(['subscription_id' => null]),
+            'create_new' => $this->createAndLinkSubscription($domain, $request, $createCustomSubscriptionAction),
+            'link_existing' => $this->linkExistingSubscriptionToDomain($domain, $request),
+            default => null, // keep_current — no change
+        };
+    }
+
+    private function createAndLinkSubscription(
+        Domain $domain,
+        UpdateCustomDomainRegistrationRequest $request,
+        CreateCustomSubscriptionAction $createCustomSubscriptionAction
+    ): void {
+        $subscriptionData = [
+            'user_id' => $domain->owner_id,
+            'hosting_plan_id' => $request->input('hosting_plan_id'),
+            'billing_cycle' => $request->input('billing_cycle'),
+            'domain' => $domain->name,
+            'starts_at' => $request->input('hosting_starts_at'),
+            'expires_at' => $request->input('hosting_expires_at'),
+            'auto_renew' => $request->boolean('hosting_auto_renew'),
+        ];
+
+        if ($request->filled('hosting_custom_price') && (float) $request->input('hosting_custom_price') > 0) {
+            $subscriptionData['custom_price'] = $request->input('hosting_custom_price');
+            $subscriptionData['custom_price_currency'] = $request->input('hosting_custom_price_currency', 'USD');
+            $subscriptionData['custom_price_notes'] = $request->input('hosting_custom_price_notes');
+        }
+
+        $subscription = $createCustomSubscriptionAction->handle($subscriptionData, (int) auth()->id())['subscription'];
+        $domain->update(['subscription_id' => $subscription->id]);
+
+        Log::info('New subscription created and linked to domain during edit', [
+            'domain_id' => $domain->id,
+            'subscription_id' => $subscription->id,
+        ]);
+    }
+
+    private function linkExistingSubscriptionToDomain(Domain $domain, UpdateCustomDomainRegistrationRequest $request): void
+    {
+        $subscription = Subscription::query()->findOrFail(
+            $request->integer('existing_subscription_id')
+        );
+
+        $domain->update(['subscription_id' => $subscription->id]);
+
+        if (empty($subscription->domain)) {
+            $subscription->update(['domain' => $domain->name]);
+        }
+
+        Log::info('Domain linked to existing subscription during edit', [
+            'domain_id' => $domain->id,
+            'subscription_id' => $subscription->id,
+        ]);
     }
 }
