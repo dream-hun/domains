@@ -8,6 +8,7 @@ use App\Enums\Hosting\BillingCycle;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Subscription;
+use App\Notifications\RenewalInvoiceNotification;
 use Exception;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
@@ -42,8 +43,10 @@ final readonly class SubscriptionInvoiceGenerationService
             }
 
             try {
-                $this->createRenewalInvoiceOrder($subscription);
+                $order = $this->createRenewalInvoiceOrder($subscription);
                 $generated++;
+
+                $subscription->user->notify(new RenewalInvoiceNotification($order));
 
                 Log::info('Renewal invoice generated for subscription', [
                     'subscription_id' => $subscription->id,

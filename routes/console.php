@@ -11,16 +11,16 @@ Artisan::command('inspire', function (): void {
 })->purpose('Display an inspiring quote');
 
 // Schedule subscription expiration checks
-Schedule::command('subscriptions:check-expiring --days=7')->daily()->at('09:00');
+Schedule::command('subscriptions:check-expiring --days=30')->daily()->at('09:00');
 
 // Schedule subscription renewal invoice generation
-Schedule::command('subscriptions:generate-renewal-invoices --days=7')->daily()->at('08:00');
+Schedule::command('subscriptions:generate-renewal-invoices --days=30')->daily()->at('08:00');
 
 // Schedule domain expiration checks
-Schedule::command('domains:check-expiring --days=7')->daily()->at('09:15');
+Schedule::command('domains:check-expiring --days=90')->daily()->at('09:15');
 
 // Schedule domain renewal invoice generation
-Schedule::command('domains:generate-renewal-invoices --days=7')->daily()->at('08:15');
+Schedule::command('domains:generate-renewal-invoices --days=90')->daily()->at('08:15');
 
 // Schedule pending jobs processing (every 15 minutes)
 Schedule::command('app:process-pending-jobs --limit=50 --older-than=30')->everyFifteenMinutes();

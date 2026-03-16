@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Domain;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Notifications\RenewalInvoiceNotification;
 use Exception;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
@@ -41,8 +42,10 @@ final readonly class DomainInvoiceGenerationService
             }
 
             try {
-                $this->createRenewalInvoiceOrder($domain);
+                $order = $this->createRenewalInvoiceOrder($domain);
                 $generated++;
+
+                $domain->owner->notify(new RenewalInvoiceNotification($order));
 
                 Log::info('Renewal invoice generated for domain', [
                     'domain_id' => $domain->id,
@@ -99,6 +102,8 @@ final readonly class DomainInvoiceGenerationService
         $renewalCurrency = $domain->getRenewalCurrency();
         $years = $domain->years ?: 1;
 
+        $totalAmount = $renewalPrice * $years;
+
         $order = Order::query()->create([
             'user_id' => $user->id,
             'order_number' => Order::generateOrderNumber(),
@@ -106,8 +111,8 @@ final readonly class DomainInvoiceGenerationService
             'status' => 'pending',
             'payment_method' => 'stripe',
             'payment_status' => 'pending',
-            'total_amount' => $renewalPrice,
-            'subtotal' => $renewalPrice,
+            'total_amount' => $totalAmount,
+            'subtotal' => $totalAmount,
             'tax' => 0,
             'currency' => $renewalCurrency,
             'billing_email' => $user->email,
@@ -141,7 +146,7 @@ final readonly class DomainInvoiceGenerationService
             'exchange_rate' => 1.0,
             'quantity' => $years,
             'years' => $years,
-            'total_amount' => $renewalPrice,
+            'total_amount' => $totalAmount,
             'metadata' => [
                 'domain_id' => $domain->id,
                 'is_custom_price' => $domain->is_custom_price,
