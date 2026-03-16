@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\Hosting\BillingCycle;
+use App\Jobs\GenerateSubscriptionRenewalInvoiceJob;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Subscription;
-use App\Notifications\RenewalInvoiceNotification;
 use Exception;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +19,7 @@ final readonly class SubscriptionInvoiceGenerationService
     /**
      * Generate renewal invoices for subscriptions due for renewal
      *
-     * @return array{generated: int, failed: array<int, array{subscription_id: int, error: string}>}
+     * @return array{dispatched: int, skipped: int}
      */
     public function generateRenewalInvoices(int $daysBeforeRenewal = 7): array
     {
@@ -34,43 +34,29 @@ final readonly class SubscriptionInvoiceGenerationService
             ->with(['user', 'plan', 'planPrice.currency'])
             ->get();
 
-        $generated = 0;
-        $failed = [];
+        $dispatched = 0;
+        $skipped = 0;
 
         foreach ($subscriptions as $subscription) {
             if (! $this->shouldGenerateInvoice($subscription, $daysBeforeRenewal)) {
+                $skipped++;
+
                 continue;
             }
 
-            try {
-                $order = $this->createRenewalInvoiceOrder($subscription);
-                $generated++;
+            GenerateSubscriptionRenewalInvoiceJob::dispatch($subscription);
+            $dispatched++;
 
-                $subscription->user->notify(new RenewalInvoiceNotification($order));
-
-                Log::info('Renewal invoice generated for subscription', [
-                    'subscription_id' => $subscription->id,
-                    'subscription_uuid' => $subscription->uuid,
-                    'next_renewal_at' => $subscription->next_renewal_at?->toDateString(),
-                ]);
-            } catch (Throwable $e) {
-                $failed[] = [
-                    'subscription_id' => $subscription->id,
-                    'error' => $e->getMessage(),
-                ];
-
-                Log::error('Failed to generate renewal invoice for subscription', [
-                    'subscription_id' => $subscription->id,
-                    'subscription_uuid' => $subscription->uuid,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-            }
+            Log::info('Dispatched subscription renewal invoice job', [
+                'subscription_id' => $subscription->id,
+                'subscription_uuid' => $subscription->uuid,
+                'next_renewal_at' => $subscription->next_renewal_at?->toDateString(),
+            ]);
         }
 
         return [
-            'generated' => $generated,
-            'failed' => $failed,
+            'dispatched' => $dispatched,
+            'skipped' => $skipped,
         ];
     }
 
@@ -138,7 +124,6 @@ final readonly class SubscriptionInvoiceGenerationService
             ],
         ]);
 
-        // Create order item
         OrderItem::query()->create([
             'order_id' => $order->id,
             'domain_name' => $subscription->domain ?: 'Hosting',

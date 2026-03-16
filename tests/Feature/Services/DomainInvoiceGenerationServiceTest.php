@@ -2,20 +2,21 @@
 
 declare(strict_types=1);
 
+use App\Jobs\GenerateDomainRenewalInvoiceJob;
 use App\Models\Domain;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
-use App\Notifications\RenewalInvoiceNotification;
 use App\Services\DomainInvoiceGenerationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
-test('generates renewal order for domain expiring within window', function (): void {
+test('dispatches renewal invoice job for domain expiring within window', function (): void {
     Date::setTestNow(Date::create(2026, 3, 14));
+    Queue::fake();
 
     $user = User::factory()->create();
     $domain = Domain::factory()->create([
@@ -26,54 +27,20 @@ test('generates renewal order for domain expiring within window', function (): v
         'years' => 1,
     ]);
 
-    Notification::fake();
-
     $service = new DomainInvoiceGenerationService;
     $results = $service->generateRenewalInvoices(7);
 
-    expect($results['generated'])->toBe(1)
-        ->and($results['failed'])->toBeEmpty();
+    expect($results['dispatched'])->toBe(1)
+        ->and($results['skipped'])->toBe(0);
 
-    $order = Order::query()->where('user_id', $user->id)->first();
-    expect($order)->not->toBeNull()
-        ->and($order->type)->toBe('renewal')
-        ->and($order->status)->toBe('pending');
-
-    $orderItem = OrderItem::query()->where('order_id', $order->id)->first();
-    expect($orderItem)->not->toBeNull()
-        ->and($orderItem->domain_name)->toBe($domain->name)
-        ->and($orderItem->domain_type)->toBe('renewal');
-});
-
-test('uses custom pricing when domain has custom price', function (): void {
-    Date::setTestNow(Date::create(2026, 3, 14));
-
-    $user = User::factory()->create();
-    Domain::factory()->create([
-        'owner_id' => $user->id,
-        'status' => 'active',
-        'auto_renew' => true,
-        'expires_at' => Date::now()->addDays(5),
-        'is_custom_price' => true,
-        'custom_price' => 25.00,
-        'custom_price_currency' => 'EUR',
-        'years' => 1,
-    ]);
-
-    Notification::fake();
-
-    $service = new DomainInvoiceGenerationService;
-    $results = $service->generateRenewalInvoices(7);
-
-    expect($results['generated'])->toBe(1);
-
-    $order = Order::query()->where('user_id', $user->id)->first();
-    expect($order->total_amount)->toBe('25.00')
-        ->and($order->currency)->toBe('EUR');
+    Queue::assertPushed(GenerateDomainRenewalInvoiceJob::class, function ($job) use ($domain): bool {
+        return $job->domain->id === $domain->id;
+    });
 });
 
 test('skips domain with existing pending renewal order', function (): void {
     Date::setTestNow(Date::create(2026, 3, 14));
+    Queue::fake();
 
     $user = User::factory()->create();
     $domain = Domain::factory()->create([
@@ -84,7 +51,6 @@ test('skips domain with existing pending renewal order', function (): void {
         'years' => 1,
     ]);
 
-    // Create existing pending order
     $existingOrder = Order::factory()->pending()->create([
         'user_id' => $user->id,
     ]);
@@ -97,11 +63,15 @@ test('skips domain with existing pending renewal order', function (): void {
     $service = new DomainInvoiceGenerationService;
     $results = $service->generateRenewalInvoices(7);
 
-    expect($results['generated'])->toBe(0);
+    expect($results['dispatched'])->toBe(0)
+        ->and($results['skipped'])->toBe(1);
+
+    Queue::assertNothingPushed();
 });
 
 test('skips domains without auto renew', function (): void {
     Date::setTestNow(Date::create(2026, 3, 14));
+    Queue::fake();
 
     $user = User::factory()->create();
     Domain::factory()->create([
@@ -114,11 +84,14 @@ test('skips domains without auto renew', function (): void {
     $service = new DomainInvoiceGenerationService;
     $results = $service->generateRenewalInvoices(7);
 
-    expect($results['generated'])->toBe(0);
+    expect($results['dispatched'])->toBe(0);
+
+    Queue::assertNothingPushed();
 });
 
 test('skips non-active domains', function (): void {
     Date::setTestNow(Date::create(2026, 3, 14));
+    Queue::fake();
 
     $user = User::factory()->create();
     Domain::factory()->create([
@@ -131,11 +104,14 @@ test('skips non-active domains', function (): void {
     $service = new DomainInvoiceGenerationService;
     $results = $service->generateRenewalInvoices(7);
 
-    expect($results['generated'])->toBe(0);
+    expect($results['dispatched'])->toBe(0);
+
+    Queue::assertNothingPushed();
 });
 
 test('skips domains expiring outside the window', function (): void {
     Date::setTestNow(Date::create(2026, 3, 14));
+    Queue::fake();
 
     $user = User::factory()->create();
     Domain::factory()->create([
@@ -148,53 +124,7 @@ test('skips domains expiring outside the window', function (): void {
     $service = new DomainInvoiceGenerationService;
     $results = $service->generateRenewalInvoices(7);
 
-    expect($results['generated'])->toBe(0);
-});
+    expect($results['dispatched'])->toBe(0);
 
-test('sends renewal invoice notification after generating order', function (): void {
-    Date::setTestNow(Date::create(2026, 3, 14));
-    Notification::fake();
-
-    $user = User::factory()->create();
-    Domain::factory()->create([
-        'owner_id' => $user->id,
-        'status' => 'active',
-        'auto_renew' => true,
-        'expires_at' => Date::now()->addDays(5),
-        'years' => 1,
-    ]);
-
-    $service = new DomainInvoiceGenerationService;
-    $service->generateRenewalInvoices(7);
-
-    Notification::assertSentTo($user, RenewalInvoiceNotification::class);
-});
-
-test('calculates correct total_amount for multi-year domain renewal', function (): void {
-    Date::setTestNow(Date::create(2026, 3, 14));
-    Notification::fake();
-
-    $user = User::factory()->create();
-    Domain::factory()->create([
-        'owner_id' => $user->id,
-        'status' => 'active',
-        'auto_renew' => true,
-        'expires_at' => Date::now()->addDays(5),
-        'is_custom_price' => true,
-        'custom_price' => 10.00,
-        'custom_price_currency' => 'USD',
-        'years' => 3,
-    ]);
-
-    $service = new DomainInvoiceGenerationService;
-    $results = $service->generateRenewalInvoices(7);
-
-    expect($results['generated'])->toBe(1);
-
-    $order = Order::query()->where('user_id', $user->id)->first();
-    expect($order->total_amount)->toBe('30.00');
-
-    $orderItem = OrderItem::query()->where('order_id', $order->id)->first();
-    expect($orderItem->total_amount)->toBe('30.00')
-        ->and($orderItem->quantity)->toBe(3);
+    Queue::assertNothingPushed();
 });

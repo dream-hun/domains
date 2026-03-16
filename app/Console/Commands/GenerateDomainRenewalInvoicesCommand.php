@@ -35,17 +35,7 @@ final class GenerateDomainRenewalInvoicesCommand extends Command
 
         $results = $service->generateRenewalInvoices($days);
 
-        $this->info(sprintf('Generated %d renewal invoices.', $results['generated']));
-
-        if (! empty($results['failed'])) {
-            $this->warn(sprintf('Failed to generate %d invoices:', count($results['failed'])));
-
-            foreach ($results['failed'] as $failure) {
-                $this->error(sprintf('  Domain ID %d: %s', $failure['domain_id'], $failure['error']));
-            }
-
-            return self::FAILURE;
-        }
+        $this->info(sprintf('Dispatched %d renewal invoice jobs (skipped %d).', $results['dispatched'], $results['skipped']));
 
         return self::SUCCESS;
     }

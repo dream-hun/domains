@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Jobs\GenerateDomainRenewalInvoiceJob;
 use App\Models\Domain;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Notifications\RenewalInvoiceNotification;
 use Exception;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +18,7 @@ final readonly class DomainInvoiceGenerationService
     /**
      * Generate renewal invoices for domains due for renewal.
      *
-     * @return array{generated: int, failed: array<int, array{domain_id: int, error: string}>}
+     * @return array{dispatched: int, skipped: int}
      */
     public function generateRenewalInvoices(int $daysBeforeRenewal = 90): array
     {
@@ -33,43 +33,29 @@ final readonly class DomainInvoiceGenerationService
             ->with(['owner', 'tldPricing.currency'])
             ->get();
 
-        $generated = 0;
-        $failed = [];
+        $dispatched = 0;
+        $skipped = 0;
 
         foreach ($domains as $domain) {
             if ($this->hasPendingRenewalOrder($domain)) {
+                $skipped++;
+
                 continue;
             }
 
-            try {
-                $order = $this->createRenewalInvoiceOrder($domain);
-                $generated++;
+            GenerateDomainRenewalInvoiceJob::dispatch($domain);
+            $dispatched++;
 
-                $domain->owner->notify(new RenewalInvoiceNotification($order));
-
-                Log::info('Renewal invoice generated for domain', [
-                    'domain_id' => $domain->id,
-                    'domain_name' => $domain->name,
-                    'expires_at' => $domain->expires_at?->toDateString(),
-                ]);
-            } catch (Throwable $e) {
-                $failed[] = [
-                    'domain_id' => $domain->id,
-                    'error' => $e->getMessage(),
-                ];
-
-                Log::error('Failed to generate renewal invoice for domain', [
-                    'domain_id' => $domain->id,
-                    'domain_name' => $domain->name,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-            }
+            Log::info('Dispatched domain renewal invoice job', [
+                'domain_id' => $domain->id,
+                'domain_name' => $domain->name,
+                'expires_at' => $domain->expires_at?->toDateString(),
+            ]);
         }
 
         return [
-            'generated' => $generated,
-            'failed' => $failed,
+            'dispatched' => $dispatched,
+            'skipped' => $skipped,
         ];
     }
 
