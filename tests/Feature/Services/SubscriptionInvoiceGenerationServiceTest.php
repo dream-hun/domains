@@ -34,12 +34,12 @@ test('dispatches renewal invoice job for subscription expiring within window', f
     });
 });
 
-test('skips subscriptions without auto renew', function (): void {
+test('dispatches job for subscriptions without auto renew', function (): void {
     Date::setTestNow(Date::create(2026, 3, 14));
     Queue::fake();
 
     $user = User::factory()->create();
-    Subscription::factory()->active()->create([
+    $subscription = Subscription::factory()->active()->create([
         'user_id' => $user->id,
         'auto_renew' => false,
         'next_renewal_at' => Date::now()->addDays(5),
@@ -49,9 +49,11 @@ test('skips subscriptions without auto renew', function (): void {
     $service = new SubscriptionInvoiceGenerationService;
     $results = $service->generateRenewalInvoices(7);
 
-    expect($results['dispatched'])->toBe(0);
+    expect($results['dispatched'])->toBe(1);
 
-    Queue::assertNothingPushed();
+    Queue::assertPushed(GenerateSubscriptionRenewalInvoiceJob::class, function ($job) use ($subscription): bool {
+        return $job->subscription->id === $subscription->id;
+    });
 });
 
 test('skips non-active subscriptions', function (): void {

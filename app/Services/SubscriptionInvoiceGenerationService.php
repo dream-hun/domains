@@ -28,7 +28,6 @@ final readonly class SubscriptionInvoiceGenerationService
 
         $subscriptions = Subscription::query()
             ->where('status', 'active')
-            ->where('auto_renew', true)
             ->whereNotNull('next_renewal_at')
             ->whereBetween('next_renewal_at', [$now, $endDate])
             ->with(['user', 'plan', 'planPrice.currency'])

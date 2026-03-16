@@ -159,10 +159,6 @@ class Subscription extends Model
      */
     public function shouldGenerateInvoice(int $daysBeforeRenewal = 7): bool
     {
-        if (! $this->auto_renew) {
-            return false;
-        }
-
         if ($this->status !== 'active') {
             return false;
         }
