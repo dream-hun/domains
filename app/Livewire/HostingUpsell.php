@@ -7,6 +7,7 @@ namespace App\Livewire;
 use App\Enums\Hosting\HostingPlanPriceStatus;
 use App\Enums\Hosting\HostingPlanStatus;
 use App\Models\HostingPlan;
+use App\Models\HostingPlanPrice;
 use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -80,7 +81,7 @@ final class HostingUpsell extends Component
 
         $cartContent = Cart::getContent();
 
-        return $cartContent->contains(fn ($item): bool => $item->attributes->get('type') === 'hosting'
+        return $cartContent->contains(fn (mixed $item): bool => $item->attributes->get('type') === 'hosting'
             && $item->attributes->get('hosting_plan_id') === $planId
             && $item->attributes->get('linked_domain') === $this->selectedDomain);
     }
@@ -89,7 +90,7 @@ final class HostingUpsell extends Component
     {
         $cartContent = Cart::getContent();
 
-        $item = $cartContent->first(fn ($item): bool => $item->attributes->get('type') === 'hosting'
+        $item = $cartContent->first(fn (mixed $item): bool => $item->attributes->get('type') === 'hosting'
             && $item->attributes->get('hosting_plan_id') === $planId
             && $item->attributes->get('linked_domain') === $this->selectedDomain);
 
@@ -127,7 +128,7 @@ final class HostingUpsell extends Component
         try {
             /** @var HostingPlan|null $plan */
             $plan = HostingPlan::query()
-                ->with(['planPrices' => function ($query): void {
+                ->with(['planPrices' => function (mixed $query): void {
                     $query->where('status', HostingPlanPriceStatus::Active)
                         ->where('is_current', true)
                         ->with('currency');
@@ -159,7 +160,7 @@ final class HostingUpsell extends Component
 
             $cartContent = Cart::getContent();
 
-            $alreadyInCart = $cartContent->first(function ($item): bool {
+            $alreadyInCart = $cartContent->first(function (mixed $item): bool {
                 $isHosting = $item->attributes->get('type') === 'hosting';
 
                 if (! $isHosting) {
@@ -242,7 +243,7 @@ final class HostingUpsell extends Component
     private function loadPlans(): void
     {
         $plans = HostingPlan::query()
-            ->with(['planPrices' => function ($query): void {
+            ->with(['planPrices' => function (mixed $query): void {
                 $query->where('status', HostingPlanPriceStatus::Active)
                     ->where('is_current', true)
                     ->orderBy('billing_cycle')
@@ -260,7 +261,7 @@ final class HostingUpsell extends Component
     private function transformPlans(Collection $plans): array
     {
         return $plans->map(function (HostingPlan $plan): array {
-            $prices = $plan->planPrices->map(function ($price): array {
+            $prices = $plan->planPrices->map(function (HostingPlanPrice $price): array {
                 $converted = $price->getPriceInCurrency('regular_price');
 
                 return [

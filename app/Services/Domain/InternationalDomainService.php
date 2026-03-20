@@ -212,7 +212,7 @@ class InternationalDomainService
             'ApiKey' => $this->apiKey,
             'UserName' => $this->username,
             'ClientIp' => $this->clientIp,
-        ], $extra), static fn ($value): bool => $value !== null && $value !== '');
+        ], $extra), static fn (string|int|null $value): bool => $value !== null && $value !== '');
     }
 
     /**
@@ -280,7 +280,7 @@ class InternationalDomainService
             'PostalCode' => $contactData['postal_code'] ?? '',
             'Country' => mb_strtoupper((string) ($contactData['country_code'] ?? '')),
             'OrganizationName' => $contactData['organization'] ?? '',
-        ], static fn ($value): bool => $value !== null);
+        ], static fn (string $value): bool => $value !== null);
     }
 
     private function formatPhone(string $phone): string

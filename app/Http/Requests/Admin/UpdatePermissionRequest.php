@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 
 final class UpdatePermissionRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return Gate::allows('permission_edit');
     }

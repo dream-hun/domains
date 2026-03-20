@@ -24,13 +24,13 @@ use Throwable;
 
 final class CartComponent extends Component
 {
-    public $items;
+    public mixed $items = null;
 
-    public $subtotalAmount = 0;
+    public float $subtotalAmount = 0;
 
-    public $totalAmount = 0;
+    public float $totalAmount = 0;
 
-    public $currency;
+    public string $currency;
 
     public ?string $couponCode = null;
 
@@ -96,7 +96,7 @@ final class CartComponent extends Component
 
         // Sort by creation timestamp to maintain consistent order
         // This ensures items stay in the same order regardless of updates
-        $this->items = $cartContent->sortBy(fn ($item) => $item->attributes->get('added_at', 0));
+        $this->items = $cartContent->sortBy(fn (mixed $item): mixed => $item->attributes->get('added_at', 0));
 
         try {
             $cartPriceConverter = resolve(CartPriceConverter::class);
@@ -296,7 +296,7 @@ final class CartComponent extends Component
         }
     }
 
-    public function updateQuantity($id, $quantity): void
+    public function updateQuantity(mixed $id, mixed $quantity): void
     {
         try {
             $currentItem = Cart::get($id);
@@ -403,7 +403,7 @@ final class CartComponent extends Component
         }
     }
 
-    public function addToCart($domain, $price, $currency = null): void
+    public function addToCart(string $domain, mixed $price, ?string $currency = null): void
     {
         try {
             // Convert price string to numeric value (remove currency symbols)
@@ -687,7 +687,7 @@ final class CartComponent extends Component
         }
     }
 
-    public function removeItem($id): void
+    public function removeItem(mixed $id): void
     {
         try {
             $currentItem = Cart::get($id);

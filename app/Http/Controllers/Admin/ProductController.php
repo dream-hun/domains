@@ -15,6 +15,7 @@ use Darryldecode\Cart\Exceptions\InvalidItemException;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -43,7 +44,7 @@ class ProductController extends Controller
             ->with(['plan.category', 'planPrice.currency']);
 
         if ($categorySlug !== '') {
-            $subscriptionsQuery->whereHas('plan.category', function ($query) use ($categorySlug): void {
+            $subscriptionsQuery->whereHas('plan.category', function (Builder $query) use ($categorySlug): void {
                 $query->where('slug', $categorySlug);
             });
         }

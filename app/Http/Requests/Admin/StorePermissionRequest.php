@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 
 final class StorePermissionRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return Gate::allows('permission_create');
     }

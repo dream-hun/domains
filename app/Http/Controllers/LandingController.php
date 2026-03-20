@@ -10,6 +10,7 @@ use App\Models\HostingPlan;
 use App\Models\Tld;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 final class LandingController extends Controller
@@ -25,7 +26,7 @@ final class LandingController extends Controller
             ->where('status', 'active')
             ->with([
                 'category:id,name,slug',
-                'planPrices' => fn ($q) => $q->where('status', 'active')
+                'planPrices' => fn (Builder $q) => $q->where('status', 'active')
                     ->with('currency'),
                 'planFeatures.hostingFeature',
             ])
@@ -36,7 +37,7 @@ final class LandingController extends Controller
         $hostingCategories = HostingCategory::query()
             ->select(['id', 'name', 'slug', 'icon', 'description'])
             ->where('status', 'active')
-            ->with(['plans' => fn ($q) => $q->where('status', 'active')])
+            ->with(['plans' => fn (mixed $q) => $q->where('status', 'active')])
             ->get();
 
         // Manually attach already-loaded planPrices to plans in categories to avoid duplicate queries
@@ -51,7 +52,7 @@ final class LandingController extends Controller
         }
 
         $domainCompareTlds = Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
             ->whereIn('name', ['.com', '.net', '.info', '.org'])
             ->get()
             ->keyBy(fn (Tld $tld): string => mb_ltrim($tld->name, '.'));

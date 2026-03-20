@@ -17,32 +17,32 @@ use Livewire\Component;
 
 final class CheckoutProcess extends Component
 {
-    public $cartItems = [];
+    public array $cartItems = [];
 
-    public $subtotal = 0;
+    public float $subtotal = 0;
 
-    public $discount = 0;
+    public float $discount = 0;
 
-    public $total = 0;
+    public float $total = 0;
 
-    public $currency = 'USD';
+    public string $currency = 'USD';
 
-    public $appliedCoupon;
+    public mixed $appliedCoupon = null;
 
-    public $paymentMethod = 'stripe';
+    public string $paymentMethod = 'stripe';
 
-    public $isProcessing = false;
+    public bool $isProcessing = false;
 
-    public $errorMessage = '';
+    public string $errorMessage = '';
 
-    public $successMessage = '';
+    public string $successMessage = '';
 
     // Contact selection properties
-    public $userContacts = [];
+    public array $userContacts = [];
 
-    public $selectedContactId;
+    public mixed $selectedContactId = null;
 
-    public $showContactSelection = false;
+    public bool $showContactSelection = false;
 
     protected $listeners = [
         'cartUpdated' => 'refreshCart',
@@ -112,13 +112,13 @@ final class CheckoutProcess extends Component
         $primaryContact = collect($this->userContacts)->firstWhere('is_primary', true);
         if ($primaryContact) {
             $this->selectedContactId = $primaryContact['id'];
-        } elseif (! empty($this->userContacts)) {
+        } elseif ($this->userContacts !== []) {
             // Select first contact if no primary contact
             $this->selectedContactId = $this->userContacts[0]['id'];
         }
     }
 
-    public function selectContact($contactId): void
+    public function selectContact(mixed $contactId): void
     {
         $this->selectedContactId = $contactId;
         $this->showContactSelection = false;
@@ -130,9 +130,9 @@ final class CheckoutProcess extends Component
         $this->showContactSelection = ! $this->showContactSelection;
     }
 
-    public function proceedToPayment()
+    public function proceedToPayment(): mixed
     {
-        if (empty($this->cartItems)) {
+        if ($this->cartItems === []) {
             $this->errorMessage = 'Your cart is empty.';
 
             return null;
@@ -404,7 +404,7 @@ final class CheckoutProcess extends Component
     private function convertToDisplayCurrency(float $amount, string $fromCurrency): float
     {
         $fromCurrency = mb_strtoupper($fromCurrency);
-        $toCurrency = mb_strtoupper((string) $this->currency);
+        $toCurrency = mb_strtoupper($this->currency);
 
         if ($fromCurrency === $toCurrency) {
             return $amount;

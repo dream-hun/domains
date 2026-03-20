@@ -141,7 +141,7 @@ final class DomainSearchPage extends Component
         }
 
         $tld = $this->tldCache[(int) $tldId] ?? Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
+            ->with(['tldPricings' => fn (mixed $q) => $q->where('is_current', true)->with('currency')])
             ->find($tldId);
 
         if ($tld instanceof Tld) {
@@ -188,7 +188,7 @@ final class DomainSearchPage extends Component
 
         $this->tldCache = Tld::query()
             ->whereIn('id', $tldIds)
-            ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
+            ->with(['tldPricings' => fn (mixed $q) => $q->where('is_current', true)->with('currency')])
             ->get()
             ->keyBy('id')
             ->all();

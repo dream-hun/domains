@@ -24,7 +24,7 @@ final class UserContactController extends Controller
             ->get();
 
         // Get the domain contacts to determine the contact type
-        $contacts->each(function ($contact): void {
+        $contacts->each(function (mixed $contact): void {
             // Get the domain contact types for this contact
             $domainContacts = DomainContact::query()->where('contact_id', $contact->id)
                 ->distinct((array) 'type')

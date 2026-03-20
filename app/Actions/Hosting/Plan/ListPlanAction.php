@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Hosting\Plan;
 
 use App\Models\HostingPlan;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 final class ListPlanAction
@@ -26,7 +27,7 @@ final class ListPlanAction
                 'created_at',
             ])
             ->with(['category:id,uuid,name,slug'])
-            ->when($categoryId !== null, fn ($query) => $query->where('category_id', $categoryId))
+            ->when($categoryId !== null, fn (Builder $query) => $query->where('category_id', $categoryId))
             ->orderBy('sort_order')
             ->orderByDesc('created_at')
             ->get();

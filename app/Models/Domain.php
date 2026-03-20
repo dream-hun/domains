@@ -48,7 +48,7 @@ final class Domain extends Model
 
     protected $guarded = [];
 
-    public function resolveRouteBinding($value, $field = null): Model
+    public function resolveRouteBinding($value, $field = null): Model // @pest-ignore-type
     {
         $field ??= $this->getRouteKeyName();
 

@@ -7,6 +7,7 @@ namespace App\Http\Requests\Admin;
 use App\Models\Domain;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Validator;
 
 final class UpdateDomainContactsRequest extends FormRequest
 {
@@ -65,13 +66,13 @@ final class UpdateDomainContactsRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
         if ($this->has('contact_type')) {
             return;
         }
 
-        $validator->after(function ($validator): void {
+        $validator->after(function (Validator $validator): void {
             if (
                 empty($this->input('registrant.contact_id')) &&
                 empty($this->input('admin.contact_id')) &&

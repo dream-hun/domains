@@ -99,7 +99,7 @@ final readonly class CreateOrderFromCartAction
                 'billing_email' => $billingEmail,
                 'billing_name' => $billingName,
                 'billing_address' => $billingAddress,
-                'items' => $cartItems->map(fn ($item): array => [
+                'items' => $cartItems->map(fn (mixed $item): array => [
                     'id' => $item->id,
                     'name' => $item->name,
                     'price' => $item->price,

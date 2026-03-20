@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin;
 
 use App\Enums\Hosting\BillingCycle;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -39,7 +40,7 @@ final class UpdatePlanPriceRequest extends FormRequest
             'hosting_plan_id' => [
                 'required',
                 'integer',
-                Rule::exists('hosting_plans', 'id')->where(function ($query): void {
+                Rule::exists('hosting_plans', 'id')->where(function (Builder $query): void {
                     $query->where('category_id', $this->integer('hosting_category_id'));
                 }),
             ],

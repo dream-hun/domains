@@ -17,6 +17,7 @@ use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 
 final class HostingPlanPriceController extends Controller
@@ -41,7 +42,7 @@ final class HostingPlanPriceController extends Controller
 
         $plansQuery = HostingPlan::query()->select(['uuid', 'name', 'category_id'])->orderBy('name');
         if ($categoryUuid !== null) {
-            $plansQuery->whereHas('category', function ($q) use ($categoryUuid): void {
+            $plansQuery->whereHas('category', function (Builder $q) use ($categoryUuid): void {
                 $q->where('uuid', $categoryUuid);
             });
         }

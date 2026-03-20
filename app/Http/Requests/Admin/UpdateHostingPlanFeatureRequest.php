@@ -8,6 +8,7 @@ use App\Models\HostingPlan;
 use App\Models\HostingPlanFeature;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Validator;
 
 final class UpdateHostingPlanFeatureRequest extends FormRequest
 {
@@ -43,9 +44,9 @@ final class UpdateHostingPlanFeatureRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
-        $validator->after(function ($validator): void {
+        $validator->after(function (Validator $validator): void {
             $hostingPlanFeature = $this->route('hosting_plan_feature');
 
             if ($hostingPlanFeature && $this->filled('hosting_plan_id') && $this->filled('hosting_feature_id')) {

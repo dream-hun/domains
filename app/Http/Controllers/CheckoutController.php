@@ -13,6 +13,7 @@ use App\Services\TransactionLogger;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View as ViewContract;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -114,7 +115,7 @@ final class CheckoutController extends Controller
             $session = Session::retrieve($sessionId);
 
             $paymentAttempt = $order->payments()
-                ->where(function ($query) use ($sessionId, $session): void {
+                ->where(function (Builder $query) use ($sessionId, $session): void {
                     $query->where('stripe_session_id', $sessionId);
 
                     if (! empty($session->payment_intent)) {

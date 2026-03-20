@@ -240,7 +240,7 @@ final class StripeWebhookController extends Controller
                 $failureDetails = array_filter([
                     'message' => $paymentIntent->last_payment_error->message ?? null,
                     'code' => $paymentIntent->last_payment_error->code ?? null,
-                ], static fn ($value): bool => $value !== null);
+                ], static fn (mixed $value): bool => $value !== null);
 
                 $payment->update([
                     'status' => 'failed',

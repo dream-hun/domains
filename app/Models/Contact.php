@@ -67,7 +67,7 @@ final class Contact extends Model
     {
         parent::boot();
 
-        self::creating(function ($contact): void {
+        self::creating(function (Contact $contact): void {
             if (empty($contact->uuid)) {
                 $contact->uuid = (string) Str::uuid();
             }
