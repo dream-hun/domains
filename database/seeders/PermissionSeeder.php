@@ -118,6 +118,30 @@ final class PermissionSeeder extends Seeder
             ['title' => 'tld_pricing_create', 'created_at' => now(), 'updated_at' => now()],
             ['title' => 'tld_pricing_edit', 'created_at' => now(), 'updated_at' => now()],
             ['title' => 'tld_pricing_delete', 'created_at' => now(), 'updated_at' => now()],
+
+            // VPS permissions (shared: admin + user)
+            ['title' => 'vps_access', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_show', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_restart', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_shutdown', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_reinstall', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_rescue', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_reset_credentials', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_change_display_name', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_snapshot_access', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_snapshot_create', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_snapshot_delete', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_backup_access', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_backup_restore', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_vnc_access', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_upgrade', 'created_at' => now(), 'updated_at' => now()],
+
+            // VPS permissions (admin only)
+            ['title' => 'vps_cancel', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_assign', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_order_license', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_move_region', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'vps_extend_storage', 'created_at' => now(), 'updated_at' => now()],
         ];
 
         Permission::query()->upsert($permissions, ['title'], ['updated_at']);

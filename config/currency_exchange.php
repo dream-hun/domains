@@ -15,7 +15,7 @@ return [
     | Each currency has:
     | - name: Human-readable name
     | - symbol: Currency symbol for display
-    | - decimals: Number of decimal places (0 for currencies without minor units)
+    | - decimals: Number of currency minor units (0 for currencies without minor units)
     | - symbol_position: 'before' or 'after' the amount
     | - aliases: Alternative codes that map to this currency
     |
