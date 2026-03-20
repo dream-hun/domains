@@ -32,14 +32,14 @@ final readonly class ExtendVpsStorageAction
                 'storage_gb' => $storageGb,
             ]);
 
-            return ['success' => true, 'message' => "Storage extension of {$storageGb} GB initiated.", 'data' => $data];
-        } catch (RuntimeException $e) {
+            return ['success' => true, 'message' => sprintf('Storage extension of %d GB initiated.', $storageGb), 'data' => $data];
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to extend VPS storage', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to extend storage: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to extend storage: '.$runtimeException->getMessage()];
         }
     }
 }

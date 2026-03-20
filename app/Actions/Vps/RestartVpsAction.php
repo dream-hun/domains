@@ -30,13 +30,13 @@ final readonly class RestartVpsAction
             ]);
 
             return ['success' => true, 'message' => 'VPS instance is restarting.'];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to restart VPS instance', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to restart instance: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to restart instance: '.$runtimeException->getMessage()];
         }
     }
 }

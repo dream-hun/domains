@@ -8,6 +8,7 @@ use App\Notifications\DomainExpiringNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -26,9 +27,7 @@ test('sends notification for domain expiring in 7 days', function (): void {
     $this->artisan('domains:check-expiring --days=7')
         ->assertSuccessful();
 
-    Notification::assertSentTo($user, DomainExpiringNotification::class, function ($notification) use ($domain): bool {
-        return $notification->domain->id === $domain->id && $notification->daysUntilExpiry === 7;
-    });
+    Notification::assertSentTo($user, DomainExpiringNotification::class, fn ($notification): bool => $notification->domain->id === $domain->id && $notification->daysUntilExpiry === 7);
 });
 
 test('sends notification for domain expiring in 3 days', function (): void {
@@ -46,9 +45,7 @@ test('sends notification for domain expiring in 3 days', function (): void {
     $this->artisan('domains:check-expiring --days=7')
         ->assertSuccessful();
 
-    Notification::assertSentTo($user, DomainExpiringNotification::class, function ($notification): bool {
-        return $notification->daysUntilExpiry === 3;
-    });
+    Notification::assertSentTo($user, DomainExpiringNotification::class, fn ($notification): bool => $notification->daysUntilExpiry === 3);
 });
 
 test('sends notification for domain expiring in 1 day', function (): void {
@@ -66,9 +63,7 @@ test('sends notification for domain expiring in 1 day', function (): void {
     $this->artisan('domains:check-expiring --days=7')
         ->assertSuccessful();
 
-    Notification::assertSentTo($user, DomainExpiringNotification::class, function ($notification): bool {
-        return $notification->daysUntilExpiry === 1;
-    });
+    Notification::assertSentTo($user, DomainExpiringNotification::class, fn ($notification): bool => $notification->daysUntilExpiry === 1);
 });
 
 test('sends notification for domain expiring today', function (): void {
@@ -86,9 +81,7 @@ test('sends notification for domain expiring today', function (): void {
     $this->artisan('domains:check-expiring --days=7')
         ->assertSuccessful();
 
-    Notification::assertSentTo($user, DomainExpiringNotification::class, function ($notification): bool {
-        return $notification->daysUntilExpiry === 0;
-    });
+    Notification::assertSentTo($user, DomainExpiringNotification::class, fn ($notification): bool => $notification->daysUntilExpiry === 0);
 });
 
 test('does not send notification for non-milestone days', function (): void {
@@ -159,7 +152,7 @@ test('deduplicates notifications sent today', function (): void {
 
     // Simulate a previously sent notification
     $user->notifications()->create([
-        'id' => Illuminate\Support\Str::uuid()->toString(),
+        'id' => Str::uuid()->toString(),
         'type' => DomainExpiringNotification::class,
         'data' => [
             'domain_id' => $domain->id,

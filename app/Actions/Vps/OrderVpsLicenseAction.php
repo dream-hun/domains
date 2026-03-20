@@ -32,14 +32,14 @@ final readonly class OrderVpsLicenseAction
                 'license_type' => $licenseType,
             ]);
 
-            return ['success' => true, 'message' => "License ($licenseType) order initiated.", 'data' => $data];
-        } catch (RuntimeException $e) {
+            return ['success' => true, 'message' => sprintf('License (%s) order initiated.', $licenseType), 'data' => $data];
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to order VPS license', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to order license: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to order license: '.$runtimeException->getMessage()];
         }
     }
 }

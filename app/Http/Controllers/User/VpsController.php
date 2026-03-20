@@ -31,7 +31,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class VpsController extends Controller
 {
-    public function __construct(private ContaboService $contaboService) {}
+    public function __construct(private readonly ContaboService $contaboService) {}
 
     public function index(): View|Factory
     {
@@ -83,8 +83,8 @@ final class VpsController extends Controller
                     'plan_name' => $subscription->plan?->name ?? 'N/A',
                 ];
             })->filter()->values()->toArray();
-        } catch (RuntimeException $e) {
-            Log::error('Failed to load VPS instances', ['error' => $e->getMessage()]);
+        } catch (RuntimeException $runtimeException) {
+            Log::error('Failed to load VPS instances', ['error' => $runtimeException->getMessage()]);
             $errorMessage = 'Failed to load VPS instances. Please try again.';
         }
 
@@ -147,8 +147,8 @@ final class VpsController extends Controller
                 $snapshotResponse = $this->contaboService->listSnapshots((int) $subscription->provider_resource_id);
                 $snapshots = $snapshotResponse['data'] ?? [];
             }
-        } catch (RuntimeException $e) {
-            Log::error('Failed to load VPS instance', ['error' => $e->getMessage()]);
+        } catch (RuntimeException $runtimeException) {
+            Log::error('Failed to load VPS instance', ['error' => $runtimeException->getMessage()]);
             $errorMessage = 'Failed to load VPS instance details.';
         }
 

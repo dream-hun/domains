@@ -31,13 +31,13 @@ final readonly class ResetVpsCredentialsAction
             ]);
 
             return ['success' => true, 'message' => 'VPS instance credentials have been reset.', 'data' => $data];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to reset VPS credentials', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to reset credentials: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to reset credentials: '.$runtimeException->getMessage()];
         }
     }
 }

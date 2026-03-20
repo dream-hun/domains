@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
 use App\Notifications\RenewalInvoiceNotification;
+use App\Services\DomainInvoiceGenerationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Notification;
@@ -28,7 +29,7 @@ test('creates order and sends notification for domain renewal', function (): voi
     ]);
 
     $job = new GenerateDomainRenewalInvoiceJob($domain);
-    $job->handle(new App\Services\DomainInvoiceGenerationService);
+    $job->handle(new DomainInvoiceGenerationService);
 
     $order = Order::query()->where('user_id', $user->id)->first();
     expect($order)->not->toBeNull()
@@ -60,7 +61,7 @@ test('uses custom pricing when domain has custom price', function (): void {
     ]);
 
     $job = new GenerateDomainRenewalInvoiceJob($domain);
-    $job->handle(new App\Services\DomainInvoiceGenerationService);
+    $job->handle(new DomainInvoiceGenerationService);
 
     $order = Order::query()->where('user_id', $user->id)->first();
     expect($order->total_amount)->toBe('25.00')
@@ -84,7 +85,7 @@ test('calculates correct total for multi-year domain renewal', function (): void
     ]);
 
     $job = new GenerateDomainRenewalInvoiceJob($domain);
-    $job->handle(new App\Services\DomainInvoiceGenerationService);
+    $job->handle(new DomainInvoiceGenerationService);
 
     $order = Order::query()->where('user_id', $user->id)->first();
     expect($order->total_amount)->toBe('30.00');
@@ -117,7 +118,7 @@ test('skips if pending renewal order already exists', function (): void {
     ]);
 
     $job = new GenerateDomainRenewalInvoiceJob($domain);
-    $job->handle(new App\Services\DomainInvoiceGenerationService);
+    $job->handle(new DomainInvoiceGenerationService);
 
     // Should still only have the one pre-existing order
     expect(Order::query()->where('user_id', $user->id)->count())->toBe(1);

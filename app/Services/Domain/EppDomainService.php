@@ -20,7 +20,6 @@ use AfriCC\EPP\Frame\Command\Renew\Domain as RenewDomain;
 use AfriCC\EPP\Frame\Command\Transfer\Domain as TransferDomain;
 use AfriCC\EPP\Frame\Command\Update\Domain as UpdateDomain;
 use AfriCC\EPP\Frame\Hello;
-use AfriCC\EPP\Frame\Response;
 use App\Enums\TldType;
 use App\Models\Contact;
 use App\Models\Domain;
@@ -687,6 +686,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                     ]);
                     throw $e;
                 }
+
                 $lastException = $e;
                 $attempts++;
                 Log::warning(sprintf('EPP Connection attempt %d failed: ', $attempts).$e->getMessage());
@@ -1201,9 +1201,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                 $data = $response->data();
                 $authCode = $data['infData']['authInfo']['pw'] ?? null;
 
-                if ($authCode === null) {
-                    throw new Exception('Auth code not found in EPP InfoDomain response for domain: '.$domain);
-                }
+                throw_if($authCode === null, Exception::class, 'Auth code not found in EPP InfoDomain response for domain: '.$domain);
 
                 return $authCode;
             }
@@ -2001,6 +1999,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
             if ($this->isConnectionAlive()) {
                 return;
             }
+
             // Socket is dead — reset and reconnect
             $this->connected = false;
             $this->client = null;
@@ -2008,13 +2007,9 @@ class EppDomainService implements DomainRegistrationServiceInterface
 
         if (! $this->client instanceof EPPClient) {
             throw_if(empty($this->config['host']), Exception::class, 'EPP host is not configured. Please set EPP_HOST in your .env file.');
-            if (! empty($this->config['certificate']) && ! file_exists($this->config['certificate'])) {
-                throw new Exception('EPP certificate not found. Please check the certificate path in your configuration.');
-            }
+            throw_if(! empty($this->config['certificate']) && ! file_exists($this->config['certificate']), Exception::class, 'EPP certificate not found. Please check the certificate path in your configuration.');
 
-            if (! empty($this->config['private_key']) && ! file_exists($this->config['private_key'])) {
-                throw new Exception('EPP private key not found. Please check the private key path in your configuration.');
-            }
+            throw_if(! empty($this->config['private_key']) && ! file_exists($this->config['private_key']), Exception::class, 'EPP private key not found. Please check the private key path in your configuration.');
 
             $this->initializeClient();
         }
@@ -2042,7 +2037,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
     private function extractDomainValue(array $item): string
     {// Try multiple possible paths for the domain name
         $namePaths = [
-            'name'.'._text',
+            'name._text',
             'name',
             '_text',
         ];

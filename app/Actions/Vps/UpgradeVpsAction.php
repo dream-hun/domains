@@ -32,13 +32,13 @@ final readonly class UpgradeVpsAction
             ]);
 
             return ['success' => true, 'message' => 'VPS instance upgrade initiated.', 'data' => $data];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to upgrade VPS instance', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to upgrade instance: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to upgrade instance: '.$runtimeException->getMessage()];
         }
     }
 }

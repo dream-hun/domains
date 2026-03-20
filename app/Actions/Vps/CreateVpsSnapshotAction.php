@@ -31,13 +31,13 @@ final readonly class CreateVpsSnapshotAction
             ]);
 
             return ['success' => true, 'message' => 'Snapshot created successfully.', 'data' => $data];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to create VPS snapshot', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to create snapshot: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to create snapshot: '.$runtimeException->getMessage()];
         }
     }
 }

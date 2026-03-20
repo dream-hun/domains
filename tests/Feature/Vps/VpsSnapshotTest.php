@@ -18,7 +18,7 @@ it('creates a VPS snapshot successfully', function (): void {
         ->andReturn(['snapshotId' => 'snap-123']);
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(CreateVpsSnapshotAction::class)->execute($subscription, 'test-snapshot', 'Test description');
+    $result = resolve(CreateVpsSnapshotAction::class)->execute($subscription, 'test-snapshot', 'Test description');
 
     expect($result['success'])->toBeTrue();
     expect($result['message'])->toContain('Snapshot created');
@@ -34,7 +34,7 @@ it('deletes a VPS snapshot successfully', function (): void {
         ->andReturn(true);
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(DeleteVpsSnapshotAction::class)->execute($subscription, 'snap-123');
+    $result = resolve(DeleteVpsSnapshotAction::class)->execute($subscription, 'snap-123');
 
     expect($result['success'])->toBeTrue();
     expect($result['message'])->toContain('Snapshot deleted');
@@ -50,7 +50,7 @@ it('handles delete VPS snapshot failure gracefully', function (): void {
         ->andThrow(new RuntimeException('API Error'));
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(DeleteVpsSnapshotAction::class)->execute($subscription, 'snap-123');
+    $result = resolve(DeleteVpsSnapshotAction::class)->execute($subscription, 'snap-123');
 
     expect($result['success'])->toBeFalse();
     expect($result['message'])->toContain('Failed');
@@ -66,7 +66,7 @@ it('restores a VPS snapshot successfully', function (): void {
         ->andReturn([]);
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(RestoreVpsSnapshotAction::class)->execute($subscription, 'snap-123');
+    $result = resolve(RestoreVpsSnapshotAction::class)->execute($subscription, 'snap-123');
 
     expect($result['success'])->toBeTrue();
     expect($result['message'])->toContain('restored');
@@ -82,7 +82,7 @@ it('handles restore VPS snapshot failure gracefully', function (): void {
         ->andThrow(new RuntimeException('API Error'));
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(RestoreVpsSnapshotAction::class)->execute($subscription, 'snap-123');
+    $result = resolve(RestoreVpsSnapshotAction::class)->execute($subscription, 'snap-123');
 
     expect($result['success'])->toBeFalse();
     expect($result['message'])->toContain('Failed');
@@ -97,7 +97,7 @@ it('handles snapshot creation failure', function (): void {
         ->andThrow(new RuntimeException('Snapshot limit reached'));
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(CreateVpsSnapshotAction::class)->execute($subscription, 'test-snapshot');
+    $result = resolve(CreateVpsSnapshotAction::class)->execute($subscription, 'test-snapshot');
 
     expect($result['success'])->toBeFalse();
     expect($result['message'])->toContain('Failed');
