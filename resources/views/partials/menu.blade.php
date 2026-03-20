@@ -129,6 +129,21 @@
                         </a>
                     </li>
                 @endcan
+                @can('vps_access')
+                    <x-admin.sidebar-group
+                        title="VPS Management"
+                        icon="bi bi-hdd-stack"
+                        :routes="['admin.vps.*']">
+                        <x-admin.sidebar-link route="admin.vps.index" icon="bi bi-server">
+                            VPS Instances
+                        </x-admin.sidebar-link>
+                        @can('vps_assign')
+                            <x-admin.sidebar-link route="admin.vps.assign" icon="bi bi-link-45deg">
+                                Assign Instance
+                            </x-admin.sidebar-link>
+                        @endcan
+                    </x-admin.sidebar-group>
+                @endcan
                 @can('setting_access')
                     <li class="nav-item">
                         <a href="{{ route('admin.settings.index') }}"

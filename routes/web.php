@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\SubscriptionController;
 use App\Http\Controllers\Admin\TldController;
 use App\Http\Controllers\Admin\TldPricingController;
 use App\Http\Controllers\Admin\UsersController;
+use App\Http\Controllers\Admin\VpsController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryShowController;
 use App\Http\Controllers\CheckoutController as RenewalCheckoutController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\SearchDomainController;
 use App\Http\Controllers\SmartCheckoutController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SubscriptionRenewalController;
+use App\Http\Controllers\User\VpsController as UserVpsController;
 use App\Livewire\Hosting\Configuration;
 use Illuminate\Support\Facades\Route;
 
@@ -127,9 +129,43 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::get('products/subscriptions/{subscription}', [ProductController::class, 'showSubscription'])->name('products.subscription.show');
     Route::post('products/subscriptions/{subscription}/renew', [ProductController::class, 'addSubscriptionRenewalToCart'])->name('products.subscription.renew');
 
+    // VPS management routes
+    Route::get('vps', [VpsController::class, 'index'])->name('vps.index');
+    Route::get('vps/assign', [VpsController::class, 'assign'])->name('vps.assign');
+    Route::post('vps/assign', [VpsController::class, 'storeAssignment'])->name('vps.assign.store');
+    Route::get('vps/{subscription}', [VpsController::class, 'show'])->name('vps.show');
+    Route::post('vps/{subscription}/restart', [VpsController::class, 'restart'])->name('vps.restart');
+    Route::post('vps/{subscription}/shutdown', [VpsController::class, 'shutdown'])->name('vps.shutdown');
+    Route::post('vps/{subscription}/reinstall', [VpsController::class, 'reinstall'])->name('vps.reinstall');
+    Route::post('vps/{subscription}/rescue', [VpsController::class, 'rescue'])->name('vps.rescue');
+    Route::post('vps/{subscription}/reset-credentials', [VpsController::class, 'resetCredentials'])->name('vps.reset-credentials');
+    Route::post('vps/{subscription}/display-name', [VpsController::class, 'changeDisplayName'])->name('vps.display-name');
+    Route::post('vps/{subscription}/snapshots', [VpsController::class, 'createSnapshot'])->name('vps.snapshots.store');
+    Route::delete('vps/{subscription}/snapshots/{snapshotId}', [VpsController::class, 'deleteSnapshot'])->name('vps.snapshots.destroy');
+    Route::post('vps/{subscription}/snapshots/{snapshotId}/restore', [VpsController::class, 'restoreSnapshot'])->name('vps.snapshots.restore');
+    Route::post('vps/{subscription}/upgrade', [VpsController::class, 'upgrade'])->name('vps.upgrade');
+    Route::post('vps/{subscription}/order-license', [VpsController::class, 'orderLicense'])->name('vps.order-license');
+    Route::post('vps/{subscription}/extend-storage', [VpsController::class, 'extendStorage'])->name('vps.extend-storage');
+    Route::post('vps/{subscription}/move-region', [VpsController::class, 'moveRegion'])->name('vps.move-region');
+    Route::post('vps/{subscription}/cancel', [VpsController::class, 'cancel'])->name('vps.cancel');
+
 });
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
+
+    // User VPS routes
+    Route::get('/vps', [UserVpsController::class, 'index'])->name('user.vps.index');
+    Route::get('/vps/{subscription}', [UserVpsController::class, 'show'])->name('user.vps.show');
+    Route::post('/vps/{subscription}/restart', [UserVpsController::class, 'restart'])->name('user.vps.restart');
+    Route::post('/vps/{subscription}/shutdown', [UserVpsController::class, 'shutdown'])->name('user.vps.shutdown');
+    Route::post('/vps/{subscription}/rescue', [UserVpsController::class, 'rescue'])->name('user.vps.rescue');
+    Route::post('/vps/{subscription}/reset-credentials', [UserVpsController::class, 'resetCredentials'])->name('user.vps.reset-credentials');
+    Route::post('/vps/{subscription}/display-name', [UserVpsController::class, 'changeDisplayName'])->name('user.vps.display-name');
+    Route::post('/vps/{subscription}/snapshots', [UserVpsController::class, 'createSnapshot'])->name('user.vps.snapshots.store');
+    Route::delete('/vps/{subscription}/snapshots/{snapshotId}', [UserVpsController::class, 'deleteSnapshot'])->name('user.vps.snapshots.destroy');
+    Route::post('/vps/{subscription}/snapshots/{snapshotId}/restore', [UserVpsController::class, 'restoreSnapshot'])->name('user.vps.snapshots.restore');
+    Route::post('/vps/{subscription}/reinstall', [UserVpsController::class, 'reinstall'])->name('user.vps.reinstall');
+    Route::post('/vps/{subscription}/upgrade', [UserVpsController::class, 'upgrade'])->name('user.vps.upgrade');
 
     Route::get('shopping-cart/checkout', [SmartCheckoutController::class, 'index'])->name('checkout.index');
 
