@@ -359,7 +359,7 @@ class ContaboService
      */
     public function deleteSnapshot(int $instanceId, string $snapshotId): bool
     {
-        $response = $this->client()->delete(
+        $response = $this->deleteClient()->delete(
             sprintf('/compute/instances/%d/snapshots/%s', $instanceId, $snapshotId)
         );
         $this->assertSuccess($response, 'Delete snapshot '.$snapshotId);
@@ -443,7 +443,7 @@ class ContaboService
      */
     public function deleteImage(string $imageId): bool
     {
-        $response = $this->client()->delete('/compute/images/'.$imageId);
+        $response = $this->deleteClient()->delete('/compute/images/'.$imageId);
         $this->assertSuccess($response, 'Delete image '.$imageId);
 
         return true;
@@ -603,7 +603,7 @@ class ContaboService
      */
     public function deletePrivateNetwork(string $privateNetworkId): bool
     {
-        $response = $this->client()->delete('/private-networks/'.$privateNetworkId);
+        $response = $this->deleteClient()->delete('/private-networks/'.$privateNetworkId);
         $this->assertSuccess($response, 'Delete private network '.$privateNetworkId);
 
         return true;
@@ -631,7 +631,7 @@ class ContaboService
      */
     public function removeInstanceFromPrivateNetwork(string $privateNetworkId, int $instanceId): bool
     {
-        $response = $this->client()->delete(
+        $response = $this->deleteClient()->delete(
             sprintf('/private-networks/%s/instances/%d', $privateNetworkId, $instanceId)
         );
         $this->assertSuccess($response, sprintf('Remove instance #%d from private network %s', $instanceId, $privateNetworkId));
@@ -700,7 +700,7 @@ class ContaboService
      */
     public function deleteSecret(int $secretId): bool
     {
-        $response = $this->client()->delete('/secrets/'.$secretId);
+        $response = $this->deleteClient()->delete('/secrets/'.$secretId);
         $this->assertSuccess($response, 'Delete secret #'.$secretId);
 
         return true;
@@ -767,7 +767,7 @@ class ContaboService
      */
     public function deleteTag(int $tagId): bool
     {
-        $response = $this->client()->delete('/tags/'.$tagId);
+        $response = $this->deleteClient()->delete('/tags/'.$tagId);
         $this->assertSuccess($response, 'Delete tag #'.$tagId);
 
         return true;
@@ -809,7 +809,7 @@ class ContaboService
      */
     public function removeTagAssignment(int $tagId, string $resourceType, string $resourceId): bool
     {
-        $response = $this->client()->delete(sprintf('/tags/%d/assignments/%s/%s', $tagId, $resourceType, $resourceId));
+        $response = $this->deleteClient()->delete(sprintf('/tags/%d/assignments/%s/%s', $tagId, $resourceType, $resourceId));
         $this->assertSuccess($response, sprintf('Remove tag #%d from %s/%s', $tagId, $resourceType, $resourceId));
 
         return true;
@@ -898,7 +898,7 @@ class ContaboService
      */
     public function deleteUser(string $userId): bool
     {
-        $response = $this->client()->delete('/users/'.$userId);
+        $response = $this->deleteClient()->delete('/users/'.$userId);
         $this->assertSuccess($response, 'Delete user '.$userId);
 
         return true;
@@ -1004,7 +1004,7 @@ class ContaboService
      */
     public function deleteRole(int $roleId): bool
     {
-        $response = $this->client()->delete('/roles/'.$roleId);
+        $response = $this->deleteClient()->delete('/roles/'.$roleId);
         $this->assertSuccess($response, 'Delete role #'.$roleId);
 
         return true;
@@ -1035,6 +1035,16 @@ class ContaboService
             ])
             ->acceptJson()
             ->asJson()
+            ->baseUrl($this->baseUrl);
+    }
+
+    protected function deleteClient(): PendingRequest
+    {
+        return Http::withToken($this->getAccessToken())
+            ->withHeaders([
+                'x-request-id' => (string) Str::uuid(),
+            ])
+            ->acceptJson()
             ->baseUrl($this->baseUrl);
     }
 
