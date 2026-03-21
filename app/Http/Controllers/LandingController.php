@@ -10,7 +10,7 @@ use App\Models\HostingPlan;
 use App\Models\Tld;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 
 final class LandingController extends Controller
@@ -26,7 +26,7 @@ final class LandingController extends Controller
             ->where('status', 'active')
             ->with([
                 'category:id,name,slug',
-                'planPrices' => fn (Builder $q) => $q->where('status', 'active')
+                'planPrices' => fn (HasMany $q) => $q->where('status', 'active')
                     ->with('currency'),
                 'planFeatures.hostingFeature',
             ])
