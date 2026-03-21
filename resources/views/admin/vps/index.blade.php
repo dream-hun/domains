@@ -64,7 +64,7 @@
                         </div>
                     @else
                         <div class="table-responsive">
-                            <table class="table table-hover table-striped">
+                            <table class="table table-hover table-striped datatable-Vps">
                                 <thead>
                                     <tr>
                                         <th>Instance</th>
@@ -131,4 +131,35 @@
             </div>
         </div>
     </section>
+    @section('scripts')
+        @parent
+        <script>
+            $(function () {
+                let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
+                let table = $('.datatable-Vps:not(.ajaxTable)').DataTable({
+                    buttons: dtButtons,
+                    paging: true,
+                    pageLength: 10,
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    lengthChange: false,
+                    dom: 'Bfrtip',
+                    autoWidth: false,
+                    language: {
+                        search: "Search:",
+                        searchPlaceholder: "Search VPS instances..."
+                    },
+                    columnDefs: [
+                        { orderable: false, targets: -1 }
+                    ]
+                })
+
+                $('a[data-toggle="tab"]').on('shown.bs.tab click', function (e) {
+                    $($.fn.dataTable.tables(true)).DataTable()
+                        .columns.adjust();
+                });
+            })
+        </script>
+    @endsection
 </x-admin-layout>
