@@ -157,7 +157,7 @@ final class SubscriptionController extends Controller
             ->whereNotNull('billing_cycle')
             ->orderBy('billing_cycle')
             ->pluck('billing_cycle')
-            ->map(static fn (mixed $value): string => (string) $value)
+            ->map(static fn (BillingCycle $value): string => $value->value)
             ->values();
 
         return view('admin.subscriptions.index', [
