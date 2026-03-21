@@ -12,7 +12,7 @@ final class CouponService
     /**
      * @throws Exception
      */
-    public function validateCoupon($code): Coupon
+    public function validateCoupon(string $code): Coupon
     {
         $coupon = Coupon::query()->where('code', $code)->first();
         throw_unless($coupon, Exception::class, 'Invalid coupon code');
@@ -25,7 +25,7 @@ final class CouponService
 
     }
 
-    public function applyCoupon($coupon, $amount)
+    public function applyCoupon(Coupon $coupon, float $amount): float
     {
         $type = is_string($coupon->type) ? $coupon->type : $coupon->type->value;
 

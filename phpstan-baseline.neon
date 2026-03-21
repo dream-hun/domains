@@ -1,0 +1,3763 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Actions\\Contacts\\ListContactAction\:\:handle\(\) return type with generic class Illuminate\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/Contacts/ListContactAction.php
+
+		-
+			message: '#^Method App\\Actions\\Currency\\ListCurrencyAction\:\:handle\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/Currency/ListCurrencyAction.php
+
+		-
+			message: '#^Method App\\Actions\\Currency\\StoreCurrencyAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Currency/StoreCurrencyAction.php
+
+		-
+			message: '#^Method App\\Actions\\Currency\\UpdateCurrencyAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Currency/UpdateCurrencyAction.php
+
+		-
+			message: '#^Call to method fetchRates\(\) on an unknown class App\\Services\\ExchangeRateClient\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Currency/UpdateExchangeRatesAction.php
+
+		-
+			message: '#^Parameter \$client of method App\\Actions\\Currency\\UpdateExchangeRatesAction\:\:__construct\(\) has invalid type App\\Services\\ExchangeRateClient\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Currency/UpdateExchangeRatesAction.php
+
+		-
+			message: '#^Property App\\Actions\\Currency\\UpdateExchangeRatesAction\:\:\$client has unknown class App\\Services\\ExchangeRateClient as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Currency/UpdateExchangeRatesAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domain\\GetDomainContactStatsAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domain/GetDomainContactStatsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domain\\SyncDomainContactsAction\:\:createOrUpdateContact\(\) has parameter \$contactData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domain/SyncDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domain\\SyncDomainContactsAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domain/SyncDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domain\\SyncDomainContactsAction\:\:syncContacts\(\) has parameter \$contacts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domain/SyncDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domain\\SyncDomainContactsAction\:\:syncContacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domain/SyncDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$address_one on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$address_two on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$city on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$country_code on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$email on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$first_name on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$last_name on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$organization on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$phone on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$pivot on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$postal_code on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Access to property \$state_province on an unknown class App\\Actions\\Domain\\Contact\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domain\\UpdateDomainContactsAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domain/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\GetDomainInfoAction\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/GetDomainInfoAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\ReactivateDomainAction\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/ReactivateDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\ReactivateDomainAction\:\:reactivateWithEpp\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/ReactivateDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\ReactivateDomainAction\:\:reactivateWithNamecheap\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/ReactivateDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\ReactivateDomainAction\:\:updateDomainRecord\(\) has parameter \$reactivationResult with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/ReactivateDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\RenewDomainAction\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/RenewDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\RenewDomainAction\:\:renewWithEpp\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/RenewDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\RenewDomainAction\:\:renewWithNamecheap\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/RenewDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\TransferDomainAction\:\:handle\(\) has parameter \$transferData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/TransferDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\TransferDomainAction\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/TransferDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\TransferDomainAction\:\:prepareContactInfo\(\) has parameter \$transferData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/TransferDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\TransferDomainAction\:\:prepareContactInfo\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/TransferDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\TransferDomainAction\:\:transferWithEpp\(\) has parameter \$transferData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/TransferDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\TransferDomainAction\:\:transferWithEpp\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/TransferDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\TransferDomainAction\:\:transferWithNamecheap\(\) has parameter \$transferData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/TransferDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\TransferDomainAction\:\:transferWithNamecheap\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/TransferDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:createOrUpdateContact\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:getCurrentDomainContacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:handle\(\) has parameter \$contactData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:handleNewFormFormat\(\) has parameter \$contactData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:handleNewFormFormat\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:handleOldFormFormat\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:handleOldFormFormat\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:isNewFormFormat\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:prepareContactData\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:prepareContactData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateDomainContactsAction\:\:syncLocalContacts\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateDomainContactsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateNameserversAction\:\:handle\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateNameserversAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateNameserversAction\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateNameserversAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateNameserversAction\:\:syncNameserversInDatabase\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateNameserversAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateNameserversAction\:\:updateWithEpp\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateNameserversAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateNameserversAction\:\:updateWithEpp\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateNameserversAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateNameserversAction\:\:updateWithNamecheap\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateNameserversAction.php
+
+		-
+			message: '#^Method App\\Actions\\Domains\\UpdateNameserversAction\:\:updateWithNamecheap\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Domains/UpdateNameserversAction.php
+
+		-
+			message: '#^Method App\\Actions\\FeatureCategory\\CreateFeatureCategoryAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/FeatureCategory/CreateFeatureCategoryAction.php
+
+		-
+			message: '#^Method App\\Actions\\FeatureCategory\\ListFeatureCategoryAction\:\:handle\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/FeatureCategory/ListFeatureCategoryAction.php
+
+		-
+			message: '#^Method App\\Actions\\FeatureCategory\\UpdateFeatureCategoryAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/FeatureCategory/UpdateFeatureCategoryAction.php
+
+		-
+			message: '#^Method App\\Actions\\Hosting\\Plan\\ListPlanAction\:\:handle\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/Hosting/Plan/ListPlanAction.php
+
+		-
+			message: '#^Method App\\Actions\\Hosting\\PlanPrices\\ListPlanPriceAction\:\:handle\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/Hosting/PlanPrices/ListPlanPriceAction.php
+
+		-
+			message: '#^Method App\\Actions\\Hosting\\PlanPrices\\StorePlanPriceAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Hosting/PlanPrices/StorePlanPriceAction.php
+
+		-
+			message: '#^Method App\\Actions\\Hosting\\PlanPrices\\UpdatePlanPriceAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Hosting/PlanPrices/UpdatePlanPriceAction.php
+
+		-
+			message: '#^Method App\\Actions\\Hosting\\PlanPrices\\UpdatePlanPriceAction\:\:handleFutureEffectiveDate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Hosting/PlanPrices/UpdatePlanPriceAction.php
+
+		-
+			message: '#^Method App\\Actions\\Hosting\\PlanPrices\\UpdatePlanPriceAction\:\:handlePastOrCurrentEffectiveDate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Hosting/PlanPrices/UpdatePlanPriceAction.php
+
+		-
+			message: '#^Parameter \#3 \$effectiveDate of method App\\Actions\\Hosting\\PlanPrices\\UpdatePlanPriceAction\:\:handleFutureEffectiveDate\(\) expects Carbon\\Carbon, Carbon\\CarbonInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Actions/Hosting/PlanPrices/UpdatePlanPriceAction.php
+
+		-
+			message: '#^Parameter \#4 \$today of method App\\Actions\\Hosting\\PlanPrices\\UpdatePlanPriceAction\:\:handleFutureEffectiveDate\(\) expects Carbon\\Carbon, Carbon\\CarbonImmutable given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Actions/Hosting/PlanPrices/UpdatePlanPriceAction.php
+
+		-
+			message: '#^Method App\\Actions\\Hosting\\Promotions\\ListHostingPromotionAction\:\:handle\(\) return type with generic class Illuminate\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/Hosting/Promotions/ListHostingPromotionAction.php
+
+		-
+			message: '#^Method App\\Actions\\Hosting\\Promotions\\StoreHostingPromotionAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Hosting/Promotions/StoreHostingPromotionAction.php
+
+		-
+			message: '#^Method App\\Actions\\Hosting\\Promotions\\UpdateHostingPromotionAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Hosting/Promotions/UpdateHostingPromotionAction.php
+
+		-
+			message: '#^Method App\\Actions\\HostingFeature\\CreateHostingFeatureAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/HostingFeature/CreateHostingFeatureAction.php
+
+		-
+			message: '#^Method App\\Actions\\HostingFeature\\ListHostingFeatureAction\:\:handle\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/HostingFeature/ListHostingFeatureAction.php
+
+		-
+			message: '#^Method App\\Actions\\HostingFeature\\UpdateHostingFeatureAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/HostingFeature/UpdateHostingFeatureAction.php
+
+		-
+			message: '#^Method App\\Actions\\HostingPlanFeature\\ListHostingPlanFeatureAction\:\:handle\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/HostingPlanFeature/ListHostingPlanFeatureAction.php
+
+		-
+			message: '#^Method App\\Actions\\HostingPlanFeature\\StoreHostingPlanFeatureAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/HostingPlanFeature/StoreHostingPlanFeatureAction.php
+
+		-
+			message: '#^Method App\\Actions\\HostingPlanFeature\\UpdateHostingPlanFeatureAction\:\:handle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/HostingPlanFeature/UpdateHostingPlanFeatureAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Actions/Order/CreateOrderFromCartAction.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>full_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Actions/Order/CreateOrderFromCartAction.php
+
+		-
+			message: '#^Method App\\Actions\\Order\\ProcessOrderAfterPaymentAction\:\:handle\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Order/ProcessOrderAfterPaymentAction.php
+
+		-
+			message: '#^Method App\\Actions\\Payment\\ProcessKPayPaymentAction\:\:getOrCreateOrder\(\) has parameter \$billingData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Payment/ProcessKPayPaymentAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:createDomainRecord\(\) has parameter \$contacts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:ensureContactsInEppRegistry\(\) has parameter \$contacts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:ensureContactsInEppRegistry\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:extractContactIDFromTheContactData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:handle\(\) has parameter \$contactInfo with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:handle\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:prepareEppContacts\(\) has parameter \$contacts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:prepareEppContacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:prepareNamecheapContacts\(\) has parameter \$contacts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:prepareNamecheapContacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:processContactsForService\(\) has parameter \$contactInfo with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:processContactsForService\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RegisterDomainAction\:\:processNameservers\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type App\\Models\\User\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Actions/RegisterDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\RenewDomainAction\:\:handle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/RenewDomainAction.php
+
+		-
+			message: '#^Method App\\Actions\\Tld\\ListTldAction\:\:handle\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/Tld/ListTldAction.php
+
+		-
+			message: '#^Method App\\Actions\\TldPricing\\ListTldPricingAction\:\:handle\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Actions/TldPricing/ListTldPricingAction.php
+
+		-
+			message: '#^Offset ''is_current'' on array\{tld_id\?\: int\|string\|null, currency_id\: int\|string, register_price\: int\|string, renew_price\: int\|string, redemption_price\?\: int\|string\|null, transfer_price\?\: int\|string\|null, is_current\: bool, effective_date\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Actions/TldPricing/StoreTldPricingAction.php
+
+		-
+			message: '#^Offset ''is_current'' on array\{tld_id\?\: int\|string\|null, currency_id\: int\|string, register_price\: int\|string, renew_price\: int\|string, redemption_price\?\: int\|string\|null, transfer_price\?\: int\|string\|null, is_current\: bool, effective_date\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Actions/TldPricing/UpdateTldPricingAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\CancelVpsAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/CancelVpsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\ChangeVpsDisplayNameAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/ChangeVpsDisplayNameAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\CreateVpsSnapshotAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/CreateVpsSnapshotAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\ExtendVpsStorageAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/ExtendVpsStorageAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\MoveVpsRegionAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/MoveVpsRegionAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\OrderVpsLicenseAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/OrderVpsLicenseAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\ReinstallVpsAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/ReinstallVpsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\RescueVpsAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/RescueVpsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\ResetVpsCredentialsAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/ResetVpsCredentialsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\RestoreVpsSnapshotAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/RestoreVpsSnapshotAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\UpgradeVpsAction\:\:execute\(\) has parameter \$addOns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: app/Actions/Vps/UpgradeVpsAction.php
+
+		-
+			message: '#^Method App\\Actions\\Vps\\UpgradeVpsAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Actions/Vps/UpgradeVpsAction.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonInterface\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Console/Commands/ActivateEffectivePricesCommand.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and App\\Enums\\TldStatus\:\:Active will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Console/Commands/Admin/ImportTld.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Console/Commands/CheckExpiringDomainsCommand.php
+
+		-
+			message: '#^Method App\\Events\\ExchangeRatesUpdated\:\:__construct\(\) has parameter \$updatedCurrencies with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Events/ExchangeRatesUpdated.php
+
+		-
+			message: '#^Call to an undefined method App\\Services\\Domain\\DomainRegistrationServiceInterface\:\:searchDomains\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Helpers/DomainSearchHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\DomainSearchHelper\:\:getPopularDomains\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Helpers/DomainSearchHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\DomainSearchHelper\:\:processDomainSearch\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Helpers/DomainSearchHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\DomainSearchHelper\:\:searchInternationalDomains\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Helpers/DomainSearchHelper.php
+
+		-
+			message: '#^Method App\\Helpers\\DomainSearchHelper\:\:searchLocalDomains\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Helpers/DomainSearchHelper.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\ContactController\:\:compareContactData\(\) has parameter \$eppData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Admin/ContactController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\ContactController\:\:compareContactData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Admin/ContactController.php
+
+		-
+			message: '#^Left side of \|\| is always false\.$#'
+			identifier: booleanOr.leftAlwaysFalse
+			count: 1
+			path: app/Http/Controllers/Admin/DomainController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\DomainController\:\:domainInfo\(\) should return Illuminate\\Contracts\\View\\Factory\|Illuminate\\Contracts\\View\\View but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Admin/DomainController.php
+
+		-
+			message: '#^Result of function abort_if \(void\) is used\.$#'
+			identifier: function.void
+			count: 1
+			path: app/Http/Controllers/Admin/DomainController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\DomainOperationsController\:\:domainInfo\(\) should return Illuminate\\Contracts\\View\\Factory\|Illuminate\\Contracts\\View\\View but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Admin/DomainOperationsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\DomainOperationsController\:\:getContactStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Admin/DomainOperationsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\DomainPriceHistoryController\:\:applyDateFilter\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Controllers/Admin/DomainPriceHistoryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\HostingPlanController\:\:categories\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Controllers/Admin/HostingPlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\HostingPlanPriceHistoryController\:\:applyDateFilter\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Controllers/Admin/HostingPlanPriceHistoryController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\HostingPromotionController\:\:categories\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Controllers/Admin/HostingPromotionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\HostingPromotionController\:\:plans\(\) should return Illuminate\\Support\\Collection\<int, array\{id\: int, name\: string, category\: string\|null\}\> but returns Illuminate\\Support\\Collection\<int, array\{id\: int, name\: string, category\: string\|null\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Admin/HostingPromotionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\SubscriptionController\:\:applyDateFilter\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Controllers/Admin/SubscriptionController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: app/Http/Controllers/Admin/VpsController.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 3
+			path: app/Http/Controllers/Admin/VpsController.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 3
+			path: app/Http/Controllers/Admin/VpsController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Admin/VpsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\DomainSearchController\:\:buildResults\(\) has parameter \$domainPrices with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Controllers/Api/DomainSearchController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\DomainSearchController\:\:buildResults\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/DomainSearchController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\DomainSearchController\:\:transformDomainPrice\(\) has parameter \$availability with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/DomainSearchController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\DomainSearchController\:\:transformDomainPrice\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Api/DomainSearchController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\CategoryShowController\:\:__invoke\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/CategoryShowController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\DomainRenewalController\:\:respondRenewalError\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/DomainRenewalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\KPayWebhookController\:\:handlePostback\(\) never returns Illuminate\\Http\\Response so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Http/Controllers/KPayWebhookController.php
+
+		-
+			message: '#^Call to function is_array\(\) with string\|null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Http/Controllers/KpayPaymentController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/KpayPaymentController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Http/Controllers/KpayPaymentController.php
+
+		-
+			message: '#^Parameter \#1 \$relations of method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\HostingPlan\>\:\:with\(\) expects array\<array\|\(Closure\(Illuminate\\Database\\Eloquent\\Relations\\Relation\<\*, \*, \*\>\)\: mixed\)\|string\>\|string, array\{0\: ''category\:id,name…'', planPrices\: Closure\(Illuminate\\Database\\Eloquent\\Builder\)\: Illuminate\\Database\\Eloquent\\Builder, 1\: ''planFeatures…''\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/LandingController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\RegisterDomainController\:\:processCartItemsWithCurrency\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/RegisterDomainController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\RegisterDomainController\:\:processContactsFromForm\(\) has parameter \$validatedData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/RegisterDomainController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\RegisterDomainController\:\:processContactsFromForm\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/RegisterDomainController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\RegisterDomainController\:\:processNameserversFromForm\(\) has parameter \$validatedData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/RegisterDomainController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\RegisterDomainController\:\:processNameserversFromForm\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/RegisterDomainController.php
+
+		-
+			message: '#^Variable \$updateData in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Http/Controllers/User/VpsController.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 2
+			path: app/Http/Controllers/User/VpsController.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 2
+			path: app/Http/Controllers/User/VpsController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Middleware/SetCurrency.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$preferred_currency\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/SetCurrency.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\AuditLogIndexRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/AuditLogIndexRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\CreateContactRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/CreateContactRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\DomainCheckRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/DomainCheckRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\DomainLockRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/DomainLockRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\DomainRenewalRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/DomainRenewalRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\DomainTransferRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/DomainTransferRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\ManualRegisterDomainRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/ManualRegisterDomainRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\ReactivateDomainRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/ReactivateDomainRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreCurrencyRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreCurrencyRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreDomainPriceRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreDomainPriceRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreDomainPricingRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreDomainPricingRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreFeatureCategoryRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreFeatureCategoryRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreHostRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreHostRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreHostingFeatureRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreHostingFeatureRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreHostingPlanFeatureRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreHostingPlanFeatureRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StorePermissionRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StorePermissionRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StorePlanPriceRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StorePlanPriceRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreRoleRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreRoleRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreServiceRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreServiceRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreSettingRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreSettingRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\StoreUserRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/StoreUserRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\ToggleDomainLockRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/ToggleDomainLockRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateBookingRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateBookingRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateContactRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateContactRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateCurrencyRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateCurrencyRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateDomainContactsRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateDomainContactsRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateDomainPriceRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateDomainPriceRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateDomainPricingRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateDomainPricingRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateFeatureCategoryRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateFeatureCategoryRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateGalleryRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateGalleryRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateHostingFeatureRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateHostingFeatureRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateHostingPlanFeatureRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateHostingPlanFeatureRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateNameserversRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateNameserversRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdatePasswordRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdatePasswordRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdatePermissionRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdatePermissionRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdatePlanPriceRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdatePlanPriceRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateProfileRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateProfileRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateRoleRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateRoleRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateServiceRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateServiceRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateSettingRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateSettingRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UpdateUserRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UpdateUserRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Admin\\UseExistingContactRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Admin/UseExistingContactRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Api\\DomainSearchRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Api/DomainSearchRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Auth\\LoginRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Auth/LoginRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Auth\\RegisterUserRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Auth/RegisterUserRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Auth\\UpdateBillingRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Auth/UpdateBillingRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Auth\\UpdatePasswordRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Auth/UpdatePasswordRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Auth\\UpdateProfileRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/Auth/UpdateProfileRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\CheckoutRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/CheckoutRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\InitiatePaymentRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/InitiatePaymentRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\KPayPaymentRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/KPayPaymentRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\ProfileUpdateRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/ProfileUpdateRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\RegisterDomainRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/RegisterDomainRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\SearchDomainRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/SearchDomainRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreContactRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreContactRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreHostingCategoryRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreHostingCategoryRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StripePaymentRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StripePaymentRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdateHostingCategoryRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/UpdateHostingCategoryRequest.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonInterface\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/ActivateHostingPlanPriceJob.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonInterface\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/ActivateTldPricingJob.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Jobs/FetchDomainsJob.php
+
+		-
+			message: '#^Method App\\Jobs\\FetchDomainsJob\:\:getOrCreateTldPricingId\(\) has parameter \$domainData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Jobs/FetchDomainsJob.php
+
+		-
+			message: '#^Method App\\Jobs\\FetchDomainsJob\:\:sendImportNotifications\(\) has parameter \$importedDomains with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Jobs/FetchDomainsJob.php
+
+		-
+			message: '#^Method App\\Jobs\\ProcessDomainRegistrationJob\:\:__construct\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Jobs/ProcessDomainRegistrationJob.php
+
+		-
+			message: '#^Property App\\Jobs\\RetryDomainRegistrationJob\:\:\$backoff type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Jobs/RetryDomainRegistrationJob.php
+
+		-
+			message: '#^Method App\\Listeners\\HandleStripeWebhook\:\:handle\(\) has parameter \$event with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Listeners/HandleStripeWebhook.php
+
+		-
+			message: '#^Method App\\Listeners\\HandleStripeWebhook\:\:handleCheckoutSessionCompleted\(\) has parameter \$session with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Listeners/HandleStripeWebhook.php
+
+		-
+			message: '#^Method App\\Listeners\\HandleStripeWebhook\:\:handlePaymentIntentFailed\(\) has parameter \$paymentIntent with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Listeners/HandleStripeWebhook.php
+
+		-
+			message: '#^Method App\\Listeners\\HandleStripeWebhook\:\:handlePaymentIntentSucceeded\(\) has parameter \$paymentIntent with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Listeners/HandleStripeWebhook.php
+
+		-
+			message: '#^Method App\\Livewire\\CartComponent\:\:convertToDisplayCurrency\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Livewire/CartComponent.php
+
+		-
+			message: '#^Method App\\Livewire\\CartComponent\:\:prepareCartForPayment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/CartComponent.php
+
+		-
+			message: '#^Property App\\Livewire\\CartComponent\:\:\$listeners has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Livewire/CartComponent.php
+
+		-
+			message: '#^Variable \$itemPrice might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Livewire/CartComponent.php
+
+		-
+			message: '#^Property App\\Livewire\\CartSummary\:\:\$listeners has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Livewire/CartSummary.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Livewire/CartTotal.php
+
+		-
+			message: '#^Method App\\Livewire\\CartTotal\:\:getBillingCycleMonths\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Livewire/CartTotal.php
+
+		-
+			message: '#^Property App\\Livewire\\CartTotal\:\:\$listeners has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Livewire/CartTotal.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Checkout/CheckoutWizard.php
+
+		-
+			message: '#^Method App\\Livewire\\Checkout\\CheckoutWizard\:\:userContacts\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Livewire/Checkout/CheckoutWizard.php
+
+		-
+			message: '#^PHPDoc tag @property\-read for property App\\Livewire\\Checkout\\CheckoutWizard\:\:\$userContacts contains generic class Illuminate\\Database\\Eloquent\\Collection but does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Livewire/Checkout/CheckoutWizard.php
+
+		-
+			message: '#^Property App\\Livewire\\Checkout\\CheckoutWizard\:\:\$paymentMethods type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/Checkout/CheckoutWizard.php
+
+		-
+			message: '#^Method App\\Livewire\\CheckoutProcess\:\:convertToDisplayCurrency\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Livewire/CheckoutProcess.php
+
+		-
+			message: '#^Method App\\Livewire\\CheckoutProcess\:\:getFormattedItemPrice\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/CheckoutProcess.php
+
+		-
+			message: '#^Method App\\Livewire\\CheckoutProcess\:\:getFormattedItemTotal\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/CheckoutProcess.php
+
+		-
+			message: '#^Method App\\Livewire\\CheckoutProcess\:\:prepareCartForPayment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/CheckoutProcess.php
+
+		-
+			message: '#^Property App\\Livewire\\CheckoutProcess\:\:\$cartItems type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/CheckoutProcess.php
+
+		-
+			message: '#^Property App\\Livewire\\CheckoutProcess\:\:\$listeners has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Livewire/CheckoutProcess.php
+
+		-
+			message: '#^Property App\\Livewire\\CheckoutProcess\:\:\$userContacts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/CheckoutProcess.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/CurrencySwitcher.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$preferred_currency\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/CurrencySwitcher.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Model\>\:\:mapWithKeys\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\|string\)\: array\<string, array\{name\: string, symbol\: string, code\: string\}\>, Closure\(App\\Models\\Currency\)\: non\-empty\-array\<string, array\{name\: string, symbol\: string, code\: string\}\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Livewire/CurrencySwitcher.php
+
+		-
+			message: '#^Property App\\Livewire\\DomainCartButton\:\:\$listeners has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Livewire/DomainCartButton.php
+
+		-
+			message: '#^Property App\\Livewire\\DomainSearchPage\:\:\$details type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/DomainSearchPage.php
+
+		-
+			message: '#^Property App\\Livewire\\DomainSearchPage\:\:\$listeners has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Livewire/DomainSearchPage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Livewire/Hosting/CategoryShow.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Hosting/Configuration.php
+
+		-
+			message: '#^Method App\\Livewire\\Hosting\\Configuration\:\:domainsInCart\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Livewire/Hosting/Configuration.php
+
+		-
+			message: '#^Method App\\Livewire\\Hosting\\Configuration\:\:highlightedFeatures\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/Hosting/Configuration.php
+
+		-
+			message: '#^Method App\\Livewire\\Hosting\\Configuration\:\:userOwnedDomains\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Livewire/Hosting/Configuration.php
+
+		-
+			message: '#^Property App\\Livewire\\Hosting\\Configuration\:\:\$domainSearchResults type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/Hosting/Configuration.php
+
+		-
+			message: '#^Method App\\Livewire\\HostingUpsell\:\:transformPlans\(\) has parameter \$plans with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Livewire/HostingUpsell.php
+
+		-
+			message: '#^Method App\\Livewire\\HostingUpsell\:\:transformPlans\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/HostingUpsell.php
+
+		-
+			message: '#^Property App\\Livewire\\HostingUpsell\:\:\$cartDomains type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/HostingUpsell.php
+
+		-
+			message: '#^Property App\\Livewire\\HostingUpsell\:\:\$listeners has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Livewire/HostingUpsell.php
+
+		-
+			message: '#^Property App\\Livewire\\HostingUpsell\:\:\$plans type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Livewire/HostingUpsell.php
+
+		-
+			message: '#^Property App\\Livewire\\NavbarComponent\:\:\$listeners has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Livewire/NavbarComponent.php
+
+		-
+			message: '#^Class App\\Models\\Address uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Address.php
+
+		-
+			message: '#^Class App\\Models\\Contact uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Contact.php
+
+		-
+			message: '#^Method App\\Models\\Contact\:\:domains\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\Domain, App\\Models\\Contact, App\\Models\\DomainContact, ''pivot''\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\Domain, \$this\(App\\Models\\Contact\), App\\Models\\DomainContact, ''pivot''\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Contact.php
+
+		-
+			message: '#^Method App\\Models\\Contact\:\:user\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\User, App\\Models\\Contact\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\User, \$this\(App\\Models\\Contact\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Contact.php
+
+		-
+			message: '#^Class App\\Models\\Country uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Country.php
+
+		-
+			message: '#^Class App\\Models\\Coupon uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Coupon.php
+
+		-
+			message: '#^Class App\\Models\\Currency uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Currency.php
+
+		-
+			message: '#^Method App\\Models\\Currency\:\:getActiveCurrencies\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Currency.php
+
+		-
+			message: '#^Property App\\Models\\Currency\:\:\$uuid is not writable\.$#'
+			identifier: assign.propertyReadOnly
+			count: 1
+			path: app/Models/Currency.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Class App\\Models\\Domain uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Method App\\Models\\Domain\:\:contacts\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\Contact, App\\Models\\Domain, App\\Models\\DomainContact, ''pivot''\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\Contact, \$this\(App\\Models\\Domain\), App\\Models\\DomainContact, ''pivot''\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Method App\\Models\\Domain\:\:createdByAdmin\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\User, App\\Models\\Domain\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\User, \$this\(App\\Models\\Domain\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Method App\\Models\\Domain\:\:domainPrice\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasOneThrough\<App\\Models\\Tld, App\\Models\\TldPricing, App\\Models\\Domain\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasManyThrough\<Illuminate\\Database\\Eloquent\\Model, Illuminate\\Database\\Eloquent\\Model, \$this\(App\\Models\\Domain\)\>\|Illuminate\\Database\\Eloquent\\Relations\\HasOneThrough\<Illuminate\\Database\\Eloquent\\Model, Illuminate\\Database\\Eloquent\\Model, \$this\(App\\Models\\Domain\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Method App\\Models\\Domain\:\:nameservers\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\Nameserver, App\\Models\\Domain, Illuminate\\Database\\Eloquent\\Relations\\Pivot, ''pivot''\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\Nameserver, \$this\(App\\Models\\Domain\), Illuminate\\Database\\Eloquent\\Relations\\Pivot, ''pivot''\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Method App\\Models\\Domain\:\:owner\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\User, App\\Models\\Domain\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\User, \$this\(App\\Models\\Domain\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Method App\\Models\\Domain\:\:renewals\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\DomainRenewal, App\\Models\\Domain\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\DomainRenewal, \$this\(App\\Models\\Domain\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Method App\\Models\\Domain\:\:subscription\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\Subscription, App\\Models\\Domain\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\Subscription, \$this\(App\\Models\\Domain\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Method App\\Models\\Domain\:\:tldPricing\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\TldPricing, App\\Models\\Domain\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\TldPricing, \$this\(App\\Models\\Domain\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Domain.php
+
+		-
+			message: '#^Class App\\Models\\DomainContact uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/DomainContact.php
+
+		-
+			message: '#^Class App\\Models\\DomainPriceHistory uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/DomainPriceHistory.php
+
+		-
+			message: '#^Method App\\Models\\DomainPriceHistory\:\:changedBy\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/DomainPriceHistory.php
+
+		-
+			message: '#^Method App\\Models\\DomainPriceHistory\:\:domainPrice\(\) should return App\\Models\\Tld\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/DomainPriceHistory.php
+
+		-
+			message: '#^Method App\\Models\\DomainPriceHistory\:\:tldPricing\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\TldPricing, App\\Models\\DomainPriceHistory\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\TldPricing, \$this\(App\\Models\\DomainPriceHistory\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/DomainPriceHistory.php
+
+		-
+			message: '#^Class App\\Models\\DomainRenewal uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/DomainRenewal.php
+
+		-
+			message: '#^Method App\\Models\\DomainRenewal\:\:domain\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/DomainRenewal.php
+
+		-
+			message: '#^Method App\\Models\\DomainRenewal\:\:order\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/DomainRenewal.php
+
+		-
+			message: '#^Class App\\Models\\FailedDomainRegistration has PHPDoc tag @property for property \$contact_ids with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/FailedDomainRegistration.php
+
+		-
+			message: '#^Class App\\Models\\FailedDomainRegistration uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/FailedDomainRegistration.php
+
+		-
+			message: '#^Method App\\Models\\FailedDomainRegistration\:\:order\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/FailedDomainRegistration.php
+
+		-
+			message: '#^Method App\\Models\\FailedDomainRegistration\:\:orderItem\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/FailedDomainRegistration.php
+
+		-
+			message: '#^Method App\\Models\\FeatureCategory\:\:hostingFeatures\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/FeatureCategory.php
+
+		-
+			message: '#^Method App\\Models\\HostingCategory\:\:getActiveCategories\(\) return type with generic class Illuminate\\Database\\Eloquent\\Collection does not specify its types\: TKey, TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingCategory.php
+
+		-
+			message: '#^Method App\\Models\\HostingCategory\:\:plans\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingCategory.php
+
+		-
+			message: '#^Method App\\Models\\HostingFeature\:\:featureCategory\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingFeature.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlan\:\:category\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlan.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlan\:\:planFeatures\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlan.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlan\:\:planPrices\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlan.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlan\:\:promotions\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlan.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlanFeature\:\:hostingFeature\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanFeature.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlanFeature\:\:hostingPlan\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanFeature.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/HostingPlanPrice.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlanPrice\:\:currency\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanPrice.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlanPrice\:\:current\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanPrice.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlanPrice\:\:current\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanPrice.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlanPrice\:\:hostingPlanPriceHistories\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanPrice.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlanPrice\:\:plan\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanPrice.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/HostingPlanPrice.php
+
+		-
+			message: '#^Class App\\Models\\HostingPlanPriceHistory uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanPriceHistory.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlanPriceHistory\:\:changedBy\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanPriceHistory.php
+
+		-
+			message: '#^Method App\\Models\\HostingPlanPriceHistory\:\:hostingPlanPrice\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPlanPriceHistory.php
+
+		-
+			message: '#^Method App\\Models\\HostingPromotion\:\:plan\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/HostingPromotion.php
+
+		-
+			message: '#^Class App\\Models\\Nameserver uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Nameserver.php
+
+		-
+			message: '#^Method App\\Models\\Nameserver\:\:domains\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Nameserver.php
+
+		-
+			message: '#^Class App\\Models\\Order has PHPDoc tag @property for property \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Class App\\Models\\Order uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Method App\\Models\\Order\:\:domainRenewals\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\DomainRenewal, App\\Models\\Order\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\DomainRenewal, \$this\(App\\Models\\Order\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Method App\\Models\\Order\:\:failedDomainRegistrations\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\FailedDomainRegistration, App\\Models\\Order\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\FailedDomainRegistration, \$this\(App\\Models\\Order\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Method App\\Models\\Order\:\:orderItems\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\OrderItem, App\\Models\\Order\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\OrderItem, \$this\(App\\Models\\Order\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Method App\\Models\\Order\:\:payments\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Payment, App\\Models\\Order\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Payment, \$this\(App\\Models\\Order\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Method App\\Models\\Order\:\:user\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\User, App\\Models\\Order\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\User, \$this\(App\\Models\\Order\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Class App\\Models\\OrderItem has PHPDoc tag @property for property \$metadata with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/OrderItem.php
+
+		-
+			message: '#^Class App\\Models\\OrderItem uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrderItem.php
+
+		-
+			message: '#^Method App\\Models\\OrderItem\:\:domain\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrderItem.php
+
+		-
+			message: '#^Method App\\Models\\OrderItem\:\:order\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrderItem.php
+
+		-
+			message: '#^Class App\\Models\\Payment uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Method App\\Models\\Payment\:\:failed\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Method App\\Models\\Payment\:\:failed\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Method App\\Models\\Payment\:\:latestForOrder\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Method App\\Models\\Payment\:\:latestForOrder\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Method App\\Models\\Payment\:\:successful\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Method App\\Models\\Payment\:\:successful\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^PHPDoc tag @method for method App\\Models\\Payment\:\:failed\(\) return type contains generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^PHPDoc tag @method for method App\\Models\\Payment\:\:successful\(\) return type contains generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Payment.php
+
+		-
+			message: '#^Class App\\Models\\Permission uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Permission.php
+
+		-
+			message: '#^Class App\\Models\\Role uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Role.php
+
+		-
+			message: '#^Method App\\Models\\Role\:\:permissions\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Role.php
+
+		-
+			message: '#^Method App\\Models\\Role\:\:users\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Role.php
+
+		-
+			message: '#^Class App\\Models\\Setting uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Setting.php
+
+		-
+			message: '#^Class App\\Models\\Subscription has PHPDoc tag @property for property \$product_snapshot with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Class App\\Models\\Subscription uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:active\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:active\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:autoRenewable\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:autoRenewable\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:createdByAdmin\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:expiringSoon\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:expiringSoon\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:extendSubscription\(\) has parameter \$renewalSnapshot with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:extendSubscriptionByMonths\(\) has parameter \$renewalSnapshot with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:linkedDomain\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasOne\<App\\Models\\Domain, static\(App\\Models\\Subscription\)\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasOne\<App\\Models\\Domain, \$this\(App\\Models\\Subscription\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:plan\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:planPrice\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Class App\\Models\\Tld uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Method App\\Models\\Tld\:\:currentTldPricings\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\TldPricing, App\\Models\\Tld\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\TldPricing, \$this\(App\\Models\\Tld\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Method App\\Models\\Tld\:\:internationalTlds\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Method App\\Models\\Tld\:\:internationalTlds\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Method App\\Models\\Tld\:\:localTlds\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Method App\\Models\\Tld\:\:localTlds\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Method App\\Models\\Tld\:\:tld\(\) return type with generic class Illuminate\\Database\\Eloquent\\Casts\\Attribute does not specify its types\: TGet, TSet$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Method App\\Models\\Tld\:\:tldPricings\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\TldPricing, App\\Models\\Tld\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\TldPricing, \$this\(App\\Models\\Tld\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and App\\Enums\\TldType\:\:Local will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 2
+			path: app/Models/Tld.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:format\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/TldPricing.php
+
+		-
+			message: '#^Class App\\Models\\TldPricing uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/TldPricing.php
+
+		-
+			message: '#^Method App\\Models\\TldPricing\:\:currency\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/TldPricing.php
+
+		-
+			message: '#^Method App\\Models\\TldPricing\:\:current\(\) has parameter \$query with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/TldPricing.php
+
+		-
+			message: '#^Method App\\Models\\TldPricing\:\:current\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/TldPricing.php
+
+		-
+			message: '#^Method App\\Models\\TldPricing\:\:domainPriceHistories\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\DomainPriceHistory, static\(App\\Models\\TldPricing\)\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\DomainPriceHistory, \$this\(App\\Models\\TldPricing\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/TldPricing.php
+
+		-
+			message: '#^Method App\\Models\\TldPricing\:\:tld\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/TldPricing.php
+
+		-
+			message: '#^Class App\\Models\\Transaction uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Transaction.php
+
+		-
+			message: '#^Method App\\Models\\Transaction\:\:order\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Transaction.php
+
+		-
+			message: '#^Method App\\Models\\Transaction\:\:payment\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Transaction.php
+
+		-
+			message: '#^Method App\\Models\\Transaction\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Transaction.php
+
+		-
+			message: '#^Class App\\Models\\Transfer uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Transfer.php
+
+		-
+			message: '#^Method App\\Models\\Transfer\:\:domain\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Transfer.php
+
+		-
+			message: '#^Method App\\Models\\Transfer\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Transfer.php
+
+		-
+			message: '#^Class App\\Models\\User uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:address\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasOne does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:contacts\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Contact, App\\Models\\User\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Contact, \$this\(App\\Models\\User\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:domains\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Domain, App\\Models\\User\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Domain, \$this\(App\\Models\\User\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:orders\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Order, App\\Models\\User\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Order, \$this\(App\\Models\\User\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:roles\(\) should return Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\Role, App\\Models\\User, Illuminate\\Database\\Eloquent\\Relations\\Pivot, ''pivot''\> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\Role, \$this\(App\\Models\\User\), Illuminate\\Database\\Eloquent\\Relations\\Pivot, ''pivot''\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:subscriptions\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Subscription, App\\Models\\User\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\Subscription, \$this\(App\\Models\\User\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Notifications\\CriticalOrderFailureNotification\:\:via\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Notifications/CriticalOrderFailureNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\DomainRegistrationAbandonedNotification\:\:via\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Notifications/DomainRegistrationAbandonedNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\DomainRegistrationFailedNotification\:\:__construct\(\) has parameter \$results with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Notifications/DomainRegistrationFailedNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\DomainRegistrationFailedNotification\:\:via\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Notifications/DomainRegistrationFailedNotification.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 2
+			path: app/Notifications/DomainRegistrationFailedNotification.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 2
+			path: app/Notifications/DomainRegistrationFailedNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\DomainRegistrationFailedUserNotification\:\:__construct\(\) has parameter \$results with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Notifications/DomainRegistrationFailedUserNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\DomainRegistrationFailedUserNotification\:\:via\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Notifications/DomainRegistrationFailedUserNotification.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Notifications/DomainRegistrationFailedUserNotification.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 1
+			path: app/Notifications/DomainRegistrationFailedUserNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\PartialRegistrationFailureNotification\:\:__construct\(\) has parameter \$results with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Notifications/PartialRegistrationFailureNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\PartialRegistrationFailureNotification\:\:via\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Notifications/PartialRegistrationFailureNotification.php
+
+		-
+			message: '#^Unable to resolve the template type TKey in call to function collect$#'
+			identifier: argument.templateType
+			count: 2
+			path: app/Notifications/PartialRegistrationFailureNotification.php
+
+		-
+			message: '#^Unable to resolve the template type TValue in call to function collect$#'
+			identifier: argument.templateType
+			count: 2
+			path: app/Notifications/PartialRegistrationFailureNotification.php
+
+		-
+			message: '#^Access to property \$domainPrice on an unknown class App\\Models\\DomainPriceCurrency\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Observers/DomainPriceCurrencyObserver.php
+
+		-
+			message: '#^Access to property \$id on an unknown class App\\Models\\DomainPriceCurrency\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Observers/DomainPriceCurrencyObserver.php
+
+		-
+			message: '#^Access to property \$redemption_price on an unknown class App\\Models\\DomainPriceCurrency\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Observers/DomainPriceCurrencyObserver.php
+
+		-
+			message: '#^Access to property \$registration_price on an unknown class App\\Models\\DomainPriceCurrency\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Observers/DomainPriceCurrencyObserver.php
+
+		-
+			message: '#^Access to property \$renewal_price on an unknown class App\\Models\\DomainPriceCurrency\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Observers/DomainPriceCurrencyObserver.php
+
+		-
+			message: '#^Access to property \$transfer_price on an unknown class App\\Models\\DomainPriceCurrency\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Observers/DomainPriceCurrencyObserver.php
+
+		-
+			message: '#^Call to method getOriginal\(\) on an unknown class App\\Models\\DomainPriceCurrency\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Observers/DomainPriceCurrencyObserver.php
+
+		-
+			message: '#^Call to method isDirty\(\) on an unknown class App\\Models\\DomainPriceCurrency\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Observers/DomainPriceCurrencyObserver.php
+
+		-
+			message: '#^Parameter \$domainPriceCurrency of method App\\Observers\\DomainPriceCurrencyObserver\:\:updating\(\) has invalid type App\\Models\\DomainPriceCurrency\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Observers/DomainPriceCurrencyObserver.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int\<0, max\> and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Observers/PaymentObserver.php
+
+		-
+			message: '#^Method App\\Services\\Audit\\ActivityLogger\:\:logAuthEvent\(\) has parameter \$context with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Audit/ActivityLogger.php
+
+		-
+			message: '#^Method App\\Services\\Audit\\ActivityLogger\:\:requestContext\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Audit/ActivityLogger.php
+
+		-
+			message: '#^Method App\\Services\\Audit\\ActivityLogger\:\:sanitizeAttributes\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Audit/ActivityLogger.php
+
+		-
+			message: '#^Method App\\Services\\Audit\\ActivityLogger\:\:sanitizeAttributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Audit/ActivityLogger.php
+
+		-
+			message: '#^Method App\\Services\\BillingService\:\:createOrderFromCart\(\) has parameter \$billingData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/BillingService.php
+
+		-
+			message: '#^Method App\\Services\\BillingService\:\:createOrderFromCart\(\) has parameter \$checkoutData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/BillingService.php
+
+		-
+			message: '#^Method App\\Services\\BillingService\:\:createOrderFromCart\(\) has parameter \$preparedCartData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/BillingService.php
+
+		-
+			message: '#^Method App\\Services\\BillingService\:\:determineOrderType\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/BillingService.php
+
+		-
+			message: '#^Method App\\Services\\BillingService\:\:getPreparedCartData\(\) has parameter \$preparedCartData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/BillingService.php
+
+		-
+			message: '#^Method App\\Services\\BillingService\:\:getPreparedCartData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/BillingService.php
+
+		-
+			message: '#^Method App\\Services\\BillingService\:\:validateCartData\(\) has parameter \$cartData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/BillingService.php
+
+		-
+			message: '#^Call to function is_string\(\) with App\\Enums\\Coupons\\CouponType will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Services/Coupon/CouponService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''percentage'' and ''percentage'' will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Services/Coupon/CouponService.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Services/Coupon/CouponService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainRegistrationServiceInterface\:\:createContacts\(\) has parameter \$contactData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainRegistrationServiceInterface.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainRegistrationServiceInterface\:\:createContacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainRegistrationServiceInterface.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainServiceInterface\:\:checkAvailability\(\) has parameter \$domain with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainServiceInterface.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainServiceInterface\:\:getDomainList\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainServiceInterface.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainServiceInterface\:\:getNameservers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainServiceInterface.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainServiceInterface\:\:reActivateDomain\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainServiceInterface.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainServiceInterface\:\:setAutoRenew\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainServiceInterface.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainServiceInterface\:\:suggestDomains\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainServiceInterface.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainServiceInterface\:\:updateDomainContacts\(\) has parameter \$contactInfo with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainServiceInterface.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\DomainServiceInterface\:\:updateNameservers\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/DomainServiceInterface.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Instanceof between string and DateTimeImmutable will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:checkAvailability\(\) has parameter \$domains with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:checkContacts\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:checkContacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:checkDomain\(\) has parameter \$domains with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:checkDomain\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:checkHosts\(\) has parameter \$hosts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:checkHosts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:createContacts\(\) has parameter \$contacts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:createContacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:createDomain\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:createHost\(\) has parameter \$addresses with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:deleteContact\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:extractAvailabilityValue\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:extractDomainValue\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:extractReasonValue\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:generateDomainSuggestions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:getCommonTlds\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:getDomainList\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:getNameservers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:getNestedValue\(\) has parameter \$array with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:infoContact\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:reActivateDomain\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:searchDomains\(\) has parameter \$specificTlds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:searchDomains\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:setAutoRenew\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:suggestDomains\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:updateContact\(\) has parameter \$contactData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:updateContact\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:updateDomainContacts\(\) has parameter \$contactInfo with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:updateDomainNameservers\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\EppDomainService\:\:updateNameservers\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Property App\\Services\\Domain\\EppDomainService\:\:\$commonTlds type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Property App\\Services\\Domain\\EppDomainService\:\:\$config type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Property App\\Services\\Domain\\EppDomainService\:\:\$suggestionPatterns type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/EppDomainService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Domain/InternationalDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:addContactDetails\(\) has parameter \$contactInfo with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:addContactDetails\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:addContactDetails\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:checkAvailability\(\) has parameter \$domain with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:createContacts\(\) has parameter \$contactData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:createContacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:disableWhoisGuard\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:enableWhoisGuard\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:getAuthCode\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:getDomainContacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:getDomainList\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:getDomainLock\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:getNameservers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:getTldList\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:getTldSpecificParams\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:getTransferStatus\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:getUserBalance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:makeApiCall\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:reActivateDomain\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:resubmitTransfer\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:setAutoRenew\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:suggestDomains\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:updateDomainContacts\(\) has parameter \$contactInfo with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:updateNameservers\(\) has parameter \$nameservers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:validateContactInfo\(\) has parameter \$contactInfo with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\Domain\\NamecheapDomainService\:\:validateDomainForTransfer\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Domain/NamecheapDomainService.php
+
+		-
+			message: '#^Method App\\Services\\DomainRegistrationService\:\:processDomainRegistrations\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/DomainRegistrationService.php
+
+		-
+			message: '#^Method App\\Services\\DomainRegistrationService\:\:processDomainRegistrations\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/DomainRegistrationService.php
+
+		-
+			message: '#^Method App\\Services\\DomainRegistrationService\:\:recordFailedRegistration\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/DomainRegistrationService.php
+
+		-
+			message: '#^Method App\\Services\\DomainRegistrationService\:\:recordFailedRegistration\(\) has parameter \$orderItem with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/DomainRegistrationService.php
+
+		-
+			message: '#^Method App\\Services\\DomainRegistrationService\:\:registerDomain\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/DomainRegistrationService.php
+
+		-
+			message: '#^Method App\\Services\\DomainRegistrationService\:\:registerDomain\(\) has parameter \$orderItem with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/DomainRegistrationService.php
+
+		-
+			message: '#^Method App\\Services\\DomainRegistrationService\:\:registerDomain\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/DomainRegistrationService.php
+
+		-
+			message: '#^Method App\\Services\\DomainRegistrationService\:\:sendNotifications\(\) has parameter \$results with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/DomainRegistrationService.php
+
+		-
+			message: '#^Method App\\Services\\DomainRegistrationService\:\:updateOrderStatus\(\) has parameter \$results with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/DomainRegistrationService.php
+
+		-
+			message: '#^Offset ''contact_ids'' on string\|null in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Services/KPayPaymentStatusService.php
+
+		-
+			message: '#^Offset ''selected_contact_id'' on string\|null in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Services/KPayPaymentStatusService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and 0 will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/KPayPaymentStatusService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and 1 will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/KPayPaymentStatusService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and 2 will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/KPayPaymentStatusService.php
+
+		-
+			message: '#^Method App\\Services\\NotificationService\:\:notifyAdminOfFailedRegistration\(\) has parameter \$results with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/NotificationService.php
+
+		-
+			message: '#^Method App\\Services\\NotificationService\:\:notifyAdminOfPartialFailure\(\) has parameter \$results with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/NotificationService.php
+
+		-
+			message: '#^Method App\\Services\\NotificationService\:\:notifyUserOfFailedRegistration\(\) has parameter \$results with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/NotificationService.php
+
+		-
+			message: '#^Method App\\Services\\OrderJobDispatcherService\:\:dispatchJobsForOrder\(\) has parameter \$contactIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OrderJobDispatcherService.php
+
+		-
+			message: '#^Method App\\Services\\OrderProcessingService\:\:resolveHostingPlanPricingId\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/OrderProcessingService.php
+
+		-
+			message: '#^Method App\\Services\\PaymentMethodValidator\:\:validate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentMethodValidator.php
+
+		-
+			message: '#^Method App\\Services\\PaymentMethodValidator\:\:validatePayPal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentMethodValidator.php
+
+		-
+			message: '#^Method App\\Services\\PaymentMethodValidator\:\:validateStripe\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentMethodValidator.php
+
+		-
+			message: '#^Method App\\Services\\PaymentService\:\:checkKPayPaymentStatus\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Method App\\Services\\PaymentService\:\:processKPayPayment\(\) has parameter \$paymentData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Method App\\Services\\PaymentService\:\:processKPayPayment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Method App\\Services\\PaymentService\:\:processPayment\(\) has parameter \$paymentData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Method App\\Services\\PaymentService\:\:processPayment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Method App\\Services\\PaymentService\:\:processStripePayment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Method App\\Services\\PaymentService\:\:validateStripeMinimumAmount\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Offset ''amount''\|''cname''\|''details''\|''email''\|''msisdn''\|''pmethod''\|''refid'' on array\{msisdn\: string, email\: string, details\: non\-falsy\-string, refid\: string, amount\: int, currency\: string, cname\: string, cnumber\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Domain\:\:\$registrar\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/RenewalService.php
+
+		-
+			message: '#^Method App\\Services\\RenewalService\:\:processDomainRenewals\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: app/Services/RenewalService.php
+
+		-
+			message: '#^Method App\\Services\\StripeCheckoutService\:\:createSessionFromOrder\(\) has parameter \$validationResult with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/StripeCheckoutService.php
+
+		-
+			message: '#^Method App\\Services\\SubscriptionRenewalService\:\:processSubscriptionRenewals\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: app/Services/SubscriptionRenewalService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:assignInstanceToPrivateNetwork\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:assignTag\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:cancelInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:cancelObjectStorage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createImage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createInstance\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createObjectStorage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createPrivateNetwork\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createRole\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createRole\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createSecret\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createSnapshot\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createTag\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:createUser\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getClient\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getImage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getImageStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getObjectStorage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getObjectStorageStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getPrivateNetwork\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getRole\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getSecret\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getSnapshot\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getTag\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getUser\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:getUserObjectStorageCredentials\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:instanceAction\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listApiPermissions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listImages\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listImages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listInstanceAudits\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listInstanceAudits\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listInstances\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listObjectStorages\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listObjectStorages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listPrivateNetworks\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listPrivateNetworks\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listRoles\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listRoles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listSecrets\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listSecrets\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listSnapshots\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listSnapshots\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listTagAssignments\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listTagAssignments\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listTags\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listTags\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listUsers\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:listUsers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:reinstallInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:rescueInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:resetInstancePassword\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:restartInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:revertSnapshot\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:shutdownInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:startInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:stopInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateImage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateObjectStorage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updatePrivateNetwork\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updatePrivateNetwork\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateRole\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateRole\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateSecret\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateSecret\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateSnapshot\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateSnapshot\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateTag\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateTag\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateUser\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:updateUser\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:upgradeInstance\(\) has parameter \$addOns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Method App\\Services\\Vps\\ContaboService\:\:upgradeInstance\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Vps/ContaboService.php
+
+		-
+			message: '#^Call to an undefined method Faker\\Generator\:\:secondaryAddress\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: database/factories/AddressFactory.php
+
+		-
+			message: '#^Call to an undefined method Faker\\Generator\:\:state\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: database/factories/AddressFactory.php
+
+		-
+			message: '#^Call to an undefined method App\\Models\\Tld\:\:domainPriceCurrencies\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: database/factories/DomainPriceFactory.php
+
+		-
+			message: '#^Method Database\\Factories\\DomainPriceFactory\:\:createPriceCurrenciesFromData\(\) has parameter \$priceData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: database/factories/DomainPriceFactory.php
+
+		-
+			message: '#^Comparison operation "\>" between 0 and 0 is always false\.$#'
+			identifier: greater.alwaysFalse
+			count: 1
+			path: database/seeders/TldPricingSeeder.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: mixed$#'
+			identifier: match.unhandled
+			count: 2
+			path: database/seeders/TldPricingSeeder.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: string$#'
+			identifier: match.unhandled
+			count: 1
+			path: database/seeders/TldPricingSeeder.php
+
+		-
+			message: '#^Method Database\\Seeders\\TldPricingSeeder\:\:createOrGetTld\(\) has parameter \$priceData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: database/seeders/TldPricingSeeder.php

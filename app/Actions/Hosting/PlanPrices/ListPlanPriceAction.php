@@ -6,6 +6,7 @@ namespace App\Actions\Hosting\PlanPrices;
 
 use App\Models\HostingPlanPrice;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 final class ListPlanPriceAction
 {
@@ -16,13 +17,13 @@ final class ListPlanPriceAction
             ->orderByDesc('id');
 
         if ($categoryUuid !== null) {
-            $query->whereHas('plan.category', function ($q) use ($categoryUuid): void {
+            $query->whereHas('plan.category', function (Builder $q) use ($categoryUuid): void {
                 $q->where('uuid', $categoryUuid);
             });
         }
 
         if ($planUuid !== null) {
-            $query->whereHas('plan', function ($q) use ($planUuid): void {
+            $query->whereHas('plan', function (Builder $q) use ($planUuid): void {
                 $q->where('uuid', $planUuid);
             });
         }
@@ -32,11 +33,11 @@ final class ListPlanPriceAction
         }
 
         if ($search !== null) {
-            $query->where(function ($q) use ($search): void {
+            $query->where(function (Builder $q) use ($search): void {
                 $q->where('billing_cycle', 'like', sprintf('%%%s%%', $search))
-                    ->orWhereHas('plan', function ($q) use ($search): void {
+                    ->orWhereHas('plan', function (Builder $q) use ($search): void {
                         $q->where('name', 'like', sprintf('%%%s%%', $search))
-                            ->orWhereHas('category', function ($q) use ($search): void {
+                            ->orWhereHas('category', function (Builder $q) use ($search): void {
                                 $q->where('name', 'like', sprintf('%%%s%%', $search));
                             });
                     });

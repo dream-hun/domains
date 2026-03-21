@@ -192,7 +192,7 @@ final class VpsController extends Controller
             $assignedInstanceIds = Subscription::query()
                 ->whereNotNull('provider_resource_id')
                 ->pluck('provider_resource_id')
-                ->map(fn ($id): int => (int) $id)
+                ->map(fn (mixed $id): int => (int) $id)
                 ->all();
 
             $unassignedInstances = $allApiInstances

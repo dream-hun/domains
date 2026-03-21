@@ -8,6 +8,7 @@ use App\Actions\Order\ProcessOrderAfterPaymentAction;
 use App\Models\Order;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 
 final class ProcessPendingJobs extends Command
@@ -48,7 +49,7 @@ final class ProcessPendingJobs extends Command
         $orders = Order::query()
             ->where('payment_status', 'paid')
             ->whereIn('status', ['pending', 'processing'])
-            ->where(function ($query) use ($cutoffTime): void {
+            ->where(function (Builder $query) use ($cutoffTime): void {
                 $query->whereNull('processed_at')
                     ->orWhere('processed_at', '<=', $cutoffTime);
             })->oldest()

@@ -323,7 +323,7 @@ class Configuration extends Component
     {
         $cartContent = Cart::getContent();
 
-        return $cartContent->filter(fn ($item): bool => $item->attributes->get('type') === 'domain');
+        return $cartContent->filter(fn (mixed $item): bool => $item->attributes->get('type') === 'domain');
     }
 
     #[Computed]
@@ -557,7 +557,7 @@ class Configuration extends Component
         $cartContent = Cart::getContent();
 
         if ($domainName) {
-            $alreadyInCart = $cartContent->first(function ($item) use ($domainName): bool {
+            $alreadyInCart = $cartContent->first(function (mixed $item) use ($domainName): bool {
                 $isHosting = $item->attributes->get('type') === 'hosting';
 
                 if (! $isHosting) {

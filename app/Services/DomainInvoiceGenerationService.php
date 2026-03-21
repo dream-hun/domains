@@ -9,6 +9,7 @@ use App\Models\Domain;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -67,7 +68,7 @@ final readonly class DomainInvoiceGenerationService
         return OrderItem::query()
             ->where('domain_name', $domain->name)
             ->where('domain_type', 'renewal')
-            ->whereHas('order', fn ($query) => $query->where('status', 'pending'))
+            ->whereHas('order', fn (Builder $query) => $query->where('status', 'pending'))
             ->exists();
     }
 

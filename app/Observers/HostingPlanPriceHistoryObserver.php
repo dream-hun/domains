@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\HostingPlanPrice;
+use Illuminate\Database\Eloquent\Builder;
 
 class HostingPlanPriceHistoryObserver
 {
@@ -61,7 +62,7 @@ class HostingPlanPriceHistoryObserver
             ->where('currency_id', $planPrice->currency_id)
             ->where('billing_cycle', $planPrice->billing_cycle)
             ->where('is_current', true)
-            ->when($planPrice->exists, fn ($query) => $query->where('id', '!=', $planPrice->id))
+            ->when($planPrice->exists, fn (Builder $query) => $query->where('id', '!=', $planPrice->id))
             ->update(['is_current' => false]);
     }
 }

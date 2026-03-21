@@ -33,6 +33,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -178,7 +179,7 @@ final class DomainController extends Controller
 
             $registrarInfo = $action->handle($domain);
             $domain->load(['nameservers']);
-            $domain->load(['contacts' => function ($query): void {
+            $domain->load(['contacts' => function (mixed $query): void {
                 $query->withPivot('type', 'user_id')->withoutGlobalScopes();
             }]);
 
@@ -245,7 +246,7 @@ final class DomainController extends Controller
 
         $domain->load(['owner']);
 
-        $users = User::query()->with('roles')->whereHas('roles', function ($query): void {
+        $users = User::query()->with('roles')->whereHas('roles', function (Builder $query): void {
             $query->where('roles.id', '!=', 1);
         })->where('id', '!=', $domain->owner_id)->get();
 
@@ -269,7 +270,7 @@ final class DomainController extends Controller
 
         $countries = Country::query()->select('name', 'iso_code')->get();
         $domain->load(['owner', 'nameservers']);
-        $domain->load(['contacts' => function ($query): void {
+        $domain->load(['contacts' => function (mixed $query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
         $user = auth()->user();
@@ -280,9 +281,9 @@ final class DomainController extends Controller
                 ->get();
         } else {
             $availableContacts = Contact::query()->withoutGlobalScopes()
-                ->where(function ($query) use ($user, $domain): void {
+                ->where(function (Builder $query) use ($user, $domain): void {
                     $query->where('user_id', $user->id)
-                        ->orWhereHas('domains', function ($q) use ($domain): void {
+                        ->orWhereHas('domains', function (Builder $q) use ($domain): void {
                             $q->where('domains.id', $domain->id);
                         })
                         ->orWhereNull('user_id');
@@ -357,7 +358,7 @@ final class DomainController extends Controller
         $validTypes = ['registrant', 'admin', 'technical', 'billing'];
         abort_unless(in_array($type, $validTypes), 404, 'Invalid contact type');
 
-        $domain->load(['contacts' => function ($query): void {
+        $domain->load(['contacts' => function (mixed $query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
         $user = auth()->user();
@@ -368,9 +369,9 @@ final class DomainController extends Controller
                 ->get();
         } else {
             $availableContacts = Contact::query()->withoutGlobalScopes()
-                ->where(function ($query) use ($user, $domain): void {
+                ->where(function (Builder $query) use ($user, $domain): void {
                     $query->where('user_id', $user->id)
-                        ->orWhereHas('domains', function ($q) use ($domain): void {
+                        ->orWhereHas('domains', function (Builder $q) use ($domain): void {
                             $q->where('domains.id', $domain->id);
                         })
                         ->orWhereNull('user_id');

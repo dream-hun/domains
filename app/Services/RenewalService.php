@@ -252,7 +252,7 @@ final readonly class RenewalService
         }
 
         return Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
             ->where('name', '.'.$tld)
             ->first();
     }

@@ -276,7 +276,7 @@ readonly class RegisterDomainAction
     {
         $tldString = $this->extractTld($domainName);
         $tld = Tld::query()
-            ->with(['currentTldPricings' => fn ($q) => $q->with('currency')])
+            ->with(['currentTldPricings' => fn (mixed $q) => $q->with('currency')])
             ->where('name', $tldString)
             ->firstOrFail();
 
@@ -332,7 +332,7 @@ readonly class RegisterDomainAction
             ]);
 
         $normalized = collect($sourceNameservers)
-            ->map(fn ($nameserver): string => mb_strtolower(mb_trim((string) $nameserver)))
+            ->map(fn (mixed $nameserver): string => mb_strtolower(mb_trim((string) $nameserver)))
             ->filter(fn (string $nameserver): bool => $nameserver !== '' && $nameserver !== '0')
             ->unique()
             ->values();

@@ -18,7 +18,7 @@ use Throwable;
 
 final class CartSummary extends Component
 {
-    public $currency;
+    public string $currency;
 
     public float $discountAmount = 0;
 

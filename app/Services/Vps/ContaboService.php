@@ -1032,6 +1032,7 @@ class ContaboService
         return Http::withToken($this->getAccessToken())
             ->withHeaders([
                 'x-request-id' => (string) Str::uuid(),
+                'Content-Type' => 'application/json',
             ])
             ->baseUrl($this->baseUrl);
     }

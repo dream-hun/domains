@@ -138,7 +138,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
             foreach ($suggestedDomains as $suggestedDomain) {
                 $tld = $this->extractTld($suggestedDomain);
                 $priceInfo = Tld::query()
-                    ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                    ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
                     ->where('name', '.'.$tld)
                     ->first();
 
@@ -443,7 +443,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
         try {
             $tld = $this->extractTld($domain);
             $priceInfo = Tld::query()
-                ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
                 ->where('name', '.'.$tld)
                 ->first();
 
@@ -1218,7 +1218,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
      *
      * @throws Exception
      */
-    public function renewDomain(string $domain, $currentExpirationDate, string $period): RenewDomain
+    public function renewDomain(string $domain, string $currentExpirationDate, string $period): RenewDomain
     {
         try {
             $this->ensureConnection();
@@ -1338,7 +1338,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
             $domain = mb_rtrim($domain, '.');
 
             // Filter out empty nameservers and normalize hostnames
-            $nameservers = array_filter(array_map(function ($ns): string {
+            $nameservers = array_filter(array_map(function (mixed $ns): string {
                 // Normalize nameserver hostname (remove trailing dot if present)
                 // Ensure $ns is a string before passing to mb_trim
                 $ns = is_null($ns) ? '' : (string) $ns;
@@ -1636,7 +1636,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                                 $domainParts = explode('.', $domainName);
                                 $tld = count($domainParts) > 1 ? implode('.', array_slice($domainParts, 1)) : '';
                                 $priceInfo = Tld::query()
-                                    ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                                    ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
                                     ->where('name', '.'.$tld)
                                     ->where('status', 'active')
                                     ->first();
@@ -2171,7 +2171,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
     /**
      * Helper method to get nested array values using dot notation
      */
-    private function getNestedValue(array $array, string $path)
+    private function getNestedValue(array $array, string $path): mixed
     {
         $keys = explode('.', $path);
         $value = $array;

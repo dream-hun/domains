@@ -6,12 +6,14 @@ namespace App\Http\Middleware;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\User;
 use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 final class AuthGates
 {
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         $user = auth()->user();
 
@@ -30,7 +32,7 @@ final class AuthGates
         }
 
         foreach ($permissionsArray as $title => $roles) {
-            Gate::define($title, fn ($user): bool => array_intersect($user->roles->pluck('id')->toArray(), $roles) !== []);
+            Gate::define($title, fn (User $user): bool => array_intersect($user->roles->pluck('id')->toArray(), $roles) !== []);
         }
 
         return $next($request);

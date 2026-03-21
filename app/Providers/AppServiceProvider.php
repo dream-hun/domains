@@ -20,6 +20,7 @@ use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use Carbon\CarbonImmutable;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
@@ -68,7 +69,7 @@ final class AppServiceProvider extends ServiceProvider
 
     private function registerDomainServices(): void
     {
-        $this->app->singleton(fn ($app): DomainSearchHelper => new DomainSearchHelper(
+        $this->app->singleton(fn (Application $app): DomainSearchHelper => new DomainSearchHelper(
             $app->make(NamecheapDomainService::class),
             $app->make(DomainRegistrationServiceInterface::class)
         ));

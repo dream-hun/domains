@@ -173,7 +173,7 @@ final class Order extends Model
     {
         parent::boot();
 
-        self::creating(function ($order): void {
+        self::creating(function (Order $order): void {
             if (empty($order->uuid)) {
                 $order->uuid = (string) Str::uuid();
             }

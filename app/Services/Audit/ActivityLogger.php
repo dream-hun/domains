@@ -70,7 +70,7 @@ final class ActivityLogger
             'guard' => $context['guard'] ?? null,
             'request' => $this->requestContext(),
             'context' => Arr::except($context, ['guard']),
-        ], fn ($value): bool => $value !== null && $value !== []);
+        ], fn (mixed $value): bool => $value !== null && $value !== []);
 
         $causer = $user ?? $this->resolveCauser();
         $causerId = $causer instanceof Model ? $causer : ($causer instanceof Authenticatable ? $causer->getAuthIdentifier() : null);
@@ -124,8 +124,8 @@ final class ActivityLogger
     private function sanitizeAttributes(array $attributes): array
     {
         return collect($attributes)
-            ->reject(fn ($value, string $key): bool => in_array($key, self::SENSITIVE_FIELDS, true))
-            ->map(fn ($value): mixed => $this->normalizeValue($value))
+            ->reject(fn (mixed $value, string $key): bool => in_array($key, self::SENSITIVE_FIELDS, true))
+            ->map(fn (mixed $value): mixed => $this->normalizeValue($value))
             ->all();
     }
 
@@ -177,7 +177,7 @@ final class ActivityLogger
         }
 
         if (is_array($value)) {
-            return collect($value)->map(fn ($inner): mixed => $this->normalizeValue($inner))->all();
+            return collect($value)->map(fn (mixed $inner): mixed => $this->normalizeValue($inner))->all();
         }
 
         return (string) $value;

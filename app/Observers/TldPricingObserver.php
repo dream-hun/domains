@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\TldPricing;
+use Illuminate\Database\Eloquent\Builder;
 
 class TldPricingObserver
 {
@@ -62,7 +63,7 @@ class TldPricingObserver
             ->where('tld_id', $tldPricing->tld_id)
             ->where('currency_id', $tldPricing->currency_id)
             ->where('is_current', true)
-            ->when($tldPricing->exists, fn ($query) => $query->where('id', '!=', $tldPricing->id))
+            ->when($tldPricing->exists, fn (Builder $query) => $query->where('id', '!=', $tldPricing->id))
             ->update(['is_current' => false]);
     }
 }
