@@ -3,6 +3,16 @@
         <h3 class="card-title"><i class="fas fa-cogs mr-1"></i> Actions</h3>
     </div>
     <div class="card-body">
+        @if (session('generated_password'))
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-key mr-1"></i> Generated Root Password:</strong>
+                <code class="ml-1 user-select-all">{{ session('generated_password') }}</code>
+                <br><small class="text-muted">Save this password now. It will not be shown again.</small>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        @endif
         <div class="row">
             {{-- Power Actions --}}
             <div class="col-md-6">

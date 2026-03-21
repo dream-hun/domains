@@ -259,16 +259,28 @@ final class VpsController extends Controller
 
         $result = $action->execute($subscription);
 
-        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+        $redirect = back()->with($result['success'] ? 'success' : 'error', $result['message']);
+
+        if ($result['success'] && isset($result['password'])) {
+            $redirect->with('generated_password', $result['password']);
+        }
+
+        return $redirect;
     }
 
     public function resetCredentials(Subscription $subscription, ResetVpsCredentialsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_reset_credentials'), Response::HTTP_FORBIDDEN);
 
-        $result = $action->execute($subscription, []);
+        $result = $action->execute($subscription);
 
-        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+        $redirect = back()->with($result['success'] ? 'success' : 'error', $result['message']);
+
+        if ($result['success'] && isset($result['password'])) {
+            $redirect->with('generated_password', $result['password']);
+        }
+
+        return $redirect;
     }
 
     public function changeDisplayName(ChangeVpsDisplayNameRequest $request, Subscription $subscription, ChangeVpsDisplayNameAction $action): RedirectResponse
