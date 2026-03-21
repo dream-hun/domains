@@ -275,8 +275,12 @@ it('admin vps action endpoints succeed', function (): void {
     $mock->shouldReceive('restartInstance')->with(12345)->once()->andReturn([]);
     $mock->shouldReceive('shutdownInstance')->with(12345)->once()->andReturn([]);
     $mock->shouldReceive('reinstallInstance')->with(12345, ['imageId' => 'ubuntu-22.04'])->once()->andReturn([]);
-    $mock->shouldReceive('rescueInstance')->with(12345, [])->once()->andReturn([]);
-    $mock->shouldReceive('resetInstancePassword')->with(12345, [])->once()->andReturn([]);
+    $mock->shouldReceive('createSecret')
+        ->withArgs(fn (array $payload): bool => $payload['type'] === 'password')
+        ->twice()
+        ->andReturn(['secretId' => 99999]);
+    $mock->shouldReceive('rescueInstance')->with(12345, ['rootPassword' => 99999])->once()->andReturn([]);
+    $mock->shouldReceive('resetInstancePassword')->with(12345, ['rootPassword' => 99999])->once()->andReturn([]);
     $mock->shouldReceive('updateInstance')->with(12345, 'New Name')->once()->andReturn([]);
 
     $mock->shouldReceive('createSnapshot')
@@ -646,8 +650,12 @@ it('user vps action endpoints succeed', function (): void {
 
     $mock->shouldReceive('restartInstance')->with(12345)->once()->andReturn([]);
     $mock->shouldReceive('shutdownInstance')->with(12345)->once()->andReturn([]);
-    $mock->shouldReceive('rescueInstance')->with(12345, [])->once()->andReturn([]);
-    $mock->shouldReceive('resetInstancePassword')->with(12345, [])->once()->andReturn([]);
+    $mock->shouldReceive('createSecret')
+        ->withArgs(fn (array $payload): bool => $payload['type'] === 'password')
+        ->twice()
+        ->andReturn(['secretId' => 99999]);
+    $mock->shouldReceive('rescueInstance')->with(12345, ['rootPassword' => 99999])->once()->andReturn([]);
+    $mock->shouldReceive('resetInstancePassword')->with(12345, ['rootPassword' => 99999])->once()->andReturn([]);
     $mock->shouldReceive('updateInstance')->with(12345, 'New Name')->once()->andReturn([]);
 
     $mock->shouldReceive('createSnapshot')->with(12345, 'user-snapshot', '')

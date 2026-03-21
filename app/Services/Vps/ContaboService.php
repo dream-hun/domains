@@ -286,7 +286,7 @@ class ContaboService
     public function resetInstancePassword(int $instanceId, array $payload): array
     {
         $response = $this->client()->post(
-            sprintf('/compute/instances/%d/actions/resetPassword', $instanceId),
+            sprintf('/compute/instances/%d/actions/reset-password', $instanceId),
             $payload
         );
         $this->assertSuccess($response, 'Reset password for instance #'.$instanceId);
@@ -375,7 +375,7 @@ class ContaboService
     public function revertSnapshot(int $instanceId, string $snapshotId): array
     {
         $response = $this->client()->post(
-            sprintf('/compute/instances/%d/snapshots/%s/rollback', $instanceId, $snapshotId)
+            sprintf('/compute/instances/%d/snapshots/%s/revert', $instanceId, $snapshotId)
         );
         $this->assertSuccess($response, sprintf('Revert instance #%d to snapshot %s', $instanceId, $snapshotId));
 
