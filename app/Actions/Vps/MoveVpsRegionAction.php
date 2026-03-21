@@ -23,11 +23,11 @@ final readonly class MoveVpsRegionAction
         try {
             $instanceId = (int) $subscription->provider_resource_id;
 
-            $snapshotName = "region-migration-{$targetRegion}-".now()->format('Y-m-d-His');
+            $snapshotName = sprintf('region-migration-%s-', $targetRegion).now()->format('Y-m-d-His');
             $snapshotData = $this->contaboService->createSnapshot(
                 $instanceId,
                 $snapshotName,
-                "Pre-migration snapshot for region move to {$targetRegion}",
+                'Pre-migration snapshot for region move to '.$targetRegion,
             );
 
             Log::info('VPS region migration snapshot created', [
@@ -39,16 +39,16 @@ final readonly class MoveVpsRegionAction
 
             return [
                 'success' => true,
-                'message' => "Migration snapshot created. Next steps: create a new instance in {$targetRegion} from this snapshot, then reassign the subscription.",
+                'message' => sprintf('Migration snapshot created. Next steps: create a new instance in %s from this snapshot, then reassign the subscription.', $targetRegion),
                 'data' => $snapshotData,
             ];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to initiate VPS region migration', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to initiate region migration: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to initiate region migration: '.$runtimeException->getMessage()];
         }
     }
 }

@@ -31,13 +31,13 @@ final readonly class ChangeVpsDisplayNameAction
             ]);
 
             return ['success' => true, 'message' => 'Display name updated successfully.', 'data' => $data];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to change VPS display name', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to update display name: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to update display name: '.$runtimeException->getMessage()];
         }
     }
 }

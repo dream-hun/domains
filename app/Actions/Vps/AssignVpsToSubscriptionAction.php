@@ -40,14 +40,14 @@ final readonly class AssignVpsToSubscriptionAction
             ]);
 
             return ['success' => true, 'message' => 'VPS instance assigned successfully.'];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to assign VPS instance', [
                 'subscription_id' => $subscription->id,
                 'instance_id' => $instanceId,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to assign instance: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to assign instance: '.$runtimeException->getMessage()];
         }
     }
 }

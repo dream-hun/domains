@@ -31,13 +31,13 @@ final readonly class DeleteVpsSnapshotAction
             ]);
 
             return ['success' => true, 'message' => 'Snapshot deleted successfully.'];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to delete VPS snapshot', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to delete snapshot: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to delete snapshot: '.$runtimeException->getMessage()];
         }
     }
 }

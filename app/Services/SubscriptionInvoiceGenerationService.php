@@ -43,7 +43,7 @@ final readonly class SubscriptionInvoiceGenerationService
                 continue;
             }
 
-            GenerateSubscriptionRenewalInvoiceJob::dispatch($subscription);
+            dispatch(new GenerateSubscriptionRenewalInvoiceJob($subscription));
             $dispatched++;
 
             Log::info('Dispatched subscription renewal invoice job', [

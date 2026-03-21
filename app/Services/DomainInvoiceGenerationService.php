@@ -43,7 +43,7 @@ final readonly class DomainInvoiceGenerationService
                 continue;
             }
 
-            GenerateDomainRenewalInvoiceJob::dispatch($domain);
+            dispatch(new GenerateDomainRenewalInvoiceJob($domain));
             $dispatched++;
 
             Log::info('Dispatched domain renewal invoice job', [

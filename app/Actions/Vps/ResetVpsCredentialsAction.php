@@ -26,7 +26,7 @@ final readonly class ResetVpsCredentialsAction
 
             $password = Str::password(24);
             $secret = $this->contaboService->createSecret([
-                'name' => "reset-{$instanceId}-".now()->timestamp,
+                'name' => sprintf('reset-%d-', $instanceId).now()->timestamp,
                 'type' => 'password',
                 'value' => $password,
             ]);
@@ -46,13 +46,13 @@ final readonly class ResetVpsCredentialsAction
                 'data' => $data,
                 'password' => $password,
             ];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to reset VPS credentials', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to reset credentials: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to reset credentials: '.$runtimeException->getMessage()];
         }
     }
 }
