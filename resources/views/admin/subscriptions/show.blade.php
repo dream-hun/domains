@@ -88,7 +88,7 @@
                                     </tr>
                                     <tr>
                                         <th>Billing Cycle:</th>
-                                        <td>{{ ucfirst(str_replace('_', ' ', $subscription->billing_cycle)) }}</td>
+                                        <td>{{ $subscription->billing_cycle->label() }}</td>
                                     </tr>
                                     <tr>
                                         <th>Linked Domain:</th>
@@ -237,13 +237,11 @@
                                                         <div class="form-group">
                                                             <label for="billing_cycle">Billing cycle for this renewal</label>
                                                             <select name="billing_cycle" id="billing_cycle" class="form-control select2bs4">
-                                                                <option value="{{ $subscription->billing_cycle }}" selected>{{ ucfirst($subscription->billing_cycle) }}</option>
-                                                                @if($subscription->billing_cycle !== 'monthly')
-                                                                    <option value="monthly">Monthly</option>
-                                                                @endif
-                                                                @if($subscription->billing_cycle !== 'annually')
-                                                                    <option value="annually">Annually</option>
-                                                                @endif
+                                                                @foreach(\App\Enums\Hosting\BillingCycle::cases() as $cycle)
+                                                                    <option value="{{ $cycle->value }}" @selected($subscription->billing_cycle === $cycle)>
+                                                                        {{ $cycle->label() }}
+                                                                    </option>
+                                                                @endforeach
                                                             </select>
                                                         </div>
                                                     </div>

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\Hosting\BillingCycle;
 use App\Jobs\GenerateSubscriptionRenewalInvoiceJob;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -85,7 +84,7 @@ final readonly class SubscriptionInvoiceGenerationService
 
         $exchangeRate = 1.0;
 
-        $billingCycle = BillingCycle::from($subscription->billing_cycle);
+        $billingCycle = $subscription->billing_cycle;
 
         $order = Order::query()->create([
             'user_id' => $user->id,

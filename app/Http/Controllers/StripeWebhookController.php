@@ -527,7 +527,7 @@ final class StripeWebhookController extends Controller
                 return;
             }
 
-            $billingCycleValue = $invoice->metadata->billing_cycle ?? $subscription->billing_cycle;
+            $billingCycleValue = $invoice->metadata->billing_cycle ?? $subscription->billing_cycle->value;
             $billingCycle = $this->resolveBillingCycle($billingCycleValue);
 
             $paidAmount = isset($invoice->amount_paid) ? ($invoice->amount_paid / 100) : null;

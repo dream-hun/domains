@@ -50,8 +50,8 @@ final class SubscriptionRenewalController extends Controller
             });
 
         // Get current renewal price for the subscription's current billing cycle
-        $currentBillingCycle = BillingCycle::tryFrom($subscription->billing_cycle) ?? BillingCycle::Monthly;
-        $currentPrice = $availableBillingCycles[$subscription->billing_cycle] ?? null;
+        $currentBillingCycle = $subscription->billing_cycle;
+        $currentPrice = $availableBillingCycles[$subscription->billing_cycle->value] ?? null;
 
         return view('subscriptions.renew', [
             'subscription' => $subscription,
@@ -91,11 +91,11 @@ final class SubscriptionRenewalController extends Controller
         }
 
         // Get the original billing cycle plan price for display
-        $originalBillingCycle = BillingCycle::tryFrom($subscription->billing_cycle) ?? BillingCycle::Monthly;
+        $originalBillingCycle = $subscription->billing_cycle;
         $originalPlanPrice = HostingPlanPrice::query()
             ->with('currency')
             ->where('hosting_plan_id', $subscription->hosting_plan_id)
-            ->where('billing_cycle', $subscription->billing_cycle)
+            ->where('billing_cycle', $subscription->billing_cycle->value)
             ->where('status', 'active')
             ->first();
 
@@ -135,7 +135,7 @@ final class SubscriptionRenewalController extends Controller
                 'type' => 'subscription_renewal',
                 'subscription_id' => $subscription->id,
                 'subscription_uuid' => $subscription->uuid,
-                'billing_cycle' => $subscription->billing_cycle, // Store original billing cycle for reference
+                'billing_cycle' => $subscription->billing_cycle->value, // Store original billing cycle for reference
                 'hosting_plan_id' => $subscription->hosting_plan_id,
                 'hosting_plan_pricing_id' => $monthlyPlanPrice->id,
                 'domain' => $subscription->domain,
@@ -150,7 +150,7 @@ final class SubscriptionRenewalController extends Controller
                 'metadata' => [
                     'hosting_plan_id' => $subscription->hosting_plan_id,
                     'hosting_plan_pricing_id' => $monthlyPlanPrice->id,
-                    'billing_cycle' => $subscription->billing_cycle,
+                    'billing_cycle' => $subscription->billing_cycle->value,
                     'subscription_id' => $subscription->id,
                 ],
             ],

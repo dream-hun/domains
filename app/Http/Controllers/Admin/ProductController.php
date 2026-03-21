@@ -106,11 +106,11 @@ class ProductController extends Controller
             return back()->with('error', 'Unable to find monthly pricing information for this subscription plan.');
         }
 
-        $originalBillingCycle = BillingCycle::tryFrom($subscription->billing_cycle) ?? BillingCycle::Monthly;
+        $originalBillingCycle = $subscription->billing_cycle;
         $originalPlanPrice = HostingPlanPrice::query()
             ->with('currency')
             ->where('hosting_plan_id', $subscription->hosting_plan_id)
-            ->where('billing_cycle', $subscription->billing_cycle)
+            ->where('billing_cycle', $subscription->billing_cycle->value)
             ->where('status', 'active')
             ->first();
 
@@ -145,7 +145,7 @@ class ProductController extends Controller
                 'subscription_uuid' => $subscription->uuid,
                 'domain' => $subscription->domain,
                 'domain_name' => $subscription->domain ?? 'N/A',
-                'billing_cycle' => $subscription->billing_cycle,
+                'billing_cycle' => $subscription->billing_cycle->value,
                 'hosting_plan_id' => $subscription->hosting_plan_id,
                 'hosting_plan_pricing_id' => $monthlyPlanPrice->id,
                 'current_expiry' => $subscription->expires_at->format('Y-m-d'),
@@ -158,7 +158,7 @@ class ProductController extends Controller
                 'metadata' => [
                     'hosting_plan_id' => $subscription->hosting_plan_id,
                     'hosting_plan_pricing_id' => $monthlyPlanPrice->id,
-                    'billing_cycle' => $subscription->billing_cycle,
+                    'billing_cycle' => $subscription->billing_cycle->value,
                     'subscription_id' => $subscription->id,
                 ],
             ],

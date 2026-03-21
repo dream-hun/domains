@@ -76,7 +76,7 @@
                                                 <td>{{ $subscription->domain ?? 'None' }}</td>
                                                 <td>
                                                     <span class="badge badge-light">
-                                                        {{ ucfirst(str_replace('_', ' ', $subscription->billing_cycle)) }}
+                                                        {{ $subscription->billing_cycle->label() }}
                                                     </span>
                                                 </td>
                                                 <td>

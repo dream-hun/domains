@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Date;
  * @property int $hosting_plan_id
  * @property int $hosting_plan_pricing_id
  * @property array $product_snapshot
- * @property string $billing_cycle
+ * @property BillingCycle $billing_cycle
  * @property string $domain
  * @property string $status
  * @property Carbon $starts_at
@@ -62,6 +62,7 @@ class Subscription extends Model
 
     protected $casts = [
         'product_snapshot' => 'array',
+        'billing_cycle' => BillingCycle::class,
         'auto_renew' => 'boolean',
         'custom_price' => 'decimal:2',
         'custom_price_currency' => 'string',
@@ -175,7 +176,7 @@ class Subscription extends Model
         }
 
         if ($this->last_invoice_generated_at !== null) {
-            $billingCycleMonths = $this->billing_cycle === 'annually' ? 12 : 1;
+            $billingCycleMonths = $this->billing_cycle === BillingCycle::Annually ? 12 : 1;
             $lastInvoiceDate = $this->last_invoice_generated_at->copy()->addMonths($billingCycleMonths);
 
             if ($now->lessThan($lastInvoiceDate)) {
@@ -288,7 +289,7 @@ class Subscription extends Model
             'product_snapshot' => $snapshot,
         ];
 
-        if ($this->billing_cycle !== $billingCycle->value) {
+        if ($this->billing_cycle !== $billingCycle) {
             $updateData['billing_cycle'] = $billingCycle->value;
         }
 
@@ -315,7 +316,7 @@ class Subscription extends Model
 
                 // If billing cycle is annual, divide by 12 to get monthly price
                 // If monthly, use the price directly
-                $expectedMonthlyPrice = $this->billing_cycle === 'monthly' ? $renewalPrice : $renewalPrice / 12;
+                $expectedMonthlyPrice = $this->billing_cycle === BillingCycle::Monthly ? $renewalPrice : $renewalPrice / 12;
             } else {
                 $expectedMonthlyPrice = $this->getRenewalPrice();
             }

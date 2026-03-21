@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Hosting\BillingCycle;
 use App\Models\Currency;
 use App\Models\Permission;
 use App\Models\Role;
@@ -62,7 +63,7 @@ test('update subscription with custom price fields', function (): void {
     $response->assertSessionHas('success');
 
     $subscription->refresh();
-    expect($subscription->billing_cycle)->toBe('monthly')
+    expect($subscription->billing_cycle)->toBe(BillingCycle::Monthly)
         ->and((float) $subscription->custom_price)->toBe(29.99)
         ->and($subscription->custom_price_currency)->toBe('USD')
         ->and($subscription->is_custom_price)->toBeTrue()
@@ -83,7 +84,7 @@ test('update subscription with billing cycle change to annually', function (): v
     $response->assertRedirect(route('admin.subscriptions.show', $subscription));
 
     $subscription->refresh();
-    expect($subscription->billing_cycle)->toBe('annually');
+    expect($subscription->billing_cycle)->toBe(BillingCycle::Annually);
 });
 
 test('clearing custom price sets is_custom_price to false', function (): void {

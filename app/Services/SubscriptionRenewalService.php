@@ -66,7 +66,7 @@ final readonly class SubscriptionRenewalService
                 continue;
             }
 
-            $billingCycleValue = $orderItem->metadata['billing_cycle'] ?? $subscription->billing_cycle;
+            $billingCycleValue = $orderItem->metadata['billing_cycle'] ?? $subscription->billing_cycle->value;
             $billingCycle = $this->resolveBillingCycle($billingCycleValue);
             // Get the total amount paid (price * quantity)
             $paidAmount = (float) $orderItem->total_amount;
@@ -88,7 +88,7 @@ final readonly class SubscriptionRenewalService
                 'subscription_id' => $subscription->id,
                 'subscription_uuid' => $subscription->uuid,
                 'domain' => $subscription->domain,
-                'stored_billing_cycle' => $subscription->billing_cycle,
+                'stored_billing_cycle' => $subscription->billing_cycle->value,
                 'order_billing_cycle' => $billingCycleValue,
                 'quantity_months' => $quantityMonths,
                 'paid_amount_usd' => $paidAmount,
@@ -99,7 +99,7 @@ final readonly class SubscriptionRenewalService
                 // getRenewalPrice() returns price in USD for the subscription's billing cycle
                 // Convert to monthly price for calculation
                 $renewalPrice = $subscription->getRenewalPrice();
-                $expectedMonthlyPrice = $subscription->billing_cycle === 'annually' ? $renewalPrice / 12 : $renewalPrice;
+                $expectedMonthlyPrice = $subscription->billing_cycle === BillingCycle::Annually ? $renewalPrice / 12 : $renewalPrice;
 
                 $expectedTotalAmount = $expectedMonthlyPrice * $quantityMonths;
 
@@ -139,7 +139,7 @@ final readonly class SubscriptionRenewalService
                         'custom_price' => $subscription->custom_price,
                         'custom_price_currency' => $subscription->custom_price_currency,
                         'is_custom_price' => true,
-                        'billing_cycle' => $subscription->billing_cycle,
+                        'billing_cycle' => $subscription->billing_cycle->value,
                     ];
                 } else {
                     $monthlyPlanPrice = HostingPlanPrice::query()
@@ -172,7 +172,7 @@ final readonly class SubscriptionRenewalService
                 $subscription->refresh();
 
                 // Update billing cycle if it's different from the order item's billing cycle
-                if (isset($orderItem->metadata['billing_cycle']) && $billingCycle->value !== $subscription->billing_cycle) {
+                if (isset($orderItem->metadata['billing_cycle']) && $billingCycle !== $subscription->billing_cycle) {
                     $subscription->update(['billing_cycle' => $billingCycle->value]);
                 }
 
