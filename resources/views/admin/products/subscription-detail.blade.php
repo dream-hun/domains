@@ -93,7 +93,7 @@
                                             </tr>
                                             <tr>
                                                 <th>Billing Cycle:</th>
-                                                <td>{{ ucfirst(str_replace('_', ' ', $subscription->billing_cycle)) }}</td>
+                                                <td>{{ $subscription->billing_cycle->label() }}</td>
                                             </tr>
                                             <tr>
                                                 <th>Linked Domain:</th>

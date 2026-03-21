@@ -234,7 +234,7 @@
                                 </span>
                                 <br>
                                 <small>
-                                    Billing: {{ ucfirst($domain->subscription->billing_cycle) }}
+                                    Billing: {{ $domain->subscription->billing_cycle->label() }}
                                     | Starts: {{ $domain->subscription->starts_at?->format('Y-m-d') }}
                                     | Expires: {{ $domain->subscription->expires_at?->format('Y-m-d') }}
                                 </small>

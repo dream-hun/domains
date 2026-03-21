@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\Hosting\BillingCycle;
 use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
@@ -48,7 +49,7 @@ final class SubscriptionFactory extends Factory
                     'billing_cycle' => $planPrice->billing_cycle,
                 ],
             ],
-            'billing_cycle' => $this->faker->randomElement(['monthly', 'quarterly', 'annually']),
+            'billing_cycle' => $this->faker->randomElement(BillingCycle::values()),
             'domain' => $this->faker->optional()->domainName(),
             'status' => 'active',
             'auto_renew' => false,

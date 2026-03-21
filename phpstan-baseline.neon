@@ -925,12 +925,6 @@ parameters:
 			path: app/Http/Controllers/KpayPaymentController.php
 
 		-
-			message: '#^Parameter \#1 \$relations of method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\HostingPlan\>\:\:with\(\) expects array\<array\|\(Closure\(Illuminate\\Database\\Eloquent\\Relations\\Relation\<\*, \*, \*\>\)\: mixed\)\|string\>\|string, array\{0\: ''category\:id,name…'', planPrices\: Closure\(Illuminate\\Database\\Eloquent\\Builder\)\: Illuminate\\Database\\Eloquent\\Builder, 1\: ''planFeatures…''\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/LandingController.php
-
-		-
 			message: '#^Method App\\Http\\Controllers\\RegisterDomainController\:\:processCartItemsWithCurrency\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

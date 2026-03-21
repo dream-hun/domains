@@ -54,12 +54,12 @@
 
                         @php
                             $monthlyPrice = $availableBillingCycles['monthly']['renewal_price'] ?? 0;
-                            $defaultBillingCycle = BillingCycle::tryFrom($subscription->billing_cycle) ?? BillingCycle::Monthly;
+                            $defaultBillingCycle = $subscription->billing_cycle;
                             $defaultQuantity = $defaultBillingCycle->toMonths();
                         @endphp
                         <form action="{{ route('subscriptions.renew.add-to-cart', $subscription) }}" method="POST"
                               x-data="{
-                                  billingCycle: '{{ $subscription->billing_cycle }}',
+                                  billingCycle: '{{ $subscription->billing_cycle->value }}',
                                   quantity: {{ $defaultQuantity }},
                                   monthlyPrice: {{ $monthlyPrice }},
                                   availableCycles: @js($availableBillingCycles),
@@ -97,7 +97,7 @@
                                         @change="updateQuantityFromBillingCycle()"
                                         required>
                                     @foreach($availableBillingCycles as $cycleValue => $cycleData)
-                                        <option value="{{ $cycleValue }}" @selected($cycleValue === $subscription->billing_cycle)>
+                                        <option value="{{ $cycleValue }}" @selected($cycleValue === $subscription->billing_cycle->value)>
                                             {{ $cycleData['cycle']->label() }}
                                         </option>
                                     @endforeach

@@ -135,7 +135,7 @@
                                                     required>
                                                 @foreach($billingCycleOptions as $cycle)
                                                     <option value="{{ $cycle->value }}"
-                                                            @selected(old('billing_cycle', $subscription->billing_cycle) === $cycle->value)>
+                                                            @selected(old('billing_cycle', $subscription->billing_cycle->value) === $cycle->value)>
                                                         {{ $cycle->label() }}
                                                     </option>
                                                 @endforeach

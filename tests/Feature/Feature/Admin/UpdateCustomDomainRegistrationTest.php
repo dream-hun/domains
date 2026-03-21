@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Hosting\BillingCycle;
 use App\Models\Currency;
 use App\Models\Domain;
 use App\Models\HostingPlan;
@@ -254,7 +255,7 @@ test('create new subscription and link to domain', function (): void {
     $subscription = Subscription::query()->find($domain->subscription_id);
     expect($subscription)->not->toBeNull()
         ->and($subscription->hosting_plan_id)->toBe($plan->id)
-        ->and($subscription->billing_cycle)->toBe('monthly');
+        ->and($subscription->billing_cycle)->toBe(BillingCycle::Monthly);
 });
 
 test('keep_current subscription option preserves existing subscription', function (): void {

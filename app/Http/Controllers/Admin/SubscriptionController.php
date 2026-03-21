@@ -249,7 +249,7 @@ final class SubscriptionController extends Controller
         }
 
         try {
-            $billingCycleValue = $request->string('billing_cycle')->trim()->toString() ?: $subscription->billing_cycle;
+            $billingCycleValue = $request->string('billing_cycle')->trim()->toString() ?: $subscription->billing_cycle->value;
             $billingCycle = $this->resolveBillingCycle($billingCycleValue);
 
             $planPrice = HostingPlanPrice::query()
