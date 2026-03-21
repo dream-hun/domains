@@ -254,28 +254,26 @@ it('handles region migration failure gracefully', function (): void {
 it('rescues a VPS instance successfully', function (): void {
     $subscription = Subscription::factory()->create(['provider_resource_id' => '12345']);
 
-    $payload = ['rootPassword' => 123456];
-
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('rescueInstance')->with(12345, $payload)->once()->andReturn([]);
+    $mock->shouldReceive('createSecret')->once()->andReturn(['secretId' => 99]);
+    $mock->shouldReceive('rescueInstance')->with(12345, ['rootPassword' => 99])->once()->andReturn([]);
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(RescueVpsAction::class)->execute($subscription, $payload);
+    $result = app(RescueVpsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeTrue();
     expect($result['message'])->toContain('rescue mode');
+    expect($result['password'])->toBeString();
 });
 
 it('handles rescue VPS instance failure gracefully', function (): void {
     $subscription = Subscription::factory()->create(['provider_resource_id' => '12345']);
 
-    $payload = ['rootPassword' => 123456];
-
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('rescueInstance')->with(12345, $payload)->once()->andThrow(new RuntimeException('API Error'));
+    $mock->shouldReceive('createSecret')->once()->andThrow(new RuntimeException('API Error'));
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(RescueVpsAction::class)->execute($subscription, $payload);
+    $result = app(RescueVpsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeFalse();
     expect($result['message'])->toContain('Failed');
@@ -284,28 +282,26 @@ it('handles rescue VPS instance failure gracefully', function (): void {
 it('resets VPS credentials successfully', function (): void {
     $subscription = Subscription::factory()->create(['provider_resource_id' => '12345']);
 
-    $payload = ['sshKeys' => [1, 2, 3]];
-
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('resetInstancePassword')->with(12345, $payload)->once()->andReturn([]);
+    $mock->shouldReceive('createSecret')->once()->andReturn(['secretId' => 99]);
+    $mock->shouldReceive('resetInstancePassword')->with(12345, ['rootPassword' => 99])->once()->andReturn([]);
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(ResetVpsCredentialsAction::class)->execute($subscription, $payload);
+    $result = app(ResetVpsCredentialsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeTrue();
     expect($result['message'])->toContain('credentials have been reset');
+    expect($result['password'])->toBeString();
 });
 
 it('handles reset VPS credentials failure gracefully', function (): void {
     $subscription = Subscription::factory()->create(['provider_resource_id' => '12345']);
 
-    $payload = ['sshKeys' => [1, 2, 3]];
-
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('resetInstancePassword')->with(12345, $payload)->once()->andThrow(new RuntimeException('API Error'));
+    $mock->shouldReceive('createSecret')->once()->andThrow(new RuntimeException('API Error'));
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(ResetVpsCredentialsAction::class)->execute($subscription, $payload);
+    $result = app(ResetVpsCredentialsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeFalse();
     expect($result['message'])->toContain('Failed');

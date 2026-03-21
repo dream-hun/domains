@@ -7,6 +7,7 @@ namespace App\Actions\Vps;
 use App\Models\Subscription;
 use App\Services\Vps\ContaboService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 final readonly class RescueVpsAction
@@ -16,21 +17,35 @@ final readonly class RescueVpsAction
     ) {}
 
     /**
-     * @param  array{rootPassword?: int, sshKeys?: int[], userData?: string}  $payload
-     * @return array{success: bool, message: string, data?: array}
+     * @return array{success: bool, message: string, data?: array, password?: string}
      */
-    public function execute(Subscription $subscription, array $payload = []): array
+    public function execute(Subscription $subscription): array
     {
         try {
             $instanceId = (int) $subscription->provider_resource_id;
-            $data = $this->contaboService->rescueInstance($instanceId, $payload);
+
+            $password = Str::password(24);
+            $secret = $this->contaboService->createSecret([
+                'name' => "rescue-{$instanceId}-".now()->timestamp,
+                'type' => 'password',
+                'value' => $password,
+            ]);
+
+            $data = $this->contaboService->rescueInstance($instanceId, [
+                'rootPassword' => (int) $secret['secretId'],
+            ]);
 
             Log::info('VPS instance booted into rescue mode', [
                 'subscription_id' => $subscription->id,
                 'instance_id' => $instanceId,
             ]);
 
-            return ['success' => true, 'message' => 'VPS instance is booting into rescue mode.', 'data' => $data];
+            return [
+                'success' => true,
+                'message' => 'VPS instance is booting into rescue mode.',
+                'data' => $data,
+                'password' => $password,
+            ];
         } catch (RuntimeException $e) {
             Log::error('Failed to rescue VPS instance', [
                 'subscription_id' => $subscription->id,
