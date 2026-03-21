@@ -46,6 +46,8 @@
                             <tr>
                                 <th>Domain</th>
                                 <th>Owner</th>
+                                <th>Registration Price</th>
+                                <th>Renewal Price</th>
                                 <th>Status</th>
                                 <th>Expiry Date</th>
                                 <th>Actions</th>
@@ -56,6 +58,15 @@
                                 <tr data-entry-id="{{ $domain->id }}">
                                     <td>{{ $domain->name ?? '' }}</td>
                                     <td>{{ $domain->owner->name ?? '' }}</td>
+                                    <td>{{ $domain->tldPricing?->getFormattedPrice('register_price') ?? '—' }}</td>
+                                    <td>
+                                        @if ($domain->isCustomPriced())
+                                            {{ number_format($domain->getRenewalPrice(), 2) }} {{ $domain->getRenewalCurrency() }}
+                                            <span class="badge badge-info">Custom</span>
+                                        @else
+                                            {{ $domain->tldPricing?->getFormattedPrice('renew_price') ?? '—' }}
+                                        @endif
+                                    </td>
                                     <td>
                                             <span class="badge {{ $domain->status->color() }}">
                                                 {{ $domain->status->label() }}
