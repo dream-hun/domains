@@ -26,7 +26,7 @@ final readonly class RescueVpsAction
 
             $password = Str::password(24);
             $secret = $this->contaboService->createSecret([
-                'name' => "rescue-{$instanceId}-".now()->timestamp,
+                'name' => sprintf('rescue-%d-', $instanceId).now()->timestamp,
                 'type' => 'password',
                 'value' => $password,
             ]);
@@ -40,7 +40,12 @@ final readonly class RescueVpsAction
                 'instance_id' => $instanceId,
             ]);
 
-            return ['success' => true, 'message' => 'VPS instance is booting into rescue mode.', 'data' => $data];
+            return [
+                'success' => true,
+                'message' => 'VPS instance is booting into rescue mode.',
+                'data' => $data,
+                'password' => $password,
+            ];
         } catch (RuntimeException $runtimeException) {
             Log::error('Failed to rescue VPS instance', [
                 'subscription_id' => $subscription->id,

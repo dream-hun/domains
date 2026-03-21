@@ -259,7 +259,7 @@ it('rescues a VPS instance successfully', function (): void {
     $mock->shouldReceive('rescueInstance')->with(12345, ['rootPassword' => 99])->once()->andReturn([]);
     app()->instance(ContaboService::class, $mock);
 
-    $result = resolve(RescueVpsAction::class)->execute($subscription, $payload);
+    $result = resolve(RescueVpsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeTrue();
     expect($result['message'])->toContain('rescue mode');
@@ -273,7 +273,7 @@ it('handles rescue VPS instance failure gracefully', function (): void {
     $mock->shouldReceive('createSecret')->once()->andThrow(new RuntimeException('API Error'));
     app()->instance(ContaboService::class, $mock);
 
-    $result = resolve(RescueVpsAction::class)->execute($subscription, $payload);
+    $result = resolve(RescueVpsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeFalse();
     expect($result['message'])->toContain('Failed');
@@ -287,7 +287,7 @@ it('resets VPS credentials successfully', function (): void {
     $mock->shouldReceive('resetInstancePassword')->with(12345, ['rootPassword' => 99])->once()->andReturn([]);
     app()->instance(ContaboService::class, $mock);
 
-    $result = resolve(ResetVpsCredentialsAction::class)->execute($subscription, $payload);
+    $result = resolve(ResetVpsCredentialsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeTrue();
     expect($result['message'])->toContain('credentials have been reset');
@@ -301,7 +301,7 @@ it('handles reset VPS credentials failure gracefully', function (): void {
     $mock->shouldReceive('createSecret')->once()->andThrow(new RuntimeException('API Error'));
     app()->instance(ContaboService::class, $mock);
 
-    $result = resolve(ResetVpsCredentialsAction::class)->execute($subscription, $payload);
+    $result = resolve(ResetVpsCredentialsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeFalse();
     expect($result['message'])->toContain('Failed');
