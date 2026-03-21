@@ -16,7 +16,7 @@ it('assigns a VPS instance to a subscription successfully', function (): void {
         ->andReturn(['instanceId' => 12345, 'name' => 'vmi12345']);
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(AssignVpsToSubscriptionAction::class)->execute($subscription, 12345);
+    $result = resolve(AssignVpsToSubscriptionAction::class)->execute($subscription, 12345);
 
     expect($result['success'])->toBeTrue();
     expect($subscription->fresh()->provider_resource_id)->toBe('12345');
@@ -29,7 +29,7 @@ it('prevents duplicate instance assignment', function (): void {
     $mock = Mockery::mock(ContaboService::class);
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(AssignVpsToSubscriptionAction::class)->execute($newSubscription, 12345);
+    $result = resolve(AssignVpsToSubscriptionAction::class)->execute($newSubscription, 12345);
 
     expect($result['success'])->toBeFalse();
     expect($result['message'])->toContain('already assigned');
@@ -46,7 +46,7 @@ it('handles API failure when verifying instance', function (): void {
         ->andThrow(new RuntimeException('Instance not found'));
     app()->instance(ContaboService::class, $mock);
 
-    $result = app(AssignVpsToSubscriptionAction::class)->execute($subscription, 99999);
+    $result = resolve(AssignVpsToSubscriptionAction::class)->execute($subscription, 99999);
 
     expect($result['success'])->toBeFalse();
     expect($subscription->fresh()->provider_resource_id)->toBeNull();

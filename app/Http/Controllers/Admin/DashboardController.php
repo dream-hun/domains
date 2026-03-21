@@ -12,6 +12,7 @@ use App\Models\Tld;
 use App\Models\User;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -25,7 +26,7 @@ final class DashboardController extends Controller
         $tlds = Cache::remember('dashboard.tlds', 3600, fn () => Tld::query()->withoutGlobalScope(DomainPriceScope::class)->count());
         $plans = Cache::remember('dashboard.plans', 3600, fn (): int => 0);
 
-        $customers = Cache::remember('dashboard.customers', 3600, fn () => User::query()->whereHas('roles', function ($query): void {
+        $customers = Cache::remember('dashboard.customers', 3600, fn () => User::query()->whereHas('roles', function (Builder $query): void {
             $query->where('title', 'user');
         })->count());
         $domains = Cache::remember('dashboard.domains', 3600, fn () => Domain::query()->count());

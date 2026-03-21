@@ -39,7 +39,7 @@ final class DomainSearchController extends Controller
     private function getDomainPrices(string $type): Collection
     {
         $query = Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
             ->where('status', 'active');
 
         if ($type === 'local') {

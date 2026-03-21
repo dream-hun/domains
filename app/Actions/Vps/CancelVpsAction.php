@@ -31,13 +31,13 @@ final readonly class CancelVpsAction
             ]);
 
             return ['success' => true, 'message' => 'VPS instance cancellation has been scheduled.', 'data' => $data];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to cancel VPS instance', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to cancel instance: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to cancel instance: '.$runtimeException->getMessage()];
         }
     }
 }

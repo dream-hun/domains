@@ -135,8 +135,8 @@ test('checkDomain does not throw cert error when no certificate is configured', 
     // must be a connection error, not a cert-not-found error.
     try {
         $service->checkDomain(['example.rw']);
-    } catch (Exception $e) {
-        expect($e->getMessage())->not->toContain('EPP certificate not found');
+    } catch (Exception $exception) {
+        expect($exception->getMessage())->not->toContain('EPP certificate not found');
     }
 });
 
@@ -262,7 +262,7 @@ test('connectWithRetry fails fast on ETIMEDOUT without retrying', function (): v
     $clientProp = $reflection->getProperty('client');
     $clientProp->setValue($service, $mockClient);
 
-    expect(fn () => $service->connectWithRetry())
+    expect(fn (): ?string => $service->connectWithRetry())
         ->toThrow(Exception::class, 'Connection timed out');
 });
 

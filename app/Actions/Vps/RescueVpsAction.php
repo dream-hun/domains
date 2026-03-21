@@ -40,19 +40,14 @@ final readonly class RescueVpsAction
                 'instance_id' => $instanceId,
             ]);
 
-            return [
-                'success' => true,
-                'message' => 'VPS instance is booting into rescue mode.',
-                'data' => $data,
-                'password' => $password,
-            ];
-        } catch (RuntimeException $e) {
+            return ['success' => true, 'message' => 'VPS instance is booting into rescue mode.', 'data' => $data];
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to rescue VPS instance', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to enter rescue mode: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to enter rescue mode: '.$runtimeException->getMessage()];
         }
     }
 }

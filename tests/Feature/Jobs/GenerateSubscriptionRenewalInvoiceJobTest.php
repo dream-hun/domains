@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Notifications\RenewalInvoiceNotification;
+use App\Services\SubscriptionInvoiceGenerationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Notification;
@@ -26,7 +27,7 @@ test('creates order and sends notification for subscription renewal', function (
     ]);
 
     $job = new GenerateSubscriptionRenewalInvoiceJob($subscription);
-    $job->handle(new App\Services\SubscriptionInvoiceGenerationService);
+    $job->handle(new SubscriptionInvoiceGenerationService);
 
     $order = Order::query()->where('user_id', $user->id)->first();
     expect($order)->not->toBeNull()
@@ -52,7 +53,7 @@ test('skips if shouldGenerateInvoice returns false', function (): void {
     ]);
 
     $job = new GenerateSubscriptionRenewalInvoiceJob($subscription);
-    $job->handle(new App\Services\SubscriptionInvoiceGenerationService);
+    $job->handle(new SubscriptionInvoiceGenerationService);
 
     expect(Order::query()->where('user_id', $user->id)->exists())->toBeFalse();
 

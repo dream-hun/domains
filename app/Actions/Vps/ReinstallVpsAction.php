@@ -32,13 +32,13 @@ final readonly class ReinstallVpsAction
             ]);
 
             return ['success' => true, 'message' => 'VPS instance is being reinstalled.', 'data' => $data];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to reinstall VPS instance', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to reinstall instance: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to reinstall instance: '.$runtimeException->getMessage()];
         }
     }
 }

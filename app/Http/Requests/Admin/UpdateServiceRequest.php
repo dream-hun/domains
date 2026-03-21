@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 
 final class UpdateServiceRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return Gate::allows('service_edit');
     }

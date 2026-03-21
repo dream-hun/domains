@@ -33,9 +33,7 @@ test('dispatches renewal invoice job for domain expiring within window', functio
     expect($results['dispatched'])->toBe(1)
         ->and($results['skipped'])->toBe(0);
 
-    Queue::assertPushed(GenerateDomainRenewalInvoiceJob::class, function ($job) use ($domain): bool {
-        return $job->domain->id === $domain->id;
-    });
+    Queue::assertPushed(GenerateDomainRenewalInvoiceJob::class, fn ($job): bool => $job->domain->id === $domain->id);
 });
 
 test('skips domain with existing pending renewal order', function (): void {

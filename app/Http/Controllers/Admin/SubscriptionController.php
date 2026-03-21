@@ -105,10 +105,10 @@ final class SubscriptionController extends Controller
         if ($filters['search'] !== '') {
             $searchTerm = '%'.$filters['search'].'%';
 
-            $subscriptionsQuery->where(function ($query) use ($searchTerm): void {
+            $subscriptionsQuery->where(function (Builder $query) use ($searchTerm): void {
                 $query->where('domain', 'like', $searchTerm)
                     ->orWhere('provider_resource_id', 'like', $searchTerm)
-                    ->orWhereHas('user', function ($userQuery) use ($searchTerm): void {
+                    ->orWhereHas('user', function (Builder $userQuery) use ($searchTerm): void {
                         $userQuery->where('first_name', 'like', $searchTerm)
                             ->orWhere('last_name', 'like', $searchTerm)
                             ->orWhere('email', 'like', $searchTerm);
@@ -148,7 +148,7 @@ final class SubscriptionController extends Controller
             ->whereNotNull('status')
             ->orderBy('status')
             ->pluck('status')
-            ->map(static fn ($value): string => (string) $value)
+            ->map(static fn (mixed $value): string => (string) $value)
             ->values();
 
         $billingCycleOptions = Subscription::query()
@@ -157,7 +157,7 @@ final class SubscriptionController extends Controller
             ->whereNotNull('billing_cycle')
             ->orderBy('billing_cycle')
             ->pluck('billing_cycle')
-            ->map(static fn ($value): string => (string) $value)
+            ->map(static fn (mixed $value): string => (string) $value)
             ->values();
 
         return view('admin.subscriptions.index', [

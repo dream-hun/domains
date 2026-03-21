@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 
 final class UpdateBookingRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return Gate::allows('booking_edit');
     }

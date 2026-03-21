@@ -285,11 +285,9 @@ it('admin vps action endpoints succeed', function (): void {
         ->andReturn(['snapshotId' => 'snap-123']);
 
     $mock->shouldReceive('createSnapshot')
-        ->withArgs(function (int $instanceId, string $snapshotName, string $description): bool {
-            return $instanceId === 12345
-                && str_contains($snapshotName, 'region-migration-EU-')
-                && $description === 'Pre-migration snapshot for region move to EU';
-        })
+        ->withArgs(fn (int $instanceId, string $snapshotName, string $description): bool => $instanceId === 12345
+            && str_contains($snapshotName, 'region-migration-EU-')
+            && $description === 'Pre-migration snapshot for region move to EU')
         ->once()
         ->andReturn(['snapshotId' => 'snap-999']);
 

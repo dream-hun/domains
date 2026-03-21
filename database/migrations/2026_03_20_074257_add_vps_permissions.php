@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -84,7 +85,7 @@ return new class extends Migration
 
         $permissionIds = Permission::query()->whereIn('title', $allPermissions)->pluck('id');
 
-        Illuminate\Support\Facades\DB::table('permission_role')
+        DB::table('permission_role')
             ->whereIn('permission_id', $permissionIds)
             ->delete();
 

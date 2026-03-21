@@ -258,7 +258,7 @@ final class RegisterDomainController extends Controller
             return [];
         }
 
-        return array_values(array_filter($nameservers, fn ($ns): bool => ! in_array(mb_trim($ns), ['', '0'], true)));
+        return array_values(array_filter($nameservers, fn (string $ns): bool => ! in_array(mb_trim($ns), ['', '0'], true)));
     }
 
     /**

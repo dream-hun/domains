@@ -9,6 +9,7 @@ use App\Models\HostingPlan;
 use App\Models\Order;
 use App\Models\Subscription;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,7 +24,7 @@ final class BillingController extends Controller
 
         $orders = Order::query()
             ->with(['orderItems', 'user.roles', 'payments'])
-            ->unless($user->isAdmin(), function ($query) use ($user): void {
+            ->unless($user->isAdmin(), function (Builder $query) use ($user): void {
                 $query->where('user_id', $user->id);
             })->latest()
             ->paginate(15);

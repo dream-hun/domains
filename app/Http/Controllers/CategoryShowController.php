@@ -15,15 +15,15 @@ class CategoryShowController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(Request $request, $slug)
+    public function __invoke(Request $request, string $slug)
     {
         $category = HostingCategory::query()
             ->where('slug', $slug)
             ->where('status', CategoryStatus::Active)
-            ->with(['plans' => function ($query): void {
+            ->with(['plans' => function (mixed $query): void {
                 $query->where('status', HostingPlanStatus::Active)
                     ->with([
-                        'planPrices' => function ($priceQuery): void {
+                        'planPrices' => function (mixed $priceQuery): void {
                             $priceQuery->where('status', HostingPlanPriceStatus::Active)->with('currency');
                         },
                         'planFeatures.hostingFeature',

@@ -31,13 +31,13 @@ final readonly class RestoreVpsSnapshotAction
             ]);
 
             return ['success' => true, 'message' => 'Snapshot is being restored.', 'data' => $data];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to restore VPS snapshot', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to restore snapshot: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to restore snapshot: '.$runtimeException->getMessage()];
         }
     }
 }

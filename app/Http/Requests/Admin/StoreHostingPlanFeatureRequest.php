@@ -8,6 +8,7 @@ use App\Models\HostingPlan;
 use App\Models\HostingPlanFeature;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Validator;
 
 final class StoreHostingPlanFeatureRequest extends FormRequest
 {
@@ -43,9 +44,9 @@ final class StoreHostingPlanFeatureRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
-        $validator->after(function ($validator): void {
+        $validator->after(function (Validator $validator): void {
             if ($this->filled('hosting_plan_id') && $this->filled('hosting_feature_id')) {
                 $exists = HostingPlanFeature::query()
                     ->where('hosting_plan_id', $this->input('hosting_plan_id'))

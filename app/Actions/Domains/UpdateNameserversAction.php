@@ -105,7 +105,7 @@ final readonly class UpdateNameserversAction
     private function syncNameserversInDatabase(Domain $domain, array $nameservers): void
     {
         $normalized = collect($nameservers)
-            ->map(fn ($nameserver): string => mb_strtolower(mb_trim((string) $nameserver)))
+            ->map(fn (mixed $nameserver): string => mb_strtolower(mb_trim((string) $nameserver)))
             ->filter(fn (string $nameserver): bool => $nameserver !== '' && $nameserver !== '0')
             ->unique()
             ->values();

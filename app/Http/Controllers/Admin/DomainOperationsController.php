@@ -28,7 +28,7 @@ final class DomainOperationsController extends Controller
             return to_route('dashboard')->with('error', 'You are not authorized to view this domain.');
         }
 
-        $domain->load(['contacts' => function ($query): void {
+        $domain->load(['contacts' => function (mixed $query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();
         }]);
 

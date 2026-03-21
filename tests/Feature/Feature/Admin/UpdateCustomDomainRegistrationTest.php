@@ -197,6 +197,7 @@ test('unlink subscription from domain sets subscription_id to null', function ()
     ]);
 
     $response->assertRedirect(route('admin.domains.info', $domain));
+
     $domain->refresh();
     expect($domain->subscription_id)->toBeNull();
 });
@@ -217,6 +218,7 @@ test('link existing subscription to domain', function (): void {
     ]);
 
     $response->assertRedirect(route('admin.domains.info', $domain));
+
     $domain->refresh();
     expect($domain->subscription_id)->toBe($subscription->id);
 });
@@ -245,6 +247,7 @@ test('create new subscription and link to domain', function (): void {
     ]);
 
     $response->assertRedirect(route('admin.domains.info', $domain));
+
     $domain->refresh();
     expect($domain->subscription_id)->not->toBeNull();
 
@@ -269,6 +272,7 @@ test('keep_current subscription option preserves existing subscription', functio
     ]);
 
     $response->assertRedirect(route('admin.domains.info', $domain));
+
     $domain->refresh();
     expect($domain->subscription_id)->toBe($subscription->id);
 });

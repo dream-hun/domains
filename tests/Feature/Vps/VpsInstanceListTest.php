@@ -19,6 +19,7 @@ function createVpsUser(array $permissions = ['vps_access']): User
                 ?? Permission::query()->create(['title' => $permission])->id
         );
     }
+
     $user = User::factory()->create();
     $user->roles()->attach($role);
 

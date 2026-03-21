@@ -252,7 +252,7 @@ final readonly class CartPriceConverter
         );
 
         $loaded = Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
             ->whereIn('name', $searchNames)
             ->get();
 
@@ -293,7 +293,7 @@ final readonly class CartPriceConverter
         } else {
             // Fallback to individual query if map not provided (for backward compatibility)
             $tld = Tld::query()
-                ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
                 ->where('name', $tldPart)
                 ->orWhere('name', '.'.$tldPart)
                 ->first();

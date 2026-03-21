@@ -122,7 +122,7 @@ final class CheckoutWizard extends Component
     }
 
     #[Computed(persist: false)]
-    public function cartItems()
+    public function cartItems(): CartCollection
     {
         return Cart::getContent();
     }
@@ -136,7 +136,7 @@ final class CheckoutWizard extends Component
             return false;
         }
 
-        return $cartItems->every(fn ($item): bool => ($item->attributes->type ?? 'registration') === 'renewal');
+        return $cartItems->every(fn (mixed $item): bool => ($item->attributes->type ?? 'registration') === 'renewal');
     }
 
     #[Computed(persist: false)]
@@ -148,7 +148,7 @@ final class CheckoutWizard extends Component
             return false;
         }
 
-        return $cartItems->contains(function ($item): bool {
+        return $cartItems->contains(function (mixed $item): bool {
             $itemType = $item->attributes->type ?? 'registration';
 
             if (in_array($itemType, ['domain', 'registration', 'transfer'], true)) {
@@ -164,7 +164,7 @@ final class CheckoutWizard extends Component
     }
 
     #[Computed(persist: false)]
-    public function userContacts()
+    public function userContacts(): Collection
     {
         return auth()->user()->contacts()->get();
     }

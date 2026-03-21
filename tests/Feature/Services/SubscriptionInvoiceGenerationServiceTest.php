@@ -29,9 +29,7 @@ test('dispatches renewal invoice job for subscription expiring within window', f
     expect($results['dispatched'])->toBe(1)
         ->and($results['skipped'])->toBe(0);
 
-    Queue::assertPushed(GenerateSubscriptionRenewalInvoiceJob::class, function ($job) use ($subscription): bool {
-        return $job->subscription->id === $subscription->id;
-    });
+    Queue::assertPushed(GenerateSubscriptionRenewalInvoiceJob::class, fn ($job): bool => $job->subscription->id === $subscription->id);
 });
 
 test('dispatches job for subscriptions without auto renew', function (): void {
@@ -51,9 +49,7 @@ test('dispatches job for subscriptions without auto renew', function (): void {
 
     expect($results['dispatched'])->toBe(1);
 
-    Queue::assertPushed(GenerateSubscriptionRenewalInvoiceJob::class, function ($job) use ($subscription): bool {
-        return $job->subscription->id === $subscription->id;
-    });
+    Queue::assertPushed(GenerateSubscriptionRenewalInvoiceJob::class, fn ($job): bool => $job->subscription->id === $subscription->id);
 });
 
 test('skips non-active subscriptions', function (): void {

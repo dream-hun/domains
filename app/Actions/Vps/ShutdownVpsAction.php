@@ -30,13 +30,13 @@ final readonly class ShutdownVpsAction
             ]);
 
             return ['success' => true, 'message' => 'VPS instance is shutting down.'];
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException $runtimeException) {
             Log::error('Failed to shutdown VPS instance', [
                 'subscription_id' => $subscription->id,
-                'error' => $e->getMessage(),
+                'error' => $runtimeException->getMessage(),
             ]);
 
-            return ['success' => false, 'message' => 'Failed to shutdown instance: '.$e->getMessage()];
+            return ['success' => false, 'message' => 'Failed to shutdown instance: '.$runtimeException->getMessage()];
         }
     }
 }

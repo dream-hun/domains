@@ -16,19 +16,19 @@ final class DomainCartButton extends Component
 {
     use HasCurrency;
 
-    public $domain;
+    public string $domain;
 
-    public $price;
+    public string $price;
 
-    public $available;
+    public bool $available;
 
-    public $domainPrice; // Tld model instance
+    public mixed $domainPrice = null; // Tld model instance
 
-    public $currency;
+    public string $currency;
 
     protected $listeners = ['refreshCart' => '$refresh', 'currency-changed' => 'updateCurrency', 'currencyChanged' => 'updateCurrency'];
 
-    public function mount($domain, $price, $available = true, $domainPrice = null, $currency = null, ?int $tldId = null): void
+    public function mount(string $domain, mixed $price, bool $available = true, mixed $domainPrice = null, ?string $currency = null, ?int $tldId = null): void
     {
         $this->domain = $domain;
         $this->available = $available;
@@ -37,7 +37,7 @@ final class DomainCartButton extends Component
 
         if ($this->domainPrice === null && $tldId !== null && ($price === null || $price === '')) {
             $this->domainPrice = Tld::query()
-                ->with(['tldPricings' => fn ($q) => $q->where('is_current', true)->with('currency')])
+                ->with(['tldPricings' => fn (mixed $q) => $q->where('is_current', true)->with('currency')])
                 ->find($tldId);
         }
 
@@ -68,7 +68,7 @@ final class DomainCartButton extends Component
                 $numericPrice = $display['amount'];
                 $itemCurrency = $display['currency_code'];
             } else {
-                $numericPrice = (float) preg_replace('/[^\d.]/', '', (string) $this->price);
+                $numericPrice = (float) preg_replace('/[^\d.]/', '', $this->price);
                 $itemCurrency = $this->currency;
             }
 

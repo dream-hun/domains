@@ -119,7 +119,7 @@ final readonly class DomainSearchHelper
     public function getPopularDomains(TldType $type, int $limit = 5, ?string $targetCurrency = null): array
     {
         $query = Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
             ->latest();
         if ($type === TldType::Local) {
             $query->localTlds();
@@ -159,7 +159,7 @@ final readonly class DomainSearchHelper
 
         $allLocalTlds = Tld::query()->localTlds()->pluck('name')->map(fn (string $name): string => mb_ltrim($name, '.'))->all();
         $suggestionTlds = array_diff($allLocalTlds, [$primaryTld]);
-        $tldsToLoad = array_filter(array_merge([$primaryTld], $suggestionTlds), fn ($t): bool => ! in_array($t, [null, '', '0'], true));
+        $tldsToLoad = array_filter(array_merge([$primaryTld], $suggestionTlds), fn (mixed $t): bool => ! in_array($t, [null, '', '0'], true));
         $priceInfoMap = $this->findDomainPriceInfoBatch(array_values($tldsToLoad));
 
         if (! in_array($primaryTld, [null, '', '0'], true)) {
@@ -227,7 +227,7 @@ final readonly class DomainSearchHelper
             ->pluck('name')->map(fn (string $name): string => mb_ltrim($name, '.'))
             ->all();
 
-        $tldsToLoad = array_values(array_filter(array_merge([$primaryTld], $suggestionTlds), fn ($t): bool => ! in_array($t, [null, '', '0'], true)));
+        $tldsToLoad = array_values(array_filter(array_merge([$primaryTld], $suggestionTlds), fn (mixed $t): bool => ! in_array($t, [null, '', '0'], true)));
         $priceInfoMap = $this->findDomainPriceInfoBatch($tldsToLoad);
 
         try {
@@ -328,7 +328,7 @@ final readonly class DomainSearchHelper
         $names = array_map(fn (string $t): string => '.'.$t, $normalized);
 
         $loaded = Tld::query()
-            ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+            ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
             ->whereIn('name', $names)
             ->get();
 
@@ -341,7 +341,7 @@ final readonly class DomainSearchHelper
         return $map;
     }
 
-    private function normalizeAvailabilityStatus($available): string
+    private function normalizeAvailabilityStatus(mixed $available): string
     {
         if (is_bool($available)) {
             return $available ? 'true' : 'false';

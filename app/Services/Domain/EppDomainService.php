@@ -20,7 +20,6 @@ use AfriCC\EPP\Frame\Command\Renew\Domain as RenewDomain;
 use AfriCC\EPP\Frame\Command\Transfer\Domain as TransferDomain;
 use AfriCC\EPP\Frame\Command\Update\Domain as UpdateDomain;
 use AfriCC\EPP\Frame\Hello;
-use AfriCC\EPP\Frame\Response;
 use App\Enums\TldType;
 use App\Models\Contact;
 use App\Models\Domain;
@@ -139,7 +138,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
             foreach ($suggestedDomains as $suggestedDomain) {
                 $tld = $this->extractTld($suggestedDomain);
                 $priceInfo = Tld::query()
-                    ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                    ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
                     ->where('name', '.'.$tld)
                     ->first();
 
@@ -444,7 +443,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
         try {
             $tld = $this->extractTld($domain);
             $priceInfo = Tld::query()
-                ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
                 ->where('name', '.'.$tld)
                 ->first();
 
@@ -687,6 +686,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                     ]);
                     throw $e;
                 }
+
                 $lastException = $e;
                 $attempts++;
                 Log::warning(sprintf('EPP Connection attempt %d failed: ', $attempts).$e->getMessage());
@@ -1201,9 +1201,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                 $data = $response->data();
                 $authCode = $data['infData']['authInfo']['pw'] ?? null;
 
-                if ($authCode === null) {
-                    throw new Exception('Auth code not found in EPP InfoDomain response for domain: '.$domain);
-                }
+                throw_if($authCode === null, Exception::class, 'Auth code not found in EPP InfoDomain response for domain: '.$domain);
 
                 return $authCode;
             }
@@ -1220,7 +1218,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
      *
      * @throws Exception
      */
-    public function renewDomain(string $domain, $currentExpirationDate, string $period): RenewDomain
+    public function renewDomain(string $domain, string $currentExpirationDate, string $period): RenewDomain
     {
         try {
             $this->ensureConnection();
@@ -1340,7 +1338,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
             $domain = mb_rtrim($domain, '.');
 
             // Filter out empty nameservers and normalize hostnames
-            $nameservers = array_filter(array_map(function ($ns): string {
+            $nameservers = array_filter(array_map(function (mixed $ns): string {
                 // Normalize nameserver hostname (remove trailing dot if present)
                 // Ensure $ns is a string before passing to mb_trim
                 $ns = is_null($ns) ? '' : (string) $ns;
@@ -1638,7 +1636,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                                 $domainParts = explode('.', $domainName);
                                 $tld = count($domainParts) > 1 ? implode('.', array_slice($domainParts, 1)) : '';
                                 $priceInfo = Tld::query()
-                                    ->with(['tldPricings' => fn ($q) => $q->current()->with('currency')])
+                                    ->with(['tldPricings' => fn (mixed $q) => $q->current()->with('currency')])
                                     ->where('name', '.'.$tld)
                                     ->where('status', 'active')
                                     ->first();
@@ -2001,6 +1999,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
             if ($this->isConnectionAlive()) {
                 return;
             }
+
             // Socket is dead — reset and reconnect
             $this->connected = false;
             $this->client = null;
@@ -2008,13 +2007,9 @@ class EppDomainService implements DomainRegistrationServiceInterface
 
         if (! $this->client instanceof EPPClient) {
             throw_if(empty($this->config['host']), Exception::class, 'EPP host is not configured. Please set EPP_HOST in your .env file.');
-            if (! empty($this->config['certificate']) && ! file_exists($this->config['certificate'])) {
-                throw new Exception('EPP certificate not found. Please check the certificate path in your configuration.');
-            }
+            throw_if(! empty($this->config['certificate']) && ! file_exists($this->config['certificate']), Exception::class, 'EPP certificate not found. Please check the certificate path in your configuration.');
 
-            if (! empty($this->config['private_key']) && ! file_exists($this->config['private_key'])) {
-                throw new Exception('EPP private key not found. Please check the private key path in your configuration.');
-            }
+            throw_if(! empty($this->config['private_key']) && ! file_exists($this->config['private_key']), Exception::class, 'EPP private key not found. Please check the private key path in your configuration.');
 
             $this->initializeClient();
         }
@@ -2042,7 +2037,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
     private function extractDomainValue(array $item): string
     {// Try multiple possible paths for the domain name
         $namePaths = [
-            'name'.'._text',
+            'name._text',
             'name',
             '_text',
         ];
@@ -2176,7 +2171,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
     /**
      * Helper method to get nested array values using dot notation
      */
-    private function getNestedValue(array $array, string $path)
+    private function getNestedValue(array $array, string $path): mixed
     {
         $keys = explode('.', $path);
         $value = $array;

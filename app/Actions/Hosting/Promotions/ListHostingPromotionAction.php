@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Hosting\Promotions;
 
 use App\Models\HostingPromotion;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class ListHostingPromotionAction
@@ -16,7 +17,7 @@ final class ListHostingPromotionAction
             ->latest('starts_at');
 
         if ($categoryId !== null) {
-            $query->whereHas('plan', function ($q) use ($categoryId): void {
+            $query->whereHas('plan', function (Builder $q) use ($categoryId): void {
                 $q->where('category_id', $categoryId);
             });
         }

@@ -64,7 +64,7 @@ class HostingCategory extends Model
     {
         parent::boot();
 
-        self::creating(function ($category): void {
+        self::creating(function (HostingCategory $category): void {
             $category->uuid = (string) Str::uuid();
             $category->slug = Str::slug($category->name);
         });
