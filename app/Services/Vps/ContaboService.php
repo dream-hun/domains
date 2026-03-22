@@ -1065,6 +1065,11 @@ class ContaboService
     {
         if ($response->failed()) {
             $message = $response->json('message') ?? $response->body();
+
+            if (is_array($message)) {
+                $message = json_encode($message);
+            }
+
             throw new RuntimeException(sprintf('%s: [%d] %s', $context, $response->status(), $message));
         }
     }
