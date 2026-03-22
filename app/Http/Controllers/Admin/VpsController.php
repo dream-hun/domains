@@ -41,10 +41,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class VpsController extends Controller
 {
-    public function __construct(private readonly ContaboService $contaboService)
-    {
-        abort_if(! auth()->user()?->isAdmin(), Response::HTTP_FORBIDDEN);
-    }
+    public function __construct(private readonly ContaboService $contaboService) {}
 
     public function index(): View|Factory
     {
@@ -54,10 +51,20 @@ final class VpsController extends Controller
         $errorMessage = '';
 
         try {
+            $isAdmin = auth()->user()?->isAdmin();
+
             $subscriptions = Subscription::query()
                 ->whereNotNull('provider_resource_id')
+                ->when(! $isAdmin, fn ($query) => $query->where('user_id', auth()->id()))
                 ->with('user', 'plan')
                 ->get();
+
+            if ($subscriptions->isEmpty()) {
+                return view('admin.vps.index', [
+                    'instances' => $instances,
+                    'errorMessage' => $errorMessage,
+                ]);
+            }
 
             $apiResponse = $this->contaboService->listInstances();
             $apiInstances = collect($apiResponse['data'] ?? []);
@@ -105,6 +112,7 @@ final class VpsController extends Controller
     public function show(Subscription $subscription): View|Factory
     {
         abort_if(Gate::denies('vps_show'), Response::HTTP_FORBIDDEN);
+        $this->authorizeSubscriptionOwner($subscription);
 
         $instance = [];
         $snapshots = [];
@@ -182,6 +190,7 @@ final class VpsController extends Controller
 
     public function assign(): View|Factory
     {
+        $this->authorizeAdmin();
         abort_if(Gate::denies('vps_assign'), Response::HTTP_FORBIDDEN);
 
         $unassignedSubscriptions = [];
@@ -236,6 +245,8 @@ final class VpsController extends Controller
 
     public function storeAssignment(AssignVpsRequest $request, AssignVpsToSubscriptionAction $action): RedirectResponse
     {
+        $this->authorizeAdmin();
+
         $subscription = Subscription::query()->findOrFail($request->validated('subscription_id'));
         $result = $action->execute($subscription, (int) $request->validated('instance_id'));
 
@@ -245,6 +256,7 @@ final class VpsController extends Controller
     public function start(Subscription $subscription, StartVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_start'), Response::HTTP_FORBIDDEN);
+        $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute($subscription);
 
@@ -254,6 +266,7 @@ final class VpsController extends Controller
     public function restart(Subscription $subscription, RestartVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_restart'), Response::HTTP_FORBIDDEN);
+        $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute($subscription);
 
@@ -263,6 +276,7 @@ final class VpsController extends Controller
     public function shutdown(Subscription $subscription, ShutdownVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_shutdown'), Response::HTTP_FORBIDDEN);
+        $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute($subscription);
 
@@ -272,6 +286,7 @@ final class VpsController extends Controller
     public function reinstall(Request $request, Subscription $subscription, ReinstallVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_reinstall'), Response::HTTP_FORBIDDEN);
+        $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute($subscription, $request->only(['imageId']));
 
@@ -281,6 +296,7 @@ final class VpsController extends Controller
     public function rescue(Subscription $subscription, RescueVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_rescue'), Response::HTTP_FORBIDDEN);
+        $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute($subscription);
 
@@ -296,6 +312,7 @@ final class VpsController extends Controller
     public function resetCredentials(Subscription $subscription, ResetVpsCredentialsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_reset_credentials'), Response::HTTP_FORBIDDEN);
+        $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute($subscription);
 
@@ -310,6 +327,8 @@ final class VpsController extends Controller
 
     public function changeDisplayName(ChangeVpsDisplayNameRequest $request, Subscription $subscription, ChangeVpsDisplayNameAction $action): RedirectResponse
     {
+        $this->authorizeSubscriptionOwner($subscription);
+
         $result = $action->execute($subscription, $request->validated('display_name'));
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
@@ -317,6 +336,8 @@ final class VpsController extends Controller
 
     public function createSnapshot(CreateVpsSnapshotRequest $request, Subscription $subscription, CreateVpsSnapshotAction $action): RedirectResponse
     {
+        $this->authorizeSubscriptionOwner($subscription);
+
         $result = $action->execute(
             $subscription,
             $request->validated('name'),
@@ -329,6 +350,7 @@ final class VpsController extends Controller
     public function deleteSnapshot(Subscription $subscription, string $snapshotId, DeleteVpsSnapshotAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_snapshot_delete'), Response::HTTP_FORBIDDEN);
+        $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute($subscription, $snapshotId);
 
@@ -338,6 +360,7 @@ final class VpsController extends Controller
     public function restoreSnapshot(Subscription $subscription, string $snapshotId, RestoreVpsSnapshotAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_backup_restore'), Response::HTTP_FORBIDDEN);
+        $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute($subscription, $snapshotId);
 
@@ -346,6 +369,7 @@ final class VpsController extends Controller
 
     public function upgrade(Subscription $subscription, UpgradeVpsAction $action): RedirectResponse
     {
+        $this->authorizeAdmin();
         abort_if(Gate::denies('vps_upgrade'), Response::HTTP_FORBIDDEN);
 
         $result = $action->execute($subscription);
@@ -355,6 +379,8 @@ final class VpsController extends Controller
 
     public function orderLicense(OrderVpsLicenseRequest $request, Subscription $subscription, OrderVpsLicenseAction $action): RedirectResponse
     {
+        $this->authorizeAdmin();
+
         $result = $action->execute($subscription, $request->validated('license_type'));
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
@@ -362,6 +388,8 @@ final class VpsController extends Controller
 
     public function extendStorage(ExtendVpsStorageRequest $request, Subscription $subscription, ExtendVpsStorageAction $action): RedirectResponse
     {
+        $this->authorizeAdmin();
+
         $result = $action->execute($subscription, (int) $request->validated('storage_gb'));
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
@@ -369,6 +397,8 @@ final class VpsController extends Controller
 
     public function moveRegion(MoveVpsRegionRequest $request, Subscription $subscription, MoveVpsRegionAction $action): RedirectResponse
     {
+        $this->authorizeAdmin();
+
         $result = $action->execute($subscription, $request->validated('target_region'));
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
@@ -376,10 +406,21 @@ final class VpsController extends Controller
 
     public function cancel(Subscription $subscription, CancelVpsAction $action): RedirectResponse
     {
+        $this->authorizeAdmin();
         abort_if(Gate::denies('vps_cancel'), Response::HTTP_FORBIDDEN);
 
         $result = $action->execute($subscription);
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    private function authorizeSubscriptionOwner(Subscription $subscription): void
+    {
+        abort_if(! auth()->user()?->isAdmin() && $subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+    }
+
+    private function authorizeAdmin(): void
+    {
+        abort_if(! auth()->user()?->isAdmin(), Response::HTTP_FORBIDDEN);
     }
 }
