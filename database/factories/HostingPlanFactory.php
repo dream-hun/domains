@@ -31,6 +31,7 @@ class HostingPlanFactory extends Factory
             'is_popular' => $this->faker->boolean(),
             'status' => $this->faker->randomElement(HostingPlanStatus::cases())->value,
             'sort_order' => $this->faker->numberBetween(1, 100),
+            'contabo_product_id' => null,
             'category_id' => HostingCategory::factory(),
         ];
     }

@@ -697,12 +697,6 @@ parameters:
 			path: app/Actions/Vps/RestoreVpsSnapshotAction.php
 
 		-
-			message: '#^Method App\\Actions\\Vps\\UpgradeVpsAction\:\:execute\(\) has parameter \$addOns with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 2
-			path: app/Actions/Vps/UpgradeVpsAction.php
-
-		-
 			message: '#^Method App\\Actions\\Vps\\UpgradeVpsAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

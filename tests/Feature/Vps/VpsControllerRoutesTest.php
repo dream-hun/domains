@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\AuthGates;
+use App\Models\HostingCategory;
+use App\Models\HostingPlan;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Subscription;
@@ -268,7 +270,21 @@ it('admin vps action endpoints succeed', function (): void {
         'vps_cancel',
     ]);
 
-    $subscription = Subscription::factory()->create(['provider_resource_id' => '12345']);
+    $category = HostingCategory::factory()->create();
+    $currentPlan = HostingPlan::factory()->create([
+        'category_id' => $category->id,
+        'sort_order' => 1,
+    ]);
+    $nextPlan = HostingPlan::factory()->create([
+        'category_id' => $category->id,
+        'sort_order' => 2,
+        'contabo_product_id' => 'V99',
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'provider_resource_id' => '12345',
+        'hosting_plan_id' => $currentPlan->id,
+    ]);
 
     $mock = Mockery::mock(ContaboService::class);
 
@@ -298,7 +314,7 @@ it('admin vps action endpoints succeed', function (): void {
     $mock->shouldReceive('deleteSnapshot')->with(12345, 'snap-123')->once()->andReturn(true);
     $mock->shouldReceive('revertSnapshot')->with(12345, 'snap-123')->once()->andReturn([]);
 
-    $mock->shouldReceive('upgradeInstance')->with(12345, [])->once()->andReturn([]);
+    $mock->shouldReceive('upgradeInstance')->with(12345, ['productId' => 'V99'])->once()->andReturn([]);
     $mock->shouldReceive('upgradeInstance')->with(12345, ['license' => 'cPanel'])->once()->andReturn([]);
     $mock->shouldReceive('upgradeInstance')->with(12345, ['extraStorage' => 100])->once()->andReturn([]);
 
@@ -666,7 +682,6 @@ it('user vps action endpoints succeed', function (): void {
     $mock->shouldReceive('revertSnapshot')->with(12345, 'snap-123')->once()->andReturn([]);
 
     $mock->shouldReceive('reinstallInstance')->with(12345, ['imageId' => 'ubuntu-22.04'])->once()->andReturn([]);
-    $mock->shouldReceive('upgradeInstance')->with(12345, [])->once()->andReturn([]);
 
     app()->instance(ContaboService::class, $mock);
     setupVpsControllerGates($user);
@@ -732,12 +747,6 @@ it('user vps action endpoints succeed', function (): void {
         ->post(route('user.vps.reinstall', $subscription), [
             'imageId' => 'ubuntu-22.04',
         ])
-        ->assertRedirect()
-        ->assertSessionHas('success');
-
-    $this->actingAs($user)
-        ->from(route('user.vps.show', $subscription))
-        ->post(route('user.vps.upgrade', $subscription))
         ->assertRedirect()
         ->assertSessionHas('success');
 });

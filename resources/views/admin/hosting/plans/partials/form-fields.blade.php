@@ -56,7 +56,7 @@
 
 <div class="row">
     {{-- Sort Order --}}
-    <div class="col-md-6 mb-3">
+    <div class="col-md-3 mb-3">
         <label for="sort_order" class="form-label">Sort Order</label>
         <input type="number" name="sort_order" id="sort_order" min="0"
                class="form-control @error('sort_order') is-invalid @enderror"
@@ -68,7 +68,7 @@
     </div>
 
     {{-- Status --}}
-    <div class="col-md-6 mb-3">
+    <div class="col-md-3 mb-3">
         <label for="status" class="form-label required">Status</label>
         <select name="status" id="status" class="form-control select2bs4 @error('status') is-invalid @enderror" required>
             <option value="">Select Status</option>
@@ -82,11 +82,9 @@
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
     </div>
-</div>
 
-<div class="row">
     {{-- Is Popular --}}
-    <div class="col-md-6 mb-3">
+    <div class="col-md-3 mb-3">
         <label class="form-label required">Popular Plan</label>
         <div class="form-check form-switch">
             <input type="hidden" name="is_popular" value="0">
@@ -97,6 +95,18 @@
                 <div class="invalid-feedback d-block">{{ $message }}</div>
             @enderror
         </div>
+    </div>
+
+    {{-- Contabo Product ID --}}
+    <div class="col-md-3 mb-3">
+        <label for="contabo_product_id" class="form-label">Contabo Product ID</label>
+        <input type="text" name="contabo_product_id" id="contabo_product_id"
+               class="form-control @error('contabo_product_id') is-invalid @enderror"
+               value="{{ old('contabo_product_id', $plan?->contabo_product_id) }}">
+        @error('contabo_product_id')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+        <small class="form-text text-muted">Third-party product identifier for VPS integration.</small>
     </div>
 </div>
 

@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $uuid
  * @property int|null $category_id
+ * @property string|null $contabo_product_id
  * @property int $sort_order
  * @property bool $is_popular
  * @property HostingPlanStatus $status

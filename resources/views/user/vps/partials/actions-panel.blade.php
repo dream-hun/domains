@@ -18,22 +18,34 @@
             <div class="col-md-6">
                 <h5 class="mb-3">Power Management</h5>
                 <div class="btn-group-vertical w-100" role="group">
-                    @can('vps_restart')
-                        <form method="POST" action="{{ route('user.vps.restart', $subscription) }}" onsubmit="return confirm('Are you sure you want to restart this instance?')">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-warning text-left w-100 mb-2">
-                                <i class="fas fa-redo mr-2"></i> Restart Instance
-                            </button>
-                        </form>
-                    @endcan
-                    @can('vps_shutdown')
-                        <form method="POST" action="{{ route('user.vps.shutdown', $subscription) }}" onsubmit="return confirm('Are you sure you want to shut down this instance?')">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-danger text-left w-100 mb-2">
-                                <i class="fas fa-power-off mr-2"></i> Shutdown Instance
-                            </button>
-                        </form>
-                    @endcan
+                    @if (($instance['status'] ?? '') === 'stopped')
+                        @can('vps_start')
+                            <form method="POST" action="{{ route('user.vps.start', $subscription) }}" onsubmit="return confirm('Are you sure you want to start this instance?')">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-success text-left w-100 mb-2">
+                                    <i class="fas fa-play mr-2"></i> Start Instance
+                                </button>
+                            </form>
+                        @endcan
+                    @endif
+                    @if (($instance['status'] ?? '') === 'running')
+                        @can('vps_shutdown')
+                            <form method="POST" action="{{ route('user.vps.shutdown', $subscription) }}" onsubmit="return confirm('Are you sure you want to shut down this instance?')">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-danger text-left w-100 mb-2">
+                                    <i class="fas fa-power-off mr-2"></i> Shutdown Instance
+                                </button>
+                            </form>
+                        @endcan
+                        @can('vps_restart')
+                            <form method="POST" action="{{ route('user.vps.restart', $subscription) }}" onsubmit="return confirm('Are you sure you want to restart this instance?')">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-warning text-left w-100 mb-2">
+                                    <i class="fas fa-redo mr-2"></i> Restart Instance
+                                </button>
+                            </form>
+                        @endcan
+                    @endif
                     @can('vps_rescue')
                         <form method="POST" action="{{ route('user.vps.rescue', $subscription) }}" onsubmit="return confirm('Boot into rescue mode? The instance will be restarted.')">
                             @csrf
@@ -89,15 +101,6 @@
                         @error('imageId')
                             <small class="text-danger">{{ $message }}</small>
                         @enderror
-                    </form>
-                @endcan
-
-                @can('vps_upgrade')
-                    <form method="POST" action="{{ route('user.vps.upgrade', $subscription) }}" onsubmit="return confirm('Are you sure you want to upgrade this instance?')">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-success text-left w-100 mb-2">
-                            <i class="fas fa-arrow-up mr-2"></i> Upgrade Instance
-                        </button>
                     </form>
                 @endcan
 

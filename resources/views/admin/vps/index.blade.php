@@ -98,21 +98,40 @@
                                             <td>{{ $inst['region'] }}</td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    @can('vps_restart')
-                                                        <form method="POST" action="{{ route('admin.vps.restart', $inst['subscription_uuid']) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to restart this instance?')">
-                                                            @csrf
-                                                            <button type="submit" class="btn btn-outline-warning btn-sm" title="Restart">
-                                                                <i class="fas fa-redo"></i>
-                                                            </button>
-                                                        </form>
-                                                    @endcan
-                                                    @can('vps_shutdown')
-                                                        <form method="POST" action="{{ route('admin.vps.shutdown', $inst['subscription_uuid']) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to shut down this instance?')">
-                                                            @csrf
-                                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Shutdown">
-                                                                <i class="fas fa-power-off"></i>
-                                                            </button>
-                                                        </form>
+                                                    @if ($inst['status'] === 'stopped')
+                                                        @can('vps_start')
+                                                            <form method="POST" action="{{ route('admin.vps.start', $inst['subscription_uuid']) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to start this instance?')">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-outline-success btn-sm" title="Start">
+                                                                    <i class="fas fa-play"></i>
+                                                                </button>
+                                                            </form>
+                                                        @endcan
+                                                    @endif
+                                                    @if ($inst['status'] === 'running')
+                                                        @can('vps_restart')
+                                                            <form method="POST" action="{{ route('admin.vps.restart', $inst['subscription_uuid']) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to restart this instance?')">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-outline-warning btn-sm" title="Restart">
+                                                                    <i class="fas fa-redo"></i>
+                                                                </button>
+                                                            </form>
+                                                        @endcan
+                                                        @can('vps_shutdown')
+                                                            <form method="POST" action="{{ route('admin.vps.shutdown', $inst['subscription_uuid']) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to shut down this instance?')">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Shutdown">
+                                                                    <i class="fas fa-power-off"></i>
+                                                                </button>
+                                                            </form>
+                                                        @endcan
+                                                    @endif
+                                                    @can('vps_assign')
+                                                        <a href="{{ route('admin.vps.assign') }}"
+                                                           class="btn btn-outline-primary btn-sm"
+                                                           title="Assign">
+                                                            <i class="fas fa-link"></i>
+                                                        </a>
                                                     @endcan
                                                     <a href="{{ route('admin.vps.show', $inst['subscription_uuid']) }}"
                                                        class="btn btn-outline-info btn-sm"

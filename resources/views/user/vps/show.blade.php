@@ -122,6 +122,11 @@
                 @can('vps_snapshot_access')
                     @include('user.vps.partials.snapshots-panel')
                 @endcan
+
+                {{-- Backups Panel --}}
+                @can('vps_backup_access')
+                    @include('user.vps.partials.backups-panel')
+                @endcan
             @endif
         </div>
     </section>
