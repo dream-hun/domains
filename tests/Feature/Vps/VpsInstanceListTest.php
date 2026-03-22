@@ -10,14 +10,38 @@ use App\Models\User;
 use App\Services\Vps\ContaboService;
 use Illuminate\Http\Request;
 
+function ensureAdminRoleExists(): Role
+{
+    return Role::query()->firstOrCreate(['id' => 1], ['title' => 'Admin']);
+}
+
 function createVpsUser(array $permissions = ['vps_access']): User
 {
+    ensureAdminRoleExists();
+
     $role = Role::query()->create(['title' => 'VpsUser-'.uniqid()]);
     foreach ($permissions as $permission) {
         $role->permissions()->attach(
             Permission::query()->where('title', $permission)->first()?->id
                 ?? Permission::query()->create(['title' => $permission])->id
         );
+    }
+
+    $user = User::factory()->create();
+    $user->roles()->attach($role);
+
+    return $user;
+}
+
+function createVpsAdmin(array $permissions = ['vps_access']): User
+{
+    $role = ensureAdminRoleExists();
+    foreach ($permissions as $permission) {
+        $perm = Permission::query()->where('title', $permission)->first()
+            ?? Permission::query()->create(['title' => $permission]);
+        if (! $role->permissions()->where('permissions.id', $perm->id)->exists()) {
+            $role->permissions()->attach($perm->id);
+        }
     }
 
     $user = User::factory()->create();
@@ -65,7 +89,26 @@ function fakeContaboInstances(array $instances = []): void
     app()->instance(ContaboService::class, $mock);
 }
 
-it('shows VPS instance list for authorized users', function (): void {
+it('shows all VPS instances for admin users', function (): void {
+    $admin = createVpsAdmin(['vps_access']);
+    $otherUser = User::factory()->create();
+
+    Subscription::factory()->create([
+        'user_id' => $otherUser->id,
+        'provider_resource_id' => '12345',
+    ]);
+
+    fakeContaboInstances();
+    setupVpsGates($admin);
+
+    $this->actingAs($admin)
+        ->get(route('admin.vps.index'))
+        ->assertOk()
+        ->assertSee('My VPS')
+        ->assertSee('192.168.1.1');
+});
+
+it('shows only own VPS instances for non-admin users', function (): void {
     $user = createVpsUser(['vps_access']);
     Subscription::factory()->create([
         'user_id' => $user->id,
@@ -80,6 +123,24 @@ it('shows VPS instance list for authorized users', function (): void {
         ->assertOk()
         ->assertSee('My VPS')
         ->assertSee('192.168.1.1');
+});
+
+it('shows empty table for non-admin user without VPS instances', function (): void {
+    $user = createVpsUser(['vps_access']);
+    $otherUser = User::factory()->create();
+
+    Subscription::factory()->create([
+        'user_id' => $otherUser->id,
+        'provider_resource_id' => '12345',
+    ]);
+
+    fakeContaboInstances();
+    setupVpsGates($user);
+
+    $this->actingAs($user)
+        ->get(route('admin.vps.index'))
+        ->assertOk()
+        ->assertDontSee('My VPS');
 });
 
 it('shows empty state when user has no VPS instances', function (): void {

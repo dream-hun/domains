@@ -14,13 +14,15 @@ use Illuminate\Http\Request;
 
 function createVpsControllerUser(array $permissions = ['vps_access']): User
 {
-    $role = Role::query()->create(['title' => 'VpsUser-'.uniqid()]);
+    $role = Role::query()->firstOrCreate(['id' => 1], ['title' => 'Admin']);
 
     foreach ($permissions as $permissionTitle) {
         $permission = Permission::query()->where('title', $permissionTitle)->first()
             ?? Permission::query()->create(['title' => $permissionTitle]);
 
-        $role->permissions()->attach($permission->id);
+        if (! $role->permissions()->where('permissions.id', $permission->id)->exists()) {
+            $role->permissions()->attach($permission->id);
+        }
     }
 
     $user = User::factory()->create();
@@ -92,6 +94,10 @@ it('admin vps index maps instances (and ignores missing API instances)', functio
 
 it('admin vps index handles RuntimeException from provider listInstances', function (): void {
     $user = createVpsControllerUser(['vps_access']);
+
+    Subscription::factory()->create([
+        'provider_resource_id' => '12345',
+    ]);
 
     $mock = Mockery::mock(ContaboService::class);
     $mock->shouldReceive('listInstances')->once()->andThrow(new RuntimeException('Provider down'));
