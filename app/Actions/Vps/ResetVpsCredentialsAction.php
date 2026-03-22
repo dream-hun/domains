@@ -25,14 +25,32 @@ final readonly class ResetVpsCredentialsAction
             $instanceId = (int) $subscription->provider_resource_id;
 
             $password = Str::password(24);
+
+            Log::info('Creating Contabo secret for password reset', [
+                'subscription_id' => $subscription->id,
+                'instance_id' => $instanceId,
+            ]);
+
             $secret = $this->contaboService->createSecret([
-                'name' => sprintf('reset-%d-', $instanceId).now()->timestamp,
+                'name' => sprintf('reset-%d-%d', $instanceId, now()->timestamp),
                 'type' => 'password',
                 'value' => $password,
             ]);
 
+            $secretId = $secret['secretId'] ?? null;
+
+            if (! $secretId) {
+                Log::error('Secret created but secretId not found in response', [
+                    'subscription_id' => $subscription->id,
+                    'instance_id' => $instanceId,
+                    'secret_response_keys' => array_keys($secret),
+                ]);
+
+                return ['success' => false, 'message' => 'Failed to reset credentials: could not retrieve secret ID.'];
+            }
+
             $data = $this->contaboService->resetInstancePassword($instanceId, [
-                'rootPassword' => (int) $secret['secretId'],
+                'rootPassword' => (int) $secretId,
             ]);
 
             Log::info('VPS instance credentials reset', [

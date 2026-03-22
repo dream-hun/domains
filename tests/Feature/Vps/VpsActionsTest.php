@@ -13,6 +13,8 @@ use App\Actions\Vps\ResetVpsCredentialsAction;
 use App\Actions\Vps\RestartVpsAction;
 use App\Actions\Vps\ShutdownVpsAction;
 use App\Actions\Vps\UpgradeVpsAction;
+use App\Models\HostingCategory;
+use App\Models\HostingPlan;
 use App\Models\Subscription;
 use App\Services\Vps\ContaboService;
 
@@ -147,26 +149,73 @@ it('handles reinstall failure gracefully', function (): void {
 });
 
 it('upgrades a VPS instance successfully', function (): void {
-    $subscription = Subscription::factory()->create(['provider_resource_id' => '12345']);
+    $category = HostingCategory::factory()->create();
+    $currentPlan = HostingPlan::factory()->create([
+        'category_id' => $category->id,
+        'sort_order' => 1,
+    ]);
+    $nextPlan = HostingPlan::factory()->create([
+        'category_id' => $category->id,
+        'sort_order' => 2,
+        'contabo_product_id' => 'V99',
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'provider_resource_id' => '12345',
+        'hosting_plan_id' => $currentPlan->id,
+    ]);
 
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('upgradeInstance')->with(12345, [])->once()->andReturn([]);
+    $mock->shouldReceive('upgradeInstance')->with(12345, ['productId' => 'V99'])->once()->andReturn([]);
     app()->instance(ContaboService::class, $mock);
 
-    $result = resolve(UpgradeVpsAction::class)->execute($subscription, []);
+    $result = resolve(UpgradeVpsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeTrue();
-    expect($result['message'])->toContain('upgrade');
+    expect($result['message'])->toContain($nextPlan->name);
+    expect($subscription->fresh()->hosting_plan_id)->toBe($nextPlan->id);
+});
+
+it('returns error when already on highest plan', function (): void {
+    $category = HostingCategory::factory()->create();
+    $topPlan = HostingPlan::factory()->create([
+        'category_id' => $category->id,
+        'sort_order' => 3,
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'provider_resource_id' => '12345',
+        'hosting_plan_id' => $topPlan->id,
+    ]);
+
+    $result = resolve(UpgradeVpsAction::class)->execute($subscription);
+
+    expect($result['success'])->toBeFalse();
+    expect($result['message'])->toContain('highest plan');
 });
 
 it('handles upgrade failure gracefully', function (): void {
-    $subscription = Subscription::factory()->create(['provider_resource_id' => '12345']);
+    $category = HostingCategory::factory()->create();
+    $currentPlan = HostingPlan::factory()->create([
+        'category_id' => $category->id,
+        'sort_order' => 1,
+    ]);
+    $nextPlan = HostingPlan::factory()->create([
+        'category_id' => $category->id,
+        'sort_order' => 2,
+        'contabo_product_id' => 'V99',
+    ]);
+
+    $subscription = Subscription::factory()->create([
+        'provider_resource_id' => '12345',
+        'hosting_plan_id' => $currentPlan->id,
+    ]);
 
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('upgradeInstance')->with(12345, [])->once()->andThrow(new RuntimeException('API Error'));
+    $mock->shouldReceive('upgradeInstance')->with(12345, ['productId' => 'V99'])->once()->andThrow(new RuntimeException('API Error'));
     app()->instance(ContaboService::class, $mock);
 
-    $result = resolve(UpgradeVpsAction::class)->execute($subscription, []);
+    $result = resolve(UpgradeVpsAction::class)->execute($subscription);
 
     expect($result['success'])->toBeFalse();
     expect($result['message'])->toContain('Failed');

@@ -18,6 +18,7 @@ use App\Actions\Vps\ResetVpsCredentialsAction;
 use App\Actions\Vps\RestartVpsAction;
 use App\Actions\Vps\RestoreVpsSnapshotAction;
 use App\Actions\Vps\ShutdownVpsAction;
+use App\Actions\Vps\StartVpsAction;
 use App\Actions\Vps\UpgradeVpsAction;
 use App\Enums\Vps\VpsInstanceStatus;
 use App\Http\Controllers\Controller;
@@ -40,7 +41,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class VpsController extends Controller
 {
-    public function __construct(private readonly ContaboService $contaboService) {}
+    public function __construct(private readonly ContaboService $contaboService)
+    {
+        abort_if(! auth()->user()?->isAdmin(), Response::HTTP_FORBIDDEN);
+    }
 
     public function index(): View|Factory
     {
@@ -104,6 +108,7 @@ final class VpsController extends Controller
 
         $instance = [];
         $snapshots = [];
+        $backups = [];
         $errorMessage = '';
 
         try {
@@ -114,6 +119,7 @@ final class VpsController extends Controller
                     'subscription' => $subscription,
                     'instance' => $instance,
                     'snapshots' => $snapshots,
+                    'backups' => $backups,
                     'errorMessage' => $errorMessage,
                 ]);
             }
@@ -150,6 +156,15 @@ final class VpsController extends Controller
                 $snapshotResponse = $this->contaboService->listSnapshots((int) $subscription->provider_resource_id);
                 $snapshots = $snapshotResponse['data'] ?? [];
             }
+
+            if (Gate::allows('vps_backup_access')) {
+                try {
+                    $backupResponse = $this->contaboService->listInstanceBackups((int) $subscription->provider_resource_id);
+                    $backups = $backupResponse['data'] ?? [];
+                } catch (RuntimeException) {
+                    // Backups may not be activated — fail silently
+                }
+            }
         } catch (RuntimeException $runtimeException) {
             Log::error('Failed to load VPS instance', ['error' => $runtimeException->getMessage()]);
             $errorMessage = 'Failed to load VPS instance details.';
@@ -159,6 +174,7 @@ final class VpsController extends Controller
             'subscription' => $subscription,
             'instance' => $instance,
             'snapshots' => $snapshots,
+            'backups' => $backups,
             'maxSnapshots' => $maxSnapshots ?? null,
             'errorMessage' => $errorMessage,
         ]);
@@ -222,6 +238,15 @@ final class VpsController extends Controller
     {
         $subscription = Subscription::query()->findOrFail($request->validated('subscription_id'));
         $result = $action->execute($subscription, (int) $request->validated('instance_id'));
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    public function start(Subscription $subscription, StartVpsAction $action): RedirectResponse
+    {
+        abort_if(Gate::denies('vps_start'), Response::HTTP_FORBIDDEN);
+
+        $result = $action->execute($subscription);
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
@@ -323,7 +348,7 @@ final class VpsController extends Controller
     {
         abort_if(Gate::denies('vps_upgrade'), Response::HTTP_FORBIDDEN);
 
-        $result = $action->execute($subscription, []);
+        $result = $action->execute($subscription);
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }

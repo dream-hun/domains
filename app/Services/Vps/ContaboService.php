@@ -191,9 +191,9 @@ class ContaboService
     }
 
     /**
-     * Upgrade an instance with add-ons (e.g. private networking, backup).
+     * Upgrade an instance (e.g. product tier, private networking, backup).
      *
-     * @param  array{privateNetworking?: array, backup?: array}  $addOns
+     * @param  array{productId?: string, privateNetworking?: array, backup?: array}  $addOns
      *
      * @throws ConnectionException
      */
@@ -286,7 +286,7 @@ class ContaboService
     public function resetInstancePassword(int $instanceId, array $payload): array
     {
         $response = $this->client()->post(
-            sprintf('/compute/instances/%d/actions/reset-password', $instanceId),
+            sprintf('/compute/instances/%d/actions/resetPassword', $instanceId),
             $payload
         );
         $this->assertSuccess($response, 'Reset password for instance #'.$instanceId);
@@ -375,11 +375,24 @@ class ContaboService
     public function revertSnapshot(int $instanceId, string $snapshotId): array
     {
         $response = $this->client()->post(
-            sprintf('/compute/instances/%d/snapshots/%s/revert', $instanceId, $snapshotId)
+            sprintf('/compute/instances/%d/snapshots/%s/rollback', $instanceId, $snapshotId)
         );
         $this->assertSuccess($response, sprintf('Revert instance #%d to snapshot %s', $instanceId, $snapshotId));
 
         return $response->json('data.0');
+    }
+
+    /**
+     * List automated backups for an instance.
+     *
+     * @throws ConnectionException
+     */
+    public function listInstanceBackups(int $instanceId, array $filters = []): array
+    {
+        $response = $this->client()->get(sprintf('/compute/instances/%d/backups', $instanceId), $filters);
+        $this->assertSuccess($response, 'List backups for instance #'.$instanceId);
+
+        return $response->json();
     }
 
     /**

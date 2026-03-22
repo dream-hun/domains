@@ -36,6 +36,7 @@ final class StoreHostingPlanRequest extends FormRequest
             'status' => ['required', new Enum(HostingPlanStatus::class)],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'category_id' => ['required', 'exists:hosting_categories,id'],
+            'contabo_product_id' => ['nullable', 'string', 'max:255'],
         ];
     }
 

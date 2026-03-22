@@ -134,6 +134,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::get('vps/assign', [VpsController::class, 'assign'])->name('vps.assign');
     Route::post('vps/assign', [VpsController::class, 'storeAssignment'])->name('vps.assign.store');
     Route::get('vps/{subscription}', [VpsController::class, 'show'])->name('vps.show');
+    Route::post('vps/{subscription}/start', [VpsController::class, 'start'])->name('vps.start');
     Route::post('vps/{subscription}/restart', [VpsController::class, 'restart'])->name('vps.restart');
     Route::post('vps/{subscription}/shutdown', [VpsController::class, 'shutdown'])->name('vps.shutdown');
     Route::post('vps/{subscription}/reinstall', [VpsController::class, 'reinstall'])->name('vps.reinstall');
@@ -156,6 +157,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     // User VPS routes
     Route::get('/vps', [UserVpsController::class, 'index'])->name('user.vps.index');
     Route::get('/vps/{subscription}', [UserVpsController::class, 'show'])->name('user.vps.show');
+    Route::post('/vps/{subscription}/start', [UserVpsController::class, 'start'])->name('user.vps.start');
     Route::post('/vps/{subscription}/restart', [UserVpsController::class, 'restart'])->name('user.vps.restart');
     Route::post('/vps/{subscription}/shutdown', [UserVpsController::class, 'shutdown'])->name('user.vps.shutdown');
     Route::post('/vps/{subscription}/rescue', [UserVpsController::class, 'rescue'])->name('user.vps.rescue');
@@ -165,7 +167,6 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::delete('/vps/{subscription}/snapshots/{snapshotId}', [UserVpsController::class, 'deleteSnapshot'])->name('user.vps.snapshots.destroy');
     Route::post('/vps/{subscription}/snapshots/{snapshotId}/restore', [UserVpsController::class, 'restoreSnapshot'])->name('user.vps.snapshots.restore');
     Route::post('/vps/{subscription}/reinstall', [UserVpsController::class, 'reinstall'])->name('user.vps.reinstall');
-    Route::post('/vps/{subscription}/upgrade', [UserVpsController::class, 'upgrade'])->name('user.vps.upgrade');
 
     Route::get('shopping-cart/checkout', [SmartCheckoutController::class, 'index'])->name('checkout.index');
 
