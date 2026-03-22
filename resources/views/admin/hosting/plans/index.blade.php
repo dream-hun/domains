@@ -83,6 +83,7 @@
                                                 <th>Category</th>
                                                 <th>Status</th>
                                                 <th>Popular</th>
+                                                <th>Contabo Product</th>
                                                 <th>Sort Order</th>
                                                 <th>Created</th>
                                                 <th class="text-right">Actions</th>
@@ -108,6 +109,7 @@
                                                             <span class="badge bg-secondary">No</span>
                                                         @endif
                                                     </td>
+                                                    <td>{{ $plan->contabo_product_id ?? '—' }}</td>
                                                     <td>{{ $plan->sort_order }}</td>
                                                     <td>{{ $plan->created_at?->format('M d, Y') }}</td>
                                                     <td class="text-right">
@@ -157,37 +159,42 @@
 
             .datatable-HostingPlan th:nth-child(1),
             .datatable-HostingPlan td:nth-child(1) {
-                width: 20%;
+                width: 16%;
             }
 
             .datatable-HostingPlan th:nth-child(2),
             .datatable-HostingPlan td:nth-child(2) {
-                width: 15%;
+                width: 12%;
             }
 
             .datatable-HostingPlan th:nth-child(3),
             .datatable-HostingPlan td:nth-child(3) {
-                width: 12%;
+                width: 10%;
             }
 
             .datatable-HostingPlan th:nth-child(4),
             .datatable-HostingPlan td:nth-child(4) {
-                width: 10%;
+                width: 8%;
             }
 
             .datatable-HostingPlan th:nth-child(5),
             .datatable-HostingPlan td:nth-child(5) {
-                width: 10%;
+                width: 12%;
             }
 
             .datatable-HostingPlan th:nth-child(6),
             .datatable-HostingPlan td:nth-child(6) {
-                width: 13%;
+                width: 8%;
             }
 
             .datatable-HostingPlan th:nth-child(7),
             .datatable-HostingPlan td:nth-child(7) {
-                width: 20%;
+                width: 12%;
+            }
+
+            .datatable-HostingPlan th:nth-child(8),
+            .datatable-HostingPlan td:nth-child(8) {
+                width: 22%;
             }
         </style>
     @endsection
