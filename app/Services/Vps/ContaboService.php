@@ -379,7 +379,7 @@ class ContaboService
         );
         $this->assertSuccess($response, sprintf('Revert instance #%d to snapshot %s', $instanceId, $snapshotId));
 
-        return $response->json('data.0');
+        return $response->json('data.0') ?? [];
     }
 
     /**
