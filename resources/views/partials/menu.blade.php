@@ -55,8 +55,8 @@
                     </x-admin.sidebar-link>
                 @endcan
                 @if(auth()->user()->can('tld_access') || auth()->user()->can('tld_pricing_access') || auth()->user()->can('domain_access') || auth()->user()->can('failed_registration_access'))
-                    <x-admin.sidebar-group 
-                        title="Domain Management" 
+                    <x-admin.sidebar-group
+                        title="Domain Management"
                         icon="bi bi-globe"
                         :routes="['admin.tlds.*', 'admin.tld-pricings.*', 'admin.domains.*', 'admin.domain-price-history.*', 'admin.failed-registrations.*']">
                         @can('tld_access')
@@ -74,7 +74,7 @@
                                 Domains
                             </x-admin.sidebar-link>
                         @endcan
-                        @can('domain_access')
+                        @can('tld_pricing_access')
                             <x-admin.sidebar-link route="admin.domain-price-history.index" icon="bi bi-clock-history">
                                 Domain Price History
                             </x-admin.sidebar-link>
@@ -87,8 +87,8 @@
                     </x-admin.sidebar-group>
                 @endif
                 @can('hosting_management_access')
-                    <x-admin.sidebar-group 
-                        title="Hosting Management" 
+                    <x-admin.sidebar-group
+                        title="Hosting Management"
                         icon="bi bi-hdd"
                         :routes="['admin.hosting-categories.*', 'admin.hosting-plans.*', 'admin.hosting-plan-prices.*', 'admin.hosting-plan-price-history.*', 'admin.hosting-promotions.*', 'admin.hosting-features.*', 'admin.hosting-plan-features.*']">
                         <x-admin.sidebar-link route="admin.hosting-categories.index" icon="bi bi-hdd">
@@ -156,8 +156,8 @@
                     </li>
                 @endcan
                 @can('product_access')
-                    <x-admin.sidebar-group 
-                        title="My Products" 
+                    <x-admin.sidebar-group
+                        title="My Products"
                         icon="bi bi-globe2"
                         :routes="['admin.products.*']">
                         <x-admin.sidebar-link route="admin.products.domains" icon="bi bi-globe2">
@@ -169,8 +169,8 @@
                     </x-admin.sidebar-group>
                 @endcan
                 @can('user_management_access')
-                    <x-admin.sidebar-group 
-                        :title="trans('cruds.userManagement.title')" 
+                    <x-admin.sidebar-group
+                        :title="trans('cruds.userManagement.title')"
                         icon="bi bi-people-fill"
                         :routes="['admin.permissions.*', 'admin.roles.*', 'admin.users.*']">
                         @can('permission_access')
