@@ -147,6 +147,7 @@ final class Order extends Model
         if ($this->isPending()) {
             return true;
         }
+
         return $this->isFailed();
     }
 
