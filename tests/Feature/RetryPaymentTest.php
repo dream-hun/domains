@@ -9,6 +9,15 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function (): void {
+    config([
+        'services.payment.kpay.base_url' => 'https://pay.example.com',
+        'services.payment.kpay.username' => 'test',
+        'services.payment.kpay.password' => 'test',
+        'services.payment.kpay.retailer_id' => 'test',
+    ]);
+});
+
 test('billing show displays pay now button for failed order', function (): void {
     $user = User::factory()->create();
     $order = Order::factory()->failed()->create(['user_id' => $user->id]);
