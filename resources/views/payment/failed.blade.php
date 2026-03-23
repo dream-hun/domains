@@ -77,11 +77,11 @@
                         <!-- Action Buttons -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                {{--<a href="{{ route('payment.index') }}"
+                                <a href="{{ route('billing.retry-payment', $order) }}"
                                     class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
                                     <i class="bi bi-arrow-clockwise me-2"></i>
                                     Try Again
-                                </a>--}}
+                                </a>
                             </div>
 
                             <div class="col-md-4">

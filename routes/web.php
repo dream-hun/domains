@@ -39,6 +39,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterDomainController;
+use App\Http\Controllers\RetryPaymentController;
 use App\Http\Controllers\SearchDomainController;
 use App\Http\Controllers\SmartCheckoutController;
 use App\Http\Controllers\StripeWebhookController;
@@ -198,6 +199,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/billing/{order:order_number}/invoice', [BillingController::class, 'invoice'])->name('billing.invoice');
     Route::get('/billing/{order:order_number}/invoice/download', [BillingController::class, 'downloadInvoice'])->name('billing.invoice.download');
     Route::get('/billing/{order:order_number}/invoice/view-pdf', [BillingController::class, 'viewInvoicePdf'])->name('billing.invoice.view-pdf');
+    Route::get('/billing/{order:order_number}/retry-payment', [RetryPaymentController::class, 'show'])->name('billing.retry-payment');
+    Route::post('/billing/{order:order_number}/retry-payment', [RetryPaymentController::class, 'process'])->name('billing.retry-payment.process');
 
     Route::get('/contacts/{id}/details', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('contacts.details');
     Route::get('/api/contacts/{id}', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('api.contacts.details');

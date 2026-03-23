@@ -142,6 +142,14 @@ final class Order extends Model
         return $this->payment_status === 'refunded';
     }
 
+    public function canRetryPayment(): bool
+    {
+        if ($this->isPending()) {
+            return true;
+        }
+        return $this->isFailed();
+    }
+
     // Order Status Methods
     public function isCompleted(): bool
     {

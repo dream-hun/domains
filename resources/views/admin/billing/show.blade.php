@@ -274,6 +274,12 @@
                         <h3 class="card-title">Actions</h3>
                     </div>
                     <div class="card-body">
+                        @if ($order->canRetryPayment())
+                            <a href="{{ route('billing.retry-payment', $order) }}"
+                                class="btn btn-warning btn-block mb-2">
+                                <i class="bi bi-credit-card"></i> Pay Now
+                            </a>
+                        @endif
                         <a href="{{ route('billing.invoice', $order) }}" class="btn btn-primary btn-block mb-2">
                             <i class="bi bi-file-text"></i> View Invoice
                         </a>

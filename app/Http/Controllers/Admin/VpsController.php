@@ -55,7 +55,7 @@ final class VpsController extends Controller
 
             $subscriptions = Subscription::query()
                 ->whereNotNull('provider_resource_id')
-                ->when(! $isAdmin, fn ($query) => $query->where('user_id', auth()->id()))
+                ->unless($isAdmin, fn ($query) => $query->where('user_id', auth()->id()))
                 ->with('user', 'plan')
                 ->get();
 
