@@ -98,6 +98,33 @@ class ContaboService
     }
 
     /**
+     * Fetch every instance across all pages (size=100 per page).
+     *
+     * @return array<int, mixed>
+     *
+     * @throws ConnectionException
+     */
+    public function listAllInstances(): array
+    {
+        $page = 1;
+        $size = 100;
+        $all = [];
+
+        do {
+            $response = $this->client()->get('/compute/instances', ['page' => $page, 'size' => $size]);
+            $this->assertSuccess($response, 'List instances (page '.$page.')');
+
+            $body = $response->json();
+            $all = array_merge($all, $body['data'] ?? []);
+
+            $totalPages = $body['_pagination']['totalPages'] ?? 1;
+            $page++;
+        } while ($page <= $totalPages);
+
+        return $all;
+    }
+
+    /**
      * Get a single instance by ID.
      *
      * @throws ConnectionException
@@ -314,10 +341,13 @@ class ContaboService
      */
     public function createSnapshot(int $instanceId, string $name, string $description = ''): array
     {
-        $response = $this->client()->post(sprintf('/compute/instances/%d/snapshots', $instanceId), [
-            'name' => $name,
-            'description' => $description,
-        ]);
+        $payload = ['name' => $name];
+
+        if ($description !== '') {
+            $payload['description'] = $description;
+        }
+
+        $response = $this->client()->post(sprintf('/compute/instances/%d/snapshots', $instanceId), $payload);
         $this->assertSuccess($response, 'Create snapshot for instance #'.$instanceId);
 
         return $response->json('data.0');

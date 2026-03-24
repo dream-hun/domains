@@ -92,7 +92,6 @@ final class VpsController extends Controller
                     'status_color' => $status->color(),
                     'status_icon' => $status->icon(),
                     'ip_address' => $ipAddresses ?: ($apiInstance['ipConfig']['v4']['ip'] ?? 'N/A'),
-                    'region' => $apiInstance['region'] ?? 'N/A',
                     'user_name' => $subscription->user?->name ?? 'N/A',
                     'user_id' => $subscription->user_id,
                     'plan_name' => $subscription->plan?->name ?? 'N/A',
@@ -147,8 +146,6 @@ final class VpsController extends Controller
                 'status_icon' => $status->icon(),
                 'ip_v4' => $apiInstance['ipConfig']['v4']['ip'] ?? 'N/A',
                 'ip_v6' => $apiInstance['ipConfig']['v6']['ip'] ?? 'N/A',
-                'region' => $apiInstance['region'] ?? 'N/A',
-                'data_center' => $apiInstance['dataCenter'] ?? 'N/A',
                 'image_id' => $apiInstance['imageId'] ?? '',
                 'os_type' => $apiInstance['osType'] ?? 'N/A',
                 'cpu_cores' => $apiInstance['cpuCores'] ?? 'N/A',
@@ -156,6 +153,7 @@ final class VpsController extends Controller
                 'disk_mb' => $apiInstance['diskMb'] ?? 'N/A',
                 'vnc_url' => $apiInstance['vncUrl'] ?? null,
                 'created_date' => $apiInstance['createdDate'] ?? 'N/A',
+                'cancel_date' => $apiInstance['cancelDate'] ?? null,
             ];
 
             $maxSnapshots = $apiInstance['addOns']['maxSnapshots'] ?? null;
@@ -211,11 +209,11 @@ final class VpsController extends Controller
                 ])
                 ->toArray();
 
-            $apiResponse = $this->contaboService->listInstances();
-            $allApiInstances = collect($apiResponse['data'] ?? []);
+            $allApiInstances = collect($this->contaboService->listAllInstances());
 
             $assignedInstanceIds = Subscription::query()
                 ->whereNotNull('provider_resource_id')
+                ->whereNotIn('status', ['cancelled', 'expired'])
                 ->pluck('provider_resource_id')
                 ->map(fn (mixed $id): int => (int) $id)
                 ->all();
@@ -260,7 +258,13 @@ final class VpsController extends Controller
 
         $result = $action->execute($subscription);
 
-        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+        $redirect = back()->with($result['success'] ? 'success' : 'error', $result['message']);
+
+        if ($result['success']) {
+            $redirect->with('pending_refresh', true);
+        }
+
+        return $redirect;
     }
 
     public function restart(Subscription $subscription, RestartVpsAction $action): RedirectResponse
@@ -270,7 +274,13 @@ final class VpsController extends Controller
 
         $result = $action->execute($subscription);
 
-        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+        $redirect = back()->with($result['success'] ? 'success' : 'error', $result['message']);
+
+        if ($result['success']) {
+            $redirect->with('pending_refresh', true);
+        }
+
+        return $redirect;
     }
 
     public function shutdown(Subscription $subscription, ShutdownVpsAction $action): RedirectResponse
@@ -280,7 +290,13 @@ final class VpsController extends Controller
 
         $result = $action->execute($subscription);
 
-        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+        $redirect = back()->with($result['success'] ? 'success' : 'error', $result['message']);
+
+        if ($result['success']) {
+            $redirect->with('pending_refresh', true);
+        }
+
+        return $redirect;
     }
 
     public function reinstall(Request $request, Subscription $subscription, ReinstallVpsAction $action): RedirectResponse

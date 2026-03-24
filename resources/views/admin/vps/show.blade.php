@@ -38,6 +38,14 @@
                 </div>
             @endif
 
+            @if (session('pending_refresh'))
+                <div class="alert alert-info alert-dismissible fade show" id="refresh-alert">
+                    <i class="fas fa-sync-alt fa-spin mr-1"></i>
+                    The power action has been sent. Page will refresh in <strong id="refresh-countdown">8</strong> seconds to show the updated status.
+                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                </div>
+            @endif
+
             @if ($errorMessage)
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle"></i> {{ $errorMessage }}
@@ -93,14 +101,12 @@
                                         <th>IPv6</th>
                                         <td><code>{{ $instance['ip_v6'] }}</code></td>
                                     </tr>
-                                    <tr>
-                                        <th>Region</th>
-                                        <td>{{ $instance['region'] }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Data Center</th>
-                                        <td>{{ $instance['data_center'] }}</td>
-                                    </tr>
+                                    @if (!empty($instance['cancel_date']))
+                                        <tr>
+                                            <th>Cancellation Date</th>
+                                            <td><span class="badge badge-danger">{{ $instance['cancel_date'] }}</span></td>
+                                        </tr>
+                                    @endif
                                     <tr>
                                         <th>Product Type</th>
                                         <td>{{ $instance['product_type'] }}</td>
@@ -130,4 +136,25 @@
             @endif
         </div>
     </section>
+    @if (session('pending_refresh'))
+        @section('scripts')
+            @parent
+            <script>
+                (function () {
+                    let seconds = 8;
+                    const el = document.getElementById('refresh-countdown');
+                    const interval = setInterval(function () {
+                        seconds--;
+                        if (el) {
+                            el.textContent = seconds;
+                        }
+                        if (seconds <= 0) {
+                            clearInterval(interval);
+                            location.reload();
+                        }
+                    }, 1000);
+                })();
+            </script>
+        @endsection
+    @endif
 </x-admin-layout>

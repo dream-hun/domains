@@ -150,7 +150,17 @@
                                             @if($subscription->provider_resource_id)
                                                 <tr>
                                                     <th>Provider Reference:</th>
-                                                    <td><code>{{ $subscription->provider_resource_id }}</code></td>
+                                                    <td>
+                                                        <code>{{ $subscription->provider_resource_id }}</code>
+                                                        @php
+                                                            $vpsRoute = auth()->user()->isAdmin()
+                                                                ? route('admin.vps.show', $subscription)
+                                                                : route('user.vps.show', $subscription);
+                                                        @endphp
+                                                        <a href="{{ $vpsRoute }}" class="btn btn-sm btn-outline-info ml-2">
+                                                            <i class="fas fa-server mr-1"></i> View Server Details
+                                                        </a>
+                                                    </td>
                                                 </tr>
                                             @endif
                                         </tbody>

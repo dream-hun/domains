@@ -61,7 +61,6 @@
                                         <th>Status</th>
                                         <th>IP Address</th>
                                         <th>Product</th>
-                                        <th>Region</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -83,7 +82,6 @@
                                             </td>
                                             <td><code>{{ $inst['ip_address'] }}</code></td>
                                             <td>{{ $inst['product_type'] }}</td>
-                                            <td>{{ $inst['region'] }}</td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     @if ($inst['status'] === 'stopped')
