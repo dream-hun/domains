@@ -21,8 +21,8 @@ final class CreateVpsSnapshotRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:500'],
+            'name' => ['required', 'string', 'max:30', 'regex:/^[a-zA-Z0-9 \-]+$/'],
+            'description' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -33,8 +33,9 @@ final class CreateVpsSnapshotRequest extends FormRequest
     {
         return [
             'name.required' => 'A snapshot name is required.',
-            'name.max' => 'The snapshot name may not exceed 255 characters.',
-            'description.max' => 'The description may not exceed 500 characters.',
+            'name.max' => 'The snapshot name may not exceed 30 characters.',
+            'name.regex' => 'The snapshot name may only contain letters, numbers, spaces, and dashes.',
+            'description.max' => 'The description may not exceed 255 characters.',
         ];
     }
 }

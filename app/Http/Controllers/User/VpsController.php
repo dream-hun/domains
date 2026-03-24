@@ -79,7 +79,6 @@ final class VpsController extends Controller
                     'status_color' => $status->color(),
                     'status_icon' => $status->icon(),
                     'ip_address' => $ipAddresses ?: ($apiInstance['ipConfig']['v4']['ip'] ?? 'N/A'),
-                    'region' => $apiInstance['region'] ?? 'N/A',
                     'plan_name' => $subscription->plan?->name ?? 'N/A',
                 ];
             })->filter()->values()->toArray();
@@ -132,8 +131,6 @@ final class VpsController extends Controller
                 'status_icon' => $status->icon(),
                 'ip_v4' => $apiInstance['ipConfig']['v4']['ip'] ?? 'N/A',
                 'ip_v6' => $apiInstance['ipConfig']['v6']['ip'] ?? 'N/A',
-                'region' => $apiInstance['region'] ?? 'N/A',
-                'data_center' => $apiInstance['dataCenter'] ?? 'N/A',
                 'image_id' => $apiInstance['imageId'] ?? '',
                 'os_type' => $apiInstance['osType'] ?? 'N/A',
                 'cpu_cores' => $apiInstance['cpuCores'] ?? 'N/A',
@@ -141,6 +138,7 @@ final class VpsController extends Controller
                 'disk_mb' => $apiInstance['diskMb'] ?? 'N/A',
                 'vnc_url' => $apiInstance['vncUrl'] ?? null,
                 'created_date' => $apiInstance['createdDate'] ?? 'N/A',
+                'cancel_date' => $apiInstance['cancelDate'] ?? null,
             ];
 
             $maxSnapshots = $apiInstance['addOns']['maxSnapshots'] ?? null;
@@ -180,7 +178,13 @@ final class VpsController extends Controller
 
         $result = $action->execute($subscription);
 
-        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+        $redirect = back()->with($result['success'] ? 'success' : 'error', $result['message']);
+
+        if ($result['success']) {
+            $redirect->with('pending_refresh', true);
+        }
+
+        return $redirect;
     }
 
     public function restart(Subscription $subscription, RestartVpsAction $action): RedirectResponse
@@ -190,7 +194,13 @@ final class VpsController extends Controller
 
         $result = $action->execute($subscription);
 
-        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+        $redirect = back()->with($result['success'] ? 'success' : 'error', $result['message']);
+
+        if ($result['success']) {
+            $redirect->with('pending_refresh', true);
+        }
+
+        return $redirect;
     }
 
     public function shutdown(Subscription $subscription, ShutdownVpsAction $action): RedirectResponse
@@ -200,7 +210,13 @@ final class VpsController extends Controller
 
         $result = $action->execute($subscription);
 
-        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+        $redirect = back()->with($result['success'] ? 'success' : 'error', $result['message']);
+
+        if ($result['success']) {
+            $redirect->with('pending_refresh', true);
+        }
+
+        return $redirect;
     }
 
     public function rescue(Subscription $subscription, RescueVpsAction $action): RedirectResponse

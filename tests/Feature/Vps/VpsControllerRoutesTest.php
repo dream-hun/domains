@@ -163,11 +163,9 @@ it('admin vps assign renders unassigned lists', function (): void {
     ]);
 
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('listInstances')->once()->andReturn([
-        'data' => [
-            makeVpsControllerApiInstance(['instanceId' => 11111, 'displayName' => 'Unassigned VPS']),
-            makeVpsControllerApiInstance(['instanceId' => 22222, 'displayName' => 'Assigned VPS']),
-        ],
+    $mock->shouldReceive('listAllInstances')->once()->andReturn([
+        makeVpsControllerApiInstance(['instanceId' => 11111, 'displayName' => 'Unassigned VPS']),
+        makeVpsControllerApiInstance(['instanceId' => 22222, 'displayName' => 'Assigned VPS']),
     ]);
     app()->instance(ContaboService::class, $mock);
 
@@ -196,7 +194,7 @@ it('admin vps assign handles RuntimeException from provider listInstances', func
     $user = createVpsControllerUser(['vps_assign']);
 
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('listInstances')->once()->andThrow(new RuntimeException('Provider down'));
+    $mock->shouldReceive('listAllInstances')->once()->andThrow(new RuntimeException('Provider down'));
     app()->instance(ContaboService::class, $mock);
 
     setupVpsControllerGates($user);

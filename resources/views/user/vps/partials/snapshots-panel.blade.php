@@ -9,6 +9,7 @@
     <div class="card-body">
         {{-- Create Snapshot Form --}}
         @can('vps_snapshot_create')
+            @if (!empty($maxSnapshots) && $maxSnapshots > 0)
             <form method="POST" action="{{ route('user.vps.snapshots.store', $subscription) }}" class="mb-4">
                 @csrf
                 <div class="row">
@@ -28,6 +29,11 @@
                     </div>
                 </div>
             </form>
+            @else
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle mr-1"></i> Your plan does not include snapshot support.
+                </div>
+            @endif
         @endcan
 
         {{-- Snapshot List --}}
