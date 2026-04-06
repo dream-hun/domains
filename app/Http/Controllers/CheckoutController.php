@@ -42,6 +42,9 @@ final class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty.');
         }
 
+        $order = null;
+        $paymentAttempt = null;
+
         try {
             $orderNumber = $this->generateOrderNumber();
             $cartTotal = Cart::getTotal();
@@ -72,14 +75,19 @@ final class CheckoutController extends Controller
             return redirect()->away($session->url);
 
         } catch (Exception $exception) {
-            $this->failPaymentAttempt($paymentAttempt, $exception->getMessage());
-            $this->transactionLogger->logFailure(
-                order: $order,
-                method: 'stripe',
-                error: 'Failed to create checkout session',
-                details: $exception->getMessage(),
-                payment: $paymentAttempt
-            );
+            if ($paymentAttempt !== null) {
+                $this->failPaymentAttempt($paymentAttempt, $exception->getMessage());
+            }
+
+            if ($order !== null) {
+                $this->transactionLogger->logFailure(
+                    order: $order,
+                    method: 'stripe',
+                    error: 'Failed to create checkout session',
+                    details: $exception->getMessage(),
+                    payment: $paymentAttempt
+                );
+            }
             Log::error('Failed to create checkout session', [
                 'error' => $exception->getMessage(),
                 'user_id' => auth()->id(),
