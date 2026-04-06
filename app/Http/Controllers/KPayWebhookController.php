@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 final class KPayWebhookController extends Controller
@@ -87,13 +88,8 @@ final class KPayWebhookController extends Controller
                     ]);
                 }
 
-                // Update payment and order status
-                $this->kPayPaymentStatusService->updatePaymentStatus(
-                    $payment,
-                    $order,
-                    $statusid,
-                    $data
-                );
+                // Update payment and order status atomically
+                DB::transaction(fn () => $this->kPayPaymentStatusService->updatePaymentStatus($payment, $order, $statusid, $data));
 
                 // Process successful payment (dispatch jobs in background)
                 try {
@@ -125,13 +121,8 @@ final class KPayWebhookController extends Controller
             }
 
             if ($this->kPayPaymentStatusService->isFailedStatus($statusid)) {
-                // Update payment and order status
-                $this->kPayPaymentStatusService->updatePaymentStatus(
-                    $payment,
-                    $order,
-                    $statusid,
-                    $data
-                );
+                // Update payment and order status atomically
+                DB::transaction(fn () => $this->kPayPaymentStatusService->updatePaymentStatus($payment, $order, $statusid, $data));
 
                 $order->refresh();
                 $payment->refresh();

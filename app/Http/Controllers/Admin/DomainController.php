@@ -170,7 +170,8 @@ final class DomainController extends Controller
 
     public function domainInfo(Domain $domain, GetDomainInfoAction $action): Factory|View|\Illuminate\View\View
     {
-        abort_if(Gate::denies('domain_show'), 403) || $domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin();
+        abort_if(Gate::denies('domain_show'), 403);
+
         if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return to_route('dashboard')->with('error', 'You are not authorized to view this domain.');
         }

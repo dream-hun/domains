@@ -469,7 +469,7 @@
                                         <li class="list-group-item">
                                             {{ $item->name }}
                                             <p class="float-right">
-                                                {!! $converted['formatted_line_total'] !!}
+                                                {{ $converted['formatted_line_total'] }}
                                                 / {{ $converted['quantity'] }} {{ Str::plural('Year', $converted['quantity']) }}
                                             </p>
                                         </li>
@@ -479,7 +479,7 @@
                                         <b>Total</b>
                                         <b>
                                             <p class="float-right">
-                                                {!! $convertedCartTotal !!}
+                                                {{ $convertedCartTotal }}
                                             </p>
                                         </b>
                                     </li>

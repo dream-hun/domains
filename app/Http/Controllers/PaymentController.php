@@ -153,11 +153,15 @@ final class PaymentController extends Controller
                         ->with('error', 'Payment was not successful.');
                 }
 
-                // Only process if order is still pending payment
-                if ($order->payment_status === 'pending') {
-                    DB::beginTransaction();
+                // Lock the order row and check status atomically to prevent duplicate processing
+                $orderWasProcessed = false;
 
-                    try {
+                DB::beginTransaction();
+
+                try {
+                    $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+
+                    if ($order->payment_status === 'pending') {
                         $order->update([
                             'payment_status' => 'paid',
                             'status' => $order->status === 'pending' ? 'processing' : $order->status,
@@ -193,45 +197,49 @@ final class PaymentController extends Controller
                             ]);
                         }
 
-                        DB::commit();
+                        $orderWasProcessed = true;
+                    }
 
-                        // Process order after payment (idempotent - safe to call multiple times)
-                        try {
-                            $primaryContact = $order->user->contacts()->where('is_primary', true)->first();
-                            $contactIds = [];
-                            if ($primaryContact) {
-                                $contactIds = [
-                                    'registrant' => $primaryContact->id,
-                                    'admin' => $primaryContact->id,
-                                    'tech' => $primaryContact->id,
-                                    'billing' => $primaryContact->id,
-                                ];
-                            }
+                    DB::commit();
+                } catch (Exception $e) {
+                    DB::rollBack();
+                    Log::error('Failed to update order on success page', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Continue to show success page even if update fails
+                }
 
-                            $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
-                            $processOrderAction->handle($order, $contactIds, false);
-
-                            Log::info('Order processed successfully on success page', [
-                                'order_id' => $order->id,
-                                'order_number' => $order->order_number,
-                            ]);
-                        } catch (Exception $e) {
-                            Log::warning('Order processing failed on success page', [
-                                'order_id' => $order->id,
-                                'error' => $e->getMessage(),
-                            ]);
-                            // Don't fail the page load if processing fails - webhook will handle it
+                if ($orderWasProcessed) {
+                    // Process order after payment (idempotent - safe to call multiple times)
+                    try {
+                        $primaryContact = $order->user->contacts()->where('is_primary', true)->first();
+                        $contactIds = [];
+                        if ($primaryContact) {
+                            $contactIds = [
+                                'registrant' => $primaryContact->id,
+                                'admin' => $primaryContact->id,
+                                'tech' => $primaryContact->id,
+                                'billing' => $primaryContact->id,
+                            ];
                         }
 
-                        $order->refresh();
+                        $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
+                        $processOrderAction->handle($order, $contactIds, false);
+
+                        Log::info('Order processed successfully on success page', [
+                            'order_id' => $order->id,
+                            'order_number' => $order->order_number,
+                        ]);
                     } catch (Exception $e) {
-                        DB::rollBack();
-                        Log::error('Failed to update order on success page', [
+                        Log::warning('Order processing failed on success page', [
                             'order_id' => $order->id,
                             'error' => $e->getMessage(),
                         ]);
-                        // Continue to show success page even if update fails
+                        // Don't fail the page load if processing fails - webhook will handle it
                     }
+
+                    $order->refresh();
                 }
             } catch (ApiErrorException $e) {
                 Log::error('Failed to retrieve Stripe session on success page', [

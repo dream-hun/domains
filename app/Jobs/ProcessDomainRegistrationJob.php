@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class ProcessDomainRegistrationJob implements ShouldQueue
 {
@@ -32,6 +33,23 @@ final class ProcessDomainRegistrationJob implements ShouldQueue
         public Order $order,
         public array $contactIds = []
     ) {}
+
+    /**
+     * Handle a job failure after all retries are exhausted.
+     */
+    public function failed(Throwable $exception): void
+    {
+        Log::error('Domain registration job permanently failed after all retries', [
+            'order_id' => $this->order->id,
+            'order_number' => $this->order->order_number,
+            'error' => $exception->getMessage(),
+        ]);
+
+        $this->order->update([
+            'status' => 'failed',
+            'notes' => 'Domain registration permanently failed after all retries: '.$exception->getMessage(),
+        ]);
+    }
 
     /**
      * Execute the job.
