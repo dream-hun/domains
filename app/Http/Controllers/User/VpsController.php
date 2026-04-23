@@ -54,8 +54,7 @@ final class VpsController extends Controller
                 ]);
             }
 
-            $apiResponse = $this->contaboService->listInstances();
-            $apiInstances = collect($apiResponse['data'] ?? []);
+            $apiInstances = collect($this->contaboService->listAllInstances());
 
             $instances = $subscriptions->map(function (Subscription $subscription) use ($apiInstances): ?array {
                 $apiInstance = $apiInstances->firstWhere('instanceId', (int) $subscription->provider_resource_id);

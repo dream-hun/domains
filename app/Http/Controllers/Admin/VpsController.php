@@ -34,6 +34,7 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -43,60 +44,53 @@ final class VpsController extends Controller
 {
     public function __construct(private readonly ContaboService $contaboService) {}
 
-    public function index(): View|Factory
+    public function index(Request $request): View|Factory
     {
         abort_if(Gate::denies('vps_access'), Response::HTTP_FORBIDDEN);
 
-        $instances = [];
+        $instances = new LengthAwarePaginator([], 0, 10);
         $errorMessage = '';
 
         try {
-            $isAdmin = auth()->user()?->isAdmin();
+            $page = (int) $request->query('page', 1);
+            $perPage = 10;
 
-            $subscriptions = Subscription::query()
+            $assignedSubscriptions = Subscription::query()
                 ->whereNotNull('provider_resource_id')
-                ->unless($isAdmin, fn ($query) => $query->where('user_id', auth()->id()))
                 ->with('user', 'plan')
-                ->get();
+                ->get()
+                ->keyBy(fn (Subscription $sub): int => (int) $sub->provider_resource_id);
 
-            if ($subscriptions->isEmpty()) {
-                return view('admin.vps.index', [
-                    'instances' => $instances,
-                    'errorMessage' => $errorMessage,
-                ]);
-            }
+            $apiResponse = $this->contaboService->listInstances(['page' => $page, 'size' => $perPage]);
+            $pagination = $apiResponse['_pagination'] ?? [];
+            $totalElements = (int) ($pagination['totalElements'] ?? 0);
 
-            $apiResponse = $this->contaboService->listInstances();
-            $apiInstances = collect($apiResponse['data'] ?? []);
-
-            $instances = $subscriptions->map(function (Subscription $subscription) use ($apiInstances): ?array {
-                $apiInstance = $apiInstances->firstWhere('instanceId', (int) $subscription->provider_resource_id);
-
-                if (! $apiInstance) {
-                    return null;
-                }
-
+            $items = collect($apiResponse['data'] ?? [])->map(function (array $apiInstance) use ($assignedSubscriptions): array {
                 $status = VpsInstanceStatus::tryFrom(mb_strtolower($apiInstance['status'] ?? '')) ?? VpsInstanceStatus::Unknown;
-                $ipAddresses = collect($apiInstance['ipConfig']['v4']['ip'] ?? [])->implode(', ');
+                $subscription = $assignedSubscriptions->get($apiInstance['instanceId']);
 
                 return [
-                    'subscription_uuid' => $subscription->uuid,
-                    'subscription_id' => $subscription->id,
                     'instance_id' => $apiInstance['instanceId'],
                     'name' => $apiInstance['name'] ?? 'N/A',
                     'display_name' => $apiInstance['displayName'] ?? '',
                     'product_type' => $apiInstance['productType'] ?? 'N/A',
-                    'default_user' => $apiInstance['defaultUser'] ?? 'N/A',
                     'status' => $status->value,
                     'status_label' => $status->label(),
                     'status_color' => $status->color(),
                     'status_icon' => $status->icon(),
-                    'ip_address' => $ipAddresses ?: ($apiInstance['ipConfig']['v4']['ip'] ?? 'N/A'),
-                    'user_name' => $subscription->user?->name ?? 'N/A',
-                    'user_id' => $subscription->user_id,
-                    'plan_name' => $subscription->plan?->name ?? 'N/A',
+                    'ip_address' => $apiInstance['ipConfig']['v4']['ip'] ?? 'N/A',
+                    'assigned' => $subscription !== null,
+                    'subscription_uuid' => $subscription?->uuid,
+                    'subscription_id' => $subscription?->id,
+                    'user_name' => $subscription?->user?->name,
+                    'plan_name' => $subscription?->plan?->name,
                 ];
-            })->filter()->values()->toArray();
+            })->all();
+
+            $instances = new LengthAwarePaginator($items, $totalElements, $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
         } catch (RuntimeException $runtimeException) {
             Log::error('Failed to load VPS instances', ['error' => $runtimeException->getMessage()]);
             $errorMessage = 'Failed to load VPS instances. Please try again.';
