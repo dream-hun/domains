@@ -1,19 +1,19 @@
 {
     "agents": [
-        "cursor",
         "claude_code"
     ],
     "guidelines": true,
-    "herd_mcp": false,
     "mcp": true,
     "nightwatch_mcp": true,
+    "packages": [
+        "fruitcake/laravel-debugbar"
+    ],
     "sail": false,
     "skills": [
+        "laravel-best-practices",
+        "configure-nightwatch",
         "livewire-development",
         "pest-testing",
-        "eloquent-best-practices",
-        "laravel-specialist",
-        "php-mcp-server-generator",
-        "php-pro"
+        "debug-using-debugbar"
     ]
 }
