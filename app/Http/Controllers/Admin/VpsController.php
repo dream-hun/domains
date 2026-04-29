@@ -46,6 +46,7 @@ final class VpsController extends Controller
 
     public function index(Request $request): View|Factory
     {
+        $this->authorizeAdmin();
         abort_if(Gate::denies('vps_access'), Response::HTTP_FORBIDDEN);
 
         $instances = new LengthAwarePaginator([], 0, 10);
@@ -191,7 +192,6 @@ final class VpsController extends Controller
 
         try {
             $unassignedSubscriptions = Subscription::query()
-                ->whereNull('provider_resource_id')
                 ->with('user', 'plan')
                 ->get()
                 ->map(fn (Subscription $sub): array => [
@@ -200,6 +200,8 @@ final class VpsController extends Controller
                     'domain' => $sub->domain ?? 'N/A',
                     'plan_name' => $sub->plan?->name ?? 'N/A',
                     'user_name' => $sub->user?->name ?? 'N/A',
+                    'is_assigned' => $sub->provider_resource_id !== null,
+                    'current_instance_id' => $sub->provider_resource_id,
                 ])
                 ->toArray();
 
@@ -207,19 +209,18 @@ final class VpsController extends Controller
 
             $assignedInstanceIds = Subscription::query()
                 ->whereNotNull('provider_resource_id')
-                ->whereNotIn('status', ['cancelled', 'expired'])
                 ->pluck('provider_resource_id')
                 ->map(fn (mixed $id): int => (int) $id)
-                ->all();
+                ->flip();
 
             $unassignedInstances = $allApiInstances
-                ->reject(fn (array $instance): bool => in_array($instance['instanceId'], $assignedInstanceIds, true))
                 ->map(fn (array $instance): array => [
                     'instanceId' => $instance['instanceId'],
                     'name' => $instance['name'] ?? 'N/A',
                     'displayName' => $instance['displayName'] ?? '',
                     'status' => $instance['status'] ?? 'unknown',
                     'ipAddress' => $instance['ipConfig']['v4']['ip'] ?? 'N/A',
+                    'is_assigned' => $assignedInstanceIds->has($instance['instanceId']),
                 ])
                 ->values()
                 ->all();
@@ -235,6 +236,27 @@ final class VpsController extends Controller
         ]);
     }
 
+    public function showInstance(int $instanceId): View|Factory
+    {
+        $this->authorizeAdmin();
+
+        $instance = [];
+        $errorMessage = '';
+
+        try {
+            $instance = $this->contaboService->getInstance($instanceId);
+        } catch (RuntimeException $runtimeException) {
+            Log::error('Failed to load VPS instance', ['error' => $runtimeException->getMessage()]);
+            $errorMessage = 'Failed to load VPS instance details.';
+        }
+
+        return view('admin.vps.show-instance', [
+            'instanceId' => $instanceId,
+            'instance' => $instance,
+            'errorMessage' => $errorMessage,
+        ]);
+    }
+
     public function storeAssignment(AssignVpsRequest $request, AssignVpsToSubscriptionAction $action): RedirectResponse
     {
         $this->authorizeAdmin();
@@ -242,7 +264,11 @@ final class VpsController extends Controller
         $subscription = Subscription::query()->findOrFail($request->validated('subscription_id'));
         $result = $action->execute($subscription, (int) $request->validated('instance_id'));
 
-        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+        if ($result['success']) {
+            return redirect()->route('admin.vps.index')->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
     }
 
     public function start(Subscription $subscription, StartVpsAction $action): RedirectResponse

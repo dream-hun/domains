@@ -2,9 +2,10 @@
     "agents": [
         "claude_code"
     ],
+    "cloud": true,
     "guidelines": true,
     "mcp": true,
-    "nightwatch_mcp": true,
+    "nightwatch": true,
     "packages": [
         "fruitcake/laravel-debugbar"
     ],
@@ -14,6 +15,7 @@
         "configure-nightwatch",
         "livewire-development",
         "pest-testing",
-        "debug-using-debugbar"
+        "debug-using-debugbar",
+        "deploying-laravel-cloud"
     ]
 }

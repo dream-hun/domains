@@ -82,6 +82,7 @@ function fakeContaboInstances(array $instances = []): void
 
     $mock = Mockery::mock(ContaboService::class);
     $mock->shouldReceive('listInstances')->andReturn(['data' => $instances]);
+    $mock->shouldReceive('listAllInstances')->andReturn($instances);
     $mock->shouldReceive('getInstance')->andReturn($instances[0] ?? $defaultInstance);
     $mock->shouldReceive('restartInstance')->andReturn($instances[0] ?? $defaultInstance);
     $mock->shouldReceive('shutdownInstance')->andReturn($instances[0] ?? $defaultInstance);
@@ -108,7 +109,7 @@ it('shows all VPS instances for admin users', function (): void {
         ->assertSee('192.168.1.1');
 });
 
-it('shows only own VPS instances for non-admin users', function (): void {
+it('non-admin users cannot access admin vps index and are forbidden', function (): void {
     $user = createVpsUser(['vps_access']);
     Subscription::factory()->create([
         'user_id' => $user->id,
@@ -118,14 +119,19 @@ it('shows only own VPS instances for non-admin users', function (): void {
     fakeContaboInstances();
     setupVpsGates($user);
 
+    // Non-admin users must not access the admin panel
     $this->actingAs($user)
         ->get(route('admin.vps.index'))
+        ->assertForbidden();
+
+    // They should access their own instances via the user VPS route instead
+    $this->actingAs($user)
+        ->get(route('user.vps.index'))
         ->assertOk()
-        ->assertSee('My VPS')
-        ->assertSee('192.168.1.1');
+        ->assertSee('My VPS');
 });
 
-it('shows empty table for non-admin user without VPS instances', function (): void {
+it('non-admin users only see their own VPS instances via user routes', function (): void {
     $user = createVpsUser(['vps_access']);
     $otherUser = User::factory()->create();
 
@@ -137,10 +143,16 @@ it('shows empty table for non-admin user without VPS instances', function (): vo
     fakeContaboInstances();
     setupVpsGates($user);
 
+    // Non-admin users must not access the admin panel
     $this->actingAs($user)
         ->get(route('admin.vps.index'))
+        ->assertForbidden();
+
+    // User route shows nothing since the subscription belongs to another user
+    $this->actingAs($user)
+        ->get(route('user.vps.index'))
         ->assertOk()
-        ->assertDontSee('My VPS');
+        ->assertDontSee('192.168.1.1');
 });
 
 it('shows empty state when user has no VPS instances', function (): void {

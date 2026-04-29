@@ -134,6 +134,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::get('vps', [VpsController::class, 'index'])->name('vps.index');
     Route::get('vps/assign', [VpsController::class, 'assign'])->name('vps.assign');
     Route::post('vps/assign', [VpsController::class, 'storeAssignment'])->name('vps.assign.store');
+    Route::get('vps/instances/{instanceId}', [VpsController::class, 'showInstance'])->name('vps.instance.show')->whereNumber('instanceId');
     Route::get('vps/{subscription}', [VpsController::class, 'show'])->name('vps.show');
     Route::post('vps/{subscription}/start', [VpsController::class, 'start'])->name('vps.start');
     Route::post('vps/{subscription}/restart', [VpsController::class, 'restart'])->name('vps.restart');

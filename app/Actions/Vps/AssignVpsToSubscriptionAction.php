@@ -21,13 +21,17 @@ final readonly class AssignVpsToSubscriptionAction
     public function execute(Subscription $subscription, int $instanceId): array
     {
         try {
-            $existing = Subscription::query()
+            $existingSubscription = Subscription::query()
                 ->where('provider_resource_id', (string) $instanceId)
                 ->where('id', '!=', $subscription->id)
-                ->exists();
+                ->first();
 
-            if ($existing) {
-                return ['success' => false, 'message' => 'This instance is already assigned to another subscription.'];
+            if ($existingSubscription) {
+                $existingSubscription->update(['provider_resource_id' => null]);
+                Log::info('VPS instance unlinked from previous subscription for re-assignment', [
+                    'previous_subscription_id' => $existingSubscription->id,
+                    'instance_id' => $instanceId,
+                ]);
             }
 
             $this->contaboService->getInstance($instanceId);

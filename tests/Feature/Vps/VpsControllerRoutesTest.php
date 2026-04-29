@@ -31,6 +31,25 @@ function createVpsControllerUser(array $permissions = ['vps_access']): User
     return $user;
 }
 
+function createNonAdminVpsUser(array $permissions = ['vps_access']): User
+{
+    $role = Role::query()->firstOrCreate(['id' => 99], ['title' => 'Staff']);
+
+    foreach ($permissions as $permissionTitle) {
+        $permission = Permission::query()->where('title', $permissionTitle)->first()
+            ?? Permission::query()->create(['title' => $permissionTitle]);
+
+        if (! $role->permissions()->where('permissions.id', $permission->id)->exists()) {
+            $role->permissions()->attach($permission->id);
+        }
+    }
+
+    $user = User::factory()->create();
+    $user->roles()->attach($role);
+
+    return $user;
+}
+
 function setupVpsControllerGates(User $user): void
 {
     auth()->login($user);
@@ -182,12 +201,28 @@ it('admin vps assign renders unassigned lists', function (): void {
     $unassignedSubscriptions = $response->viewData('unassignedSubscriptions');
     $unassignedInstances = $response->viewData('unassignedInstances');
 
-    expect($unassignedSubscriptions)->toHaveCount(1);
-    expect($unassignedSubscriptions[0]['id'])->toBe($unassignedSubscription->id);
+    // All subscriptions are now returned (assigned and unassigned) to allow re-assignment
+    expect($unassignedSubscriptions)->toHaveCount(2);
+    $subIds = array_column($unassignedSubscriptions, 'id');
+    expect($subIds)->toContain($unassignedSubscription->id);
+    expect($subIds)->toContain($assignedSubscription->id);
 
-    expect($unassignedInstances)->toHaveCount(1);
-    expect($unassignedInstances[0]['instanceId'])->toBe(11111);
-    expect($unassignedInstances[0]['name'])->toBe('vmi123456');
+    // Verify is_assigned flag is set correctly
+    $unassignedSubEntry = collect($unassignedSubscriptions)->firstWhere('id', $unassignedSubscription->id);
+    $assignedSubEntry = collect($unassignedSubscriptions)->firstWhere('id', $assignedSubscription->id);
+    expect($unassignedSubEntry['is_assigned'])->toBeFalse();
+    expect($assignedSubEntry['is_assigned'])->toBeTrue();
+
+    // All instances are now returned to allow re-assignment
+    expect($unassignedInstances)->toHaveCount(2);
+    $instanceIds = array_column($unassignedInstances, 'instanceId');
+    expect($instanceIds)->toContain(11111);
+    expect($instanceIds)->toContain(22222);
+
+    $unassignedInstEntry = collect($unassignedInstances)->firstWhere('instanceId', 11111);
+    $assignedInstEntry = collect($unassignedInstances)->firstWhere('instanceId', 22222);
+    expect($unassignedInstEntry['is_assigned'])->toBeFalse();
+    expect($assignedInstEntry['is_assigned'])->toBeTrue();
 });
 
 it('admin vps assign handles RuntimeException from provider listInstances', function (): void {
@@ -229,7 +264,7 @@ it('admin vps assign store assigns an instance to a subscription', function (): 
             'instance_id' => 12345,
         ]);
 
-    $response->assertRedirect();
+    $response->assertRedirect(route('admin.vps.index'));
     $response->assertSessionHas('success');
 
     $subscription->refresh();
@@ -515,16 +550,16 @@ it('admin vps action endpoints validate MoveVpsRegionRequest', function (): void
     $response->assertSessionHasErrors('target_region');
 });
 
-it('user vps index handles RuntimeException from provider listInstances', function (): void {
+it('user vps index handles RuntimeException from provider listAllInstances', function (): void {
     $user = createVpsControllerUser(['vps_access']);
 
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('listInstances')->once()->andThrow(new RuntimeException('Provider down'));
+    $mock->shouldReceive('listAllInstances')->once()->andThrow(new RuntimeException('Provider down'));
     app()->instance(ContaboService::class, $mock);
 
     setupVpsControllerGates($user);
 
-    // Ensure there is at least one subscription so the code reaches listInstances call
+    // Ensure there is at least one subscription so the code reaches listAllInstances call
     Subscription::factory()->create([
         'user_id' => $user->id,
         'provider_resource_id' => '12345',
@@ -546,13 +581,11 @@ it('user vps index shows mapped instance data for current user subscriptions', f
     ]);
 
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('listInstances')->once()->andReturn([
-        'data' => [
-            makeVpsControllerApiInstance([
-                'instanceId' => 12345,
-                'displayName' => 'User VPS',
-            ]),
-        ],
+    $mock->shouldReceive('listAllInstances')->once()->andReturn([
+        makeVpsControllerApiInstance([
+            'instanceId' => 12345,
+            'displayName' => 'User VPS',
+        ]),
     ]);
     app()->instance(ContaboService::class, $mock);
 
@@ -579,13 +612,11 @@ it('user vps index filters out subscriptions missing from provider response', fu
     ]);
 
     $mock = Mockery::mock(ContaboService::class);
-    $mock->shouldReceive('listInstances')->once()->andReturn([
-        'data' => [
-            makeVpsControllerApiInstance([
-                'instanceId' => 99999,
-                'displayName' => 'Other VPS',
-            ]),
-        ],
+    $mock->shouldReceive('listAllInstances')->once()->andReturn([
+        makeVpsControllerApiInstance([
+            'instanceId' => 99999,
+            'displayName' => 'Other VPS',
+        ]),
     ]);
     app()->instance(ContaboService::class, $mock);
 
@@ -753,4 +784,53 @@ it('user vps action endpoints succeed', function (): void {
         ])
         ->assertRedirect()
         ->assertSessionHas('success');
+});
+
+it('non-admin with vps_access permission cannot access admin vps index', function (): void {
+    $user = createNonAdminVpsUser(['vps_access']);
+    setupVpsControllerGates($user);
+
+    $response = $this->actingAs($user)
+        ->get(route('admin.vps.index'));
+
+    $response->assertForbidden();
+});
+
+it('admin can view details of an unassigned instance by instance id', function (): void {
+    $user = createVpsControllerUser(['vps_access']);
+
+    $mock = Mockery::mock(ContaboService::class);
+    $mock->shouldReceive('getInstance')
+        ->with(12345)
+        ->once()
+        ->andReturn(makeVpsControllerApiInstance(['instanceId' => 12345]));
+    app()->instance(ContaboService::class, $mock);
+
+    setupVpsControllerGates($user);
+
+    $response = $this->actingAs($user)
+        ->get(route('admin.vps.instance.show', 12345));
+
+    $response->assertSuccessful();
+    $response->assertViewHas('instanceId', 12345);
+    $response->assertViewHas('instance');
+});
+
+it('admin showInstance handles RuntimeException from provider', function (): void {
+    $user = createVpsControllerUser(['vps_access']);
+
+    $mock = Mockery::mock(ContaboService::class);
+    $mock->shouldReceive('getInstance')
+        ->with(99999)
+        ->once()
+        ->andThrow(new RuntimeException('API Error'));
+    app()->instance(ContaboService::class, $mock);
+
+    setupVpsControllerGates($user);
+
+    $response = $this->actingAs($user)
+        ->get(route('admin.vps.instance.show', 99999));
+
+    $response->assertSuccessful();
+    $response->assertViewHas('errorMessage', 'Failed to load VPS instance details.');
 });

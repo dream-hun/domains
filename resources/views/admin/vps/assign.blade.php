@@ -52,15 +52,18 @@
                                 {{-- Subscription Selection --}}
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="subscription_id">Select Subscription (Unassigned)</label>
+                                        <label for="subscription_id">Select Subscription</label>
                                         @if (empty($unassignedSubscriptions))
-                                            <div class="alert alert-info">No unassigned subscriptions available.</div>
+                                            <div class="alert alert-info">No subscriptions available.</div>
                                         @else
                                             <select name="subscription_id" id="subscription_id" class="form-control @error('subscription_id') is-invalid @enderror">
                                                 <option value="">-- Select a subscription --</option>
                                                 @foreach ($unassignedSubscriptions as $sub)
                                                     <option value="{{ $sub['id'] }}" {{ old('subscription_id') == $sub['id'] ? 'selected' : '' }}>
                                                         {{ $sub['plan_name'] }} - {{ $sub['domain'] }} ({{ $sub['user_name'] }})
+                                                        @if ($sub['is_assigned'])
+                                                            [Assigned to instance #{{ $sub['current_instance_id'] }}]
+                                                        @endif
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -74,15 +77,18 @@
                                 {{-- Instance Selection --}}
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="instance_id">Select Contabo Instance (Unassigned)</label>
+                                        <label for="instance_id">Select Contabo Instance</label>
                                         @if (empty($unassignedInstances))
-                                            <div class="alert alert-info">No unassigned Contabo instances available.</div>
+                                            <div class="alert alert-info">No Contabo instances available.</div>
                                         @else
                                             <select name="instance_id" id="instance_id" class="form-control @error('instance_id') is-invalid @enderror">
                                                 <option value="">-- Select an instance --</option>
                                                 @foreach ($unassignedInstances as $inst)
                                                     <option value="{{ $inst['instanceId'] }}" {{ old('instance_id') == $inst['instanceId'] ? 'selected' : '' }}>
                                                         {{ $inst['displayName'] ?: $inst['name'] }} (ID: {{ $inst['instanceId'] }}) - {{ $inst['ipAddress'] }} [{{ $inst['status'] }}]
+                                                        @if ($inst['is_assigned'])
+                                                            [Currently Assigned]
+                                                        @endif
                                                     </option>
                                                 @endforeach
                                             </select>

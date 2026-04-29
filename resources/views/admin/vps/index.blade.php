@@ -154,6 +154,11 @@
                                                                 <i class="fas fa-link"></i> Assign
                                                             </a>
                                                         @endcan
+                                                        <a href="{{ route('admin.vps.instance.show', $inst['instance_id']) }}"
+                                                           class="btn btn-outline-info btn-sm"
+                                                           title="View Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
                                                     @endif
                                                 </div>
                                             </td>
