@@ -171,6 +171,43 @@ it('admin vps show handles RuntimeException from provider getInstance', function
     $response->assertViewHas('errorMessage', 'Failed to load VPS instance details.');
 });
 
+it('admin vps show loads instance detail with backups when vps_backup_access is granted', function (): void {
+    $user = createVpsControllerUser(['vps_show', 'vps_backup_access']);
+
+    $subscription = Subscription::factory()->create([
+        'provider_resource_id' => '12345',
+    ]);
+
+    $backup = [
+        'backupId' => 'bkp-999',
+        'name' => 'Weekly Backup',
+        'sizeMb' => 20480,
+        'createdDate' => '2025-07-01T00:00:00.000Z',
+    ];
+
+    $mock = Mockery::mock(ContaboService::class);
+    $mock->shouldReceive('getInstance')
+        ->with(12345)
+        ->once()
+        ->andReturn(makeVpsControllerApiInstance(['instanceId' => 12345]));
+    $mock->shouldReceive('listInstanceBackups')
+        ->with(12345)
+        ->once()
+        ->andReturn(['data' => [$backup]]);
+    app()->instance(ContaboService::class, $mock);
+
+    setupVpsControllerGates($user);
+
+    $response = $this->actingAs($user)->get(route('admin.vps.show', $subscription));
+
+    $response->assertSuccessful();
+    $response->assertViewHas('backups', [$backup]);
+    $response->assertSee('Automated Backups');
+    $response->assertSee('bkp-999');
+    $response->assertSee('Weekly Backup');
+    $response->assertSee('20 GB');
+});
+
 it('admin vps assign renders unassigned lists', function (): void {
     $user = createVpsControllerUser(['vps_assign']);
 
@@ -686,6 +723,7 @@ it('user vps action endpoints succeed', function (): void {
         'vps_snapshot_create',
         'vps_snapshot_delete',
         'vps_backup_restore',
+        'vps_backup_access',
         'vps_reinstall',
         'vps_upgrade',
     ]);
@@ -698,6 +736,7 @@ it('user vps action endpoints succeed', function (): void {
     $mock = Mockery::mock(ContaboService::class);
     $mock->shouldReceive('getInstance')->andReturn(makeVpsControllerApiInstance());
     $mock->shouldReceive('listSnapshots')->with(12345)->once()->andReturn(['data' => []]);
+    $mock->shouldReceive('listInstanceBackups')->with(12345)->once()->andReturn(['data' => []]);
 
     $mock->shouldReceive('restartInstance')->with(12345)->once()->andReturn([]);
     $mock->shouldReceive('shutdownInstance')->with(12345)->once()->andReturn([]);

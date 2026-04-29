@@ -55,6 +55,7 @@ function fakeContaboInstanceDetail(): void
     $mock = Mockery::mock(ContaboService::class);
     $mock->shouldReceive('getInstance')->andReturn($instance);
     $mock->shouldReceive('listSnapshots')->andReturn(['data' => []]);
+    $mock->shouldReceive('listInstanceBackups')->andReturn(['data' => []]);
     $mock->shouldReceive('restartInstance')->andReturn($instance);
     $mock->shouldReceive('shutdownInstance')->andReturn($instance);
     $mock->shouldReceive('rescueInstance')->andReturn($instance);
@@ -125,4 +126,92 @@ it('can restart instance from detail page', function (): void {
         ->post(route('admin.vps.restart', $subscription))
         ->assertRedirect()
         ->assertSessionHas('success');
+});
+
+it('shows backups panel when vps_backup_access is granted', function (): void {
+    $user = createVpsDetailUser(['vps_access', 'vps_show', 'vps_backup_access']);
+    $subscription = Subscription::factory()->create([
+        'user_id' => $user->id,
+        'provider_resource_id' => '12345',
+    ]);
+
+    $backup = [
+        'backupId' => 'bkp-001',
+        'name' => 'Daily Backup',
+        'sizeMb' => 10240,
+        'createdDate' => '2025-06-01T00:00:00.000Z',
+    ];
+
+    $instance = [
+        'instanceId' => 12345,
+        'name' => 'vmi123456',
+        'displayName' => 'My VPS',
+        'status' => 'running',
+        'productType' => 'V45',
+        'defaultUser' => 'root',
+        'ipConfig' => ['v4' => ['ip' => '192.168.1.1'], 'v6' => ['ip' => '::1']],
+        'osType' => 'Linux',
+        'cpuCores' => 4,
+        'ramMb' => 8192,
+        'diskMb' => 204800,
+        'imageId' => 'ubuntu-22.04',
+        'createdDate' => '2025-01-01T00:00:00.000Z',
+    ];
+
+    $mock = Mockery::mock(ContaboService::class);
+    $mock->shouldReceive('getInstance')->andReturn($instance);
+    $mock->shouldReceive('listSnapshots')->andReturn(['data' => []]);
+    $mock->shouldReceive('listInstanceBackups')->with(12345)->once()->andReturn(['data' => [$backup]]);
+    app()->instance(ContaboService::class, $mock);
+
+    setupVpsDetailGates($user);
+
+    $this->actingAs($user)
+        ->get(route('admin.vps.show', $subscription))
+        ->assertOk()
+        ->assertSee('Automated Backups')
+        ->assertSee('bkp-001')
+        ->assertSee('Daily Backup')
+        ->assertSee('10 GB');
+});
+
+it('silently swallows RuntimeException from listInstanceBackups', function (): void {
+    $user = createVpsDetailUser(['vps_access', 'vps_show', 'vps_backup_access']);
+    $subscription = Subscription::factory()->create([
+        'user_id' => $user->id,
+        'provider_resource_id' => '12345',
+    ]);
+
+    $instance = [
+        'instanceId' => 12345,
+        'name' => 'vmi123456',
+        'displayName' => 'My VPS',
+        'status' => 'running',
+        'productType' => 'V45',
+        'defaultUser' => 'root',
+        'ipConfig' => ['v4' => ['ip' => '192.168.1.1'], 'v6' => ['ip' => '::1']],
+        'osType' => 'Linux',
+        'cpuCores' => 4,
+        'ramMb' => 8192,
+        'diskMb' => 204800,
+        'imageId' => 'ubuntu-22.04',
+        'createdDate' => '2025-01-01T00:00:00.000Z',
+    ];
+
+    $mock = Mockery::mock(ContaboService::class);
+    $mock->shouldReceive('getInstance')->andReturn($instance);
+    $mock->shouldReceive('listSnapshots')->andReturn(['data' => []]);
+    $mock->shouldReceive('listInstanceBackups')
+        ->with(12345)
+        ->once()
+        ->andThrow(new RuntimeException('Backups not activated'));
+    app()->instance(ContaboService::class, $mock);
+
+    setupVpsDetailGates($user);
+
+    $response = $this->actingAs($user)->get(route('admin.vps.show', $subscription));
+
+    $response->assertOk();
+    $response->assertViewHas('backups', []);
+    $response->assertSee('No automated backups found');
 });
