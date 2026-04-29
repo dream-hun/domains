@@ -128,19 +128,12 @@ it('can restart instance from detail page', function (): void {
         ->assertSessionHas('success');
 });
 
-it('shows backups panel when vps_backup_access is granted', function (): void {
+it('shows backups panel with empty state when vps_backup_access is granted', function (): void {
     $user = createVpsDetailUser(['vps_access', 'vps_show', 'vps_backup_access']);
     $subscription = Subscription::factory()->create([
         'user_id' => $user->id,
         'provider_resource_id' => '12345',
     ]);
-
-    $backup = [
-        'backupId' => 'bkp-001',
-        'name' => 'Daily Backup',
-        'sizeMb' => 10240,
-        'createdDate' => '2025-06-01T00:00:00.000Z',
-    ];
 
     $instance = [
         'instanceId' => 12345,
@@ -161,7 +154,7 @@ it('shows backups panel when vps_backup_access is granted', function (): void {
     $mock = Mockery::mock(ContaboService::class);
     $mock->shouldReceive('getInstance')->andReturn($instance);
     $mock->shouldReceive('listSnapshots')->andReturn(['data' => []]);
-    $mock->shouldReceive('listInstanceBackups')->with(12345)->once()->andReturn(['data' => [$backup]]);
+    $mock->shouldReceive('listInstanceBackups')->with(12345)->once()->andReturn(['data' => []]);
     app()->instance(ContaboService::class, $mock);
 
     setupVpsDetailGates($user);
@@ -170,12 +163,10 @@ it('shows backups panel when vps_backup_access is granted', function (): void {
         ->get(route('admin.vps.show', $subscription))
         ->assertOk()
         ->assertSee('Automated Backups')
-        ->assertSee('bkp-001')
-        ->assertSee('Daily Backup')
-        ->assertSee('10 GB');
+        ->assertSee('No automated backups found');
 });
 
-it('silently swallows RuntimeException from listInstanceBackups', function (): void {
+it('shows empty backups state when vps_backup_access is granted and no backups exist', function (): void {
     $user = createVpsDetailUser(['vps_access', 'vps_show', 'vps_backup_access']);
     $subscription = Subscription::factory()->create([
         'user_id' => $user->id,
@@ -201,10 +192,7 @@ it('silently swallows RuntimeException from listInstanceBackups', function (): v
     $mock = Mockery::mock(ContaboService::class);
     $mock->shouldReceive('getInstance')->andReturn($instance);
     $mock->shouldReceive('listSnapshots')->andReturn(['data' => []]);
-    $mock->shouldReceive('listInstanceBackups')
-        ->with(12345)
-        ->once()
-        ->andThrow(new RuntimeException('Backups not activated'));
+    $mock->shouldReceive('listInstanceBackups')->with(12345)->once()->andReturn(['data' => []]);
     app()->instance(ContaboService::class, $mock);
 
     setupVpsDetailGates($user);

@@ -151,16 +151,8 @@ final class VpsController extends Controller
             }
 
             if (Gate::allows('vps_backup_access')) {
-                try {
-                    $backupResponse = $this->contaboService->listInstanceBackups((int) $subscription->provider_resource_id);
-                    $backups = $backupResponse['data'] ?? [];
-                } catch (RuntimeException $e) {
-                    Log::warning('Failed to load backups for VPS instance', [
-                        'instance_id' => $subscription->provider_resource_id,
-                        'error' => $e->getMessage(),
-                    ]);
-                    $backupError = 'Could not load backup data. Please try again later.';
-                }
+                $backupResponse = $this->contaboService->listInstanceBackups((int) $subscription->provider_resource_id);
+                $backups = $backupResponse['data'] ?? [];
             }
         } catch (RuntimeException $runtimeException) {
             Log::error('Failed to load VPS instance', ['error' => $runtimeException->getMessage()]);
