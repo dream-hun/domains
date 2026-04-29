@@ -94,23 +94,26 @@ final class VpsController extends Controller
 
     public function show(Subscription $subscription): View|Factory
     {
-        abort_if(Gate::denies('vps_show'), Response::HTTP_FORBIDDEN);
         abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+
+        $subscription->load(['plan', 'planPrice.currency']);
 
         $instance = [];
         $snapshots = [];
         $backups = [];
+        $backupError = null;
         $errorMessage = '';
 
         try {
             if (! $subscription->provider_resource_id) {
-                $errorMessage = 'No VPS instance linked to this subscription.';
+                $errorMessage = 'No VPS instance linked to this subscription yet. It will be assigned shortly.';
 
                 return view('user.vps.show', [
                     'subscription' => $subscription,
                     'instance' => $instance,
                     'snapshots' => $snapshots,
                     'backups' => $backups,
+                    'backupError' => $backupError,
                     'errorMessage' => $errorMessage,
                 ]);
             }
@@ -156,6 +159,7 @@ final class VpsController extends Controller
                         'instance_id' => $subscription->provider_resource_id,
                         'error' => $e->getMessage(),
                     ]);
+                    $backupError = 'Could not load backup data. Please try again later.';
                 }
             }
         } catch (RuntimeException $runtimeException) {
@@ -168,6 +172,7 @@ final class VpsController extends Controller
             'instance' => $instance,
             'snapshots' => $snapshots,
             'backups' => $backups,
+            'backupError' => $backupError,
             'maxSnapshots' => $maxSnapshots ?? null,
             'errorMessage' => $errorMessage,
         ]);

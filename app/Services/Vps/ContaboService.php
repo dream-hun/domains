@@ -420,6 +420,11 @@ class ContaboService
     public function listInstanceBackups(int $instanceId, array $filters = []): array
     {
         $response = $this->client()->get(sprintf('/compute/instances/%d/backups', $instanceId), $filters);
+
+        if ($response->status() === 404) {
+            return ['data' => []];
+        }
+
         $this->assertSuccess($response, 'List backups for instance #'.$instanceId);
 
         return $response->json();

@@ -46,6 +46,63 @@
                 </div>
             @endif
 
+            {{-- Subscription Info Card (always shown) --}}
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-file-contract mr-1"></i> Subscription</h3>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <th style="width: 30%;" class="pl-3">Plan</th>
+                            <td>{{ $subscription->plan?->name ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="pl-3">Status</th>
+                            <td>
+                                @php
+                                    $statusBadgeClass = match($subscription->status) {
+                                        'active' => 'badge-success',
+                                        'expired' => 'badge-danger',
+                                        'cancelled' => 'badge-secondary',
+                                        'suspended' => 'badge-warning',
+                                        default => 'badge-info'
+                                    };
+                                @endphp
+                                <span class="badge {{ $statusBadgeClass }}">{{ ucfirst($subscription->status) }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="pl-3">Customer</th>
+                            <td>{{ $subscription->user?->name ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="pl-3">Billing Cycle</th>
+                            <td>{{ $subscription->billing_cycle->label() }}</td>
+                        </tr>
+                        <tr>
+                            <th class="pl-3">Start Date</th>
+                            <td>{{ $subscription->starts_at?->format('F d, Y') ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="pl-3">Expiry Date</th>
+                            <td>
+                                {{ $subscription->expires_at?->format('F d, Y') ?? 'N/A' }}
+                                @if ($subscription->expires_at)
+                                    <small class="text-muted ml-1">({{ $subscription->expires_at->diffForHumans() }})</small>
+                                @endif
+                            </td>
+                        </tr>
+                        @if (! $subscription->provider_resource_id)
+                            <tr>
+                                <th class="pl-3">VPS Instance</th>
+                                <td><span class="badge badge-warning">Pending Assignment</span></td>
+                            </tr>
+                        @endif
+                    </table>
+                </div>
+            </div>
+
             @if ($errorMessage)
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle"></i> {{ $errorMessage }}
@@ -131,7 +188,7 @@
 
                 {{-- Backups Panel --}}
                 @can('vps_backup_access')
-                    @include('admin.vps.partials.backups-panel')
+                    @include('admin.vps.partials.backups-panel', ['backupError' => $backupError ?? null])
                 @endcan
             @endif
         </div>

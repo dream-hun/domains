@@ -148,7 +148,7 @@ it('admin vps show returns early when provider_resource_id is missing', function
         ->get(route('admin.vps.show', $subscription));
 
     $response->assertSuccessful();
-    $response->assertViewHas('errorMessage', 'No VPS instance linked to this subscription.');
+    $response->assertViewHas('errorMessage', 'No VPS instance linked to this subscription yet. It will be assigned shortly.');
 });
 
 it('admin vps show handles RuntimeException from provider getInstance', function (): void {
@@ -686,7 +686,7 @@ it('user vps show returns early when provider_resource_id is missing', function 
         ->get(route('user.vps.show', $subscription));
 
     $response->assertSuccessful();
-    $response->assertViewHas('errorMessage', 'No VPS instance linked to this subscription.');
+    $response->assertViewHas('errorMessage', 'No VPS instance linked to this subscription yet. It will be assigned shortly.');
 });
 
 it('user vps show handles RuntimeException from provider getInstance', function (): void {

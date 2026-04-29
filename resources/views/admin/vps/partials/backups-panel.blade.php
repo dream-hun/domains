@@ -3,7 +3,11 @@
         <h3 class="card-title"><i class="fas fa-hdd mr-1"></i> Automated Backups</h3>
     </div>
     <div class="card-body">
-        @if (empty($backups))
+        @if (! empty($backupError))
+            <div class="alert alert-warning mb-0">
+                <i class="fas fa-exclamation-triangle mr-1"></i> {{ $backupError }}
+            </div>
+        @elseif (empty($backups))
             <p class="text-muted text-center py-3">No automated backups found. This feature may need to be activated.</p>
         @else
             <div class="table-responsive">
