@@ -162,8 +162,11 @@ final class VpsController extends Controller
                 try {
                     $backupResponse = $this->contaboService->listInstanceBackups((int) $subscription->provider_resource_id);
                     $backups = $backupResponse['data'] ?? [];
-                } catch (RuntimeException) {
-                    // Backups may not be activated — fail silently
+                } catch (RuntimeException $e) {
+                    Log::warning('Failed to load backups for VPS instance', [
+                        'instance_id' => $subscription->provider_resource_id,
+                        'error' => $e->getMessage(),
+                    ]);
                 }
             }
         } catch (RuntimeException $runtimeException) {
