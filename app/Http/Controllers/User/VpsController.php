@@ -43,6 +43,7 @@ final class VpsController extends Controller
         try {
             $subscriptions = Subscription::query()
                 ->where('user_id', auth()->id())
+                ->where('status', 'active')
                 ->whereNotNull('provider_resource_id')
                 ->with('user', 'plan')
                 ->get();
@@ -95,6 +96,7 @@ final class VpsController extends Controller
     public function show(Subscription $subscription): View|Factory
     {
         abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        abort_if($subscription->status !== 'active', Response::HTTP_FORBIDDEN);
 
         $subscription->load(['plan', 'planPrice.currency']);
 
@@ -173,7 +175,7 @@ final class VpsController extends Controller
     public function start(Subscription $subscription, StartVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_start'), Response::HTTP_FORBIDDEN);
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription);
 
@@ -189,7 +191,7 @@ final class VpsController extends Controller
     public function restart(Subscription $subscription, RestartVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_restart'), Response::HTTP_FORBIDDEN);
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription);
 
@@ -205,7 +207,7 @@ final class VpsController extends Controller
     public function shutdown(Subscription $subscription, ShutdownVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_shutdown'), Response::HTTP_FORBIDDEN);
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription);
 
@@ -221,7 +223,7 @@ final class VpsController extends Controller
     public function rescue(Subscription $subscription, RescueVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_rescue'), Response::HTTP_FORBIDDEN);
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription);
 
@@ -237,7 +239,7 @@ final class VpsController extends Controller
     public function resetCredentials(Subscription $subscription, ResetVpsCredentialsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_reset_credentials'), Response::HTTP_FORBIDDEN);
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription);
 
@@ -252,7 +254,7 @@ final class VpsController extends Controller
 
     public function changeDisplayName(ChangeVpsDisplayNameRequest $request, Subscription $subscription, ChangeVpsDisplayNameAction $action): RedirectResponse
     {
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription, $request->validated('display_name'));
 
@@ -261,7 +263,7 @@ final class VpsController extends Controller
 
     public function createSnapshot(CreateVpsSnapshotRequest $request, Subscription $subscription, CreateVpsSnapshotAction $action): RedirectResponse
     {
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute(
             $subscription,
@@ -275,7 +277,7 @@ final class VpsController extends Controller
     public function deleteSnapshot(Subscription $subscription, string $snapshotId, DeleteVpsSnapshotAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_snapshot_delete'), Response::HTTP_FORBIDDEN);
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription, $snapshotId);
 
@@ -285,7 +287,7 @@ final class VpsController extends Controller
     public function restoreSnapshot(Subscription $subscription, string $snapshotId, RestoreVpsSnapshotAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_backup_restore'), Response::HTTP_FORBIDDEN);
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription, $snapshotId);
 
@@ -295,10 +297,17 @@ final class VpsController extends Controller
     public function reinstall(Request $request, Subscription $subscription, ReinstallVpsAction $action): RedirectResponse
     {
         abort_if(Gate::denies('vps_reinstall'), Response::HTTP_FORBIDDEN);
-        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription, $request->only(['imageId']));
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    private function authorizeVpsAction(Subscription $subscription): void
+    {
+        abort_if($subscription->user_id !== auth()->id(), Response::HTTP_FORBIDDEN);
+        abort_if($subscription->status !== 'active', Response::HTTP_FORBIDDEN);
+        abort_if($subscription->provider_resource_id === null, Response::HTTP_FORBIDDEN);
     }
 }
