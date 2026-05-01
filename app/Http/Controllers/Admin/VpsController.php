@@ -105,6 +105,7 @@ final class VpsController extends Controller
 
     public function show(Subscription $subscription): View|Factory
     {
+        abort_if(Gate::denies('vps_show'), Response::HTTP_FORBIDDEN);
         $this->authorizeSubscriptionOwner($subscription);
 
         $subscription->load(['plan', 'planPrice.currency', 'user']);
