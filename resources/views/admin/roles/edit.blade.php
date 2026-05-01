@@ -25,8 +25,8 @@
                         <span class="btn btn-info btn-xs select-all">{{ trans('global.select_all') }}</span>
                         <span class="btn btn-info btn-xs deselect-all">{{ trans('global.deselect_all') }}</span></label>
                     <select name="permissions[]" id="permissions" class="form-control select2bs4" multiple="multiple" required>
-                        @foreach($permissions as $id => $permissions)
-                            <option value="{{ $id }}" {{ (in_array($id, old('permissions', [])) || isset($role) && $role->permissions->contains($id)) ? 'selected' : '' }}>{{ $permissions }}</option>
+                        @foreach($permissions as $id => $permission)
+                            <option value="{{ $id }}" {{ (in_array($id, old('permissions', [])) || isset($role) && $role->permissions->contains($id)) ? 'selected' : '' }}>{{ $permission }}</option>
                         @endforeach
                     </select>
                     @if($errors->has('permissions'))
