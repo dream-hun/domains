@@ -12,8 +12,6 @@ use Illuminate\Http\Request;
 
 function createVpsAccessUser(array $permissions = ['vps_access', 'vps_restart']): User
 {
-    Role::query()->firstOrCreate(['id' => 1], ['title' => 'Admin']);
-
     $role = Role::query()->create(['title' => 'VpsAccess-'.uniqid()]);
     foreach ($permissions as $permission) {
         $role->permissions()->attach(
