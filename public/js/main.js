@@ -39,14 +39,13 @@ $(document).ready(function () {
     })
 
     $('.select-all').click(function () {
-        let $select = $(this).parent().siblings('select')
-        $select.find('option').prop('selected', 'selected')
-        $select.trigger('change')
+        let $select = $(this).closest('.form-group').find('select')
+        let allValues = $select.find('option').map(function () { return this.value }).get()
+        $select.val(allValues).trigger('change')
     })
     $('.deselect-all').click(function () {
-        let $select = $(this).parent().siblings('select')
-        $select.find('option').prop('selected', '')
-        $select.trigger('change')
+        let $select = $(this).closest('.form-group').find('select')
+        $select.val([]).trigger('change')
     })
 
     $('.select2').select2()
