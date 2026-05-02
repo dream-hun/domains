@@ -21,9 +21,11 @@
                     </p>
                 </div>
                 <div class="form-group {{ $errors->has('permissions') ? 'has-error' : '' }}">
-                    <label for="permissions">{{ trans('cruds.role.fields.permissions') }}*
-                        <span class="btn btn-info btn-xs select-all">{{ trans('global.select_all') }}</span>
-                        <span class="btn btn-info btn-xs deselect-all">{{ trans('global.deselect_all') }}</span></label>
+                    <label for="permissions">{{ trans('cruds.role.fields.permissions') }}*</label>
+                    <div style="padding-bottom: 4px">
+                        <span class="btn btn-info btn-xs select-all" style="border-radius: 0">{{ trans('global.select_all') }}</span>
+                        <span class="btn btn-info btn-xs deselect-all" style="border-radius: 0">{{ trans('global.deselect_all') }}</span>
+                    </div>
                     <select name="permissions[]" id="permissions" class="form-control select2bs4" multiple="multiple" required>
                         @foreach($permissions as $id => $permission)
                             <option value="{{ $id }}" {{ (in_array($id, old('permissions', [])) || isset($role) && $role->permissions->contains($id)) ? 'selected' : '' }}>{{ $permission }}</option>
@@ -42,8 +44,6 @@
                     <input class="btn btn-danger" type="submit" value="{{ trans('global.save') }}">
                 </div>
             </form>
-
-
         </div>
     </div>
 </x-admin-layout>

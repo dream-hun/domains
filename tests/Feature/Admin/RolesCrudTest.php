@@ -41,6 +41,18 @@ it('renders the create role page with permissions options', function (): void {
     $response->assertSee($permission->title);
 });
 
+it('renders select-all and deselect-all buttons outside the label on create page', function (): void {
+    $user = createRoleAdminUser();
+    setupRoleAdminGates($user);
+
+    $response = $this->actingAs($user)->get(route('admin.roles.create'));
+
+    $response->assertOk();
+    $response->assertSee('select-all', false);
+    $response->assertSee('deselect-all', false);
+    $response->assertSee('padding-bottom: 4px', false);
+});
+
 it('stores a new role with permissions', function (): void {
     $user = createRoleAdminUser();
     setupRoleAdminGates($user);
@@ -72,6 +84,20 @@ it('renders the edit role page with pre-selected permissions', function (): void
     $response->assertOk();
     $response->assertSee($permission->title);
     $response->assertSee('selected', false);
+});
+
+it('renders select-all and deselect-all buttons outside the label on edit page', function (): void {
+    $user = createRoleAdminUser();
+    setupRoleAdminGates($user);
+
+    $role = Role::query()->create(['title' => 'Some Role']);
+
+    $response = $this->actingAs($user)->get(route('admin.roles.edit', $role));
+
+    $response->assertOk();
+    $response->assertSee('select-all', false);
+    $response->assertSee('deselect-all', false);
+    $response->assertSee('padding-bottom: 4px', false);
 });
 
 it('updates a role with new permissions', function (): void {
