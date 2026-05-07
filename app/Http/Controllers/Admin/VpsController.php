@@ -105,6 +105,7 @@ final class VpsController extends Controller
 
     public function show(Subscription $subscription): View|Factory
     {
+        $this->authorizeAdmin();
         abort_if(Gate::denies('vps_show'), Response::HTTP_FORBIDDEN);
         $this->authorizeSubscriptionOwner($subscription);
 
@@ -234,6 +235,7 @@ final class VpsController extends Controller
             'unassignedSubscriptions' => $unassignedSubscriptions,
             'unassignedInstances' => $unassignedInstances,
             'errorMessage' => $errorMessage,
+            'selectedSubscriptionId' => request()->query('subscription_id'),
         ]);
     }
 
@@ -364,6 +366,7 @@ final class VpsController extends Controller
 
     public function changeDisplayName(ChangeVpsDisplayNameRequest $request, Subscription $subscription, ChangeVpsDisplayNameAction $action): RedirectResponse
     {
+        abort_if(Gate::denies('vps_change_display_name'), Response::HTTP_FORBIDDEN);
         $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute($subscription, $request->validated('display_name'));
@@ -373,6 +376,7 @@ final class VpsController extends Controller
 
     public function createSnapshot(CreateVpsSnapshotRequest $request, Subscription $subscription, CreateVpsSnapshotAction $action): RedirectResponse
     {
+        abort_if(Gate::denies('vps_snapshot_create'), Response::HTTP_FORBIDDEN);
         $this->authorizeSubscriptionOwner($subscription);
 
         $result = $action->execute(

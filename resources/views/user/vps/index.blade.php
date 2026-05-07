@@ -71,8 +71,10 @@
                                                 <a href="{{ route('user.vps.show', $inst['subscription_uuid']) }}">
                                                     <strong>{{ $inst['display_name'] ?: $inst['name'] }}</strong>
                                                 </a>
-                                                <br>
-                                                <small class="text-muted">ID: {{ $inst['instance_id'] }}</small>
+                                                @if ($inst['instance_id'])
+                                                    <br>
+                                                    <small class="text-muted">ID: {{ $inst['instance_id'] }}</small>
+                                                @endif
                                             </td>
                                             <td>
                                                 <span class="badge {{ $inst['status_color'] }}">
@@ -80,7 +82,13 @@
                                                     {{ $inst['status_label'] }}
                                                 </span>
                                             </td>
-                                            <td><code>{{ $inst['ip_address'] }}</code></td>
+                                            <td>
+                                                @if ($inst['status'] !== 'pending')
+                                                    <code>{{ $inst['ip_address'] }}</code>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
+                                            </td>
                                             <td>{{ $inst['product_type'] }}</td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">

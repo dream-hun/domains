@@ -415,12 +415,29 @@ class ContaboService
     /**
      * List automated backups for an instance.
      *
-     * Contabo does not expose a backup listing endpoint in their public API.
-     * The /compute/instances/{id}/backups route returns 404 for all instances.
+     * Uses the /v1/backups endpoint with an instanceId filter.
+     *
+     * @throws ConnectionException
      */
     public function listInstanceBackups(int $instanceId, array $filters = []): array
     {
-        return ['data' => []];
+        $response = $this->client()->get('/backups', array_merge(['instanceId' => $instanceId], $filters));
+        $this->assertSuccess($response, sprintf('List backups for instance #%d', $instanceId));
+
+        return $response->json() ?? ['data' => []];
+    }
+
+    /**
+     * List restore points for a specific backup.
+     *
+     * @throws ConnectionException
+     */
+    public function listBackupRestorePoints(string $backupId, array $filters = []): array
+    {
+        $response = $this->client()->get(sprintf('/backups/%s/restorePoints', $backupId), $filters);
+        $this->assertSuccess($response, sprintf('List restore points for backup %s', $backupId));
+
+        return $response->json() ?? ['data' => []];
     }
 
     /**

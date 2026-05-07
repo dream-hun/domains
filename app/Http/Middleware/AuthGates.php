@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 
 final class AuthGates
@@ -21,7 +22,7 @@ final class AuthGates
             return $next($request);
         }
 
-        $roles = Role::with('permissions')->get();
+        $roles = Cache::remember('auth_gates_roles', 300, fn () => Role::with('permissions')->get());
         $permissionsArray = [];
 
         foreach ($roles as $role) {

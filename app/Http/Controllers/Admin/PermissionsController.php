@@ -11,6 +11,7 @@ use App\Models\Permission;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,6 +36,7 @@ final class PermissionsController extends Controller
     public function store(StorePermissionRequest $request): RedirectResponse
     {
         Permission::query()->create($request->all());
+        Cache::forget('auth_gates_roles');
 
         return to_route('admin.permissions.index');
     }
@@ -49,6 +51,7 @@ final class PermissionsController extends Controller
     public function update(UpdatePermissionRequest $request, Permission $permission): RedirectResponse
     {
         $permission->update($request->all());
+        Cache::forget('auth_gates_roles');
 
         return to_route('admin.permissions.index');
     }
@@ -65,6 +68,7 @@ final class PermissionsController extends Controller
         abort_if(Gate::denies('permission_delete'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $permission->delete();
+        Cache::forget('auth_gates_roles');
 
         return back();
     }

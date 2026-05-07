@@ -44,7 +44,6 @@ final class VpsController extends Controller
             $subscriptions = Subscription::query()
                 ->where('user_id', auth()->id())
                 ->where('status', 'active')
-                ->whereNotNull('provider_resource_id')
                 ->with('user', 'plan')
                 ->get();
 
@@ -55,9 +54,30 @@ final class VpsController extends Controller
                 ]);
             }
 
-            $apiInstances = collect($this->contaboService->listAllInstances());
+            $assignedSubscriptions = $subscriptions->filter(fn (Subscription $sub): bool => $sub->provider_resource_id !== null);
+
+            $apiInstances = $assignedSubscriptions->isNotEmpty()
+                ? collect($this->contaboService->listAllInstances())
+                : collect();
 
             $instances = $subscriptions->map(function (Subscription $subscription) use ($apiInstances): ?array {
+                if (! $subscription->provider_resource_id) {
+                    return [
+                        'subscription_uuid' => $subscription->uuid,
+                        'subscription_id' => $subscription->id,
+                        'instance_id' => null,
+                        'name' => $subscription->plan?->name ?? 'N/A',
+                        'display_name' => '',
+                        'product_type' => $subscription->plan?->name ?? 'N/A',
+                        'status' => 'pending',
+                        'status_label' => 'Pending Assignment',
+                        'status_color' => 'badge-warning',
+                        'status_icon' => 'fas fa-clock',
+                        'ip_address' => 'N/A',
+                        'plan_name' => $subscription->plan?->name ?? 'N/A',
+                    ];
+                }
+
                 $apiInstance = $apiInstances->firstWhere('instanceId', (int) $subscription->provider_resource_id);
 
                 if (! $apiInstance) {
@@ -254,6 +274,7 @@ final class VpsController extends Controller
 
     public function changeDisplayName(ChangeVpsDisplayNameRequest $request, Subscription $subscription, ChangeVpsDisplayNameAction $action): RedirectResponse
     {
+        abort_if(Gate::denies('vps_change_display_name'), Response::HTTP_FORBIDDEN);
         $this->authorizeVpsAction($subscription);
 
         $result = $action->execute($subscription, $request->validated('display_name'));
@@ -263,6 +284,7 @@ final class VpsController extends Controller
 
     public function createSnapshot(CreateVpsSnapshotRequest $request, Subscription $subscription, CreateVpsSnapshotAction $action): RedirectResponse
     {
+        abort_if(Gate::denies('vps_snapshot_create'), Response::HTTP_FORBIDDEN);
         $this->authorizeVpsAction($subscription);
 
         $result = $action->execute(

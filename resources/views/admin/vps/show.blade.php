@@ -99,6 +99,18 @@
                                 <td><span class="badge badge-warning">Pending Assignment</span></td>
                             </tr>
                         @endif
+                        @can('vps_assign')
+                            <tr>
+                                <th class="pl-3"></th>
+                                <td>
+                                    <a href="{{ route('admin.vps.assign') }}?subscription_id={{ $subscription->id }}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-link mr-1"></i>
+                                        {{ $subscription->provider_resource_id ? 'Reassign Instance' : 'Assign Instance' }}
+                                    </a>
+                                </td>
+                            </tr>
+                        @endcan
                     </table>
                 </div>
             </div>
