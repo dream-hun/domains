@@ -6,7 +6,7 @@ namespace App\Actions\Hosting\PlanPrices;
 
 use App\Jobs\ActivateHostingPlanPriceJob;
 use App\Models\HostingPlanPrice;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Date;
 
 final readonly class UpdatePlanPriceAction
@@ -48,8 +48,8 @@ final readonly class UpdatePlanPriceAction
     private function handleFutureEffectiveDate(
         HostingPlanPrice $planPrice,
         array $data,
-        Carbon $effectiveDate,
-        Carbon $today
+        CarbonInterface $effectiveDate,
+        CarbonInterface $today
     ): void {
         $data['is_current'] = false;
         $planPrice->update($data);
@@ -66,7 +66,7 @@ final readonly class UpdatePlanPriceAction
         $planPrice->update($data);
         $planPrice->refresh();
 
-        $shouldActivate = ($data['is_current'] ?? true) !== false && ! $planPrice->is_current;
+        $shouldActivate = (bool) ($data['is_current'] ?? true) && ! $planPrice->is_current;
 
         if ($shouldActivate) {
             $this->activateAction->handle($planPrice);
