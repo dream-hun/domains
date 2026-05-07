@@ -26,7 +26,7 @@
                                 <td><code>{{ $backup['backupId'] ?? $backup['id'] ?? 'N/A' }}</code></td>
                                 <td>{{ $backup['name'] ?? 'N/A' }}</td>
                                 <td>{{ isset($backup['sizeMb']) ? round($backup['sizeMb'] / 1024, 2) . ' GB' : 'N/A' }}</td>
-                                <td>{{ $backup['createdDate'] ?? 'N/A' }}</td>
+                                <td>{{ $backup['backupCreatedDate'] ?? $backup['createdDate'] ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>

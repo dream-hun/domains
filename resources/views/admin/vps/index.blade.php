@@ -146,6 +146,13 @@
                                                            title="Details">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
+                                                        @can('vps_assign')
+                                                            <a href="{{ route('admin.vps.assign') }}?subscription_id={{ $inst['subscription_id'] }}"
+                                                               class="btn btn-outline-secondary btn-sm"
+                                                               title="Reassign instance">
+                                                                <i class="fas fa-exchange-alt"></i>
+                                                            </a>
+                                                        @endcan
                                                     @else
                                                         @can('vps_assign')
                                                             <a href="{{ route('admin.vps.assign') }}"

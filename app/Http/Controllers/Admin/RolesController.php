@@ -12,6 +12,7 @@ use App\Models\Role;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -39,6 +40,7 @@ final class RolesController extends Controller
     {
         $role = Role::query()->create($request->only(['title']));
         $role->permissions()->sync($request->input('permissions', []));
+        Cache::forget('auth_gates_roles');
 
         return to_route('admin.roles.index');
     }
@@ -58,6 +60,7 @@ final class RolesController extends Controller
     {
         $role->update($request->only(['title']));
         $role->permissions()->sync($request->input('permissions', []));
+        Cache::forget('auth_gates_roles');
 
         return to_route('admin.roles.index');
     }
@@ -78,6 +81,7 @@ final class RolesController extends Controller
         $role->permissions()->detach();
         $role->users()->detach();
         $role->delete();
+        Cache::forget('auth_gates_roles');
 
         return back();
     }

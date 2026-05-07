@@ -110,7 +110,7 @@ it('does not show VPS instances for cancelled subscriptions on the index', funct
         ->assertSee('No VPS instances found');
 });
 
-it('does not show subscriptions without a VPS assigned on the index', function (): void {
+it('shows subscriptions without a VPS assigned as pending on the index', function (): void {
     $user = createVpsAccessUser();
     Subscription::factory()->active()->create([
         'user_id' => $user->id,
@@ -123,7 +123,7 @@ it('does not show subscriptions without a VPS assigned on the index', function (
     $this->actingAs($user)
         ->get(route('user.vps.index'))
         ->assertOk()
-        ->assertSee('No VPS instances found');
+        ->assertSee('Pending Assignment');
 });
 
 // --- Show ---
@@ -249,4 +249,125 @@ it('forbids restart on another user subscription', function (): void {
     $this->actingAs($user)
         ->post(route('user.vps.restart', $subscription))
         ->assertForbidden();
+});
+
+// --- changeDisplayName permission ---
+
+it('forbids changeDisplayName without vps_change_display_name permission', function (): void {
+    $user = createVpsAccessUser(['vps_access']);
+    $subscription = Subscription::factory()->active()->create([
+        'user_id' => $user->id,
+        'provider_resource_id' => '12345',
+    ]);
+
+    fakeVpsServiceForAccess();
+    setupVpsAccessGates($user);
+
+    $this->actingAs($user)
+        ->post(route('user.vps.display-name', $subscription), ['display_name' => 'New Name'])
+        ->assertForbidden();
+});
+
+it('allows changeDisplayName with vps_change_display_name permission', function (): void {
+    $user = createVpsAccessUser(['vps_access', 'vps_change_display_name']);
+    $subscription = Subscription::factory()->active()->create([
+        'user_id' => $user->id,
+        'provider_resource_id' => '12345',
+    ]);
+
+    $mock = Mockery::mock(ContaboService::class);
+    $mock->shouldReceive('updateInstance')->andReturn([]);
+    app()->instance(ContaboService::class, $mock);
+    setupVpsAccessGates($user);
+
+    $this->actingAs($user)
+        ->post(route('user.vps.display-name', $subscription), ['display_name' => 'New Name'])
+        ->assertRedirect();
+});
+
+// --- createSnapshot permission ---
+
+it('forbids createSnapshot without vps_snapshot_create permission', function (): void {
+    $user = createVpsAccessUser(['vps_access']);
+    $subscription = Subscription::factory()->active()->create([
+        'user_id' => $user->id,
+        'provider_resource_id' => '12345',
+    ]);
+
+    fakeVpsServiceForAccess();
+    setupVpsAccessGates($user);
+
+    $this->actingAs($user)
+        ->post(route('user.vps.snapshots.store', $subscription), ['name' => 'snap-1'])
+        ->assertForbidden();
+});
+
+it('allows createSnapshot with vps_snapshot_create permission', function (): void {
+    $user = createVpsAccessUser(['vps_access', 'vps_snapshot_create']);
+    $subscription = Subscription::factory()->active()->create([
+        'user_id' => $user->id,
+        'provider_resource_id' => '12345',
+    ]);
+
+    $mock = Mockery::mock(ContaboService::class);
+    $mock->shouldReceive('createSnapshot')->andReturn(['data' => [['snapshotId' => 'snap-1', 'name' => 'snap-1']]]);
+    app()->instance(ContaboService::class, $mock);
+    setupVpsAccessGates($user);
+
+    $this->actingAs($user)
+        ->post(route('user.vps.snapshots.store', $subscription), ['name' => 'snap-1'])
+        ->assertRedirect();
+});
+
+// --- Admin VPS show access control ---
+
+it('forbids non-admin from accessing admin VPS show route for their own subscription', function (): void {
+    // Ensure role ID 1 (admin) exists before creating the non-admin user's role,
+    // so auto-increment does not assign ID 1 to the non-admin role.
+    Role::query()->firstOrCreate(['id' => 1], ['title' => 'Admin']);
+
+    $user = createVpsAccessUser(['vps_access', 'vps_show']);
+    $subscription = Subscription::factory()->active()->create([
+        'user_id' => $user->id,
+        'provider_resource_id' => '12345',
+    ]);
+
+    fakeVpsServiceForAccess();
+    setupVpsAccessGates($user);
+
+    $this->actingAs($user)
+        ->get(route('admin.vps.show', $subscription))
+        ->assertForbidden();
+});
+
+it('shows active subscription without VPS assigned as pending on the user index', function (): void {
+    $user = createVpsAccessUser();
+    $subscription = Subscription::factory()->active()->create([
+        'user_id' => $user->id,
+        'provider_resource_id' => null,
+    ]);
+
+    fakeVpsServiceForAccess();
+    setupVpsAccessGates($user);
+
+    $this->actingAs($user)
+        ->get(route('user.vps.index'))
+        ->assertOk()
+        ->assertSee('Pending Assignment');
+});
+
+it('allows user to access show page for an active subscription without VPS assigned', function (): void {
+    $user = createVpsAccessUser();
+    $subscription = Subscription::factory()->active()->create([
+        'user_id' => $user->id,
+        'provider_resource_id' => null,
+    ]);
+
+    fakeVpsServiceForAccess();
+    setupVpsAccessGates($user);
+
+    $this->actingAs($user)
+        ->get(route('user.vps.show', $subscription))
+        ->assertOk()
+        ->assertSee('No VPS instance linked');
 });

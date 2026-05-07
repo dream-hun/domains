@@ -59,7 +59,7 @@
                                             <select name="subscription_id" id="subscription_id" class="form-control @error('subscription_id') is-invalid @enderror">
                                                 <option value="">-- Select a subscription --</option>
                                                 @foreach ($unassignedSubscriptions as $sub)
-                                                    <option value="{{ $sub['id'] }}" {{ old('subscription_id') == $sub['id'] ? 'selected' : '' }}>
+                                                    <option value="{{ $sub['id'] }}" {{ (old('subscription_id') ?? $selectedSubscriptionId) == $sub['id'] ? 'selected' : '' }}>
                                                         {{ $sub['plan_name'] }} - {{ $sub['domain'] }} ({{ $sub['user_name'] }})
                                                         @if ($sub['is_assigned'])
                                                             [Assigned to instance #{{ $sub['current_instance_id'] }}]
