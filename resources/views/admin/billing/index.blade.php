@@ -35,9 +35,9 @@
                                             <th>Order Number</th>
                                             <th>Payment Reference</th>
                                             <th>Date</th>
-                                            @if (Auth::user()->isAdmin())
+                                            @can('user_access')
                                                 <th>Customer</th>
-                                            @endif
+                                            @endcan
                                             <th>Total Amount</th>
                                             <th>Payment Status</th>
                                             <th>Order Status</th>
@@ -76,9 +76,9 @@
                                                     {{ $paymentRef ?? 'N/A' }}
                                                 </td>
                                                 <td>{{ $order->created_at->format('M d, Y') }}</td>
-                                                @if (Auth::user()->isAdmin())
+                                                @can('user_access')
                                                     <td>{{ $order->user->name ?? 'N/A' }}</td>
-                                                @endif
+                                                @endcan
                                                 <td>
                                                     <strong>@price($order->total_amount, $order->currency)</strong>
                                                 </td>

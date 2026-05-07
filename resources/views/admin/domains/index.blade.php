@@ -107,19 +107,19 @@
                                                 @endif
                                             @endcan
 
-                                            @can('domain_edit')
+                                            @can('ownership_assignment_access')
                                                 <a href="{{ route('admin.domains.assign', $domain->uuid) }}"
                                                    class="btn btn-sm btn-primary">
                                                     Assign Owner
                                                 </a>
                                             @endcan
 
-                                            @if(auth()->user()->isAdmin())
+                                            @can('domain_edit')
                                                 <a href="{{ route('admin.domains.edit-registration', $domain) }}"
                                                    class="btn btn-sm btn-info">
                                                     Edit Registration
                                                 </a>
-                                            @endif
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>
@@ -169,6 +169,7 @@
             })
 
             const renewalAddToCartUrlTemplate = @json(route('domains.renew.add-to-cart', ['domain' => '__DOMAIN_UUID__']));
+            const cartIndexUrl = @json(route('cart.index'));
 
             function addRenewalToCart(element, domainUuid, domainName, domainId) {
                 element.disabled = true;
@@ -198,7 +199,7 @@
                     .then(data => {
                         if (data.success) {
                             alert(`${domainName} has been added to your cart for renewal!`);
-                            window.location.href = '/shopping-cart';
+                            window.location.href = cartIndexUrl;
                         } else {
                             alert(data.message || 'Failed to add domain to cart');
                             element.disabled = false;

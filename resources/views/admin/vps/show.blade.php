@@ -7,7 +7,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1><i class="fas fa-server mr-2"></i>VPS Instance Details</h1>
+                    <h1><i class="bi bi-server mr-2"></i>VPS Instance Details</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -40,7 +40,7 @@
 
             @if (session('pending_refresh'))
                 <div class="alert alert-info alert-dismissible fade show" id="refresh-alert">
-                    <i class="fas fa-sync-alt fa-spin mr-1"></i>
+                    <i class="bi bi-arrow-repeat mr-1" style="animation: spin 1s linear infinite;"></i>
                     The power action has been sent. Page will refresh in <strong id="refresh-countdown">8</strong> seconds to show the updated status.
                     <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
                 </div>
@@ -49,7 +49,7 @@
             {{-- Subscription Info Card (always shown) --}}
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-file-contract mr-1"></i> Subscription</h3>
+                    <h3 class="card-title"><i class="bi bi-file-earmark-text mr-1"></i> Subscription</h3>
                 </div>
                 <div class="card-body p-0">
                     <table class="table table-borderless table-sm mb-0">
@@ -105,7 +105,7 @@
                                 <td>
                                     <a href="{{ route('admin.vps.assign') }}?subscription_id={{ $subscription->id }}"
                                        class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-link mr-1"></i>
+                                        <i class="bi bi-link-45deg mr-1"></i>
                                         {{ $subscription->provider_resource_id ? 'Reassign Instance' : 'Assign Instance' }}
                                     </a>
                                 </td>
@@ -117,13 +117,13 @@
 
             @if ($errorMessage)
                 <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i> {{ $errorMessage }}
+                    <i class="bi bi-exclamation-triangle"></i> {{ $errorMessage }}
                 </div>
             @elseif (!empty($instance))
                 {{-- Overview Card --}}
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-info-circle mr-1"></i> Overview</h3>
+                        <h3 class="card-title"><i class="bi bi-info-circle mr-1"></i> Overview</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
