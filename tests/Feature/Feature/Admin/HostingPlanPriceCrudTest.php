@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Hosting\BillingCycle;
+use App\Jobs\ActivateHostingPlanPriceJob;
 use App\Models\Currency;
 use App\Models\HostingCategory;
 use App\Models\HostingPlan;
@@ -12,6 +13,7 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 
 uses(RefreshDatabase::class);
 
@@ -175,6 +177,28 @@ test('store validates is_current and effective_date required', function (): void
 
 // --- Update ---
 
+test('update with is_current "0" string does not activate price', function (): void {
+    $user = createPriceAdmin(['hosting_plan_price_edit']);
+    $price = makePlanPrice(['is_current' => true]);
+
+    $response = $this->actingAs($user)
+        ->patch(route('admin.hosting-plan-prices.update', $price->uuid), [
+            'hosting_category_id' => $price->plan->category_id,
+            'hosting_plan_id' => $price->hosting_plan_id,
+            'currency_id' => $price->currency_id,
+            'billing_cycle' => $price->billing_cycle,
+            'regular_price' => $price->regular_price,
+            'renewal_price' => $price->renewal_price,
+            'status' => 'active',
+            'is_current' => '0',
+            'effective_date' => now()->subDay()->format('Y-m-d'),
+        ]);
+
+    $response->assertRedirect(route('admin.hosting-plan-prices.index'));
+    $price->refresh();
+    expect($price->is_current)->toBeFalse();
+});
+
 test('update works with new fields', function (): void {
     $user = createPriceAdmin(['hosting_plan_price_edit']);
     $price = makePlanPrice();
@@ -263,6 +287,31 @@ test('update with price change and reason succeeds', function (): void {
 
     $price->refresh();
     expect((float) $price->regular_price)->toBe(20.00);
+});
+
+test('update with future effective date sets is_current to false without throwing', function (): void {
+    Bus::fake();
+
+    $user = createPriceAdmin(['hosting_plan_price_edit']);
+    $price = makePlanPrice();
+
+    $response = $this->actingAs($user)
+        ->patch(route('admin.hosting-plan-prices.update', $price->uuid), [
+            'hosting_category_id' => $price->plan->category_id,
+            'hosting_plan_id' => $price->hosting_plan_id,
+            'currency_id' => $price->currency_id,
+            'billing_cycle' => $price->billing_cycle,
+            'regular_price' => $price->regular_price,
+            'renewal_price' => $price->renewal_price,
+            'status' => 'active',
+            'is_current' => true,
+            'effective_date' => now()->addDays(5)->format('Y-m-d'),
+        ]);
+
+    $response->assertRedirect(route('admin.hosting-plan-prices.index'));
+    Bus::assertDispatched(ActivateHostingPlanPriceJob::class);
+    $price->refresh();
+    expect($price->is_current)->toBeFalse();
 });
 
 // --- Delete ---
