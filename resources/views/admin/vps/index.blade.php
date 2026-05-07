@@ -39,7 +39,7 @@
                 <div class="col-md-12">
                     @can('vps_assign')
                         <a href="{{ route('admin.vps.assign') }}" class="btn btn-primary btn-md">
-                            <i class="fas fa-link"></i> Assign VPS Instance
+                            <i class="bi bi-link-45deg"></i> Assign VPS Instance
                         </a>
                     @endcan
                 </div>
@@ -48,7 +48,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">
-                        <i class="fas fa-server mr-1"></i>
+                        <i class="bi bi-server mr-1"></i>
                         All VPS Instances
                     </h3>
                 </div>
@@ -100,13 +100,13 @@
                                             <td class="align-middle">
                                                 @if ($inst['assigned'])
                                                     <span class="badge badge-success">
-                                                        <i class="fas fa-check"></i> Assigned
+                                                        <i class="bi bi-check"></i> Assigned
                                                     </span>
                                                     <br>
                                                     <small class="text-muted">{{ $inst['user_name'] }} — {{ $inst['plan_name'] }}</small>
                                                 @else
                                                     <span class="badge badge-secondary">
-                                                        <i class="fas fa-minus"></i> Unassigned
+                                                        <i class="bi bi-dash"></i> Unassigned
                                                     </span>
                                                 @endif
                                             </td>
@@ -118,7 +118,7 @@
                                                                 <form method="POST" action="{{ route('admin.vps.start', $inst['subscription_uuid']) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to start this instance?')">
                                                                     @csrf
                                                                     <button type="submit" class="btn btn-outline-success btn-sm" title="Start">
-                                                                        <i class="fas fa-play"></i>
+                                                                        <i class="bi bi-play"></i>
                                                                     </button>
                                                                 </form>
                                                             @endcan
@@ -128,7 +128,7 @@
                                                                 <form method="POST" action="{{ route('admin.vps.restart', $inst['subscription_uuid']) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to restart this instance?')">
                                                                     @csrf
                                                                     <button type="submit" class="btn btn-outline-warning btn-sm" title="Restart">
-                                                                        <i class="fas fa-redo"></i>
+                                                                        <i class="bi bi-arrow-clockwise"></i>
                                                                     </button>
                                                                 </form>
                                                             @endcan
@@ -136,7 +136,7 @@
                                                                 <form method="POST" action="{{ route('admin.vps.shutdown', $inst['subscription_uuid']) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to shut down this instance?')">
                                                                     @csrf
                                                                     <button type="submit" class="btn btn-outline-danger btn-sm" title="Shutdown">
-                                                                        <i class="fas fa-power-off"></i>
+                                                                        <i class="bi bi-power"></i>
                                                                     </button>
                                                                 </form>
                                                             @endcan
@@ -144,13 +144,13 @@
                                                         <a href="{{ route('admin.vps.show', $inst['subscription_uuid']) }}"
                                                            class="btn btn-outline-info btn-sm"
                                                            title="Details">
-                                                            <i class="fas fa-eye"></i>
+                                                            <i class="bi bi-eye"></i>
                                                         </a>
                                                         @can('vps_assign')
                                                             <a href="{{ route('admin.vps.assign') }}?subscription_id={{ $inst['subscription_id'] }}"
                                                                class="btn btn-outline-secondary btn-sm"
                                                                title="Reassign instance">
-                                                                <i class="fas fa-exchange-alt"></i>
+                                                                <i class="bi bi-arrow-left-right"></i>
                                                             </a>
                                                         @endcan
                                                     @else
@@ -158,13 +158,13 @@
                                                             <a href="{{ route('admin.vps.assign') }}"
                                                                class="btn btn-outline-primary btn-sm"
                                                                title="Assign to subscription">
-                                                                <i class="fas fa-link"></i> Assign
+                                                                <i class="bi bi-link-45deg"></i> Assign
                                                             </a>
                                                         @endcan
                                                         <a href="{{ route('admin.vps.instance.show', $inst['instance_id']) }}"
                                                            class="btn btn-outline-info btn-sm"
                                                            title="View Details">
-                                                            <i class="fas fa-eye"></i>
+                                                            <i class="bi bi-eye"></i>
                                                         </a>
                                                     @endif
                                                 </div>

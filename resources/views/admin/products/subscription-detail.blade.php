@@ -153,12 +153,12 @@
                                                     <td>
                                                         <code>{{ $subscription->provider_resource_id }}</code>
                                                         @php
-                                                            $vpsRoute = auth()->user()->isAdmin()
+                                                            $vpsRoute = auth()->user()->can('vps_access')
                                                                 ? route('admin.vps.show', $subscription)
                                                                 : route('user.vps.show', $subscription);
                                                         @endphp
                                                         <a href="{{ $vpsRoute }}" class="btn btn-sm btn-outline-info ml-2">
-                                                            <i class="fas fa-server mr-1"></i> View Server Details
+                                                            <i class="bi bi-server mr-1"></i> View Server Details
                                                         </a>
                                                     </td>
                                                 </tr>

@@ -203,7 +203,7 @@
                 @endcan
                 <li class="nav-item">
                     <a href="{{ route('billing.index') }}"
-                       class="nav-link {{ request()->is('billing.index') ? 'active' : '' }}">
+                       class="nav-link {{ request()->routeIs('billing.index') ? 'active' : '' }}">
                         <i class="bi bi-credit-card-fill"></i>
                         <p>
                             Billing
@@ -213,7 +213,7 @@
 
                 <li class="nav-item">
                     <a href="{{ route('profile.edit') }}"
-                       class="nav-link {{ request()->is('profile.edit') ? 'active' : '' }}">
+                       class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
                         <i class="bi bi-person"></i>
                         <p>
                             My Profile

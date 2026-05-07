@@ -65,6 +65,7 @@
         @parent
         <script>
             const renewalAddToCartUrlTemplate = @json(route('domains.renew.add-to-cart', ['domain' => '__DOMAIN_UUID__']));
+            const cartIndexUrl = @json(route('cart.index'));
 
             // Add domain renewal to cart
             function addRenewalToCart(element, domainUuid, domainName, domainId) {
@@ -99,7 +100,7 @@
                         // Show success message
                         alert(`${domainName} has been added to your cart for renewal!`);
                         // Redirect to cart
-                        window.location.href = '/shopping-cart';
+                        window.location.href = cartIndexUrl;
                     } else {
                         alert(data.message || 'Failed to add domain to cart');
                         // Re-enable button

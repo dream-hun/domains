@@ -240,7 +240,7 @@ final class DomainController extends Controller
 
     public function ownerShipForm(Domain $domain): View|RedirectResponse
     {
-        abort_if(Gate::denies('domain_renew'), 403);
+        abort_if(Gate::denies('ownership_assignment_access'), 403);
         if ($domain->owner_id !== auth()->id() && ! auth()->user()->isAdmin()) {
             return to_route('dashboard')->with('error', 'You are not authorized to assign owner for this domain.');
         }
