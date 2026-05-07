@@ -6,23 +6,23 @@ namespace App\Enums;
 
 enum ContactProvider: string
 {
-    case NAMECHEAP = 'namecheap';
+    case Namecheap = 'namecheap';
 
-    case RICTA_EPP = 'epp';
+    case RictaEpp = 'epp';
 
     public function label(): string
     {
         return match ($this) {
-            self::NAMECHEAP => 'NameCheap',
-            self::RICTA_EPP => 'RICTA EPP',
+            self::Namecheap => 'NameCheap',
+            self::RictaEpp => 'RICTA EPP',
         };
     }
 
     public function color(): string
     {
         return match ($this) {
-            self::NAMECHEAP => 'bg-info',
-            self::RICTA_EPP => 'bg-warning',
+            self::Namecheap => 'bg-info',
+            self::RictaEpp => 'bg-warning',
         };
     }
 }

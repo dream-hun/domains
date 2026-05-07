@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class ProcessSubscriptionActivationJob implements ShouldQueue
 {
@@ -56,5 +57,19 @@ final class ProcessSubscriptionActivationJob implements ShouldQueue
 
             throw $exception;
         }
+    }
+
+    public function failed(?Throwable $exception): void
+    {
+        Log::error('ProcessSubscriptionActivationJob permanently failed after all retries', [
+            'order_id' => $this->order->id,
+            'order_number' => $this->order->order_number,
+            'error' => $exception?->getMessage() ?? 'Unknown error',
+        ]);
+
+        $this->order->update([
+            'status' => 'failed',
+            'notes' => 'Subscription activation permanently failed after multiple attempts: '.($exception?->getMessage() ?? 'Unknown error'),
+        ]);
     }
 }

@@ -35,7 +35,7 @@ final class PermissionsController extends Controller
 
     public function store(StorePermissionRequest $request): RedirectResponse
     {
-        Permission::query()->create($request->all());
+        Permission::query()->create($request->validated());
         Cache::forget('auth_gates_roles');
 
         return to_route('admin.permissions.index');
@@ -50,7 +50,7 @@ final class PermissionsController extends Controller
 
     public function update(UpdatePermissionRequest $request, Permission $permission): RedirectResponse
     {
-        $permission->update($request->all());
+        $permission->update($request->validated());
         Cache::forget('auth_gates_roles');
 
         return to_route('admin.permissions.index');

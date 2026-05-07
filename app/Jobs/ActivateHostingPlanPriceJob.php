@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class ActivateHostingPlanPriceJob implements ShouldQueue
 {
@@ -80,5 +81,13 @@ final class ActivateHostingPlanPriceJob implements ShouldQueue
 
             throw $exception;
         }
+    }
+
+    public function failed(?Throwable $exception): void
+    {
+        Log::error('ActivateHostingPlanPriceJob: Permanently failed after all retries', [
+            'uuid' => $this->planPriceUuid,
+            'error' => $exception?->getMessage() ?? 'Unknown error',
+        ]);
     }
 }

@@ -169,7 +169,7 @@ final class Order extends Model
 
     public function isPartiallyCompleted(): bool
     {
-        return $this->status === OrderStatus::PARTIAL_COMPLETED->value;
+        return $this->status === OrderStatus::PartialCompleted->value;
     }
 
     public function getRouteKeyName(): string

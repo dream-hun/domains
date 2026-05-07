@@ -20,10 +20,15 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 final class FetchDomainsJob implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    public int $backoff = 60;
 
     public function __construct(
         public NamecheapDomainService $domainService
@@ -143,7 +148,16 @@ final class FetchDomainsJob implements ShouldQueue
             Log::error('Error fetching or saving domains: '.$exception->getMessage(), [
                 'exception' => $exception,
             ]);
+
+            throw $exception;
         }
+    }
+
+    public function failed(?Throwable $exception): void
+    {
+        Log::error('FetchDomainsJob permanently failed after all retries', [
+            'error' => $exception?->getMessage() ?? 'Unknown error',
+        ]);
     }
 
     /**

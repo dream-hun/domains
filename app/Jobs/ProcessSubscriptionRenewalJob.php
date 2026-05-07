@@ -82,7 +82,7 @@ final class ProcessSubscriptionRenewalJob implements ShouldQueue
             } else {
                 $failedSubscriptions = array_column($results['failed'], 'subscription');
                 $this->order->update([
-                    'status' => OrderStatus::PARTIAL_COMPLETED->value,
+                    'status' => OrderStatus::PartialCompleted->value,
                     'notes' => 'Some subscriptions failed to renew: '.implode(', ', $failedSubscriptions),
                 ]);
 

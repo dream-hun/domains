@@ -6,13 +6,13 @@ namespace App\Enums;
 
 enum OrderStatus: string
 {
-    case PAID = 'paid';
-    case PENDING = 'pending';
-    case FAILED = 'failed';
-    case CANCELLED = 'cancelled';
-    case REFUNDED = 'refunded';
-    case COMPLETED = 'completed';
-    case ATTENTION = 'requires_attention';
-    case PARTIAL_COMPLETED = 'partially_completed';
-    case MANUAL = 'manual';
+    case Paid = 'paid';
+    case Pending = 'pending';
+    case Failed = 'failed';
+    case Cancelled = 'cancelled';
+    case Refunded = 'refunded';
+    case Completed = 'completed';
+    case Attention = 'requires_attention';
+    case PartialCompleted = 'partially_completed';
+    case Manual = 'manual';
 }

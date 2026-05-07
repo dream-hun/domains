@@ -128,7 +128,7 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                 ]);
             } else {
                 $this->order->update([
-                    'status' => OrderStatus::PARTIAL_COMPLETED->value,
+                    'status' => OrderStatus::PartialCompleted->value,
                     'notes' => 'Some domains failed to renew: '.implode(', ', $failedDomains),
                 ]);
 

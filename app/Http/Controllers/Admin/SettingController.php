@@ -34,7 +34,7 @@ final class SettingController extends Controller
 
     public function store(StoreSettingRequest $request): RedirectResponse
     {
-        Setting::query()->create($request->all());
+        Setting::query()->create($request->validated());
 
         return to_route('admin.settings.index');
     }
@@ -48,7 +48,7 @@ final class SettingController extends Controller
 
     public function update(UpdateSettingRequest $request, Setting $setting): RedirectResponse
     {
-        $setting->update($request->all());
+        $setting->update($request->validated());
 
         return to_route('admin.settings.index');
     }

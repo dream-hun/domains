@@ -197,7 +197,7 @@ final readonly class DomainRegistrationService
             $order->update(['status' => 'requires_attention']);
             Log::warning('All domains failed to register', ['order_id' => $order->id]);
         } else {
-            $order->update(['status' => OrderStatus::PARTIAL_COMPLETED->value]);
+            $order->update(['status' => OrderStatus::PartialCompleted->value]);
             Log::warning('Some domains failed to register', [
                 'order_id' => $order->id,
                 'successful_count' => count($results['successful']),
