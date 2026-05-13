@@ -24,7 +24,8 @@
 /storage/pail
 /vendor
 /.kiro/
+/.claude
 Homestead.json
 Homestead.yaml
 Thumbs.db
-VPS_Integration_Requirements.md
+
