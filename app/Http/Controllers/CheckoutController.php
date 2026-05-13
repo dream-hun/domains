@@ -88,6 +88,7 @@ final class CheckoutController extends Controller
                     payment: $paymentAttempt
                 );
             }
+
             Log::error('Failed to create checkout session', [
                 'error' => $exception->getMessage(),
                 'user_id' => auth()->id(),

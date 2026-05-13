@@ -101,7 +101,7 @@ final class VpsController extends Controller
                     'ip_address' => $ipAddresses ?: ($apiInstance['ipConfig']['v4']['ip'] ?? 'N/A'),
                     'plan_name' => $subscription->plan?->name ?? 'N/A',
                 ];
-            })->filter()->values()->toArray();
+            })->filter()->values()->all();
         } catch (RuntimeException $runtimeException) {
             Log::error('Failed to load VPS instances', ['error' => $runtimeException->getMessage()]);
             $errorMessage = 'Failed to load VPS instances. Please try again.';

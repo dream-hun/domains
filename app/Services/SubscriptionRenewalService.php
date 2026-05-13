@@ -73,7 +73,7 @@ final readonly class SubscriptionRenewalService
             $orderItemCurrency = $orderItem->currency ?? 'USD';
             // Get the quantity (months) from the order item
             // If not explicitly set, use the billing cycle's month duration
-            $quantityMonths = (int) $orderItem->quantity;
+            $quantityMonths = $orderItem->quantity;
             if ($quantityMonths <= 1) {
                 $quantityMonths = $billingCycle->toMonths();
             }
@@ -164,7 +164,6 @@ final readonly class SubscriptionRenewalService
                 $subscription->extendSubscriptionByMonths(
                     $quantityMonths,
                     $paidAmount,
-                    isComp: false,
                     renewalSnapshot: $renewalSnapshot,
                     paidCurrency: $orderItemCurrency
                 );

@@ -195,6 +195,7 @@ test('update with is_current "0" string does not activate price', function (): v
         ]);
 
     $response->assertRedirect(route('admin.hosting-plan-prices.index'));
+
     $price->refresh();
     expect($price->is_current)->toBeFalse();
 });

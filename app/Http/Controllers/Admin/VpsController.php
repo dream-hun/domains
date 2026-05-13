@@ -205,7 +205,7 @@ final class VpsController extends Controller
                     'is_assigned' => $sub->provider_resource_id !== null,
                     'current_instance_id' => $sub->provider_resource_id,
                 ])
-                ->toArray();
+                ->all();
 
             $allApiInstances = collect($this->contaboService->listAllInstances());
 
@@ -268,7 +268,7 @@ final class VpsController extends Controller
         $result = $action->execute($subscription, (int) $request->validated('instance_id'));
 
         if ($result['success']) {
-            return redirect()->route('admin.vps.index')->with('success', $result['message']);
+            return to_route('admin.vps.index')->with('success', $result['message']);
         }
 
         return back()->with('error', $result['message']);

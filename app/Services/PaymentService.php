@@ -287,7 +287,7 @@ final readonly class PaymentService
 
             // Check for successful status - KPay may return different values
             $successStatuses = ['01', '1', 1, 'SUCCESS', 'SUCCESSFUL', 'OK', 'COMPLETED', 'APPROVED'];
-            if (in_array($statusid, $successStatuses, false) || $statusid === '0' || $statusid === 0) {
+            if (in_array($statusid, $successStatuses) || $statusid === '0' || $statusid === 0) {
                 Log::info('KPay status check: Payment successful', [
                     'payment_id' => $payment->id,
                     'statusid' => $statusid,
@@ -319,7 +319,7 @@ final readonly class PaymentService
 
             // Check for failed status - KPay may return different values
             $failedStatuses = ['02', '2', 2, 'FAILED', 'FAILURE', 'ERROR', 'DECLINED', 'REJECTED'];
-            if (in_array($statusid, $failedStatuses, false)) {
+            if (in_array($statusid, $failedStatuses)) {
                 Log::info('KPay status check: Payment failed', [
                     'payment_id' => $payment->id,
                     'statusid' => $statusid,

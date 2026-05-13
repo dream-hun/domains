@@ -252,6 +252,7 @@ it('admin vps assign renders unassigned lists', function (): void {
 
     // All instances are now returned to allow re-assignment
     expect($unassignedInstances)->toHaveCount(2);
+
     $instanceIds = array_column($unassignedInstances, 'instanceId');
     expect($instanceIds)->toContain(11111);
     expect($instanceIds)->toContain(22222);
