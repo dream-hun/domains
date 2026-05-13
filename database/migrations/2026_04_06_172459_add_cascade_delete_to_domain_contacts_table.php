@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
 
@@ -13,7 +14,7 @@ return new class extends Migration
     public function up(): void
     {
         // Drop existing foreign keys and recreate with cascade delete
-        Schema::table('domain_contacts', function (Illuminate\Database\Schema\Blueprint $table): void {
+        Schema::table('domain_contacts', function (Blueprint $table): void {
             $table->dropForeign(['domain_id']);
             $table->dropForeign(['contact_id']);
             $table->dropForeign(['user_id']);
@@ -29,7 +30,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('domain_contacts', function (Illuminate\Database\Schema\Blueprint $table): void {
+        Schema::table('domain_contacts', function (Blueprint $table): void {
             $table->dropForeign(['domain_id']);
             $table->dropForeign(['contact_id']);
             $table->dropForeign(['user_id']);

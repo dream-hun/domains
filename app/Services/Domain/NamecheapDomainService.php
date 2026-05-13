@@ -816,7 +816,7 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
             $availability = $this->checkAvailability([$domain]);
 
             if (isset($availability[$domain])) {
-                $domainInfo = (array) $availability[$domain];
+                $domainInfo = $availability[$domain];
 
                 // If it's a premium domain, return the premium price
                 if (isset($domainInfo['is_premium']) && $domainInfo['is_premium']) {

@@ -357,7 +357,7 @@ final class DomainController extends Controller
         }
 
         $validTypes = ['registrant', 'admin', 'technical', 'billing'];
-        abort_unless(in_array($type, $validTypes), 404, 'Invalid contact type');
+        abort_unless(in_array($type, $validTypes, true), 404, 'Invalid contact type');
 
         $domain->load(['contacts' => function (mixed $query): void {
             $query->withPivot('type', 'user_id')->withoutGlobalScopes();

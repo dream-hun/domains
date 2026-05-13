@@ -17,6 +17,7 @@ function createRoleAdminUser(): User
                 ?? Permission::query()->create(['title' => $perm])->id
         );
     }
+
     $user = User::factory()->create();
     $user->roles()->attach($role);
 

@@ -98,6 +98,7 @@ final readonly class StripeCheckoutService
 
     /**
      * Ensure user has a Stripe customer ID, create if needed
+     *
      * @throws ApiErrorException
      */
     private function ensureStripeCustomer(User $user): User
@@ -120,8 +121,9 @@ final readonly class StripeCheckoutService
     /**
      * Build line items from cart items
      *
-     * @param Collection<int, object> $cartItems
+     * @param  Collection<int, object>  $cartItems
      * @return array<int, array<string, mixed>>
+     *
      * @throws Throwable
      */
     private function buildLineItemsFromCart(Collection $cartItems, string $currency): array
