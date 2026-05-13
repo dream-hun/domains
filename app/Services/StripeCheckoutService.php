@@ -30,7 +30,7 @@ final readonly class StripeCheckoutService
      * @param  Collection<int, object>  $cartItems
      *
      * @throws ApiErrorException
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     public function createSessionFromCart(Order $order, Collection $cartItems, Payment $payment, ?string $successUrl = null, ?string $cancelUrl = null): Session
     {
@@ -98,6 +98,7 @@ final readonly class StripeCheckoutService
 
     /**
      * Ensure user has a Stripe customer ID, create if needed
+     * @throws ApiErrorException
      */
     private function ensureStripeCustomer(User $user): User
     {
@@ -119,8 +120,9 @@ final readonly class StripeCheckoutService
     /**
      * Build line items from cart items
      *
-     * @param  Collection<int, object>  $cartItems
+     * @param Collection<int, object> $cartItems
      * @return array<int, array<string, mixed>>
+     * @throws Throwable
      */
     private function buildLineItemsFromCart(Collection $cartItems, string $currency): array
     {
@@ -217,7 +219,7 @@ final readonly class StripeCheckoutService
     ): Session {
         $metadata = [
             'order_id' => (string) $order->id,
-            'order_number' => (string) $order->order_number,
+            'order_number' => $order->order_number,
             'user_id' => (string) $user->id,
             'payment_id' => (string) $payment->id,
         ];

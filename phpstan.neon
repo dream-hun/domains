@@ -1,23 +1,19 @@
 includes:
-    - ./vendor/larastan/larastan/extension.neon
-    - phpstan-baseline.neon
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+    - phar://phpstan.phar/conf/bleedingEdge.neon
 
 parameters:
+
     paths:
         - app
+        - bootstrap/app.php
+        - config
         - database
+        - public
         - routes
 
-    level: 6
 
-    # Disable parallel processing to avoid memory issues with worker processes
-    parallel:
-        maximumNumberOfProcesses: 1
+    level: max
 
-    # Optional: tells Larastan to use Laravel's container for better analysis
-    bootstrapFiles:
-        - bootstrap/app.php
-
-    # Optional: exclude certain files or folders
-    excludePaths:
-        - tests
+    tmpDir: /tmp/phpstan

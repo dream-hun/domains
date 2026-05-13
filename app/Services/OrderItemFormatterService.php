@@ -118,50 +118,8 @@ final readonly class OrderItemFormatterService
             $metadata = $item->attributes->get('metadata', []);
             $hostingPlanId = $metadata['hosting_plan_id'] ?? $item->attributes->get('hosting_plan_id');
 
-            if ($hostingPlanId) {
-                $plan = HostingPlan::query()->find($hostingPlanId);
-
-                if ($plan && $plan->name) {
-                    return $plan->name;
-                }
-            }
-
-            $planData = $metadata['plan'] ?? null;
-
-            if ($planData && isset($planData['name']) && $planData['name'] !== 'N/A') {
-                return $planData['name'];
-            }
-
-            if ($itemName && str_contains((string) $itemName, ' - ')) {
-                $parts = explode(' - ', (string) $itemName, 2);
-                if (count($parts) === 2) {
-                    $planPart = $parts[1];
-                    $planPart = preg_replace('/\s*\(Renewal\)\s*$/i', '', $planPart);
-                    $planPart = mb_trim($planPart);
-
-                    if ($planPart && $planPart !== 'N/A') {
-                        return $planPart;
-                    }
-                }
-            }
-
-            if ($itemName && str_contains((string) $itemName, ' Hosting (')) {
-                $planName = str_replace(' Hosting (', '', $itemName);
-                $planName = preg_replace('/\s*\([^)]*\)\s*$/', '', $planName);
-                $planName = mb_trim($planName);
-
-                if ($planName && $planName !== 'N/A') {
-                    return $planName;
-                }
-            }
-
-            if ($itemName && $itemName !== 'N/A') {
-                $cleaned = preg_replace('/^(N\/A|N\/A\s*-\s*|Hosting\s*-\s*)/i', '', (string) $itemName);
-                $cleaned = mb_trim($cleaned);
-
-                if ($cleaned && $cleaned !== 'N/A') {
-                    return $cleaned;
-                }
+            if ($resolved = $this->resolveHostingDisplayName($metadata, $hostingPlanId, (string) $itemName)) {
+                return $resolved;
             }
         }
 
@@ -180,50 +138,8 @@ final readonly class OrderItemFormatterService
             $metadata = $item->metadata ?? [];
             $hostingPlanId = $metadata['hosting_plan_id'] ?? null;
 
-            if ($hostingPlanId) {
-                $plan = HostingPlan::query()->find($hostingPlanId);
-
-                if ($plan && $plan->name) {
-                    return $plan->name;
-                }
-            }
-
-            $planData = $metadata['plan'] ?? null;
-
-            if ($planData && isset($planData['name']) && $planData['name'] !== 'N/A') {
-                return $planData['name'];
-            }
-
-            if ($itemName && str_contains((string) $itemName, ' - ')) {
-                $parts = explode(' - ', (string) $itemName, 2);
-                if (count($parts) === 2) {
-                    $planPart = $parts[1];
-                    $planPart = preg_replace('/\s*\(Renewal\)\s*$/i', '', $planPart);
-                    $planPart = mb_trim($planPart);
-
-                    if ($planPart && $planPart !== 'N/A') {
-                        return $planPart;
-                    }
-                }
-            }
-
-            if ($itemName && str_contains((string) $itemName, ' Hosting (')) {
-                $planName = str_replace(' Hosting (', '', $itemName);
-                $planName = preg_replace('/\s*\([^)]*\)\s*$/', '', $planName);
-                $planName = mb_trim($planName);
-
-                if ($planName && $planName !== 'N/A') {
-                    return $planName;
-                }
-            }
-
-            if ($itemName && $itemName !== 'N/A') {
-                $cleaned = preg_replace('/^(N\/A|N\/A\s*-\s*|Hosting\s*-\s*)/i', '', (string) $itemName);
-                $cleaned = mb_trim($cleaned);
-
-                if ($cleaned && $cleaned !== 'N/A') {
-                    return $cleaned;
-                }
+            if ($resolved = $this->resolveHostingDisplayName($metadata, $hostingPlanId, $itemName)) {
+                return $resolved;
             }
         }
 
@@ -232,6 +148,65 @@ final readonly class OrderItemFormatterService
         }
 
         return 'Item';
+    }
+
+    private function resolveHostingDisplayName(array $metadata, mixed $hostingPlanId, string $itemName): ?string
+    {
+        if ($hostingPlanId) {
+            $plan = HostingPlan::query()->find($hostingPlanId);
+
+            if ($plan && $plan->name) {
+                return $plan->name;
+            }
+        }
+
+        $planData = $metadata['plan'] ?? null;
+
+        if ($planData && isset($planData['name']) && $planData['name'] !== 'N/A') {
+            return $planData['name'];
+        }
+
+        if ($itemName && $extracted = $this->extractPlanNameFromString($itemName)) {
+            return $extracted;
+        }
+
+        return null;
+    }
+
+    private function extractPlanNameFromString(string $itemName): ?string
+    {
+        if (str_contains($itemName, ' - ')) {
+            $parts = explode(' - ', $itemName, 2);
+            if (count($parts) === 2) {
+                $planPart = preg_replace('/\s*\(Renewal\)\s*$/i', '', $parts[1]);
+                $planPart = mb_trim($planPart);
+
+                if ($planPart && $planPart !== 'N/A') {
+                    return $planPart;
+                }
+            }
+        }
+
+        if (str_contains($itemName, ' Hosting (')) {
+            $planName = str_replace(' Hosting (', '', $itemName);
+            $planName = preg_replace('/\s*\([^)]*\)\s*$/', '', $planName);
+            $planName = mb_trim($planName);
+
+            if ($planName && $planName !== 'N/A') {
+                return $planName;
+            }
+        }
+
+        if ($itemName !== 'N/A') {
+            $cleaned = preg_replace('/^(N\/A|N\/A\s*-\s*|Hosting\s*-\s*)/i', '', $itemName);
+            $cleaned = mb_trim($cleaned);
+
+            if ($cleaned && $cleaned !== 'N/A') {
+                return $cleaned;
+            }
+        }
+
+        return null;
     }
 
     private function getOrderItemPeriod(OrderItem $item): string

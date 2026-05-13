@@ -42,29 +42,6 @@ final readonly class PriceFormatter
     }
 
     /**
-     * Get the number of decimal places for a currency.
-     */
-    public function getDecimals(string $currency, ?float $amount = null): int
-    {
-        $currency = $this->normalizeCurrency($currency);
-        $config = $this->getCurrencyConfig($currency);
-
-        return $this->getDecimalPlaces($currency, $amount ?? 0.0, $config);
-    }
-
-    /**
-     * Check if a currency uses decimal places.
-     */
-    public function currencyHasDecimals(string $currency): bool
-    {
-        $currency = $this->normalizeCurrency($currency);
-        $config = $this->getCurrencyConfig($currency);
-
-        // Currencies with configured 0 decimals never use decimals
-        return ($config['decimals'] ?? 2) > 0;
-    }
-
-    /**
      * Normalize currency code (e.g., FRW -> RWF).
      */
     public function normalizeCurrency(string $currency): string
