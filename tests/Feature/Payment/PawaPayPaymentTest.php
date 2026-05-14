@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 
@@ -16,6 +17,15 @@ beforeEach(function (): void {
         'services.payment.pawapay.token' => 'test-token',
         'services.payment.pawapay.base_url' => 'https://api.sandbox.pawapay.io',
     ]);
+});
+
+test('PaymentService resolves without error when PawaPay is not configured', function (): void {
+    config([
+        'services.payment.pawapay.token' => null,
+        'services.payment.pawapay.base_url' => null,
+    ]);
+
+    expect(fn () => app(PaymentService::class))->not->toThrow(TypeError::class);
 });
 
 test('user without cart is redirected to checkout from PawaPay payment page', function (): void {
@@ -163,6 +173,33 @@ test('PawaPay payment validation requires msisdn', function (): void {
         'billing_name' => 'Test User',
         'billing_email' => 'test@example.com',
     ])->assertStatus(422)->assertJsonValidationErrors('msisdn');
+});
+
+test('PawaPay payment is rejected when order currency is not RWF', function (): void {
+    $user = User::factory()->create();
+    $order = Order::factory()->pending()->create([
+        'user_id' => $user->id,
+        'payment_method' => 'pawapay',
+        'currency' => 'USD',
+        'total_amount' => 10,
+    ]);
+
+    Http::fake([
+        '*predict-provider*' => Http::response([['provider' => 'MTN']], 200),
+    ]);
+
+    session(['pawapay_order_number' => $order->order_number]);
+
+    $response = $this->actingAs($user)->postJson(route('payment.pawapay'), [
+        'msisdn' => '250788000000',
+        'billing_name' => $user->name,
+        'billing_email' => $user->email,
+    ]);
+
+    $response->assertStatus(400);
+    $response->assertJsonFragment(['error' => 'PawaPay only supports RWF orders. Please select a different payment method.']);
+
+    Http::assertNothingSent();
 });
 
 test('PawaPay payment validation requires billing_name', function (): void {

@@ -53,25 +53,12 @@ final readonly class PaymentService
 
             $amount = (float) $order->total_amount;
             $currency = mb_strtoupper($order->currency);
-            $pawaPayCurrency = 'RWF';
 
-            if ($currency !== $pawaPayCurrency) {
-                try {
-                    $amount = CurrencyHelper::convert($amount);
-                    $currency = $pawaPayCurrency;
-                } catch (Exception $e) {
-                    Log::error('Currency conversion to RWF failed for PawaPay payment', [
-                        'order_id' => $order->id,
-                        'original_currency' => $currency,
-                        'original_amount' => $order->total_amount,
-                        'error' => $e->getMessage(),
-                    ]);
-
-                    return [
-                        'success' => false,
-                        'error' => 'Unable to convert currency to RWF for PawaPay payment. Please try again or contact support.',
-                    ];
-                }
+            if ($currency !== 'RWF') {
+                return [
+                    'success' => false,
+                    'error' => 'PawaPay only supports RWF orders. Please select a different payment method.',
+                ];
             }
 
             // Resolve MMO provider via PawaPay predict-provider API

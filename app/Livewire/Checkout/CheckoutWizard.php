@@ -650,7 +650,8 @@ final class CheckoutWizard extends Component
         }
 
         if (config('services.payment.pawapay.token') &&
-            config('services.payment.pawapay.base_url')) {
+            config('services.payment.pawapay.base_url') &&
+            $this->userCurrencyCode === 'RWF') {
             $this->paymentMethods[] = [
                 'id' => 'pawapay',
                 'name' => 'Mobile Money (PawaPay)',

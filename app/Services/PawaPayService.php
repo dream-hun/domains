@@ -17,8 +17,8 @@ final readonly class PawaPayService
 
     public function __construct()
     {
-        $this->baseUrl = config('services.payment.pawapay.base_url');
-        $this->token = config('services.payment.pawapay.token');
+        $this->baseUrl = config('services.payment.pawapay.base_url') ?? '';
+        $this->token = config('services.payment.pawapay.token') ?? '';
     }
 
     // -------------------------------------------------------
