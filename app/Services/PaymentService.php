@@ -17,50 +17,50 @@ final readonly class PaymentService
     public function __construct(
         private TransactionLogger $transactionLogger,
         private StripeCheckoutService $stripeCheckoutService,
-        private KPayService $kPayService,
+        private PawaPayService $pawaPayService,
     ) {}
 
     public function processPayment(Order $order, string $paymentMethod, array $paymentData = []): array
     {
         return match ($paymentMethod) {
             'stripe' => $this->processStripePayment($order),
-            'kpay' => $this->processKPayPayment($order, $paymentData),
+            'pawapay' => $this->processPawaPayPayment($order, $paymentData),
             default => ['success' => false, 'error' => 'Invalid payment method'],
         };
     }
 
-    public function processKPayPayment(Order $order, array $paymentData = []): array
+    public function processPawaPayPayment(Order $order, array $paymentData = []): array
     {
         $paymentAttempt = null;
 
         try {
-            if (! $this->isKPayConfigured()) {
+            if (! $this->isPawaPayConfigured()) {
                 return [
                     'success' => false,
-                    'error' => 'KPay payment is not configured. Please contact support.',
+                    'error' => 'PawaPay payment is not configured. Please contact support.',
                 ];
             }
 
             $msisdn = mb_trim((string) ($paymentData['msisdn'] ?? ''));
-            if ($msisdn === '' || $msisdn === '0') {
+            if ($msisdn === '') {
                 return [
                     'success' => false,
-                    'error' => 'Phone number (MSISDN) is required for KPay payment.',
+                    'error' => 'Phone number (MSISDN) is required for PawaPay payment.',
                 ];
             }
 
-            $paymentAttempt = $this->createPaymentAttempt($order, 'kpay');
+            $paymentAttempt = $this->createPaymentAttempt($order, 'pawapay');
 
             $amount = (float) $order->total_amount;
             $currency = mb_strtoupper($order->currency);
-            $kpayCurrency = 'RWF';
+            $pawaPayCurrency = 'RWF';
 
-            if ($currency !== $kpayCurrency) {
+            if ($currency !== $pawaPayCurrency) {
                 try {
                     $amount = CurrencyHelper::convert($amount);
-                    $currency = $kpayCurrency;
+                    $currency = $pawaPayCurrency;
                 } catch (Exception $e) {
-                    Log::error('Currency conversion to RWF failed for KPay payment', [
+                    Log::error('Currency conversion to RWF failed for PawaPay payment', [
                         'order_id' => $order->id,
                         'original_currency' => $currency,
                         'original_amount' => $order->total_amount,
@@ -69,120 +69,87 @@ final readonly class PaymentService
 
                     return [
                         'success' => false,
-                        'error' => 'Unable to convert currency to RWF for KPay payment. Please try again or contact support.',
+                        'error' => 'Unable to convert currency to RWF for PawaPay payment. Please try again or contact support.',
                     ];
                 }
             }
 
-            // Generate reference ID (order number + payment attempt number)
-            $refId = $order->order_number.'-'.$paymentAttempt->attempt_number;
+            // Resolve MMO provider via PawaPay predict-provider API
+            try {
+                $predictResult = $this->pawaPayService->predictProvider($msisdn);
+                $provider = $predictResult['provider'] ?? ($predictResult[0]['provider'] ?? null);
 
-            $kpayPaymentData = [
-                'msisdn' => mb_trim($msisdn),
-                'email' => mb_trim((string) ($order->billing_email ?? $order->user->email ?? '')),
-                'details' => 'Order '.$order->order_number,
-                'refid' => mb_trim($refId),
-                'amount' => (int) round($amount),
-                'currency' => mb_strtoupper(mb_trim($currency)),
-                'cname' => mb_trim((string) ($order->billing_name ?? $order->user->name ?? '')),
-                'cnumber' => mb_trim($msisdn),
-                'pmethod' => mb_trim((string) ($paymentData['pmethod'] ?? 'momo')),
-                'card_number' => $paymentData['card_number'] ?? null,
-                'expiry_date' => $paymentData['expiry_date'] ?? null,
-                'cvv' => $paymentData['cvv'] ?? null,
-                'returl' => route('payment.kpay.webhook'),
-                'redirecturl' => route('payment.kpay.success', $order),
-            ];
+                if (! $provider) {
+                    $this->markPaymentFailed($paymentAttempt, 'Could not determine mobile money provider for this number');
 
-            // Validate all required fields are present
-            $requiredFields = ['msisdn', 'email', 'details', 'refid', 'amount', 'cname', 'pmethod'];
-            $missingFields = [];
-            foreach ($requiredFields as $field) {
-                $value = $kpayPaymentData[$field] ?? null;
-                if ($value === '') {
-                    $missingFields[] = $field;
+                    return [
+                        'success' => false,
+                        'error' => 'Could not determine mobile money provider. Please check your phone number.',
+                    ];
                 }
+            } catch (Exception $e) {
+                Log::error('PawaPay predictProvider failed', [
+                    'msisdn' => $msisdn,
+                    'error' => $e->getMessage(),
+                ]);
+
+                $this->markPaymentFailed($paymentAttempt, 'Provider lookup failed: '.$e->getMessage());
+
+                return [
+                    'success' => false,
+                    'error' => 'Unable to verify phone number provider. Please try again.',
+                ];
             }
 
-            if ($missingFields !== []) {
-                throw new Exception('Missing required KPay fields: '.implode(', ', $missingFields));
-            }
+            $depositId = Str::uuid()->toString();
 
-            // Call KPay service to initiate payment
-            $kpayResponse = $this->kPayService->initiatePayment($kpayPaymentData);
+            $depositResponse = $this->pawaPayService->initiateDeposit(
+                $depositId,
+                (string) (int) round($amount),
+                $currency,
+                $msisdn,
+                $provider
+            );
 
-            if (! $kpayResponse['success']) {
-                $this->markPaymentFailed($paymentAttempt, $kpayResponse['error'] ?? 'Payment initiation failed');
+            $depositStatus = $depositResponse['status'] ?? null;
+
+            if ($depositStatus !== 'ACCEPTED') {
+                $errorMsg = $depositResponse['rejectionReason']['rejectionMessage']
+                    ?? $depositResponse['errorCode']
+                    ?? 'Deposit initiation failed';
+
+                $this->markPaymentFailed($paymentAttempt, $errorMsg);
 
                 $this->transactionLogger->logFailure(
                     order: $order,
-                    method: 'kpay',
-                    error: 'Failed to initiate KPay payment',
-                    details: $kpayResponse['error'] ?? 'Unknown error',
+                    method: 'pawapay',
+                    error: 'Failed to initiate PawaPay deposit',
+                    details: $errorMsg,
                     payment: $paymentAttempt
                 );
 
                 return [
                     'success' => false,
-                    'error' => $kpayResponse['error'] ?? 'Failed to initialize payment. Please try again.',
+                    'error' => $errorMsg,
                 ];
             }
 
-            // Extract transaction details from response
-            $responseData = $kpayResponse['data'] ?? [];
-            $transactionId = $responseData['tid'] ?? $responseData['transaction_id'] ?? null;
-
-            // Update payment attempt with KPay transaction details
             $paymentAttempt->update([
-                'kpay_transaction_id' => $transactionId,
-                'kpay_ref_id' => $refId,
+                'pawapay_deposit_id' => $depositId,
                 'metadata' => array_merge($paymentAttempt->metadata ?? [], [
-                    'kpay_response' => $responseData,
-                    'kpay_currency' => $currency,
-                    'kpay_amount' => $amount,
+                    'pawapay_response' => $depositResponse,
+                    'pawapay_currency' => $currency,
+                    'pawapay_amount' => $amount,
+                    'pawapay_provider' => $provider,
+                    'pawapay_msisdn' => $msisdn,
                 ]),
             ]);
 
-            // Check if payment was auto-processed (immediate success)
-            $autoProcessed = $kpayResponse['auto_processed'] ?? false;
-            if ($autoProcessed) {
-                $paymentAttempt->update([
-                    'status' => 'succeeded',
-                    'paid_at' => now(),
-                ]);
-
-                return [
-                    'success' => true,
-                    'payment_id' => $paymentAttempt->id,
-                    'transaction_id' => $transactionId,
-                    'ref_id' => $refId,
-                ];
-            }
-
-            // Check if KPay returns a redirect/checkout URL
-            // API returns 'url' field for checkout page
-            $redirectUrl = $responseData['url'] ?? $responseData['redirecturl'] ?? $responseData['redirect_url'] ?? null;
-            $redirectUrl = in_array(mb_trim((string) $redirectUrl), ['', '0'], true) ? null : mb_trim((string) $redirectUrl);
-
-            if ($redirectUrl) {
-                return [
-                    'success' => true,
-                    'requires_action' => true,
-                    'redirect_url' => $redirectUrl,
-                    'payment_id' => $paymentAttempt->id,
-                    'transaction_id' => $transactionId,
-                    'ref_id' => $refId,
-                ];
-            }
-
-            // Payment is pending - return status check endpoint
             return [
                 'success' => true,
                 'requires_action' => true,
                 'payment_id' => $paymentAttempt->id,
-                'transaction_id' => $transactionId,
-                'ref_id' => $refId,
-                'status_check_url' => route('payment.kpay.status', $paymentAttempt),
+                'deposit_id' => $depositId,
             ];
 
         } catch (Exception $exception) {
@@ -190,8 +157,8 @@ final readonly class PaymentService
 
             $this->transactionLogger->logFailure(
                 order: $order,
-                method: 'kpay',
-                error: 'Failed to process KPay payment',
+                method: 'pawapay',
+                error: 'Failed to process PawaPay payment',
                 details: $exception->getMessage(),
                 payment: $paymentAttempt
             );
@@ -203,109 +170,38 @@ final readonly class PaymentService
         }
     }
 
-    /**
-     * Check KPay payment status
-     */
-    public function checkKPayPaymentStatus(Payment $payment): array
+    public function checkPawaPayDepositStatus(Payment $payment): array
     {
-        if (empty($payment->kpay_transaction_id) || empty($payment->kpay_ref_id)) {
-            Log::warning('KPay status check: Missing transaction details', [
+        if (empty($payment->pawapay_deposit_id)) {
+            Log::warning('PawaPay status check: Missing deposit ID', [
                 'payment_id' => $payment->id,
-                'kpay_transaction_id' => $payment->kpay_transaction_id,
-                'kpay_ref_id' => $payment->kpay_ref_id,
             ]);
 
             return [
                 'success' => false,
-                'error' => 'Payment transaction details not found.',
+                'error' => 'Payment deposit ID not found.',
             ];
         }
 
         try {
-            $statusResponse = $this->kPayService->checkPaymentStatus(
-                $payment->kpay_transaction_id,
-                $payment->kpay_ref_id
-            );
+            $response = $this->pawaPayService->checkDepositStatus($payment->pawapay_deposit_id);
+            $depositData = is_array($response) && isset($response[0]) ? $response[0] : $response;
+            $status = $depositData['status'] ?? null;
 
-            Log::info('KPay status check raw response', [
+            Log::info('PawaPay deposit status check', [
                 'payment_id' => $payment->id,
-                'tid' => $payment->kpay_transaction_id,
-                'refid' => $payment->kpay_ref_id,
-                'response' => $statusResponse,
+                'deposit_id' => $payment->pawapay_deposit_id,
+                'status' => $status,
             ]);
 
-            if (! $statusResponse['success']) {
-                return [
-                    'success' => false,
-                    'error' => $statusResponse['error'] ?? 'Failed to check payment status.',
-                ];
-            }
-
-            $statusData = $statusResponse['data'] ?? [];
-            $actualStatusData = $statusData['response'] ?? $statusData;
-
-            // Try multiple possible status field names
-            $statusid = $actualStatusData['statusid']
-                ?? $statusData['statusid']
-                ?? $actualStatusData['reply']
-                ?? $statusData['reply']
-                ?? $actualStatusData['status']
-                ?? $statusData['status']
-                ?? null;
-
-            $statusdesc = $actualStatusData['statusdesc']
-                ?? $statusData['statusdesc']
-                ?? $actualStatusData['message']
-                ?? $statusData['message']
-                ?? '';
-
-            Log::info('KPay status check parsed data', [
-                'payment_id' => $payment->id,
-                'statusData' => $statusData,
-                'actualStatusData' => $actualStatusData,
-                'statusid' => $statusid,
-                'statusdesc' => $statusdesc,
-            ]);
-
-            // Keep pending instead of failing when transaction not found
-            if (($statusResponse['transaction_not_found'] ?? false) === true) {
-                Log::info('KPay transaction not found during status check', [
-                    'payment_id' => $payment->id,
-                    'tid' => $payment->kpay_transaction_id,
-                    'refid' => $payment->kpay_ref_id,
-                    'statusdesc' => $statusdesc,
-                ]);
-
-                return [
-                    'success' => false,
-                    'status' => 'pending',
-                    'statusid' => $statusid,
-                    'error' => 'Transaction not found. Payment may still be processing.',
-                    'transaction_not_found' => true,
-                ];
-            }
-
-            // Check for successful status - KPay may return different values
-            $successStatuses = ['01', '1', 1, 'SUCCESS', 'SUCCESSFUL', 'OK', 'COMPLETED', 'APPROVED'];
-            if (in_array($statusid, $successStatuses) || $statusid === '0' || $statusid === 0) {
-                Log::info('KPay status check: Payment successful', [
-                    'payment_id' => $payment->id,
-                    'statusid' => $statusid,
-                    'current_status' => $payment->status,
-                ]);
-
+            if ($status === 'COMPLETED') {
                 if (! $payment->isSuccessful()) {
                     $payment->update([
                         'status' => 'succeeded',
                         'paid_at' => now(),
                         'metadata' => array_merge($payment->metadata ?? [], [
-                            'kpay_status_response' => $actualStatusData,
-                            'kpay_momtransactionid' => $actualStatusData['momtransactionid'] ?? $statusData['momtransactionid'] ?? null,
+                            'pawapay_status_response' => $depositData,
                         ]),
-                    ]);
-
-                    Log::info('KPay status check: Payment status updated to succeeded', [
-                        'payment_id' => $payment->id,
                     ]);
                 }
 
@@ -313,45 +209,29 @@ final readonly class PaymentService
                     'success' => true,
                     'status' => 'succeeded',
                     'payment_id' => $payment->id,
-                    'statusid' => $statusid,
                 ];
             }
 
-            // Check for failed status - KPay may return different values
-            $failedStatuses = ['02', '2', 2, 'FAILED', 'FAILURE', 'ERROR', 'DECLINED', 'REJECTED'];
-            if (in_array($statusid, $failedStatuses)) {
-                Log::info('KPay status check: Payment failed', [
-                    'payment_id' => $payment->id,
-                    'statusid' => $statusid,
-                    'statusdesc' => $statusdesc,
-                ]);
-
+            if (in_array($status, ['FAILED', 'TIMED_OUT'], true)) {
                 if ($payment->isPending()) {
-                    $this->markPaymentFailed($payment, $statusdesc ?: 'Payment failed');
+                    $this->markPaymentFailed($payment, 'Deposit '.$status);
                 }
 
                 return [
                     'success' => false,
                     'status' => 'failed',
-                    'statusid' => $statusid,
-                    'error' => $statusdesc ?: 'Payment failed',
+                    'error' => 'Payment '.mb_strtolower($status),
                 ];
             }
-
-            Log::info('KPay status check: Payment still pending', [
-                'payment_id' => $payment->id,
-                'statusid' => $statusid,
-            ]);
 
             return [
                 'success' => true,
                 'status' => 'pending',
-                'statusid' => $statusid,
                 'payment_id' => $payment->id,
             ];
 
         } catch (Exception $exception) {
-            Log::error('KPay status check error', [
+            Log::error('PawaPay deposit status check error', [
                 'payment_id' => $payment->id,
                 'error' => $exception->getMessage(),
             ]);
@@ -422,23 +302,19 @@ final readonly class PaymentService
 
     /**
      * Validate and potentially convert currency to meet Stripe's minimum amount requirement
-     * Stripe requires minimum 50 cents USD equivalent
      */
     private function validateStripeMinimumAmount(Order $order): array
     {
         $amount = (float) $order->total_amount;
         $currency = mb_strtoupper($order->currency);
 
-        // Stripe's minimum is 50 cents USD
         $minUsdAmount = 0.50;
 
         try {
-            // Convert order amount to USD to check against Stripe's minimum
             $amountInUsd = $currency === 'USD'
                 ? $amount
                 : CurrencyHelper::convert($amount);
 
-            // If amount meets the minimum, use original currency
             if ($amountInUsd >= $minUsdAmount) {
                 return [
                     'valid' => true,
@@ -447,7 +323,6 @@ final readonly class PaymentService
                 ];
             }
 
-            // Amount is below minimum - automatically convert to USD
             return [
                 'valid' => true,
                 'currency' => 'USD',
@@ -470,20 +345,12 @@ final readonly class PaymentService
         }
     }
 
-    /**
-     * Validate KPay configuration
-     */
-    private function isKPayConfigured(): bool
+    private function isPawaPayConfigured(): bool
     {
-        return ! empty(config('services.payment.kpay.base_url'))
-            && ! empty(config('services.payment.kpay.username'))
-            && ! empty(config('services.payment.kpay.password'))
-            && ! empty(config('services.payment.kpay.retailer_id'));
+        return ! empty(config('services.payment.pawapay.token'))
+            && ! empty(config('services.payment.pawapay.base_url'));
     }
 
-    /**
-     * Validate Stripe configuration
-     */
     private function isStripeConfigured(): bool
     {
         return ! empty(config('services.payment.stripe.publishable_key'))
@@ -507,7 +374,6 @@ final readonly class PaymentService
             'last_attempted_at' => now(),
         ];
 
-        // Only set stripe_payment_intent_id for Stripe payments
         if ($method === 'stripe') {
             $paymentData['stripe_payment_intent_id'] = Payment::generatePendingIntentId($order, $nextAttemptNumber);
         }

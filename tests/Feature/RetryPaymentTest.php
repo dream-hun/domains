@@ -11,10 +11,8 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     config([
-        'services.payment.kpay.base_url' => 'https://pay.example.com',
-        'services.payment.kpay.username' => 'test',
-        'services.payment.kpay.password' => 'test',
-        'services.payment.kpay.retailer_id' => 'test',
+        'services.payment.pawapay.token' => 'test-token',
+        'services.payment.pawapay.base_url' => 'https://api.sandbox.pawapay.io',
     ]);
 });
 
@@ -69,21 +67,21 @@ test('user cannot access retry payment page for paid order', function (): void {
     $response->assertRedirect(route('billing.show', $order));
 });
 
-test('retry payment with kpay sets session and redirects', function (): void {
+test('retry payment with pawapay sets session and redirects', function (): void {
     $user = User::factory()->create();
     $order = Order::factory()->failed()->create(['user_id' => $user->id]);
 
     $response = $this->actingAs($user)->post(route('billing.retry-payment.process', $order), [
-        'payment_method' => 'kpay',
+        'payment_method' => 'pawapay',
     ]);
 
-    $response->assertRedirect(route('payment.kpay.show'));
+    $response->assertRedirect(route('payment.pawapay.show'));
 
-    expect(session('kpay_order_number'))->toBe($order->order_number);
+    expect(session('pawapay_order_number'))->toBe($order->order_number);
 
     $order->refresh();
     expect($order->payment_status)->toBe('pending');
-    expect($order->payment_method)->toBe('kpay');
+    expect($order->payment_method)->toBe('pawapay');
 });
 
 test('retry payment with stripe updates order and attempts payment', function (): void {

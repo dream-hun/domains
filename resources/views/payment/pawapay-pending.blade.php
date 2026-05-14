@@ -1,6 +1,5 @@
 <x-admin-layout>
 
-
     <div class="container my-5">
         <div class="row justify-content-center">
             <div class="col-lg-6">
@@ -16,9 +15,10 @@
                                 </div>
                             </div>
                         </div>
-                        <h3 class="mb-3 font-weight-bold">Awaiting Payment</h3>
+                        <h3 class="mb-3 font-weight-bold">Awaiting PawaPay Payment</h3>
                         <p class="text-muted mb-4">
-                            We are waiting for confirmation of your KPay payment. Please complete the authorization on your mobile device.
+                            We are waiting for confirmation of your PawaPay mobile money payment.
+                            Please approve the prompt on your mobile device.
                         </p>
 
                         <div class="alert alert-light border mb-4 text-left">
@@ -36,14 +36,19 @@
                             </div>
                         </div>
 
+                        <div class="alert alert-secondary text-left mb-4">
+                            <i class="bi bi-info-circle mr-2"></i>
+                            Didn't receive a prompt? You can also approve via USSD: dial <strong>*182*7*1#</strong>
+                        </div>
+
                         <div class="mt-4 d-grid gap-2">
-                            <a href="{{ route('payment.kpay.status', $payment) }}"
+                            <a href="{{ route('payment.pawapay.status', $payment) }}"
                                class="btn btn-primary btn-lg w-100 mb-3"
                                id="check-status-btn">
                                 <i class="bi bi-arrow-clockwise mr-2"></i>
                                 Check Status Now
                             </a>
-                            <a href="{{ route('payment.kpay.show') }}" class="btn btn-link text-muted">
+                            <a href="{{ route('payment.pawapay.show') }}" class="btn btn-link text-muted">
                                 <i class="bi bi-arrow-left mr-2"></i>
                                 Back to Payment Method
                             </a>
@@ -69,7 +74,6 @@
             const checkStatusBtn = document.getElementById('check-status-btn');
             const statusUrl = checkStatusBtn.href;
 
-            // Auto-check status every 5 seconds
             let checkInterval = setInterval(function() {
                 fetch(statusUrl, {
                     method: 'GET',
@@ -82,10 +86,10 @@
                 .then(data => {
                     if (data.success && data.status === 'succeeded') {
                         clearInterval(checkInterval);
-                        window.location.href = '{{ route('payment.kpay.success', $order) }}';
+                        window.location.href = '{{ route('payment.success', $order) }}';
                     } else if (data.status === 'failed') {
                         clearInterval(checkInterval);
-                        window.location.href = '{{ route('payment.kpay.show') }}';
+                        window.location.href = '{{ route('payment.pawapay.show') }}';
                     }
                 })
                 .catch(error => {
@@ -93,7 +97,6 @@
                 });
             }, 5000);
 
-            // Stop checking after 2 minutes
             setTimeout(function() {
                 clearInterval(checkInterval);
             }, 120000);

@@ -440,12 +440,12 @@ final class CheckoutWizard extends Component
             }
 
             $createOrderAction = resolve(CreateOrderFromCartAction::class);
-            if ($this->selectedPaymentMethod === 'kpay') {
+            if ($this->selectedPaymentMethod === 'pawapay') {
                 $order = $createOrderAction->handle(
                     auth()->user(),
                     $convertedCartItems,
                     $orderCurrency,
-                    'kpay',
+                    'pawapay',
                     $contactIds,
                     null,
                     $this->appliedCoupon instanceof Coupon ? [
@@ -455,11 +455,11 @@ final class CheckoutWizard extends Component
                     $this->discountAmount
                 );
 
-                session(['kpay_order_number' => $order->order_number]);
+                session(['pawapay_order_number' => $order->order_number]);
 
                 $this->clearCheckoutState();
 
-                return to_route('payment.kpay.show');
+                return to_route('payment.pawapay.show');
             }
 
             $order = $createOrderAction->handle(
@@ -649,14 +649,12 @@ final class CheckoutWizard extends Component
             ];
         }
 
-        if (config('services.payment.kpay.base_url') &&
-            config('services.payment.kpay.username') &&
-            config('services.payment.kpay.password') &&
-            config('services.payment.kpay.retailer_id')) {
+        if (config('services.payment.pawapay.token') &&
+            config('services.payment.pawapay.base_url')) {
             $this->paymentMethods[] = [
-                'id' => 'kpay',
-                'name' => 'KPay (Mobile Money & Card)',
-                'icon' => 'credit-card',
+                'id' => 'pawapay',
+                'name' => 'Mobile Money (PawaPay)',
+                'icon' => 'phone',
             ];
         }
 

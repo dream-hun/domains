@@ -97,18 +97,18 @@
                             $payment = $order->payments->sortByDesc(function ($p) {
                                 return ($p->attempt_number ?? 0) * 1000000 + ($p->id ?? 0);
                             })->first();
-                            $kpayTransactionId = null;
-                            if ($payment && $order->payment_method === 'kpay') {
-                                $kpayTransactionId = $payment->kpay_transaction_id;
+                            $pawaPayDepositId = null;
+                            if ($payment && $order->payment_method === 'pawapay') {
+                                $pawaPayDepositId = $payment->pawapay_deposit_id;
                             }
                         @endphp
-                        @if ($kpayTransactionId)
+                        @if ($pawaPayDepositId)
                             <div class="row mb-3">
                                 <div class="col-sm-4">
-                                    <strong>KPay Transaction ID:</strong>
+                                    <strong>PawaPay Deposit ID:</strong>
                                 </div>
                                 <div class="col-sm-8">
-                                    <code>{{ $kpayTransactionId }}</code>
+                                    <code>{{ $pawaPayDepositId }}</code>
                                 </div>
                             </div>
                         @endif

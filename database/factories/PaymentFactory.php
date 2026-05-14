@@ -29,12 +29,11 @@ final class PaymentFactory extends Factory
             'stripe_session_id' => fake()->optional()->uuid(),
             'stripe_payment_intent_id' => fake()->optional()->uuid(),
             'stripe_charge_id' => fake()->optional()->uuid(),
-            'kpay_transaction_id' => fake()->optional()->uuid(),
-            'kpay_ref_id' => fake()->optional()->uuid(),
+            'pawapay_deposit_id' => fake()->optional()->uuid(),
             'amount' => fake()->numberBetween(1000, 100000),
             'currency' => fake()->randomElement(['USD', 'RWF']),
             'status' => 'pending',
-            'payment_method' => fake()->randomElement(['stripe', 'kpay']),
+            'payment_method' => fake()->randomElement(['stripe', 'pawapay']),
             'metadata' => null,
             'paid_at' => null,
             'attempt_number' => 1,
@@ -66,6 +65,14 @@ final class PaymentFactory extends Factory
                 'message' => 'Your card was declined.',
             ],
             'last_attempted_at' => now(),
+        ]);
+    }
+
+    public function pawapay(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'payment_method' => 'pawapay',
+            'pawapay_deposit_id' => fake()->uuid(),
         ]);
     }
 }

@@ -35,7 +35,7 @@ final readonly class ProcessOrderAfterPaymentAction
         } finally {
             if ($clearCart) {
                 Cart::clear();
-                session()->forget(['cart', 'checkout', 'kpay_order_number']);
+                session()->forget(['cart', 'checkout', 'pawapay_order_number']);
             }
         }
     }
