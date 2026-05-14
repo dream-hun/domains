@@ -82,12 +82,12 @@ return [
             'publishable_key' => env('STRIPE_KEY'),
             'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         ],
-        'kpay' => [
-            'base_url' => env('KPAY_BASE_URL'),
-            'username' => env('KPAY_USERNAME'),
-            'password' => env('KPAY_PASSWORD'),
-            'retailer_id' => env('KPAY_RETAILER_ID'),
+        'pawapay' => [
+            'token' => env('PAWAPAY_API_TOKEN'),
+            'base_url' => env('PAWAPAY_BASE_URL', 'https://api.sandbox.pawapay.io'),
+            'webhook_secret' => env('PAWAPAY_WEBHOOK_SECRET'),
         ],
+
     ],
 
     /*

@@ -52,10 +52,10 @@ final class RetryPaymentController extends Controller
             'payment_method' => $paymentMethod,
         ]);
 
-        if ($paymentMethod === 'kpay') {
-            session(['kpay_order_number' => $order->order_number]);
+        if ($paymentMethod === 'pawapay') {
+            session(['pawapay_order_number' => $order->order_number]);
 
-            return to_route('payment.kpay.show');
+            return to_route('payment.pawapay.show');
         }
 
         try {
@@ -105,13 +105,11 @@ final class RetryPaymentController extends Controller
             ];
         }
 
-        if (config('services.payment.kpay.base_url')
-            && config('services.payment.kpay.username')
-            && config('services.payment.kpay.password')
-            && config('services.payment.kpay.retailer_id')) {
+        if (config('services.payment.pawapay.token')
+            && config('services.payment.pawapay.base_url')) {
             $methods[] = [
-                'id' => 'kpay',
-                'name' => 'Mobile Money & Card (KPay)',
+                'id' => 'pawapay',
+                'name' => 'Mobile Money (PawaPay)',
             ];
         }
 

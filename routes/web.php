@@ -33,9 +33,9 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryShowController;
 use App\Http\Controllers\CheckoutController as RenewalCheckoutController;
 use App\Http\Controllers\DomainRenewalController;
-use App\Http\Controllers\KpayPaymentController;
-use App\Http\Controllers\KPayWebhookController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\PawaPayPaymentController;
+use App\Http\Controllers\PawaPayWebhookController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterDomainController;
@@ -212,16 +212,15 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/payment/cancel/{order}', [PaymentController::class, 'handlePaymentCancel'])->name('payment.cancel');
     Route::get('/payment/failed/{order}', [PaymentController::class, 'showPaymentFailed'])->name('payment.failed');
 
-    // KPay Payment Routes
-    Route::get('/payment/kpay', [KpayPaymentController::class, 'show'])->name('payment.kpay.show');
-    Route::post('/payment/kpay', [KpayPaymentController::class, 'process'])->name('payment.kpay');
-    Route::get('/payment/kpay/success/{order}', [KpayPaymentController::class, 'success'])->name('payment.kpay.success');
-    Route::get('/payment/kpay/cancel/{order}', [KpayPaymentController::class, 'cancel'])->name('payment.kpay.cancel');
-    Route::get('/payment/kpay/status/{payment}', [KpayPaymentController::class, 'status'])->name('payment.kpay.status');
+    // PawaPay Payment Routes
+    Route::get('/payment/pawapay', [PawaPayPaymentController::class, 'show'])->name('payment.pawapay.show');
+    Route::post('/payment/pawapay', [PawaPayPaymentController::class, 'process'])->name('payment.pawapay');
+    Route::get('/payment/pawapay/cancel/{order}', [PawaPayPaymentController::class, 'cancel'])->name('payment.pawapay.cancel');
+    Route::get('/payment/pawapay/status/{payment}', [PawaPayPaymentController::class, 'status'])->name('payment.pawapay.status');
 });
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
 
-Route::post('/payment/kpay/webhook', [KPayWebhookController::class, 'handlePostback'])->name('payment.kpay.webhook');
+Route::post('/webhooks/pawapay', [PawaPayWebhookController::class, 'handle'])->name('webhooks.pawapay');
 
 require __DIR__.'/auth.php';

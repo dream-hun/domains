@@ -60,16 +60,10 @@
                                                         })->first();
                                                         $paymentRef = null;
                                                         if ($payment) {
-                                                            if ($order->payment_method === 'kpay' && $payment->kpay_transaction_id) {
-                                                                $paymentRef = $payment->kpay_transaction_id;
+                                                            if ($order->payment_method === 'pawapay' && $payment->pawapay_deposit_id) {
+                                                                $paymentRef = $payment->pawapay_deposit_id;
                                                             } elseif ($order->payment_method === 'stripe' && $payment->stripe_payment_intent_id) {
                                                                 $paymentRef = $payment->stripe_payment_intent_id;
-                                                            }
-                                                        }
-                                                        // Fallback to order-level payment references
-                                                        if (!$paymentRef) {
-                                                            if ($order->payment_method === 'kpay' && $order->stripe_payment_intent_id) {
-                                                                $paymentRef = $order->stripe_payment_intent_id;
                                                             }
                                                         }
                                                     @endphp

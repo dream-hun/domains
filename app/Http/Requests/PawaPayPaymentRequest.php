@@ -7,74 +7,60 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
-final class KPayPaymentRequest extends FormRequest
+final class PawaPayPaymentRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array|string>
+     * @return array<string, ValidationRule|array<int, string>|string>
      */
     public function rules(): array
     {
         return [
-            'msisdn' => ['required', 'string', 'max:20', 'min:10'],
-            'pmethod' => ['required', 'string', 'in:momo,cc'],
+            'msisdn' => ['required', 'string', 'regex:/^\d{10,15}$/', 'max:20'],
             'billing_name' => ['required', 'string', 'max:255'],
             'billing_email' => ['required', 'email', 'max:255'],
             'billing_address' => ['nullable', 'string', 'max:255'],
             'billing_city' => ['nullable', 'string', 'max:255'],
             'billing_country' => ['nullable', 'string', 'max:255'],
             'billing_postal_code' => ['nullable', 'string', 'max:20'],
-            'card_number' => [Rule::requiredIf(fn (): bool => $this->input('pmethod') === 'cc'), 'string', 'max:19'],
-            'expiry_date' => [Rule::requiredIf(fn (): bool => $this->input('pmethod') === 'cc'), 'string', 'max:7'],
-            'cvv' => [Rule::requiredIf(fn (): bool => $this->input('pmethod') === 'cc'), 'string', 'max:4', 'min:3'],
         ];
     }
 
     /**
-     * Get custom error messages for validation rules.
+     * @return array<string, string>
      */
     public function messages(): array
     {
         return [
             'msisdn.required' => 'Phone number is required.',
-            'msisdn.string' => 'Phone number must be a valid string.',
-            'msisdn.min' => 'Phone number must be at least 10 characters.',
-            'pmethod.required' => 'Payment method type is required.',
-            'pmethod.in' => 'The selected payment method is not supported. Please choose Mobile Money or Card Payment.',
+            'msisdn.regex' => 'Phone number must be 10–15 digits (e.g. 250788123456).',
             'billing_name.required' => 'Billing name is required.',
             'billing_email.required' => 'Billing email is required.',
             'billing_email.email' => 'Please provide a valid email address.',
         ];
     }
 
-    /**
-     * Prepare the data for validation.
-     */
     protected function prepareForValidation(): void
     {
-        // Trim MSISDN to remove whitespace
         if ($this->has('msisdn')) {
-            $this->merge([
-                'msisdn' => mb_trim((string) $this->input('msisdn')),
-            ]);
+            $msisdn = preg_replace('/\D/', '', (string) $this->input('msisdn')) ?? '';
+
+            if (str_starts_with($msisdn, '0')) {
+                $msisdn = '250'.mb_substr($msisdn, 1);
+            } elseif (! str_starts_with($msisdn, '250')) {
+                $msisdn = '250'.$msisdn;
+            }
+
+            $this->merge(['msisdn' => $msisdn]);
         }
     }
 
-    /**
-     * Get the error messages for the defined validation rules.
-     */
     protected function failedValidation(Validator $validator): void
     {
         if ($this->expectsJson()) {

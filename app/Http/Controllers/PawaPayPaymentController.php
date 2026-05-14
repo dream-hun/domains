@@ -7,7 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\Order\CreateOrderFromCartAction;
 use App\Actions\Order\ProcessOrderAfterPaymentAction;
 use App\Helpers\CurrencyHelper;
-use App\Http\Requests\KPayPaymentRequest;
+use App\Http\Requests\PawaPayPaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\CartPriceConverter;
@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Throwable;
 
-final class KpayPaymentController extends Controller
+final class PawaPayPaymentController extends Controller
 {
     public function __construct(
         private readonly PaymentService $paymentService,
@@ -30,26 +30,24 @@ final class KpayPaymentController extends Controller
     ) {}
 
     /**
-     * Show the KPay payment form
-     *
      * @throws Throwable
      */
     public function show(): View|RedirectResponse
     {
-        $orderNumber = session('kpay_order_number');
+        $orderNumber = session('pawapay_order_number');
         $order = null;
 
         if ($orderNumber) {
             $order = Order::query()
                 ->where('order_number', $orderNumber)
                 ->where('user_id', Auth::id())
-                ->where('payment_method', 'kpay')
+                ->where('payment_method', 'pawapay')
                 ->where('payment_status', 'pending')
                 ->first();
         }
 
         if (! $order && Cart::isEmpty()) {
-            session()->forget('kpay_order_number');
+            session()->forget('pawapay_order_number');
 
             return to_route('checkout.index')->with('error', 'No order found. Please start the checkout process again.');
         }
@@ -78,7 +76,7 @@ final class KpayPaymentController extends Controller
             $subtotal = $totalAmount;
         }
 
-        return view('payment.kpay', [
+        return view('payment.pawapay', [
             'order' => $order,
             'user' => $user,
             'cartItems' => $cartItems,
@@ -89,23 +87,21 @@ final class KpayPaymentController extends Controller
     }
 
     /**
-     * Process the KPay payment
-     *
      * @throws Throwable
      */
-    public function process(KPayPaymentRequest $request): RedirectResponse|JsonResponse
+    public function process(PawaPayPaymentRequest $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validated();
         $user = Auth::user();
 
-        $orderNumber = session('kpay_order_number');
+        $orderNumber = session('pawapay_order_number');
         $order = null;
 
         if ($orderNumber) {
             $order = Order::query()
                 ->where('order_number', $orderNumber)
                 ->where('user_id', $user->id)
-                ->where('payment_method', 'kpay')
+                ->where('payment_method', 'pawapay')
                 ->where('payment_status', 'pending')
                 ->first();
         }
@@ -123,7 +119,6 @@ final class KpayPaymentController extends Controller
 
             try {
                 $currency = CurrencyHelper::getUserCurrency();
-
                 $checkoutState = session('checkout_state', []);
                 $contactIds = [
                     'registrant' => $checkoutState['selected_registrant_id'] ?? null,
@@ -131,7 +126,6 @@ final class KpayPaymentController extends Controller
                     'tech' => $checkoutState['selected_tech_id'] ?? null,
                     'billing' => $checkoutState['selected_billing_id'] ?? null,
                 ];
-
                 $billingData = [
                     'billing_name' => $validated['billing_name'],
                     'billing_email' => $validated['billing_email'],
@@ -147,13 +141,12 @@ final class KpayPaymentController extends Controller
                     $user,
                     $cartItems,
                     $currency,
-                    'kpay',
+                    'pawapay',
                     $contactIds,
                     $billingData
                 );
-
             } catch (Exception $exception) {
-                Log::error('Failed to create order for KPay payment', [
+                Log::error('Failed to create order for PawaPay payment', [
                     'user_id' => $user->id,
                     'error' => $exception->getMessage(),
                 ]);
@@ -165,7 +158,6 @@ final class KpayPaymentController extends Controller
                 return back()->with('error', 'Failed to create order. Please try again.');
             }
         } else {
-
             $order->update([
                 'billing_name' => $validated['billing_name'],
                 'billing_email' => $validated['billing_email'],
@@ -179,163 +171,75 @@ final class KpayPaymentController extends Controller
         }
 
         try {
-            $paymentResult = $this->paymentService->processKPayPayment($order, [
+            $paymentResult = $this->paymentService->processPawaPayPayment($order, [
                 'msisdn' => $validated['msisdn'],
-                'pmethod' => $validated['pmethod'] ?? 'momo',
             ]);
 
             if (! $paymentResult['success']) {
-                Log::warning('KPay payment initiation failed', [
+                Log::warning('PawaPay payment initiation failed', [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'error' => $paymentResult['error'] ?? 'Unknown error',
                 ]);
 
                 if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json(['error' => $paymentResult['error'] ?? 'Payment initiation failed. Please try again.'], 400);
+                    return response()->json(['error' => $paymentResult['error'] ?? 'Payment initiation failed.'], 400);
                 }
 
                 return back()->with('error', $paymentResult['error'] ?? 'Payment initiation failed. Please try again.');
             }
 
-            session()->forget('kpay_order_number');
-
+            session()->forget('pawapay_order_number');
             Cart::clear();
+
+            $payment = Payment::query()->find($paymentResult['payment_id']);
 
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'redirect_url' => $paymentResult['redirect_url'] ?? null,
-                    'requires_action' => $paymentResult['requires_action'] ?? false,
+                    'requires_action' => true,
                     'payment_id' => $paymentResult['payment_id'] ?? null,
-                    'check_status_url' => isset($paymentResult['payment_id']) ? route('payment.kpay.status', $paymentResult['payment_id']) : null,
-                    'success_url' => route('payment.kpay.success', $order),
+                    'check_status_url' => $payment ? route('payment.pawapay.status', $payment) : null,
+                    'success_url' => route('payment.success', $order),
                     'order_number' => $order->order_number,
                     'amount' => $order->total_amount,
                     'currency' => $order->currency,
                 ]);
             }
 
-            if (isset($paymentResult['redirect_url'])) {
-                return redirect()->away($paymentResult['redirect_url']);
+            if ($payment) {
+                return to_route('payment.pawapay.status', $payment)
+                    ->with('info', 'Please complete the payment on your mobile device.');
             }
 
-            if (isset($paymentResult['requires_action']) && $paymentResult['requires_action']) {
-                $payment = Payment::query()->find($paymentResult['payment_id']);
-
-                if ($payment) {
-                    return to_route('payment.kpay.status', $payment)
-                        ->with('info', 'Please complete the payment on your mobile device.');
-                }
-            }
-
-            return to_route('payment.kpay.success', $order)
-                ->with('success', 'Payment completed successfully!');
+            return to_route('payment.success', $order)->with('success', 'Payment completed successfully!');
 
         } catch (Exception $exception) {
-            Log::error('KPay payment processing error', [
+            Log::error('PawaPay payment processing error', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'error' => $exception->getMessage(),
             ]);
 
             if ($request->expectsJson() || $request->ajax()) {
-                return response()->json(['error' => 'An error occurred while processing your payment. Please try again.'], 500);
+                return response()->json(['error' => 'An error occurred while processing your payment.'], 500);
             }
 
             return back()->with('error', 'An error occurred while processing your payment. Please try again.');
         }
     }
 
-    /**
-     * Handle a successful payment callback /redirect
-     */
-    public function success(Order $order): RedirectResponse
-    {
-
-        if ($order->user_id !== Auth::id()) {
-            return to_route('dashboard')->with('error', 'Order not found.');
-        }
-
-        $latestPayment = $order->latestPaymentAttempt();
-
-        Log::info('KPay success callback received', [
-            'order_id' => $order->id,
-            'order_number' => $order->order_number,
-            'order_payment_status' => $order->payment_status,
-            'payment_id' => $latestPayment?->id,
-            'payment_status' => $latestPayment?->status,
-        ]);
-
-        if ($latestPayment && $latestPayment->isSuccessful()) {
-            $this->processSuccessfulPayment($order->fresh(), $latestPayment->fresh());
-
-            return to_route('payment.success', $order)
-                ->with('success', 'Payment completed successfully!');
-        }
-
-        if ($latestPayment && $latestPayment->isPending()) {
-
-            $statusResult = $this->paymentService->checkKPayPaymentStatus($latestPayment);
-
-            Log::info('KPay status check result in success handler', [
-                'order_id' => $order->id,
-                'payment_id' => $latestPayment->id,
-                'status_result' => $statusResult,
-            ]);
-
-            $latestPayment->refresh();
-            $order->refresh();
-
-            if ($statusResult['success'] && $statusResult['status'] === 'succeeded') {
-
-                $this->processSuccessfulPayment($order, $latestPayment);
-
-                return to_route('payment.success', $order)
-                    ->with('success', 'Payment completed successfully!');
-            }
-
-            if (isset($statusResult['status']) && $statusResult['status'] === 'pending') {
-
-                return to_route('payment.kpay.status', $latestPayment)
-                    ->with('info', 'Payment is still being processed. Please wait.');
-            }
-
-            if (isset($statusResult['status']) && $statusResult['status'] === 'failed') {
-                session(['kpay_order_number' => $order->order_number]);
-
-                return to_route('payment.kpay.show')
-                    ->with('error', $statusResult['error'] ?? 'Payment failed.');
-            }
-        }
-
-        if ($order->isPaid()) {
-            return to_route('payment.success', $order)
-                ->with('success', 'Payment completed successfully!');
-        }
-
-        session(['kpay_order_number' => $order->order_number]);
-
-        return to_route('payment.kpay.show');
-    }
-
-    /**
-     * Handle cancelled payment
-     */
     public function cancel(Order $order): RedirectResponse
     {
-        // Verify the order belongs to the current user
         if ($order->user_id !== Auth::id()) {
             return to_route('dashboard')->with('error', 'Order not found.');
         }
 
-        // Update order status
         $order->update([
             'payment_status' => 'cancelled',
             'status' => 'cancelled',
         ]);
 
-        // Mark any pending payment as canceled
         $pendingPayment = $order->payments()
             ->where('status', 'pending')
             ->orderByDesc('attempt_number')
@@ -349,22 +253,18 @@ final class KpayPaymentController extends Controller
             'last_attempted_at' => now(),
         ]);
 
-        Log::info('KPay payment cancelled by user', [
+        Log::info('PawaPay payment cancelled by user', [
             'order_id' => $order->id,
             'order_number' => $order->order_number,
         ]);
 
-        session(['kpay_order_number' => $order->order_number]);
+        session(['pawapay_order_number' => $order->order_number]);
 
-        return to_route('payment.kpay.show')->with('error', 'Payment was cancelled.');
+        return to_route('payment.pawapay.show')->with('error', 'Payment was cancelled.');
     }
 
-    /**
-     * Show payment status / pending page
-     */
     public function status(Payment $payment): View|RedirectResponse|JsonResponse
     {
-        // Verify the payment belongs to the current user
         if ($payment->user_id !== Auth::id()) {
             if (request()->expectsJson()) {
                 return response()->json(['error' => 'Payment not found.'], 404);
@@ -383,7 +283,6 @@ final class KpayPaymentController extends Controller
             return to_route('dashboard')->with('error', 'Order not found.');
         }
 
-        // Check the current status
         if ($payment->isSuccessful()) {
             $this->processSuccessfulPayment($order->fresh(), $payment->fresh());
 
@@ -391,12 +290,11 @@ final class KpayPaymentController extends Controller
                 return response()->json([
                     'success' => true,
                     'status' => 'succeeded',
-                    'redirect_url' => route('payment.kpay.success', $order),
+                    'redirect_url' => route('payment.success', $order),
                 ]);
             }
 
-            return to_route('payment.kpay.success', $order)
-                ->with('success', 'Payment completed successfully!');
+            return to_route('payment.success', $order)->with('success', 'Payment completed successfully!');
         }
 
         if ($payment->isFailed()) {
@@ -408,16 +306,13 @@ final class KpayPaymentController extends Controller
                 ]);
             }
 
-            session(['kpay_order_number' => $order->order_number]);
+            session(['pawapay_order_number' => $order->order_number]);
 
-            return to_route('payment.kpay.show')
-                ->with('error', 'Payment failed. Please try again.');
+            return to_route('payment.pawapay.show')->with('error', 'Payment failed. Please try again.');
         }
 
-        // Check with KPay for updated status - this may update the payment internally
-        $statusResult = $this->paymentService->checkKPayPaymentStatus($payment);
+        $statusResult = $this->paymentService->checkPawaPayDepositStatus($payment);
 
-        // Refresh payment and order to get updated values after a status check
         $payment->refresh();
         $order->refresh();
 
@@ -429,12 +324,11 @@ final class KpayPaymentController extends Controller
                     return response()->json([
                         'success' => true,
                         'status' => 'succeeded',
-                        'redirect_url' => route('payment.kpay.success', $order),
+                        'redirect_url' => route('payment.success', $order),
                     ]);
                 }
 
-                return to_route('payment.kpay.success', $order)
-                    ->with('success', 'Payment completed successfully!');
+                return to_route('payment.success', $order)->with('success', 'Payment completed successfully!');
             }
 
             if ($statusResult['status'] === 'failed') {
@@ -446,10 +340,9 @@ final class KpayPaymentController extends Controller
                     ]);
                 }
 
-                session(['kpay_order_number' => $order->order_number]);
+                session(['pawapay_order_number' => $order->order_number]);
 
-                return to_route('payment.kpay.show')
-                    ->with('error', $statusResult['error'] ?? 'Payment failed.');
+                return to_route('payment.pawapay.show')->with('error', $statusResult['error'] ?? 'Payment failed.');
             }
         }
 
@@ -461,16 +354,13 @@ final class KpayPaymentController extends Controller
             ]);
         }
 
-        // Still pending - show the pending page
-        return view('payment.kpay-pending', [
+        return view('payment.pawapay-pending', [
             'payment' => $payment->fresh(),
             'order' => $order->fresh(),
         ]);
     }
 
     /**
-     * Prepare cart items from order for display
-     *
      * @return array<int, array<string, mixed>>
      */
     private function prepareCartItemsForDisplay(Order $order): array
@@ -488,7 +378,6 @@ final class KpayPaymentController extends Controller
             ];
         }
 
-        // Fallback to order items JSON if no orderItems relationship
         if ($items === [] && ! empty($order->items)) {
             foreach ($order->items as $item) {
                 $items[] = [
@@ -508,7 +397,6 @@ final class KpayPaymentController extends Controller
     private function processSuccessfulPayment(Order $order, Payment $payment): void
     {
         try {
-            // Update payment and order status
             if (! $payment->isSuccessful()) {
                 $payment->update([
                     'status' => 'succeeded',
@@ -522,7 +410,6 @@ final class KpayPaymentController extends Controller
                     'status' => 'processing',
                 ]);
 
-                // Clear the cart only after successful payment confirmation
                 Cart::clear();
 
                 $contactIds = $this->getContactIdsFromOrder($order);
@@ -531,14 +418,13 @@ final class KpayPaymentController extends Controller
                 $processOrderAction->handle($order, $contactIds);
             }
 
-            Log::info('KPay payment processed successfully', [
+            Log::info('PawaPay payment processed successfully', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'payment_id' => $payment->id,
             ]);
-
         } catch (Exception $exception) {
-            Log::error('Error processing successful KPay payment', [
+            Log::error('Error processing successful PawaPay payment', [
                 'order_id' => $order->id,
                 'payment_id' => $payment->id,
                 'error' => $exception->getMessage(),
@@ -547,25 +433,20 @@ final class KpayPaymentController extends Controller
     }
 
     /**
-     * Extract contact IDs from order metadata
-     *
      * @return array<string, int|null>
      */
     private function getContactIdsFromOrder(Order $order): array
     {
         $metadata = $order->metadata;
 
-        // Ensure metadata is an array
         if (! is_array($metadata)) {
             return [];
         }
 
-        // Check if we have contact_ids in metadata
         if (isset($metadata['contact_ids'])) {
             return $metadata['contact_ids'];
         }
 
-        // Check for selected_contact_id (use the same contact for all roles)
         if (isset($metadata['selected_contact_id'])) {
             $contactId = $metadata['selected_contact_id'];
 

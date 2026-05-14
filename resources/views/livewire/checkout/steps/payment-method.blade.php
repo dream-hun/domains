@@ -38,13 +38,11 @@
                                              alt="Credit card"
                                              class="img-fluid"
                                              style="max-height: 5rem;">
-
-                                    @else($method['id'] === 'kpay')
+                                    @elseif($method['id'] === 'pawapay')
                                         <img src="{{ asset('Momo.png') }}"
-                                             alt="Momo Airtel"
+                                             alt="Mobile Money"
                                              class="img-fluid"
                                              style="max-height: 5rem;">
-
                                     @endif
                                 </div>
                             </div>

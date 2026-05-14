@@ -24,7 +24,7 @@
                     <div class="card shadow-sm">
                         <div class="card-header bg-white border-bottom">
                             <h3 class="card-title mb-0">
-                                <i class="bi bi-credit-card mr-2"></i>Payment Information
+                                <i class="bi bi-phone mr-2"></i>Mobile Money Payment
                             </h3>
                         </div>
                         <div class="card-body">
@@ -48,50 +48,9 @@
                                 </div>
                             @endif
 
-                            <form method="POST" action="{{ route('payment.kpay') }}" id="payment-form"
+                            <form method="POST" action="{{ route('payment.pawapay') }}" id="payment-form"
                                   autocomplete="off">
                                 @csrf
-                                <input type="hidden" name="pmethod" id="pmethod" value="{{ old('pmethod', 'momo') }}">
-
-                                <!-- Payment Method Selection -->
-                                <div class="mb-4">
-                                    <label class="form-label">
-                                        Payment Method <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <div class="payment-method-card" data-method="momo">
-                                                <input type="radio" name="pmethod_radio" id="method_momo" value="momo"
-                                                       class="payment-method-radio" {{ old('pmethod', 'momo') === 'momo' ? 'checked' : '' }}>
-                                                <label for="method_momo" class="payment-method-label">
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="{{ asset('MomoAirtel.png') }}" alt="Mobile Money"
-                                                             class="payment-icon mr-2" style="height: 40px;">
-                                                        <div>
-                                                            <div class="font-weight-bold">Mobile Money</div>
-                                                            <small class="text-muted">MTN/Airtel</small>
-                                                        </div>
-                                                    </div>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="payment-method-card" data-method="cc">
-                                                <input type="radio" name="pmethod_radio" id="method_cc" value="cc"
-                                                       class="payment-method-radio" {{ old('pmethod') === 'cc' ? 'checked' : '' }}>
-                                                <label for="method_cc" class="payment-method-label">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-credit-card mr-2" style="font-size: 2rem;"></i>
-                                                        <div>
-                                                            <div class="font-weight-bold">Card Payment</div>
-                                                            <small class="text-muted">Visa/Mastercard/Amex</small>
-                                                        </div>
-                                                    </div>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <!-- Billing Information Section -->
                                 <div class="mb-4">
@@ -129,7 +88,7 @@
                                             <input type="text"
                                                    name="billing_address"
                                                    id="billing_address"
-                                                   value="{{ old('billing_address',$user->address->address_line_one ?? '') }}"
+                                                   value="{{ old('billing_address', $user->address->address_line_one ?? '') }}"
                                                    class="form-control @error('billing_address') is-invalid @enderror">
                                             @error('billing_address')
                                             <div class="text-danger small mt-1">{{ $message }}</div>
@@ -157,7 +116,6 @@
                                             <div class="text-danger small mt-1">{{ $message }}</div>
                                             @enderror
                                         </div>
-
                                         <div class="col-md-4 mt-4">
                                             <label for="billing_postal_code" class="form-label">Postal Code</label>
                                             <input type="text"
@@ -172,11 +130,11 @@
                                     </div>
                                 </div>
 
-                                <!-- Phone Number (Required for all KPay payment methods) -->
+                                <!-- Phone Number -->
                                 <div class="mb-4">
                                     <div class="mb-3">
                                         <label for="msisdn" class="form-label">
-                                            Phone Number <span class="text-danger">*</span>
+                                            Mobile Money Number <span class="text-danger">*</span>
                                         </label>
                                         <div class="input-group">
                                             <div class="input-group-prepend">
@@ -195,16 +153,17 @@
                                             <div class="text-danger small mt-1">{{ $message }}</div>
                                             @enderror
                                         </div>
-                                        <small class="form-text text-muted" id="msisdn-help">
-                                            Enter your phone number (required for payment)
+                                        <small class="form-text text-muted">
+                                            Enter your MTN or Airtel Mobile Money number (e.g. 250788123456)
                                         </small>
                                     </div>
                                 </div>
+
                                 <!-- Security Notice -->
                                 <div class="alert alert-info mt-4 mb-4">
                                     <i class="bi bi-shield-check mr-2"></i>
-                                    <strong>Secure Payment:</strong> Your payment information is encrypted and secure.
-                                    We do not store your payment credentials.
+                                    <strong>Secure Payment:</strong> Your payment is processed securely via PawaPay.
+                                    You will receive a prompt on your mobile to confirm the payment.
                                 </div>
 
                                 <!-- Submit Button -->
@@ -212,9 +171,9 @@
                                     <button type="submit"
                                             id="submit-btn"
                                             class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center">
-                                        <i class="bi bi-lock mr-2"></i>
+                                        <i class="bi bi-phone mr-2"></i>
                                         <span id="submit-text">
-                                            Pay @price($totalAmount, $currency ?? 'USD')
+                                            Pay @price($totalAmount, $currency ?? 'RWF') with Mobile Money
                                         </span>
                                         <span id="submit-spinner" class="spinner-border spinner-border-sm ml-2 d-none"
                                               role="status">
@@ -227,6 +186,7 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Order Summary -->
                 <div class="col-lg-5">
                     <div class="card shadow-sm sticky-top" style="top: 20px;">
@@ -245,7 +205,7 @@
                                         $years = $item['years'] ?? ($domainType === 'hosting' || $domainType === 'subscription_renewal' ? (int)($quantity / 12) : $quantity);
                                         $itemPrice = $item['price'] ?? 0;
                                         $itemTotal = $itemPrice * $quantity;
-                                        $itemCurrency = $item['currency'] ?? $currency ?? 'USD';
+                                        $itemCurrency = $item['currency'] ?? $currency ?? 'RWF';
                                         $displayCurrency = mb_strtoupper((string) $itemCurrency) === 'FRW' ? 'RWF' : $itemCurrency;
                                     @endphp
                                     <div class="d-flex justify-content-between align-items-start py-3 border-bottom">
@@ -276,7 +236,7 @@
 
                             @if(!empty($cartItems))
                                 @php
-                                    $displayCurrency = $currency ?? 'USD';
+                                    $displayCurrency = $currency ?? 'RWF';
                                     $displayCurrency = mb_strtoupper((string) $displayCurrency) === 'FRW' ? 'RWF' : $displayCurrency;
                                 @endphp
                                 <div class="border-top pt-3 mt-3">
@@ -298,6 +258,7 @@
                     </div>
                 </div>
             </div>
+
             <!-- Payment Processing Modal -->
             <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel"
                  aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -330,95 +291,29 @@
         </section>
     </div>
 
-    @push('styles')
-        <style>
-            .payment-method-card {
-                position: relative;
-                cursor: pointer;
-            }
-
-            .payment-method-radio {
-                position: absolute;
-                opacity: 0;
-            }
-
-            .payment-method-label {
-                display: block;
-                padding: 1rem;
-                border: 2px solid #dee2e6;
-                border-radius: 0.5rem;
-                cursor: pointer;
-                transition: all 0.3s;
-                margin-bottom: 0;
-            }
-
-            .payment-method-radio:checked + .payment-method-label {
-                border-color: #007bff;
-                background-color: #f0f8ff;
-            }
-
-            .payment-method-label:hover {
-                border-color: #007bff;
-            }
-        </style>
-    @endpush
-
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('payment-form');
-            const pmethodInput = document.getElementById('pmethod');
             const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
             const submitBtn = document.getElementById('submit-btn');
 
-
-
-            // Update hidden field when payment method changes
-            document.querySelectorAll('.payment-method-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const method = this.value;
-                    pmethodInput.value = method;
-
-                    const msisdnHelp = document.getElementById('msisdn-help');
-
-                    if (method === 'cc') {
-                        msisdnHelp.textContent = 'Enter your phone number for transaction notifications (required).';
-                    } else {
-                        msisdnHelp.textContent = 'Enter your phone number (required for payment).';
-                    }
-                });
-            });
-
-            // Trigger change on a load to set the initial state
-            const checkedRadio = document.querySelector('.payment-method-radio:checked');
-            if (checkedRadio) {
-                checkedRadio.dispatchEvent(new Event('change'));
-            }
-
-            // Handle form submission
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-
-
-                // Disable submit button
                 submitBtn.disabled = true;
                 document.getElementById('submit-spinner').classList.remove('d-none');
 
-                // Update modal for initiation
                 document.getElementById('modal-content-processing').classList.remove('d-none');
                 document.getElementById('modal-content-error').classList.add('d-none');
                 document.getElementById('modal-footer-actions').style.setProperty('display', 'none', 'important');
                 document.getElementById('modal-message').textContent = 'Initializing payment...';
                 document.getElementById('modal-submessage').textContent = 'Please wait while we set up your transaction.';
 
-                // Show modal
                 paymentModal.show();
 
-                // Prepare for data
                 const formData = new FormData(form);
 
-                // Send AJAX request
                 fetch(form.action, {
                     method: 'POST',
                     headers: {
@@ -430,11 +325,9 @@
                     body: new URLSearchParams(formData)
                 })
                 .then(async response => {
-                    // Check if we got a redirect (non-JSON response)
                     const contentType = response.headers.get('content-type');
 
                     if (!contentType || !contentType.includes('application/json')) {
-                        // Server returned a redirect or HTML, follow it
                         if (response.redirected) {
                             window.location.href = response.url;
                             return null;
@@ -442,14 +335,11 @@
                         throw new Error('Unexpected response format');
                     }
 
-                    // Parse JSON response
                     const data = await response.json();
 
-                    // Handle error responses (including validation errors)
                     if (!response.ok) {
                         let errorMessage = data.error || data.message || 'Payment failed';
 
-                        // Handle validation errors
                         if (data.errors) {
                             const errorMessages = Object.values(data.errors).flat();
                             errorMessage = errorMessages.join(' ');
@@ -461,29 +351,15 @@
                     return data;
                 })
                 .then(data => {
-                    if (!data) return; // Handle redirect case
+                    if (!data) return;
 
                     if (data.success) {
-                        // Update modal message
-                        document.getElementById('modal-message').textContent = 'Payment initiated successfully';
+                        document.getElementById('modal-message').textContent = 'Payment Pending';
+                        document.getElementById('modal-submessage').innerHTML = 'You will receive a prompt on your mobile.<br>Please approve to complete payment.';
 
-                        const pmethod = pmethodInput.value;
-
-                        if (pmethod === 'cc' && data.redirect_url) {
-                            // For card payment, redirect to check out page
-                            document.getElementById('modal-submessage').textContent = 'Redirecting to secure payment page...';
-                            setTimeout(() => {
-                                window.location.href = data.redirect_url;
-                            }, 1500);
-                        } else if (data.check_status_url) {
-                            // For mobile money, show a prompt message and check status
-                            document.getElementById('modal-message').textContent = 'Payment Pending';
-                            document.getElementById('modal-submessage').innerHTML = 'You will get a prompt on your mobile<br>or dial *182*7*1#';
-
-                            // Start checking payment status
+                        if (data.check_status_url) {
                             checkPaymentStatus(data.check_status_url, data.success_url);
                         } else if (data.success_url) {
-                            // Auto-processed or immediate success
                             window.location.href = data.success_url;
                         } else {
                             showError('Payment response incomplete. Please check your order status.');
@@ -500,7 +376,7 @@
 
             function checkPaymentStatus(statusUrl, successUrl) {
                 let checkCount = 0;
-                const maxChecks = 60; // Check for 5 minutes (60 * 5 seconds)
+                const maxChecks = 60;
 
                 const statusInterval = setInterval(() => {
                     checkCount++;
@@ -528,9 +404,8 @@
                             showError(data.error || 'Payment failed. Please try again.');
                         } else if (checkCount >= maxChecks) {
                             clearInterval(statusInterval);
-                            showError('Payment is taking longer than expected. Please check your order status.');
+                            window.location.href = statusUrl;
                         }
-                        // If pending, continue checking
                     })
                     .catch(error => {
                         console.error('Status check error:', error);
@@ -539,29 +414,21 @@
                             showError('Unable to verify payment status. Please check your order.');
                         }
                     });
-                }, 5000); // Check every 5 seconds
+                }, 5000);
             }
 
             function showError(message) {
-                // Hide processing content
                 document.getElementById('modal-content-processing').classList.add('d-none');
-
-                // Show error content
                 document.getElementById('modal-content-error').classList.remove('d-none');
                 document.getElementById('error-message').textContent = message;
-
-                // Show the close button
                 document.getElementById('modal-footer-actions').style.setProperty('display', 'flex', 'important');
 
-                // Re-enable submit button
                 submitBtn.disabled = false;
                 document.getElementById('submit-spinner').classList.add('d-none');
 
-                // Hide modal after 5 seconds
                 setTimeout(() => {
                     paymentModal.hide();
 
-                    // Reset modal for next attempt
                     setTimeout(() => {
                         document.getElementById('modal-content-processing').classList.remove('d-none');
                         document.getElementById('modal-content-error').classList.add('d-none');

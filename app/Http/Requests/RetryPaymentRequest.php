@@ -25,7 +25,7 @@ final class RetryPaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method' => ['required', 'string', 'in:stripe,kpay'],
+            'payment_method' => ['required', 'string', 'in:stripe,pawapay'],
         ];
     }
 
