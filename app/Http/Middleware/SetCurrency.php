@@ -29,17 +29,20 @@ final readonly class SetCurrency
             return $next($request);
         }
 
-        $userPreference = $this->getCurrencyFromUserPreference($request);
+        // Authenticated users: stored address preference takes priority over session
+        if ($request->user()) {
+            $userPreference = $this->getCurrencyFromUserPreference($request);
 
-        if ($userPreference !== null) {
-            $this->setCurrencyIfValid($userPreference);
+            if ($userPreference !== null) {
+                $this->setCurrencyIfValid($userPreference);
 
-            return $next($request);
+                return $next($request);
+            }
         }
 
         $sessionCurrency = session('selected_currency');
 
-        // Keep any valid session currency the user has selected
+        // Keep any valid session currency the user has already selected
         if (is_string($sessionCurrency) && Currency::getActiveCurrencies()->contains('code', $sessionCurrency)) {
             return $next($request);
         }

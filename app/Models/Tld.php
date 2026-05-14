@@ -39,7 +39,7 @@ final class Tld extends Model
 
     protected $table = 'tld';
 
-    protected $with = ['tldPricings'];
+    protected $with = ['currentTldPricings'];
 
     protected $guarded = [];
 
@@ -102,7 +102,18 @@ final class Tld extends Model
 
     public function getBaseCurrency(): string
     {
-        if ($this->relationLoaded('tldPricings')) {
+        if ($this->relationLoaded('currentTldPricings')) {
+            $pricing = $this->currentTldPricings->first();
+            if ($pricing !== null) {
+                if (! $pricing->relationLoaded('currency')) {
+                    $pricing->loadMissing('currency');
+                }
+
+                if ($pricing->currency) {
+                    return $pricing->currency->code;
+                }
+            }
+        } elseif ($this->relationLoaded('tldPricings')) {
             $pricing = $this->tldPricings->where('is_current', true)->first();
             if ($pricing !== null) {
                 if (! $pricing->relationLoaded('currency')) {
@@ -224,9 +235,13 @@ final class Tld extends Model
             $currencyCode = 'RWF';
         }
 
-        $pricings = $this->relationLoaded('tldPricings')
-            ? $this->tldPricings->where('is_current', true)
-            : $this->currentTldPricings()->with('currency')->get();
+        if ($this->relationLoaded('currentTldPricings')) {
+            $pricings = $this->currentTldPricings;
+        } elseif ($this->relationLoaded('tldPricings')) {
+            $pricings = $this->tldPricings->where('is_current', true);
+        } else {
+            $pricings = $this->currentTldPricings()->with('currency')->get();
+        }
 
         foreach ($pricings as $pricing) {
             if (! $pricing->relationLoaded('currency')) {
