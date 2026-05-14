@@ -16,6 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
@@ -53,19 +54,21 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public static function generateCustomerNumber(): string
     {
-        $lastUser = self::query()->orderBy('id', 'desc')->first();
+        return DB::transaction(function (): string {
+            $lastUser = self::query()->lockForUpdate()->orderByDesc('id')->first();
 
-        if (! $lastUser) {
-            return 'BLCL-000001';
-        }
+            if (! $lastUser) {
+                return 'BLCL-000001';
+            }
 
-        preg_match('/\d+/', (string) $lastUser->client_code, $matches);
+            preg_match('/\d+/', (string) $lastUser->client_code, $matches);
 
-        throw_unless(isset($matches[0]), Exception::class, 'Invalid format for client_code');
+            throw_unless(isset($matches[0]), Exception::class, 'Invalid format for client_code');
 
-        $number = (int) $matches[0] + 1;
+            $number = (int) $matches[0] + 1;
 
-        return 'BLCL-'.mb_str_pad((string) $number, 6, '0', STR_PAD_LEFT);
+            return 'BLCL-'.mb_str_pad((string) $number, 6, '0', STR_PAD_LEFT);
+        });
     }
 
     /**

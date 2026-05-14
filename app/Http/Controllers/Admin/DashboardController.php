@@ -30,7 +30,7 @@ final class DashboardController extends Controller
             $query->where('title', 'user');
         })->count());
         $domains = Cache::remember('dashboard.domains', 3600, fn () => Domain::query()->count());
-        $hostingPlans = HostingPlan::query()->count();
+        $hostingPlans = Cache::remember('dashboard.hosting_plans', 3600, fn (): int => HostingPlan::query()->count());
 
         return view('dashboard', ['tlds' => $tlds, 'customers' => $customers, 'domains' => $domains, 'plans' => $plans, 'hostingPlans' => $hostingPlans]);
     }

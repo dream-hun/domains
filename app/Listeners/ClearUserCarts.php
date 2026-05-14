@@ -50,7 +50,9 @@ final class ClearUserCarts
             'currencies_updated' => $event->updatedCount,
         ]);
 
-        // Clear cart-related cache
-        Cache::flush();
+        // Clear currency-related caches (exchange rate processor clears rate caches separately)
+        Cache::forget('active_currencies');
+        Cache::forget('base_currency');
+        Cache::forget('app_settings');
     }
 }

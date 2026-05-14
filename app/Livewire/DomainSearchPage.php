@@ -11,6 +11,7 @@ use App\Models\Tld;
 use Closure;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
@@ -199,21 +200,25 @@ final class DomainSearchPage extends Component
      */
     private function getPopularDomainsForDisplay(): array
     {
-        $popularDomains = [
-            'local' => [],
-            'international' => [],
-        ];
+        $currency = $this->selectedCurrency;
 
-        try {
-            $helper = resolve(DomainSearchHelper::class);
-            $popularDomains['local'] = $helper->getPopularDomains(TldType::Local, 3, $this->selectedCurrency);
-            $popularDomains['international'] = $helper->getPopularDomains(TldType::International, 5, $this->selectedCurrency);
-        } catch (Exception $exception) {
-            Log::warning('Failed to load popular domains on search page', [
-                'error' => $exception->getMessage(),
-            ]);
-        }
+        return Cache::remember('popular_domains_'.$currency, 1800, function () use ($currency): array {
+            $popularDomains = [
+                'local' => [],
+                'international' => [],
+            ];
 
-        return $popularDomains;
+            try {
+                $helper = resolve(DomainSearchHelper::class);
+                $popularDomains['local'] = $helper->getPopularDomains(TldType::Local, 3, $currency);
+                $popularDomains['international'] = $helper->getPopularDomains(TldType::International, 5, $currency);
+            } catch (Exception $exception) {
+                Log::warning('Failed to load popular domains on search page', [
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+
+            return $popularDomains;
+        });
     }
 }

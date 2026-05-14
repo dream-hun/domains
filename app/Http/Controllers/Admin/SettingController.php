@@ -11,6 +11,7 @@ use App\Models\Setting;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,6 +36,7 @@ final class SettingController extends Controller
     public function store(StoreSettingRequest $request): RedirectResponse
     {
         Setting::query()->create($request->validated());
+        Cache::forget('app_settings');
 
         return to_route('admin.settings.index');
     }
@@ -49,6 +51,7 @@ final class SettingController extends Controller
     public function update(UpdateSettingRequest $request, Setting $setting): RedirectResponse
     {
         $setting->update($request->validated());
+        Cache::forget('app_settings');
 
         return to_route('admin.settings.index');
     }
@@ -68,6 +71,7 @@ final class SettingController extends Controller
         abort_if(Gate::denies('setting_delete'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         $setting->delete();
+        Cache::forget('app_settings');
 
         return back();
     }

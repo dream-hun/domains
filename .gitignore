@@ -25,6 +25,7 @@
 /vendor
 /.kiro/
 /.claude
+/.codex
 Homestead.json
 Homestead.yaml
 Thumbs.db
