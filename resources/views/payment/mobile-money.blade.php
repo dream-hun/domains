@@ -146,7 +146,7 @@
                                             <input type="tel"
                                                    id="msisdn"
                                                    name="msisdn"
-                                                   value="{{ old('msisdn', $user->address->phone_number ?? '') }}"
+                                                   value="{{ old('msisdn') }}"
                                                    required
                                                    class="form-control @error('msisdn') is-invalid @enderror"
                                                    placeholder="788123456">
