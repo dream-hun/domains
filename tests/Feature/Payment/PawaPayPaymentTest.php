@@ -31,7 +31,7 @@ test('PaymentService resolves without error when PawaPay is not configured', fun
 test('user without cart is redirected to checkout from PawaPay payment page', function (): void {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->get(route('payment.pawapay.show'));
+    $response = $this->actingAs($user)->get(route('payment.mobile-money.show'));
 
     $response->assertRedirect(route('checkout.index'));
 });
@@ -46,10 +46,10 @@ test('user with existing pending order can view PawaPay payment page', function 
 
     session(['pawapay_order_number' => $order->order_number]);
 
-    $response = $this->actingAs($user)->get(route('payment.pawapay.show'));
+    $response = $this->actingAs($user)->get(route('payment.mobile-money.show'));
 
     $response->assertStatus(200);
-    $response->assertViewIs('payment.pawapay');
+    $response->assertViewIs('payment.mobile-money');
 });
 
 test('PawaPay deposit initiation succeeds with ACCEPTED response', function (): void {
@@ -68,7 +68,7 @@ test('PawaPay deposit initiation succeeds with ACCEPTED response', function (): 
 
     session(['pawapay_order_number' => $order->order_number]);
 
-    $response = $this->actingAs($user)->postJson(route('payment.pawapay'), [
+    $response = $this->actingAs($user)->postJson(route('payment.mobile-money'), [
         'msisdn' => '250788000000',
         'billing_name' => $user->name,
         'billing_email' => $user->email,
@@ -96,7 +96,7 @@ test('PawaPay deposit initiation fails when provider cannot be determined', func
 
     session(['pawapay_order_number' => $order->order_number]);
 
-    $response = $this->actingAs($user)->postJson(route('payment.pawapay'), [
+    $response = $this->actingAs($user)->postJson(route('payment.mobile-money'), [
         'msisdn' => '250788000000',
         'billing_name' => $user->name,
         'billing_email' => $user->email,
@@ -121,7 +121,7 @@ test('PawaPay status check returns pending when deposit is processing', function
         '*deposits/deposit-uuid-abc*' => Http::response([['status' => 'PROCESSING']], 200),
     ]);
 
-    $response = $this->actingAs($user)->getJson(route('payment.pawapay.status', $payment));
+    $response = $this->actingAs($user)->getJson(route('payment.mobile-money.status', $payment));
 
     $response->assertStatus(200);
     $response->assertJsonFragment(['status' => 'pending']);
@@ -142,7 +142,7 @@ test('PawaPay status check marks payment succeeded when deposit completed', func
         '*deposits/deposit-uuid-def*' => Http::response([['status' => 'COMPLETED']], 200),
     ]);
 
-    $response = $this->actingAs($user)->getJson(route('payment.pawapay.status', $payment));
+    $response = $this->actingAs($user)->getJson(route('payment.mobile-money.status', $payment));
 
     $response->assertStatus(200);
     $response->assertJsonFragment(['status' => 'succeeded']);
@@ -161,7 +161,7 @@ test('user cannot access another users PawaPay payment status', function (): voi
         'payment_method' => 'pawapay',
     ]);
 
-    $response = $this->actingAs($user)->get(route('payment.pawapay.status', $payment));
+    $response = $this->actingAs($user)->get(route('payment.mobile-money.status', $payment));
 
     $response->assertRedirect(route('dashboard'));
 });
@@ -169,7 +169,7 @@ test('user cannot access another users PawaPay payment status', function (): voi
 test('PawaPay payment validation requires msisdn', function (): void {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->postJson(route('payment.pawapay'), [
+    $this->actingAs($user)->postJson(route('payment.mobile-money'), [
         'billing_name' => 'Test User',
         'billing_email' => 'test@example.com',
     ])->assertStatus(422)->assertJsonValidationErrors('msisdn');
@@ -190,7 +190,7 @@ test('PawaPay payment is rejected when order currency is not RWF', function (): 
 
     session(['pawapay_order_number' => $order->order_number]);
 
-    $response = $this->actingAs($user)->postJson(route('payment.pawapay'), [
+    $response = $this->actingAs($user)->postJson(route('payment.mobile-money'), [
         'msisdn' => '250788000000',
         'billing_name' => $user->name,
         'billing_email' => $user->email,
@@ -205,7 +205,7 @@ test('PawaPay payment is rejected when order currency is not RWF', function (): 
 test('PawaPay payment validation requires billing_name', function (): void {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->postJson(route('payment.pawapay'), [
+    $this->actingAs($user)->postJson(route('payment.mobile-money'), [
         'msisdn' => '250788000000',
         'billing_email' => 'test@example.com',
     ])->assertStatus(422)->assertJsonValidationErrors('billing_name');
@@ -218,8 +218,8 @@ test('PawaPay cancel sets session and redirects back to payment form', function 
         'payment_method' => 'pawapay',
     ]);
 
-    $response = $this->actingAs($user)->get(route('payment.pawapay.cancel', $order));
+    $response = $this->actingAs($user)->get(route('payment.mobile-money.cancel', $order));
 
-    $response->assertRedirect(route('payment.pawapay.show'));
+    $response->assertRedirect(route('payment.mobile-money.show'));
     expect(session('pawapay_order_number'))->toBe($order->order_number);
 });

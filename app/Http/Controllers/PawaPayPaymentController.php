@@ -76,7 +76,7 @@ final class PawaPayPaymentController extends Controller
             $subtotal = $totalAmount;
         }
 
-        return view('payment.pawapay', [
+        return view('payment.mobile-money', [
             'order' => $order,
             'user' => $user,
             'cartItems' => $cartItems,
@@ -199,7 +199,7 @@ final class PawaPayPaymentController extends Controller
                     'success' => true,
                     'requires_action' => true,
                     'payment_id' => $paymentResult['payment_id'] ?? null,
-                    'check_status_url' => $payment ? route('payment.pawapay.status', $payment) : null,
+                    'check_status_url' => $payment ? route('payment.mobile-money.status', $payment) : null,
                     'success_url' => route('payment.success', $order),
                     'order_number' => $order->order_number,
                     'amount' => $order->total_amount,
@@ -208,7 +208,7 @@ final class PawaPayPaymentController extends Controller
             }
 
             if ($payment) {
-                return to_route('payment.pawapay.status', $payment)
+                return to_route('payment.mobile-money.status', $payment)
                     ->with('info', 'Please complete the payment on your mobile device.');
             }
 
@@ -260,7 +260,7 @@ final class PawaPayPaymentController extends Controller
 
         session(['pawapay_order_number' => $order->order_number]);
 
-        return to_route('payment.pawapay.show')->with('error', 'Payment was cancelled.');
+        return to_route('payment.mobile-money.show')->with('error', 'Payment was cancelled.');
     }
 
     public function status(Payment $payment): View|RedirectResponse|JsonResponse
@@ -308,7 +308,7 @@ final class PawaPayPaymentController extends Controller
 
             session(['pawapay_order_number' => $order->order_number]);
 
-            return to_route('payment.pawapay.show')->with('error', 'Payment failed. Please try again.');
+            return to_route('payment.mobile-money.show')->with('error', 'Payment failed. Please try again.');
         }
 
         $statusResult = $this->paymentService->checkPawaPayDepositStatus($payment);
@@ -342,7 +342,7 @@ final class PawaPayPaymentController extends Controller
 
                 session(['pawapay_order_number' => $order->order_number]);
 
-                return to_route('payment.pawapay.show')->with('error', $statusResult['error'] ?? 'Payment failed.');
+                return to_route('payment.mobile-money.show')->with('error', $statusResult['error'] ?? 'Payment failed.');
             }
         }
 
@@ -354,7 +354,7 @@ final class PawaPayPaymentController extends Controller
             ]);
         }
 
-        return view('payment.pawapay-pending', [
+        return view('payment.mobile-money-pending', [
             'payment' => $payment->fresh(),
             'order' => $order->fresh(),
         ]);

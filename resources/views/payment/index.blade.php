@@ -133,7 +133,7 @@
 
                         @if (config('services.payment.pawapay.token') &&
                              config('services.payment.pawapay.base_url'))
-                            <!-- PawaPay Payment -->
+                            <!-- Mobile Money Payment -->
                             <div class="border rounded p-4">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div class="d-flex align-items-center">
@@ -144,14 +144,14 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <h5 class="mb-1 text-dark">Mobile Money (PawaPay)</h5>
+                                            <h5 class="mb-1 text-dark">Mobile Money</h5>
                                             <small class="text-muted">Pay with MTN or Airtel Mobile Money</small>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="mt-3">
-                                    <a href="{{ route('payment.pawapay.show') }}"
+                                    <a href="{{ route('payment.mobile-money.show') }}"
                                        class="btn btn-success btn-lg w-100 d-flex align-items-center justify-content-center">
                                         <i class="bi bi-phone me-2"></i>
                                         Pay @price($totalAmount, 'USD') with Mobile Money

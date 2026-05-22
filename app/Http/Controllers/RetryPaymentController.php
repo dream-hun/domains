@@ -55,7 +55,7 @@ final class RetryPaymentController extends Controller
         if ($paymentMethod === 'pawapay') {
             session(['pawapay_order_number' => $order->order_number]);
 
-            return to_route('payment.pawapay.show');
+            return to_route('payment.mobile-money.show');
         }
 
         try {
@@ -109,7 +109,7 @@ final class RetryPaymentController extends Controller
             && config('services.payment.pawapay.base_url')) {
             $methods[] = [
                 'id' => 'pawapay',
-                'name' => 'Mobile Money (PawaPay)',
+                'name' => 'Mobile Money',
             ];
         }
 

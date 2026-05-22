@@ -15,9 +15,9 @@
                                 </div>
                             </div>
                         </div>
-                        <h3 class="mb-3 font-weight-bold">Awaiting PawaPay Payment</h3>
+                        <h3 class="mb-3 font-weight-bold">Awaiting Mobile Money Payment</h3>
                         <p class="text-muted mb-4">
-                            We are waiting for confirmation of your PawaPay mobile money payment.
+                            We are waiting for confirmation of your mobile money payment.
                             Please approve the prompt on your mobile device.
                         </p>
 
@@ -42,13 +42,13 @@
                         </div>
 
                         <div class="mt-4 d-grid gap-2">
-                            <a href="{{ route('payment.pawapay.status', $payment) }}"
+                            <a href="{{ route('payment.mobile-money.status', $payment) }}"
                                class="btn btn-primary btn-lg w-100 mb-3"
                                id="check-status-btn">
                                 <i class="bi bi-arrow-clockwise mr-2"></i>
                                 Check Status Now
                             </a>
-                            <a href="{{ route('payment.pawapay.show') }}" class="btn btn-link text-muted">
+                            <a href="{{ route('payment.mobile-money.show') }}" class="btn btn-link text-muted">
                                 <i class="bi bi-arrow-left mr-2"></i>
                                 Back to Payment Method
                             </a>
@@ -89,7 +89,7 @@
                         window.location.href = '{{ route('payment.success', $order) }}';
                     } else if (data.status === 'failed') {
                         clearInterval(checkInterval);
-                        window.location.href = '{{ route('payment.pawapay.show') }}';
+                        window.location.href = '{{ route('payment.mobile-money.show') }}';
                     }
                 })
                 .catch(error => {

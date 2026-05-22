@@ -212,11 +212,11 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/payment/cancel/{order}', [PaymentController::class, 'handlePaymentCancel'])->name('payment.cancel');
     Route::get('/payment/failed/{order}', [PaymentController::class, 'showPaymentFailed'])->name('payment.failed');
 
-    // PawaPay Payment Routes
-    Route::get('/payment/pawapay', [PawaPayPaymentController::class, 'show'])->name('payment.pawapay.show');
-    Route::post('/payment/pawapay', [PawaPayPaymentController::class, 'process'])->name('payment.pawapay');
-    Route::get('/payment/pawapay/cancel/{order}', [PawaPayPaymentController::class, 'cancel'])->name('payment.pawapay.cancel');
-    Route::get('/payment/pawapay/status/{payment}', [PawaPayPaymentController::class, 'status'])->name('payment.pawapay.status');
+    // Mobile Money Payment Routes
+    Route::get('/payment/mobile-money', [PawaPayPaymentController::class, 'show'])->name('payment.mobile-money.show');
+    Route::post('/payment/mobile-money', [PawaPayPaymentController::class, 'process'])->name('payment.mobile-money');
+    Route::get('/payment/mobile-money/cancel/{order}', [PawaPayPaymentController::class, 'cancel'])->name('payment.mobile-money.cancel');
+    Route::get('/payment/mobile-money/status/{payment}', [PawaPayPaymentController::class, 'status'])->name('payment.mobile-money.status');
 });
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');

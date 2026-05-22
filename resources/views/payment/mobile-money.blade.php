@@ -48,7 +48,7 @@
                                 </div>
                             @endif
 
-                            <form method="POST" action="{{ route('payment.pawapay') }}" id="payment-form"
+                            <form method="POST" action="{{ route('payment.mobile-money') }}" id="payment-form"
                                   autocomplete="off">
                                 @csrf
 
@@ -137,24 +137,25 @@
                                             Mobile Money Number <span class="text-danger">*</span>
                                         </label>
                                         <div class="input-group">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text">
-                                                    <i class="bi bi-phone"></i>
-                                                </span>
-                                            </div>
+                                            <select name="phone_country_code"
+                                                    class="form-select flex-grow-0"
+                                                    style="max-width: 120px;"
+                                                    aria-label="Country code">
+                                                <option value="250" selected>+250 🇷🇼</option>
+                                            </select>
                                             <input type="tel"
                                                    id="msisdn"
                                                    name="msisdn"
                                                    value="{{ old('msisdn', $user->address->phone_number ?? '') }}"
                                                    required
                                                    class="form-control @error('msisdn') is-invalid @enderror"
-                                                   placeholder="250788123456">
+                                                   placeholder="788123456">
                                             @error('msisdn')
-                                            <div class="text-danger small mt-1">{{ $message }}</div>
+                                            <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
                                         <small class="form-text text-muted">
-                                            Enter your MTN or Airtel Mobile Money number (e.g. 250788123456)
+                                            Enter your MTN or Airtel number without country code (e.g. 788123456)
                                         </small>
                                     </div>
                                 </div>
@@ -162,7 +163,7 @@
                                 <!-- Security Notice -->
                                 <div class="alert alert-info mt-4 mb-4">
                                     <i class="bi bi-shield-check mr-2"></i>
-                                    <strong>Secure Payment:</strong> Your payment is processed securely via PawaPay.
+                                    <strong>Secure Payment:</strong> Your payment is processed securely.
                                     You will receive a prompt on your mobile to confirm the payment.
                                 </div>
 

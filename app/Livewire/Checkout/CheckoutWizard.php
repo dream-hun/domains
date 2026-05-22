@@ -459,7 +459,7 @@ final class CheckoutWizard extends Component
 
                 $this->clearCheckoutState();
 
-                return to_route('payment.pawapay.show');
+                return to_route('payment.mobile-money.show');
             }
 
             $order = $createOrderAction->handle(
@@ -654,7 +654,7 @@ final class CheckoutWizard extends Component
             $this->userCurrencyCode === 'RWF') {
             $this->paymentMethods[] = [
                 'id' => 'pawapay',
-                'name' => 'Mobile Money (PawaPay)',
+                'name' => 'Mobile Money',
                 'icon' => 'phone',
             ];
         }
