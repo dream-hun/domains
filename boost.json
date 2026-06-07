@@ -3,7 +3,7 @@
         "claude_code",
         "codex"
     ],
-    "cloud": true,
+    "cloud": false,
     "guidelines": true,
     "mcp": true,
     "nightwatch": true,
@@ -16,7 +16,6 @@
         "configure-nightwatch",
         "livewire-development",
         "pest-testing",
-        "debug-using-debugbar",
-        "deploying-laravel-cloud"
+        "debug-using-debugbar"
     ]
 }
