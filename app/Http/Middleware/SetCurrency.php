@@ -23,6 +23,10 @@ final readonly class SetCurrency
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->hasHeader('X-Livewire')) {
+            return $next($request);
+        }
+
         if ($request->has('currency')) {
             $this->setCurrencyIfValid($request->get('currency'));
 
@@ -97,7 +101,7 @@ final readonly class SetCurrency
 
         $currency = Currency::getActiveCurrencies()->firstWhere('code', $currencyCode);
 
-        if ($currency) {
+        if ($currency && session('selected_currency') !== $currency->code) {
             session(['selected_currency' => $currency->code]);
         }
     }

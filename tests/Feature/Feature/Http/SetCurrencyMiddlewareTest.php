@@ -207,3 +207,23 @@ it('preserves valid non-geolocation session currency for unauthenticated users',
 
     expect(session('selected_currency'))->toBe('USD');
 });
+
+it('skips currency detection for Livewire AJAX requests', function (): void {
+    $request = Request::create('/', 'GET');
+    $request->headers->set('X-Livewire', 'true');
+
+    createMiddleware()->handle($request, fn ($req) => response()->make('OK'));
+
+    expect(session('selected_currency'))->toBeNull();
+});
+
+it('passes through Livewire requests without modifying existing session currency', function (): void {
+    Session::put('selected_currency', 'USD');
+
+    $request = Request::create('/', 'GET');
+    $request->headers->set('X-Livewire', 'true');
+
+    createMiddleware()->handle($request, fn ($req) => response()->make('OK'));
+
+    expect(session('selected_currency'))->toBe('USD');
+});
