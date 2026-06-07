@@ -75,7 +75,7 @@ test('retry payment with pawapay sets session and redirects', function (): void 
         'payment_method' => 'pawapay',
     ]);
 
-    $response->assertRedirect(route('payment.pawapay.show'));
+    $response->assertRedirect(route('payment.mobile-money.show'));
 
     expect(session('pawapay_order_number'))->toBe($order->order_number);
 
