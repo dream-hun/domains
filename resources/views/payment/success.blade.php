@@ -23,7 +23,7 @@
         <div class="container-fluid">
             <div class="row justify-content-center">
                 <div class="col-md-12">
-                    <div class="callout callout-success">
+                    <div class="bg-success text-white p-3 mb-3">
                         <h5><i class="bi bi-info-circle-fill"></i> Thank you:</h5>
                         Payment Successful!
                     </div>
