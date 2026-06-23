@@ -24,7 +24,7 @@
         "africc/php-epp2": "^2.0",
         "barryvdh/laravel-dompdf": "^3.1.2",
         "cknow/laravel-money": "^8.5",
-        "darryldecode/cart": "^4.2",
+        "darryldecode/cart": "^4.2.6",
         "laravel/breeze": "^2.4.2",
         "laravel/framework": "^13.15",
         "laravel/nightwatch": "^1.28.0",
