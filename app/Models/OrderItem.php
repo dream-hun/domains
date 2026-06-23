@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,23 +28,22 @@ use Illuminate\Support\Carbon;
  * @property-read Order $order
  * @property-read Domain|null $domain
  */
+#[Fillable([
+    'order_id',
+    'domain_id',
+    'domain_name',
+    'domain_type',
+    'price',
+    'currency',
+    'exchange_rate',
+    'quantity',
+    'years',
+    'total_amount',
+    'metadata',
+])]
 final class OrderItem extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'order_id',
-        'domain_id',
-        'domain_name',
-        'domain_type',
-        'price',
-        'currency',
-        'exchange_rate',
-        'quantity',
-        'years',
-        'total_amount',
-        'metadata',
-    ];
 
     protected $casts = [
         'price' => 'decimal:2',

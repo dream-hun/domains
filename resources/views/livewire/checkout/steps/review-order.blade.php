@@ -42,7 +42,11 @@
     </div>
     <div class="card-footer">
         <button wire:click="nextStep" class="btn btn-primary btn-md float-right">
-            Continue to Contact Information
+            @if($this->hasOnlyRenewals || !$this->hasItemsRequiringContacts)
+                Continue to Payment
+            @else
+                Continue to Contact Information
+            @endif
             <i class="bi bi-arrow-right ml-2"></i>
         </button>
     </div>

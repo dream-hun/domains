@@ -7,28 +7,18 @@ namespace App\Console\Commands;
 use App\Actions\Order\ProcessOrderAfterPaymentAction;
 use App\Models\Order;
 use Exception;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 
+#[Description("Process orders that are paid but haven't been fully processed yet")]
+#[Signature('app:process-pending-jobs
+                            {--limit=50 : Maximum number of orders to process}
+                            {--older-than=30 : Only process orders older than N minutes}')]
 final class ProcessPendingJobs extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:process-pending-jobs
-                            {--limit=50 : Maximum number of orders to process}
-                            {--older-than=30 : Only process orders older than N minutes}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = "Process orders that are paid but haven't been fully processed yet";
-
     /**
      * Execute the console command.
      */

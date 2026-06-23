@@ -26,7 +26,7 @@ final class AuthGates
         $user->loadMissing('roles');
         $userRoleIds = $user->roles->pluck('id')->all();
 
-        $roles = Cache::remember('auth_gates_roles', 300, fn () => Role::with('permissions')->get());
+        $roles = Cache::remember('auth_gates_roles', 60, fn () => Role::with('permissions')->get());
         $permissionsArray = [];
 
         foreach ($roles as $role) {

@@ -15,7 +15,7 @@ final readonly class CreateContactAction
 {
     public function __construct(
         private CreateDualProviderContactAction $dualProviderContactAction,
-        private bool $useTestingProviderResults = true
+        private bool $useTestingProviderResults = true,
     ) {}
 
     /**

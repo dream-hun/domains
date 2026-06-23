@@ -9,22 +9,16 @@ use App\Services\HostingSubscriptionService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Backoff;
+use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
+#[Backoff(60)]
+#[Tries(3)]
 final class ProcessSubscriptionActivationJob implements ShouldQueue
 {
     use Queueable;
-
-    /**
-     * The number of times the job may be attempted.
-     */
-    public int $tries = 3;
-
-    /**
-     * The number of seconds to wait before retrying the job.
-     */
-    public int $backoff = 60;
 
     /**
      * Create a new job instance.

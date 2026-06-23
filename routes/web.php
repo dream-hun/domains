@@ -33,6 +33,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryShowController;
 use App\Http\Controllers\CheckoutController as RenewalCheckoutController;
 use App\Http\Controllers\DomainRenewalController;
+use App\Http\Controllers\HealthCheckController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PawaPayPaymentController;
 use App\Http\Controllers\PawaPayWebhookController;
@@ -48,13 +49,15 @@ use App\Http\Controllers\User\VpsController as UserVpsController;
 use App\Livewire\Hosting\Configuration;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/health', HealthCheckController::class)->name('health');
+
 Route::get('/', LandingController::class)->name('home');
 Route::get('/hosting/purchase/{plan}', Configuration::class)->name('hosting.configure');
 Route::get('/hosting/{slug}', CategoryShowController::class)->name('hosting.categories.show');
 
 Route::get('/shopping-cart', CartController::class)->name('cart.index');
 Route::get('/domains', [SearchDomainController::class, 'index'])->name('domains');
-Route::post('/domains/search', [SearchDomainController::class, 'search'])->name('domains.search'); // redirects to GET /domains?domain=...
+Route::post('/domains/search', [SearchDomainController::class, 'search'])->middleware('throttle:domain-search')->name('domains.search');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -201,20 +204,20 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/billing/{order:order_number}/invoice/download', [BillingController::class, 'downloadInvoice'])->name('billing.invoice.download');
     Route::get('/billing/{order:order_number}/invoice/view-pdf', [BillingController::class, 'viewInvoicePdf'])->name('billing.invoice.view-pdf');
     Route::get('/billing/{order:order_number}/retry-payment', [RetryPaymentController::class, 'show'])->name('billing.retry-payment');
-    Route::post('/billing/{order:order_number}/retry-payment', [RetryPaymentController::class, 'process'])->name('billing.retry-payment.process');
+    Route::post('/billing/{order:order_number}/retry-payment', [RetryPaymentController::class, 'process'])->middleware('throttle:payments')->name('billing.retry-payment.process');
 
     Route::get('/contacts/{id}/details', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('contacts.details');
     Route::get('/api/contacts/{id}', [App\Http\Controllers\Api\ContactController::class, 'details'])->name('api.contacts.details');
 
     // Payment routes
-    Route::post('/payment/stripe', [PaymentController::class, 'stripeCheckout'])->name('payment.stripe');
+    Route::post('/payment/stripe', [PaymentController::class, 'stripeCheckout'])->middleware('throttle:payments')->name('payment.stripe');
     Route::get('/payment/success/{order}', [PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/cancel/{order}', [PaymentController::class, 'handlePaymentCancel'])->name('payment.cancel');
     Route::get('/payment/failed/{order}', [PaymentController::class, 'showPaymentFailed'])->name('payment.failed');
 
     // Mobile Money Payment Routes
     Route::get('/payment/mobile-money', [PawaPayPaymentController::class, 'show'])->name('payment.mobile-money.show');
-    Route::post('/payment/mobile-money', [PawaPayPaymentController::class, 'process'])->name('payment.mobile-money');
+    Route::post('/payment/mobile-money', [PawaPayPaymentController::class, 'process'])->middleware('throttle:payments')->name('payment.mobile-money');
     Route::get('/payment/mobile-money/cancel/{order}', [PawaPayPaymentController::class, 'cancel'])->name('payment.mobile-money.cancel');
     Route::get('/payment/mobile-money/status/{payment}', [PawaPayPaymentController::class, 'status'])->name('payment.mobile-money.status');
 });

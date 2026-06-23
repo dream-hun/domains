@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[Fillable([
+    'order_id',
+    'payment_id',
+    'user_id',
+    'payment_method',
+    'transaction_id',
+    'amount',
+    'currency',
+    'status',
+    'error_message',
+    'error_details',
+    'processed_at',
+])]
 final class Transaction extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'order_id',
-        'payment_id',
-        'user_id',
-        'payment_method',
-        'transaction_id',
-        'amount',
-        'currency',
-        'status',
-        'error_message',
-        'error_details',
-        'processed_at',
-    ];
 
     public function order(): BelongsTo
     {

@@ -142,7 +142,7 @@ final class FailedDomainRegistrationController extends Controller
             ]);
 
             return back()
-                ->with('error', 'An error occurred: '.$exception->getMessage());
+                ->with('error', 'An error occurred during retry. Please check the logs for details.');
         }
     }
 
@@ -231,7 +231,7 @@ final class FailedDomainRegistrationController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'An error occurred: '.$exception->getMessage());
+                ->with('error', 'An error occurred during registration. Please check the logs for details.');
         }
     }
 }

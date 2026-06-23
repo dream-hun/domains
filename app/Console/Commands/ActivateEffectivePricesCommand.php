@@ -8,26 +8,16 @@ use App\Jobs\ActivateHostingPlanPriceJob;
 use App\Models\HostingPlanPrice;
 use Carbon\CarbonInterface;
 use Exception;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
 
+#[Description('Activate hosting plan prices whose effective date has arrived')]
+#[Signature('hosting-prices:activate-effective')]
 final class ActivateEffectivePricesCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'hosting-prices:activate-effective';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Activate hosting plan prices whose effective date has arrived';
-
     /**
      * Execute the console command.
      */

@@ -8,27 +8,17 @@ use App\Enums\TldStatus;
 use App\Enums\TldType;
 use App\Models\Tld;
 use App\Services\Domain\NamecheapDomainService;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 use Throwable;
 
+#[Description('Import all TLDs from Namecheap and store them locally')]
+#[Signature('app:import-namecheap-tlds
+                            {--activate : Mark imported TLDs as active (defaults to inactive for new ones)}')]
 final class ImportTld extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'app:import-namecheap-tlds
-                            {--activate : Mark imported TLDs as active (defaults to inactive for new ones)}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Import all TLDs from Namecheap and store them locally';
-
     public function handle(NamecheapDomainService $service): int
     {
         $this->info('Fetching TLDs from Namecheap...');

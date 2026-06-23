@@ -6,8 +6,8 @@ namespace App\Helpers;
 
 use App\Enums\TldType;
 use App\Models\Tld;
-use App\Services\Domain\DomainRegistrationServiceInterface;
-use App\Services\Domain\NamecheapDomainService;
+use App\Services\Domain\DomainAvailabilityCache;
+use App\Services\Domain\DomainRouter;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
@@ -16,67 +16,18 @@ use Illuminate\Support\Facades\Log;
 final readonly class DomainSearchHelper
 {
     public function __construct(
-        private NamecheapDomainService $internationalDomainService,
-        private DomainRegistrationServiceInterface $eppDomainService
+        private DomainRouter $domainRouter,
+        private DomainAvailabilityCache $availabilityCache,
     ) {}
 
     public function processDomainSearch(string $domain): array
     {
-        try {
-            $sanitizedDomain = $this->sanitizeDomain($domain);
-            $domainParts = explode('.', $sanitizedDomain);
-            $domainBase = $domainParts[0];
-            $searchedTld = count($domainParts) > 1 ? end($domainParts) : null;
-            $error = null;
+        return $this->availabilityCache->rememberSearch($domain, fn (): array => $this->doSearch($domain));
+    }
 
-            $domainType = $this->detectDomainType($sanitizedDomain);
-
-            $primaryDomainToSearch = $sanitizedDomain;
-            if (! $searchedTld) {
-                $defaultTld = ($domainType === TldType::Local) ? '.rw' : '.com';
-                $primaryDomainToSearch .= $defaultTld;
-                $domainType = $this->detectDomainType($primaryDomainToSearch);
-            }
-
-            // Execute the search using the appropriate service based on detected type
-            if ($domainType === TldType::Local) {
-                [$details, $suggestions] = $this->searchLocalDomains($primaryDomainToSearch, $domainBase);
-            } else {
-                [$details, $suggestions] = $this->searchInternationalDomains($primaryDomainToSearch, $domainBase);
-            }
-
-            if (! $details && empty($suggestions)) {
-                $error = 'Unable to check domain availability. Please try again later.';
-            }
-
-            return [
-                'details' => $details,
-                'suggestions' => array_values($suggestions),
-                'domainType' => $domainType,
-                'searchedDomain' => $sanitizedDomain,
-                'error' => $error,
-            ];
-        } catch (ConnectionException $e) {
-            Log::error('Domain search connection error', ['domain' => $domain, 'error' => $e->getMessage()]);
-
-            return [
-                'error' => 'Connection error. Please check your internet connection and try again.',
-                'details' => null,
-                'suggestions' => [],
-                'domainType' => $this->detectDomainType($domain),
-                'searchedDomain' => $domain,
-            ];
-        } catch (Exception $e) {
-            Log::error('Domain search unexpected error', ['domain' => $domain, 'error' => $e->getMessage()]);
-
-            return [
-                'error' => 'An unexpected error occurred. Our team has been notified.',
-                'details' => null,
-                'suggestions' => [],
-                'domainType' => $this->detectDomainType($domain),
-                'searchedDomain' => $domain,
-            ];
-        }
+    public function forgetAvailabilityCache(string $domain): void
+    {
+        $this->availabilityCache->forget([$domain]);
     }
 
     /**
@@ -145,6 +96,65 @@ final readonly class DomainSearchHelper
             ->all();
     }
 
+    private function doSearch(string $domain): array
+    {
+        try {
+            $sanitizedDomain = $this->sanitizeDomain($domain);
+            $domainParts = explode('.', $sanitizedDomain);
+            $domainBase = $domainParts[0];
+            $searchedTld = count($domainParts) > 1 ? end($domainParts) : null;
+            $error = null;
+
+            $domainType = $this->detectDomainType($sanitizedDomain);
+
+            $primaryDomainToSearch = $sanitizedDomain;
+            if (! $searchedTld) {
+                $defaultTld = ($domainType === TldType::Local) ? '.rw' : '.com';
+                $primaryDomainToSearch .= $defaultTld;
+                $domainType = $this->detectDomainType($primaryDomainToSearch);
+            }
+
+            // Execute the search using the appropriate service based on detected type
+            if ($domainType === TldType::Local) {
+                [$details, $suggestions] = $this->searchLocalDomains($primaryDomainToSearch, $domainBase);
+            } else {
+                [$details, $suggestions] = $this->searchInternationalDomains($primaryDomainToSearch, $domainBase);
+            }
+
+            if (! $details && empty($suggestions)) {
+                $error = 'Unable to check domain availability. Please try again later.';
+            }
+
+            return [
+                'details' => $details,
+                'suggestions' => array_values($suggestions),
+                'domainType' => $domainType,
+                'searchedDomain' => $sanitizedDomain,
+                'error' => $error,
+            ];
+        } catch (ConnectionException $e) {
+            Log::error('Domain search connection error', ['domain' => $domain, 'error' => $e->getMessage()]);
+
+            return [
+                'error' => 'Connection error. Please check your internet connection and try again.',
+                'details' => null,
+                'suggestions' => [],
+                'domainType' => $this->detectDomainType($domain),
+                'searchedDomain' => $domain,
+            ];
+        } catch (Exception $e) {
+            Log::error('Domain search unexpected error', ['domain' => $domain, 'error' => $e->getMessage()]);
+
+            return [
+                'error' => 'An unexpected error occurred. Our team has been notified.',
+                'details' => null,
+                'suggestions' => [],
+                'domainType' => $this->detectDomainType($domain),
+                'searchedDomain' => $domain,
+            ];
+        }
+    }
+
     /**
      * Handles searching for local domains and suggestions.
      *
@@ -163,7 +173,7 @@ final readonly class DomainSearchHelper
         $priceInfoMap = $this->findDomainPriceInfoBatch(array_values($tldsToLoad));
 
         if (! in_array($primaryTld, [null, '', '0'], true)) {
-            $primaryResult = $this->eppDomainService->searchDomains($domainBase, [$primaryTld]);
+            $primaryResult = $this->domainRouter->eppService()->searchDomains($domainBase, [$primaryTld]);
             if (isset($primaryResult[$primaryDomain])) {
                 $result = $primaryResult[$primaryDomain];
                 $priceInfo = $priceInfoMap[mb_ltrim($primaryTld, '.')] ?? null;
@@ -186,7 +196,7 @@ final readonly class DomainSearchHelper
         }
 
         if ($suggestionTlds !== []) {
-            $suggestionResults = $this->eppDomainService->searchDomains($domainBase, $suggestionTlds);
+            $suggestionResults = $this->domainRouter->eppService()->searchDomains($domainBase, $suggestionTlds);
             unset($suggestionResults[$primaryDomain]);
 
             $preferredCurrency = CurrencyHelper::getUserCurrency();
@@ -232,7 +242,7 @@ final readonly class DomainSearchHelper
 
         try {
             if (! in_array($primaryTld, [null, '', '0'], true)) {
-                $availabilityResults = $this->internationalDomainService->checkAvailability([$primaryDomain]);
+                $availabilityResults = $this->domainRouter->namecheapService()->checkAvailability([$primaryDomain]);
                 if (isset($availabilityResults[$primaryDomain])) {
                     $result = $availabilityResults[$primaryDomain];
                     $priceInfo = $priceInfoMap[mb_ltrim($primaryTld, '.')] ?? null;
@@ -263,7 +273,7 @@ final readonly class DomainSearchHelper
             $domainsToSuggest = array_map(fn (string $tld): string => $domainBase.'.'.$tld, $suggestionTlds);
 
             if ($domainsToSuggest !== []) {
-                $suggestionResults = $this->internationalDomainService->checkAvailability($domainsToSuggest);
+                $suggestionResults = $this->domainRouter->namecheapService()->checkAvailability($domainsToSuggest);
                 foreach ($suggestionResults as $domainName => $result) {
                     if ($domainName === $primaryDomain) {
                         continue;

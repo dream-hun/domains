@@ -1,4 +1,10 @@
-<?php namespace Darryldecode\Cart\Exceptions;
+<?php
+
+declare(strict_types=1);
+
+namespace Darryldecode\Cart\Exceptions;
+
+use Exception;
 
 /**
  * Created by PhpStorm.
@@ -6,7 +12,4 @@
  * Date: 1/15/2015
  * Time: 9:24 PM
  */
-
-class InvalidConditionException extends \Exception {
-
-}
+class InvalidConditionException extends Exception {}

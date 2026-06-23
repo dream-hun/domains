@@ -91,7 +91,7 @@ test('home hosting component updates prices when currency changes', function ():
     $htmlUsd = $component->html();
     expect($htmlUsd)->toContain('12');
 
-    $component->dispatch('currency-changed', currency: 'RWF');
+    $component->dispatch('currencyChanged', currency: 'RWF');
     $htmlRwf = $component->html();
     expect($htmlRwf)->toContain('15');
 });

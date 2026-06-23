@@ -6,22 +6,16 @@ namespace App\Console\Commands;
 
 use App\Jobs\RetryDomainRegistrationJob;
 use App\Models\FailedDomainRegistration;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Description('Manually retry failed domain registrations')]
+#[Signature('domain:retry-failed
+                            {--order= : Filter by specific Order ID}
+                            {--all : Retry all pending/retrying failed registrations}')]
 final class RetryFailedDomainRegistrations extends Command
 {
-    /**
-     * The name and signature of the console command.
-     */
-    protected $signature = 'domain:retry-failed
-                            {--order= : Filter by specific Order ID}
-                            {--all : Retry all pending/retrying failed registrations}';
-
-    /**
-     * The console command description.
-     */
-    protected $description = 'Manually retry failed domain registrations';
-
     /**
      * Execute the console command.
      */

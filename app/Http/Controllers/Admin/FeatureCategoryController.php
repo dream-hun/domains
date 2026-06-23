@@ -18,6 +18,7 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 final class FeatureCategoryController extends Controller
@@ -73,7 +74,9 @@ final class FeatureCategoryController extends Controller
 
             return to_route('admin.feature-categories.index')->with('success', 'Feature category deleted successfully.');
         } catch (Exception $exception) {
-            return to_route('admin.feature-categories.index')->with('error', $exception->getMessage());
+            Log::error('Failed to delete feature category', ['feature_category_id' => $featureCategory->id, 'error' => $exception->getMessage()]);
+
+            return to_route('admin.feature-categories.index')->with('error', 'Failed to delete feature category. It may be in use.');
         }
     }
 }

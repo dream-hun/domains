@@ -10,10 +10,12 @@ use App\Models\Coupon;
 use App\Models\Domain;
 use App\Models\HostingPlanPrice;
 use App\Models\Subscription;
+use App\Services\Cart\CartPreparationService;
 use App\Services\CartPriceConverter;
 use App\Services\Coupon\CouponService;
 use App\Services\OrderItemFormatterService;
 use App\Services\RenewalService;
+use App\Traits\CalculatesCartDiscount;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -24,6 +26,8 @@ use Throwable;
 
 final class CartComponent extends Component
 {
+    use CalculatesCartDiscount;
+
     public mixed $items = null;
 
     public float $subtotalAmount = 0;
@@ -808,83 +812,16 @@ final class CartComponent extends Component
      */
     public function prepareCartForPayment(): array
     {
-        $cartItems = [];
-        $cartPriceConverter = resolve(CartPriceConverter::class);
+        $cartPreparationService = resolve(CartPreparationService::class);
 
-        foreach ($this->items as $item) {
-            $itemType = $item->attributes->get('type', 'registration');
-
-            // Convert item price to display currency using unified converter
-            try {
-                $itemPrice = $cartPriceConverter->convertItemPrice($item, $this->currency);
-            } catch (Exception $exception) {
-                Log::error('Failed to convert item price in prepareCartForPayment', [
-                    'item_id' => $item->id,
-                    'item_type' => $itemType,
-                    'currency' => $this->currency,
-                    'error' => $exception->getMessage(),
-                ]);
-                throw $exception;
-            } catch (Throwable) {
-            }
-
-            $metadata = $item->attributes->get('metadata', []);
-
-            if ($itemType === 'hosting') {
-                $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
-                $metadata['hosting_plan_pricing_id'] = $item->attributes->get('hosting_plan_pricing_id');
-                $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
-                $metadata['linked_domain'] = $item->attributes->get('linked_domain');
-                $metadata['is_existing_domain'] = $item->attributes->get('is_existing_domain');
-                $metadata['duration_months'] = (int) ($item->attributes->get('duration_months') ?? $item->quantity);
-            }
-
-            if ($itemType === 'subscription_renewal') {
-                $metadata['hosting_plan_id'] = $item->attributes->get('hosting_plan_id');
-                $metadata['hosting_plan_pricing_id'] = $item->attributes->get('hosting_plan_pricing_id');
-                $metadata['billing_cycle'] = $item->attributes->get('billing_cycle');
-                $metadata['subscription_id'] = $item->attributes->get('subscription_id');
-                $metadata['duration_months'] = (int) ($item->attributes->get('duration_months') ?? $item->quantity);
-            }
-
-            $years = match ($itemType) {
-                'subscription_renewal', 'hosting' => (int) ($item->quantity / 12),
-                'renewal', 'registration' => (int) $item->quantity,
-                default => (int) $item->quantity,
-            };
-
-            $cartItems[] = [
-                'domain_name' => $item->attributes->get('domain_name') ?? $item->name,
-                'domain_type' => $itemType,
-                'price' => $itemPrice,
-                'currency' => $this->currency,
-                'quantity' => $item->quantity,
-                'years' => $years,
-                'domain_id' => $item->attributes->get('domain_id'),
-                'metadata' => $metadata,
-                'hosting_plan_id' => $item->attributes->get('hosting_plan_id'),
-                'hosting_plan_pricing_id' => $item->attributes->get('hosting_plan_pricing_id'),
-                'linked_domain' => $item->attributes->get('linked_domain'),
-            ];
-        }
-
-        $paymentData = [
-            'items' => $cartItems,
-            'subtotal' => $this->subtotalAmount,
-            'total' => $this->totalAmount,
-            'currency' => $this->currency,
-        ];
-
-        if ($this->isCouponApplied && $this->appliedCoupon) {
-            $paymentData['coupon'] = [
-                'code' => $this->appliedCoupon->code,
-                'type' => $this->appliedCoupon->type->value,
-                'value' => $this->appliedCoupon->value,
-                'discount_amount' => $this->discountAmount,
-            ];
-        }
-
-        return $paymentData;
+        return $cartPreparationService->buildPaymentData(
+            items: $this->items,
+            currency: $this->currency,
+            subtotal: $this->subtotalAmount,
+            total: $this->totalAmount,
+            discount: $this->discountAmount,
+            coupon: $this->isCouponApplied ? $this->appliedCoupon : null,
+        );
     }
 
     public function proceedToPayment(): void
@@ -957,19 +894,6 @@ final class CartComponent extends Component
         $formatter = resolve(OrderItemFormatterService::class);
 
         return $formatter->formatDurationLabel($months);
-    }
-
-    public function getBillingCycleMonths(string $billingCycle): int
-    {
-        return match ($billingCycle) {
-            'monthly' => 1,
-            'quarterly' => 3,
-            'semi-annually' => 6,
-            'annually' => 12,
-            'biennially' => 24,
-            'triennially' => 36,
-            default => 1,
-        };
     }
 
     /**

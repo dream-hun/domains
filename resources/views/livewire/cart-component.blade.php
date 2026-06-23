@@ -185,12 +185,16 @@
 
                     <div class="mt-3">
                         @if ($items && $items->isNotEmpty())
-                            <a href="{{ route('checkout.index') }}" class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
-                                style="font-size: 16px !important;">
-
+                            <button wire:click="proceedToPayment"
+                                    wire:loading.attr="disabled"
+                                    wire:target="proceedToPayment"
+                                    class="btn btn-success btn-lg w-100 mb-2 pb-3 pt-3"
+                                    style="font-size: 16px !important;">
+                                <span wire:loading.remove wire:target="proceedToPayment">
                                     <i class="bi bi-credit-card me-2"></i>Proceed to Payment
-
-                            </a>
+                                </span>
+                                <span wire:loading wire:target="proceedToPayment" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                            </button>
                         @endif
                     </div>
                 </div>

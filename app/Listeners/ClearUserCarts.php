@@ -32,8 +32,11 @@ final class ClearUserCarts
                             continue;
                         }
 
-                        $payload = unserialize($decoded);
-                        if (! is_array($payload) || ! isset($payload['cart'])) {
+                        $payload = unserialize($decoded, ['allowed_classes' => false]);
+                        if (! is_array($payload)) {
+                            continue;
+                        }
+                        if (! isset($payload['cart']) && ! isset($payload['coupon'])) {
                             continue;
                         }
 

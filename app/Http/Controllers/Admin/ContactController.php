@@ -73,9 +73,11 @@ final class ContactController extends Controller
                 $request->validated()
             );
         } catch (Exception $exception) {
+            Log::error('Failed to create contact', ['error' => $exception->getMessage()]);
+
             return back()
                 ->withInput()
-                ->with('error', $exception->getMessage());
+                ->with('error', 'Failed to create contact. Please check all fields and try again.');
         }
 
         if ($result['success']) {

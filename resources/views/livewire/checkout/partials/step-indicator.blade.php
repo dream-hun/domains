@@ -13,17 +13,20 @@
                 <div class="step-label">Review Order</div>
             </div>
         </li>
+        @php
+            $contactStepSkipped = $this->hasOnlyRenewals || !$this->hasItemsRequiringContacts;
+        @endphp
         <li class="col-3">
-            <div class="step {{ $currentStep >= 2 ? 'active' : '' }} {{ $currentStep > 2 ? 'completed' : '' }}"
+            <div class="step {{ ($currentStep >= 2 && !$contactStepSkipped) || ($contactStepSkipped && $currentStep >= 3) ? 'active' : '' }} {{ ($currentStep > 2 && !$contactStepSkipped) || ($contactStepSkipped && $currentStep >= 3) ? 'completed' : '' }}"
                  aria-current="{{ $currentStep === 2 ? 'step' : 'false' }}">
                 <div class="step-circle" aria-hidden="true">
-                    @if($currentStep > 2)
-                        <i class="bi bi-check2-circle"></i>
+                    @if(($currentStep > 2 && !$contactStepSkipped) || $contactStepSkipped)
+                        <i class="bi bi-dash-circle {{ $contactStepSkipped ? 'text-muted' : '' }}"></i>
                     @else
                         <span class="step-number">2</span>
                     @endif
                 </div>
-                <div class="step-label">Contact Information</div>
+                <div class="step-label {{ $contactStepSkipped ? 'text-muted' : '' }}">Contact Information</div>
             </div>
         </li>
         <li class="col-3">

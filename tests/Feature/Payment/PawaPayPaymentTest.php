@@ -25,7 +25,7 @@ test('PaymentService resolves without error when PawaPay is not configured', fun
         'services.payment.pawapay.base_url' => null,
     ]);
 
-    expect(fn () => app(PaymentService::class))->not->toThrow(TypeError::class);
+    expect(fn () => resolve(PaymentService::class))->not->toThrow(TypeError::class);
 });
 
 test('user without cart is redirected to checkout from PawaPay payment page', function (): void {
@@ -221,5 +221,6 @@ test('PawaPay cancel sets session and redirects back to payment form', function 
     $response = $this->actingAs($user)->get(route('payment.mobile-money.cancel', $order));
 
     $response->assertRedirect(route('payment.mobile-money.show'));
+
     expect(session('pawapay_order_number'))->toBe($order->order_number);
 });

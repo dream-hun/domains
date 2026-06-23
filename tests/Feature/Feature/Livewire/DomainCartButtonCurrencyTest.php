@@ -105,7 +105,7 @@ test('updateCurrency updates price when component is mounted with tld_id', funct
     $initialPrice = $component->get('price');
     expect($initialPrice)->toContain('5'); // RWF formatted
 
-    $component->dispatch('currency-changed', 'USD');
+    $component->dispatch('currencyChanged', 'USD');
 
     expect($component->get('currency'))->toBe('USD')
         ->and($component->get('price'))->not->toBe($initialPrice)

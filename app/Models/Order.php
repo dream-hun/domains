@@ -34,7 +34,7 @@ final class Order extends Model
 
     public static function generateOrderNumber(): string
     {
-        return 'ORD-'.mb_strtoupper(mb_substr(uniqid(), -10));
+        return 'ORD-'.mb_strtoupper(Str::random(12));
     }
 
     /**
@@ -144,7 +144,11 @@ final class Order extends Model
 
     public function canRetryPayment(): bool
     {
-        return $this->isPending() || $this->isFailed();
+        if ($this->isPending()) {
+            return true;
+        }
+
+        return $this->isFailed();
     }
 
     // Order Status Methods

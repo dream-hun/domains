@@ -7,6 +7,7 @@ namespace App\Livewire;
 use App\Helpers\CurrencyHelper;
 use App\Models\Currency;
 use App\Services\CartPriceConverter;
+use App\Traits\CalculatesCartDiscount;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -17,6 +18,8 @@ use Throwable;
 
 final class CartTotal extends Component
 {
+    use CalculatesCartDiscount;
+
     public string $selectedCurrency = '';
 
     public string $formattedTotal = '';
@@ -25,7 +28,7 @@ final class CartTotal extends Component
 
     protected $listeners = [
         'refreshCart' => 'refreshCart',
-        'currency-changed' => 'handleCurrencyChanged',
+        'currencyChanged' => 'handleCurrencyChanged',
         'couponApplied' => 'refreshCart',
         'couponRemoved' => 'refreshCart',
     ];
@@ -55,8 +58,7 @@ final class CartTotal extends Component
 
             $this->updateFormattedTotal();
 
-            $this->dispatch('currency-changed', currency: $currency->code);
-            $this->dispatch('currencyChanged', $currency->code);
+            $this->dispatch('currencyChanged', currency: $currency->code);
         }
     }
 
@@ -75,6 +77,7 @@ final class CartTotal extends Component
         ]);
     }
 
+    #[Computed]
     public function calculateTotal(): string
     {
         $cartItems = Cart::getContent();
@@ -94,7 +97,7 @@ final class CartTotal extends Component
 
         }
 
-        $this->discountAmount = $this->calculateDiscount($subtotal);
+        $this->discountAmount = $this->calculateSessionDiscount($subtotal, $this->selectedCurrency);
         $total = max(0, $subtotal - $this->discountAmount);
 
         return CurrencyHelper::formatMoney($total, $this->selectedCurrency);
@@ -115,42 +118,6 @@ final class CartTotal extends Component
             'currencies' => Currency::getActiveCurrencies(),
             'currentCurrency' => $currentCurrency,
         ]);
-    }
-
-    /**
-     * Get the number of months for a billing cycle
-     */
-    private function getBillingCycleMonths(string $billingCycle): int
-    {
-        return match ($billingCycle) {
-            'quarterly' => 3,
-            'semi-annually' => 6,
-            'annually' => 12,
-            'biennially' => 24,
-            'triennially' => 36,
-            default => 1,
-        };
-    }
-
-    private function calculateDiscount(float $subtotal): float
-    {
-        if (! session()->has('coupon')) {
-            return 0;
-        }
-
-        $couponData = session('coupon');
-        $couponCurrency = $couponData['currency'] ?? 'USD';
-        $discountAmount = $couponData['discount_amount'] ?? 0;
-
-        // Convert discount to current currency if different
-        if ($couponCurrency !== $this->selectedCurrency) {
-            $discountAmount = CurrencyHelper::convert(
-                $discountAmount
-            );
-        }
-
-        // Ensure discount doesn't exceed subtotal
-        return min($discountAmount, $subtotal);
     }
 
     private function updateFormattedTotal(): void

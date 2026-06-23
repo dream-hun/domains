@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use ValueError;
 
 final class SubscriptionController extends Controller
 {
@@ -67,7 +68,7 @@ final class SubscriptionController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Failed to create custom subscription: '.$exception->getMessage());
+                ->with('error', 'Failed to create custom subscription. Please check the logs for details.');
         }
     }
 
@@ -274,7 +275,6 @@ final class SubscriptionController extends Controller
 
             $subscription->extendSubscription(
                 $billingCycle,
-                paidAmount: null,
                 validatePayment: false,
                 isComp: true,
                 renewalSnapshot: $renewalSnapshot
@@ -296,19 +296,19 @@ final class SubscriptionController extends Controller
                 'error' => $throwable->getMessage(),
             ]);
 
-            return back()->with('error', 'Failed to renew subscription: '.$throwable->getMessage());
+            return back()->with('error', 'Failed to renew subscription. Please check the logs for details.');
         }
     }
 
     private function resolveBillingCycle(string $cycle): BillingCycle
     {
-        foreach (BillingCycle::cases() as $case) {
-            if ($case->value === $cycle) {
-                return $case;
-            }
+        $resolved = BillingCycle::tryFrom($cycle);
+
+        if ($resolved === null) {
+            throw new ValueError(sprintf('Invalid billing cycle: "%s"', $cycle));
         }
 
-        return BillingCycle::Monthly;
+        return $resolved;
     }
 
     private function applyDateFilter(Builder $query, string $column, string $operator, string $value): void

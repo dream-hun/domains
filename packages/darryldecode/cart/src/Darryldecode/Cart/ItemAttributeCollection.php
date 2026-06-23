@@ -1,4 +1,8 @@
-<?php namespace Darryldecode\Cart;
+<?php
+
+declare(strict_types=1);
+
+namespace Darryldecode\Cart;
 
 /**
  * Created by PhpStorm.
@@ -9,11 +13,14 @@
 
 use Illuminate\Support\Collection;
 
-class ItemAttributeCollection extends Collection {
-
+class ItemAttributeCollection extends Collection
+{
     public function __get($name)
     {
-        if( $this->has($name) ) return $this->get($name);
+        if ($this->has($name)) {
+            return $this->get($name);
+        }
+
         return null;
     }
 }

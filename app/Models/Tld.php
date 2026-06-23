@@ -10,6 +10,7 @@ use App\Helpers\CurrencyHelper;
 use App\Services\PriceFormatter;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
  */
+#[Table(name: 'tld')]
 final class Tld extends Model
 {
     use HasFactory;
@@ -36,8 +38,6 @@ final class Tld extends Model
         'renew_price' => 'renew_price',
         'transfer_price' => 'transfer_price',
     ];
-
-    protected $table = 'tld';
 
     protected $with = ['currentTldPricings'];
 

@@ -198,7 +198,7 @@ final class CheckoutProcess extends Component
             return to_route('checkout.index');
 
         } catch (Exception $exception) {
-            $this->errorMessage = 'Failed to proceed to payment: '.$exception->getMessage();
+            $this->errorMessage = 'Failed to proceed to payment. Please try again or contact support.';
             Log::error('Checkout process failed', [
                 'error' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),

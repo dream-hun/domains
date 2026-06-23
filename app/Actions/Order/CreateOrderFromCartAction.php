@@ -69,7 +69,7 @@ final readonly class CreateOrderFromCartAction
             }
 
             $couponCode = $coupon['code'] ?? null;
-            $discountType = $coupon['type']['value'] ?? $coupon['type'] ?? null;
+            $discountType = is_array($coupon['type'] ?? null) ? ($coupon['type']['value'] ?? null) : ($coupon['type'] ?? null);
 
             $metadata = [];
             if (isset($contactIds['registrant'])) {

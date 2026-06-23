@@ -25,7 +25,7 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
 
     private readonly string $apiBaseUrl;
 
-    public function __construct()
+    public function __construct(private readonly CircuitBreaker $circuitBreaker = new CircuitBreaker())
     {
         $this->apiUser = config('services.namecheap.apiUser');
         $this->apiKey = config('services.namecheap.apiKey');
@@ -53,131 +53,119 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
     public function checkAvailability(array $domain): array
     {
         try {
-            $query = http_build_query([
-                'ApiUser' => $this->apiUser,
-                'ApiKey' => $this->apiKey,
-                'UserName' => $this->username,
-                'ClientIp' => $this->clientIp,
-                'Command' => 'namecheap.domains.check',
-                'DomainList' => implode(',', $domain),
-            ]);
-
-            $url = $this->apiBaseUrl.'?'.$query;
-            $response = Http::timeout(60)->get($url);
-
-            Log::info('Namecheap domain check response', [
-                'url' => $this->apiBaseUrl,
-                'body' => $response->body(),
-                'domains' => $domain,
-            ]);
-
-            if (! $response->successful()) {
-                throw new Exception('API request failed with status: '.$response->status());
-            }
-
-            throw_if(empty($response->body()), Exception::class, 'Namecheap API error: Empty response from API.');
-
-            try {
-                $xml = new SimpleXMLElement($response->body());
-            } catch (Exception $e) {
-                Log::error('Failed to parse Namecheap API XML response', [
-                    'body' => $response->body(),
-                    'error' => $e->getMessage(),
-                ]);
-                throw new Exception('Namecheap API error: Malformed XML response.', $e->getCode(), $e);
-            }
-
-            // Check for API-level errors
-            if (property_exists($xml, 'Errors') && $xml->Errors !== null && (property_exists($xml->Errors, 'Error') && $xml->Errors->Error !== null)) {
-                $errorMsg = (string) $xml->Errors->Error;
-                throw_if($errorMsg !== '' && $errorMsg !== '0', Exception::class, 'Namecheap API error: '.$errorMsg);
-            }
-
-            // Check for response status
-            if (isset($xml['Status']) && mb_strtolower((string) $xml['Status']) === 'error') {
-                $errorMsg = 'API returned error status';
-                if (property_exists($xml, 'Errors') && $xml->Errors !== null) {
-                    // Use null coalescing with a fallback string if Error is missing or empty
-                    $errorMsg = (string) ($xml->Errors->Error ?? $errorMsg);
-                }
-
-                throw new Exception('Namecheap API error: '.$errorMsg);
-            }
-
-            $results = [];
-
-            throw_if(! property_exists($xml->CommandResponse, 'DomainCheckResult') || $xml->CommandResponse->DomainCheckResult === null, Exception::class, 'Namecheap API error: Missing DomainCheckResult in response.');
-
-            $domainCheckResults = $xml->CommandResponse->DomainCheckResult;
-
-            foreach ($domainCheckResults as $result) {
-                $domainName = (string) $result['Domain'];
-                $available = mb_strtolower((string) $result['Available']) === 'true';
-
-                // Handle various error scenarios
-                $errorMessage = null;
-                if (! $available) {
-                    $errorMessage = (string) $result['ErrorMessage'];
-                    if ($errorMessage === '' || $errorMessage === '0') {
-                        $errorMessage = 'Domain not available';
-                    }
-                }
-
-                // Detect premium flags and pricing if provided by Namecheap
-                // Attribute names vary across docs; support common variants
-                $isPremium = false;
-                $premiumPrice = null;
-                $eapFee = 0.0;
-
-                $premiumFlags = [
-                    'IsPremiumName',
-                    'IsPremium',
-                    'PremiumDomain',
-                ];
-                foreach ($premiumFlags as $flag) {
-                    if (isset($result[$flag]) && mb_strtolower((string) $result[$flag]) === 'true') {
-                        $isPremium = true;
-                        break;
-                    }
-                }
-
-                $priceKeys = [
-                    'PremiumRegistrationPrice',
-                    'PremiumPrice',
-                    'PremiumRegistrationCost',
-                ];
-                foreach ($priceKeys as $key) {
-                    if (isset($result[$key]) && (string) $result[$key] !== '') {
-                        $premiumPrice = (float) $result[$key];
-                        break;
-                    }
-                }
-
-                // EAP fee if present
-                if (isset($result['EapFee']) && (string) $result['EapFee'] !== '') {
-                    $eapFee = (float) $result['EapFee'];
-                }
-
-                Log::debug('Namecheap domain check result', [
-                    'domain' => $domainName,
-                    'available' => $available,
-                    'is_premium' => $isPremium,
-                    'premium_price' => $premiumPrice,
-                    'eap_fee' => $eapFee,
-                    'raw_available' => (string) $result['Available'],
-                    'error_message' => $errorMessage,
+            return $this->circuitBreaker->call('namecheap', function () use ($domain): array {
+                $query = http_build_query([
+                    'ApiUser' => $this->apiUser,
+                    'ApiKey' => $this->apiKey,
+                    'UserName' => $this->username,
+                    'ClientIp' => $this->clientIp,
+                    'Command' => 'namecheap.domains.check',
+                    'DomainList' => implode(',', $domain),
                 ]);
 
-                $results[$domainName] = [
-                    'available' => $available,
-                    'reason' => $errorMessage ?? '',
-                    'is_premium' => $isPremium,
-                    'premium_price' => $premiumPrice,
-                    'eap_fee' => $eapFee,
-                ];
-            }
+                $url = $this->apiBaseUrl.'?'.$query;
+                $response = Http::timeout(60)->get($url);
 
-            return $results;
+                Log::info('Namecheap domain check response', [
+                    'url' => $this->apiBaseUrl,
+                    'status' => $response->status(),
+                    'domains' => $domain,
+                ]);
+
+                if (! $response->successful()) {
+                    throw new Exception('API request failed with status: '.$response->status());
+                }
+
+                throw_if(empty($response->body()), Exception::class, 'Namecheap API error: Empty response from API.');
+
+                try {
+                    $xml = new SimpleXMLElement($response->body());
+                } catch (Exception $exception) {
+                    Log::error('Failed to parse Namecheap API XML response', [
+                        'error' => $exception->getMessage(),
+                    ]);
+                    throw new Exception('Namecheap API error: Malformed XML response.', $exception->getCode(), $exception);
+                }
+
+                // Check for API-level errors
+                if (property_exists($xml, 'Errors') && $xml->Errors !== null && (property_exists($xml->Errors, 'Error') && $xml->Errors->Error !== null)) {
+                    $errorMsg = (string) $xml->Errors->Error;
+                    throw_if($errorMsg !== '' && $errorMsg !== '0', Exception::class, 'Namecheap API error: '.$errorMsg);
+                }
+
+                // Check for response status
+                if (isset($xml['Status']) && mb_strtolower((string) $xml['Status']) === 'error') {
+                    $errorMsg = 'API returned error status';
+                    if (property_exists($xml, 'Errors') && $xml->Errors !== null) {
+                        $errorMsg = (string) ($xml->Errors->Error ?? $errorMsg);
+                    }
+
+                    throw new Exception('Namecheap API error: '.$errorMsg);
+                }
+
+                $results = [];
+
+                throw_if(! property_exists($xml->CommandResponse, 'DomainCheckResult') || $xml->CommandResponse->DomainCheckResult === null, Exception::class, 'Namecheap API error: Missing DomainCheckResult in response.');
+
+                $domainCheckResults = $xml->CommandResponse->DomainCheckResult;
+
+                foreach ($domainCheckResults as $result) {
+                    $domainName = (string) $result['Domain'];
+                    $available = mb_strtolower((string) $result['Available']) === 'true';
+
+                    $errorMessage = null;
+                    if (! $available) {
+                        $errorMessage = (string) $result['ErrorMessage'];
+                        if ($errorMessage === '' || $errorMessage === '0') {
+                            $errorMessage = 'Domain not available';
+                        }
+                    }
+
+                    $isPremium = false;
+                    $premiumPrice = null;
+                    $eapFee = 0.0;
+
+                    $premiumFlags = ['IsPremiumName', 'IsPremium', 'PremiumDomain'];
+                    foreach ($premiumFlags as $flag) {
+                        if (isset($result[$flag]) && mb_strtolower((string) $result[$flag]) === 'true') {
+                            $isPremium = true;
+                            break;
+                        }
+                    }
+
+                    $priceKeys = ['PremiumRegistrationPrice', 'PremiumPrice', 'PremiumRegistrationCost'];
+                    foreach ($priceKeys as $key) {
+                        if (isset($result[$key]) && (string) $result[$key] !== '') {
+                            $premiumPrice = (float) $result[$key];
+                            break;
+                        }
+                    }
+
+                    if (isset($result['EapFee']) && (string) $result['EapFee'] !== '') {
+                        $eapFee = (float) $result['EapFee'];
+                    }
+
+                    Log::debug('Namecheap domain check result', [
+                        'domain' => $domainName,
+                        'available' => $available,
+                        'is_premium' => $isPremium,
+                        'premium_price' => $premiumPrice,
+                        'eap_fee' => $eapFee,
+                        'raw_available' => (string) $result['Available'],
+                        'error_message' => $errorMessage,
+                    ]);
+
+                    $results[$domainName] = [
+                        'available' => $available,
+                        'reason' => $errorMessage ?? '',
+                        'is_premium' => $isPremium,
+                        'premium_price' => $premiumPrice,
+                        'eap_fee' => $eapFee,
+                    ];
+                }
+
+                return $results;
+            });
         } catch (Exception $exception) {
             Log::error('Namecheap domain check error', [
                 'domains' => $domain,
@@ -185,11 +173,9 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
             ]);
             $results = [];
             foreach ($domain as $d) {
-                $serviceError = 'Service error: '.$exception->getMessage();
-
                 $results[$d] = [
                     'available' => false,
-                    'reason' => $serviceError,
+                    'reason' => 'Service error: '.$exception->getMessage(),
                 ];
             }
 
@@ -203,76 +189,68 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
     public function registerDomain(string $domain, array $contactInfo, int $years): array
     {
         try {
-            // Validate domain name
-            throw_unless($this->isValidDomainName($domain), Exception::class, 'Invalid domain name format');
+            return $this->circuitBreaker->call('namecheap', function () use ($domain, $contactInfo, $years): array {
+                throw_unless($this->isValidDomainName($domain), Exception::class, 'Invalid domain name format');
+                throw_if($years < 1 || $years > 10, Exception::class, 'Registration years must be between 1 and 10');
 
-            // Validate registration years
-            throw_if($years < 1 || $years > 10, Exception::class, 'Registration years must be between 1 and 10');
+                $this->validateContactInfo($contactInfo);
 
-            // Validate required contact information
-            $this->validateContactInfo($contactInfo);
+                $params = [
+                    'ApiUser' => $this->apiUser,
+                    'ApiKey' => $this->apiKey,
+                    'UserName' => $this->username,
+                    'ClientIp' => $this->clientIp,
+                    'Command' => 'namecheap.domains.create',
+                    'DomainName' => $domain,
+                    'Years' => $years,
+                    'AddFreeWhoisguard' => 'no',
+                    'WGEnabled' => 'no',
+                    'GenerateAdminOrderRefId' => 'false',
+                ];
 
-            // Build registration request
-            $params = [
-                'ApiUser' => $this->apiUser,
-                'ApiKey' => $this->apiKey,
-                'UserName' => $this->username,
-                'ClientIp' => $this->clientIp,
-                'Command' => 'namecheap.domains.create',
-                'DomainName' => $domain,
-                'Years' => $years,
-                'AddFreeWhoisguard' => 'no',
-                'WGEnabled' => 'no',
-                'GenerateAdminOrderRefId' => 'false',
-            ];
+                $params = $this->addContactDetails($contactInfo, $params);
 
-            $params = $this->addContactDetails($contactInfo, $params);
-            $tld = $this->extractTld($domain);
-            $params = array_merge($params, $this->getTldSpecificParams($tld));
+                $tld = $this->extractTld($domain);
+                $params = array_merge($params, $this->getTldSpecificParams($tld));
 
-            $pricing = $this->getDomainPricing($domain);
-            // Check for premium pricing keys manually since they are optional
-            $isPremium = isset($pricing['is_premium']) && $pricing['is_premium'];
+                $pricing = $this->getDomainPricing($domain);
+                $isPremium = isset($pricing['is_premium']) && $pricing['is_premium'];
 
-            if ($pricing['success'] && $isPremium) {
-                $params['IsPremiumDomain'] = 'true';
-                // Ensure we have a valid price
-                if (isset($pricing['price'])) {
-                    $params['PremiumPrice'] = $pricing['price'];
+                if ($pricing['success'] && $isPremium) {
+                    $params['IsPremiumDomain'] = 'true';
+                    if (isset($pricing['price'])) {
+                        $params['PremiumPrice'] = $pricing['price'];
+                    }
+
+                    if (isset($pricing['eap_fee']) && $pricing['eap_fee'] > 0) {
+                        $params['EapFee'] = $pricing['eap_fee'];
+                    }
                 }
 
-                if (isset($pricing['eap_fee']) && $pricing['eap_fee'] > 0) {
-                    $params['EapFee'] = $pricing['eap_fee'];
+                Log::info('Namecheap domain registration request', [
+                    'domain' => $domain,
+                    'years' => $years,
+                    'params' => array_merge($params, ['ApiKey' => '[HIDDEN]']),
+                ]);
+
+                $xml = $this->makeApiCall($params);
+
+                throw_if(! property_exists($xml->CommandResponse, 'DomainCreateResult') || $xml->CommandResponse->DomainCreateResult === null, Exception::class, 'Invalid API response: Missing DomainCreateResult');
+
+                $result = $xml->CommandResponse->DomainCreateResult;
+                if ((string) $result['Registered'] !== 'true') {
+                    $description = (string) ($result['Description'] ?? 'Unknown error');
+                    throw new Exception('Domain registration failed: '.$description);
                 }
-            }
 
-            Log::info('Namecheap domain registration request', [
-                'domain' => $domain,
-                'years' => $years,
-                'params' => array_merge($params, ['ApiKey' => '[HIDDEN]']), // Hide API key in logs
-            ]);
-            // Add premium domain pricing if applicable
-
-            // Make API call
-            $xml = $this->makeApiCall($params);
-
-            // Validate successful registration
-            throw_if(! property_exists($xml->CommandResponse, 'DomainCreateResult') || $xml->CommandResponse->DomainCreateResult === null, Exception::class, 'Invalid API response: Missing DomainCreateResult');
-
-            $result = $xml->CommandResponse->DomainCreateResult;
-            if ((string) $result['Registered'] !== 'true') {
-                $description = (string) ($result['Description'] ?? 'Unknown error');
-                throw new Exception('Domain registration failed: '.$description);
-            }
-
-            return [
-                'success' => true,
-                'domain' => $domain,
-                'message' => 'Domain registered successfully',
-                'registered' => true,
-                'orderid' => (string) ($result['OrderID'] ?? ''),
-            ];
-
+                return [
+                    'success' => true,
+                    'domain' => $domain,
+                    'message' => 'Domain registered successfully',
+                    'registered' => true,
+                    'orderid' => (string) ($result['OrderID'] ?? ''),
+                ];
+            });
         } catch (Exception $exception) {
             Log::error('Namecheap domain registration failed', [
                 'domain' => $domain,
@@ -1077,29 +1055,30 @@ class NamecheapDomainService implements DomainRegistrationServiceInterface, Doma
     public function renewDomainRegistration(string $domain, int $years): array
     {
         try {
-            $params = [
-                'ApiUser' => $this->apiUser,
-                'ApiKey' => $this->apiKey,
-                'UserName' => $this->username,
-                'ClientIp' => $this->clientIp,
-                'Command' => 'namecheap.domains.renew',
-                'DomainName' => $domain,
-                'Years' => $years,
-            ];
+            return $this->circuitBreaker->call('namecheap', function () use ($domain, $years): array {
+                $params = [
+                    'ApiUser' => $this->apiUser,
+                    'ApiKey' => $this->apiKey,
+                    'UserName' => $this->username,
+                    'ClientIp' => $this->clientIp,
+                    'Command' => 'namecheap.domains.renew',
+                    'DomainName' => $domain,
+                    'Years' => $years,
+                ];
 
-            $xml = $this->makeApiCall($params);
+                $xml = $this->makeApiCall($params);
 
-            throw_if(! property_exists($xml->CommandResponse, 'DomainRenewResult') || $xml->CommandResponse->DomainRenewResult === null, Exception::class, 'Invalid API response: Missing DomainRenewResult');
+                throw_if(! property_exists($xml->CommandResponse, 'DomainRenewResult') || $xml->CommandResponse->DomainRenewResult === null, Exception::class, 'Invalid API response: Missing DomainRenewResult');
 
-            $renewalResult = $xml->CommandResponse->DomainRenewResult;
+                $renewalResult = $xml->CommandResponse->DomainRenewResult;
 
-            return [
-                'success' => true,
-                'domain' => $domain,
-                'expiry_date' => (string) ($renewalResult['RenewedUntil'] ?? ''),
-                'message' => 'Domain renewed successfully',
-            ];
-
+                return [
+                    'success' => true,
+                    'domain' => $domain,
+                    'expiry_date' => (string) ($renewalResult['RenewedUntil'] ?? ''),
+                    'message' => 'Domain renewed successfully',
+                ];
+            });
         } catch (Exception $exception) {
             return [
                 'success' => false,

@@ -24,7 +24,6 @@ final class CategoryShow extends Component
 
     /** @var array<string, string> */
     protected $listeners = [
-        'currency-changed' => 'handleCurrencyChanged',
         'currencyChanged' => 'handleCurrencyChanged',
     ];
 

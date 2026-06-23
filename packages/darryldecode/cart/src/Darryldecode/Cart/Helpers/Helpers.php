@@ -1,4 +1,8 @@
-<?php namespace Darryldecode\Cart\Helpers;
+<?php
+
+declare(strict_types=1);
+
+namespace Darryldecode\Cart\Helpers;
 
 /**
  * Created by PhpStorm.
@@ -6,18 +10,16 @@
  * Date: 1/15/2015
  * Time: 8:09 PM
  */
-
-class Helpers {
-
+class Helpers
+{
     /**
      * normalize price
      *
-     * @param $price
      * @return float
      */
     public static function normalizePrice($price)
     {
-        return (is_string($price)) ? floatval($price) : $price;
+        return (is_string($price)) ? (float) $price : $price;
     }
 
     /**
@@ -26,53 +28,48 @@ class Helpers {
      * to decide that it is a multi dimensional, if you want to check the array strictly
      * with all on its element, flag the second argument as true
      *
-     * @param $array
-     * @param bool $recursive
+     * @param  bool  $recursive
      * @return bool
      */
     public static function isMultiArray($array, $recursive = false)
     {
-        if( $recursive )
-        {
-            return (count($array) == count($array, COUNT_RECURSIVE)) ? false : true;
+        if ($recursive) {
+            return (count($array) === count($array, COUNT_RECURSIVE)) ? false : true;
         }
-        else
-        {
-            foreach ($array as $k => $v)
-            {
-                if (is_array($v))
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+
+        foreach ($array as $k => $v) {
+            if (is_array($v)) {
+                return true;
             }
 
+            return false;
+
         }
+
     }
 
     /**
      * check if variable is set and has value, return a default value
      *
-     * @param $var
-     * @param bool|mixed $default
+     * @param  bool|mixed  $default
      * @return bool|mixed
      */
     public static function issetAndHasValueOrAssignDefault(&$var, $default = false)
     {
-        if( (isset($var)) && ($var!='') ) return $var;
+        if ((isset($var)) && ($var !== '')) {
+            return $var;
+        }
 
         return $default;
     }
 
     public static function formatValue($value, $format_numbers, $config)
     {
-        if($format_numbers && $config['format_numbers']) {
+        if ($format_numbers && $config['format_numbers']) {
             return number_format($value, $config['decimals'], $config['dec_point'], $config['thousands_sep']);
-        } else {
-            return $value;
         }
+
+        return $value;
+
     }
 }

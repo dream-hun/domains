@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'format_numbers' => true,
     'decimals' => 3,

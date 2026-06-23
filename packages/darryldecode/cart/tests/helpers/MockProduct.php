@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Darryldecode\Tests\helpers;
 
 use Illuminate\Contracts\Database\ModelIdentifier;
@@ -28,9 +31,9 @@ class MockProduct extends ModelIdentifier
     /**
      * Product constructor.
      *
-     * @param int|string $id
-     * @param string     $name
-     * @param float      $price
+     * @param  int|string  $id
+     * @param  string  $name
+     * @param  float  $price
      */
     public function __construct($id = 455, $name = 'Sample Item', $price = 100.99, $weight = 0)
     {

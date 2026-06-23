@@ -14,18 +14,25 @@ use App\Models\TldPricing;
 use App\Observers\HostingPlanPriceHistoryObserver;
 use App\Observers\PaymentObserver;
 use App\Observers\TldPricingObserver;
+use App\Services\Domain\CircuitBreaker;
+use App\Services\Domain\DomainAvailabilityCache;
 use App\Services\Domain\DomainRegistrationServiceInterface;
+use App\Services\Domain\DomainRouter;
 use App\Services\Domain\DomainServiceInterface;
 use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
+use App\Services\IdempotencyService;
 use Carbon\CarbonImmutable;
 use Exception;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,6 +40,7 @@ final class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(IdempotencyService::class);
         $this->registerDomainServices();
     }
 
@@ -61,6 +69,8 @@ final class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
+        $this->configureRateLimiters();
+
         Blade::directive('price', function (string $expression): string {
             $inner = mb_trim($expression, ' ()');
 
@@ -70,17 +80,39 @@ final class AppServiceProvider extends ServiceProvider
 
     private function registerDomainServices(): void
     {
-        $this->app->singleton(DomainSearchHelper::class, fn (Application $app): DomainSearchHelper => new DomainSearchHelper(
-            $app->make(NamecheapDomainService::class),
-            $app->make(DomainRegistrationServiceInterface::class)
+        $this->app->singleton(CircuitBreaker::class);
+        $this->app->singleton(DomainAvailabilityCache::class);
+
+        $this->app->singleton(EppDomainService::class, fn (Application $app): EppDomainService => new EppDomainService(
+            $app->make(CircuitBreaker::class),
         ));
 
-        $this->app->bind('epp_domain_service', fn (): EppDomainService => new EppDomainService());
-
-        $this->app->bind('namecheap_domain_service', fn (): NamecheapDomainService => new NamecheapDomainService());
+        $this->app->singleton(NamecheapDomainService::class, fn (Application $app): NamecheapDomainService => new NamecheapDomainService(
+            $app->make(CircuitBreaker::class),
+        ));
 
         $this->app->bind(DomainServiceInterface::class, NamecheapDomainService::class);
-
         $this->app->bind(DomainRegistrationServiceInterface::class, EppDomainService::class);
+
+        $this->app->singleton(DomainRouter::class, fn (Application $app): DomainRouter => new DomainRouter(
+            eppService: $app->make(EppDomainService::class),
+            namecheapService: $app->make(NamecheapDomainService::class),
+        ));
+
+        $this->app->singleton(DomainSearchHelper::class, fn (Application $app): DomainSearchHelper => new DomainSearchHelper(
+            $app->make(DomainRouter::class),
+            $app->make(DomainAvailabilityCache::class),
+        ));
+    }
+
+    private function configureRateLimiters(): void
+    {
+        // Domain search: 30 per minute per IP (unauthenticated) or per user
+        RateLimiter::for('domain-search', fn (Request $request): Limit => $request->user()
+            ? Limit::perMinute(60)->by($request->user()->id)
+            : Limit::perMinute(30)->by($request->ip()));
+
+        // Payment endpoints: 10 per minute per user to slow brute-force card testing
+        RateLimiter::for('payments', fn (Request $request): Limit => Limit::perMinute(10)->by($request->user()?->id ?? $request->ip()));
     }
 }

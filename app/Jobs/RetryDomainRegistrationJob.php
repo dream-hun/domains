@@ -5,27 +5,22 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Actions\RegisterDomainAction;
+use App\Models\DomainContact;
 use App\Models\FailedDomainRegistration;
 use App\Services\NotificationService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Backoff;
+use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
+#[Backoff([3600, 3600, 3600])]
+#[Tries(3)]
 final class RetryDomainRegistrationJob implements ShouldQueue
 {
-    use Queueable;
-
-    /**
-     * The number of times the job may be attempted.
-     */
-    public int $tries = 3;
-
-    /**
-     * The number of seconds to wait before retrying the job.
-     */
-    public array $backoff = [3600, 3600, 3600]; // 1hr, 1hr, 1hr
+    use Queueable; // 1hr, 1hr, 1hr
 
     /**
      * Create a new job instance.
@@ -58,14 +53,34 @@ final class RetryDomainRegistrationJob implements ShouldQueue
         ]);
 
         try {
+            $ownerId = $this->failedRegistration->order->user_id;
+            $contactIds = $this->failedRegistration->contact_ids;
+
+            // Verify every contact ID belongs to the order's user before retrying.
+            if (is_array($contactIds) && $contactIds !== []) {
+                $validIds = DomainContact::query()
+                    ->where('user_id', $ownerId)
+                    ->whereIn('id', array_values($contactIds))
+                    ->pluck('id')
+                    ->all();
+
+                $submittedIds = array_values(array_unique(array_values($contactIds)));
+                sort($submittedIds);
+                sort($validIds);
+
+                if ($submittedIds !== $validIds) {
+                    throw new Exception('One or more contact IDs do not belong to the order owner — aborting retry for security.');
+                }
+            }
+
             // Attempt registration
             $result = $registerDomainAction->handle(
                 $this->failedRegistration->domain_name,
-                $this->failedRegistration->contact_ids,
+                $contactIds,
                 $this->failedRegistration->orderItem->years,
                 [], // Use default nameservers
                 true, // Use single contact
-                $this->failedRegistration->order->user_id
+                $ownerId
             );
 
             if ($result['success']) {

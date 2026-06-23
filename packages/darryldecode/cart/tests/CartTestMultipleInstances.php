@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Created by PhpStorm.
  * User: darryl
@@ -11,19 +13,19 @@ use Mockery as m;
 
 require_once __DIR__.'/helpers/SessionMock.php';
 
-class CartTestMultipleInstances extends PHPUnit\Framework\TestCase {
-
+class CartTestMultipleInstances extends PHPUnit\Framework\TestCase
+{
     /**
-     * @var Darryldecode\Cart\Cart
+     * @var Cart
      */
     protected $cart1;
 
     /**
-     * @var Darryldecode\Cart\Cart
+     * @var Cart
      */
     protected $cart2;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         $events = m::mock('Illuminate\Contracts\Events\Dispatcher');
         $events->shouldReceive('dispatch');
@@ -33,7 +35,7 @@ class CartTestMultipleInstances extends PHPUnit\Framework\TestCase {
             $events,
             'shopping',
             'uniquesessionkey123',
-            require(__DIR__.'/helpers/configMock.php')
+            require (__DIR__.'/helpers/configMock.php')
         );
 
         $this->cart2 = new Cart(
@@ -41,11 +43,11 @@ class CartTestMultipleInstances extends PHPUnit\Framework\TestCase {
             $events,
             'wishlist',
             'uniquesessionkey456',
-            require(__DIR__.'/helpers/configMock.php')
+            require (__DIR__.'/helpers/configMock.php')
         );
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         m::close();
     }
@@ -53,29 +55,29 @@ class CartTestMultipleInstances extends PHPUnit\Framework\TestCase {
     public function test_cart_multiple_instances()
     {
         // add 3 items on cart 1
-        $itemsForCart1 = array(
-            array(
+        $itemsForCart1 = [
+            [
                 'id' => 456,
                 'name' => 'Sample Item 1',
                 'price' => 67.99,
                 'quantity' => 4,
-                'attributes' => array()
-            ),
-            array(
+                'attributes' => [],
+            ],
+            [
                 'id' => 568,
                 'name' => 'Sample Item 2',
                 'price' => 69.25,
                 'quantity' => 4,
-                'attributes' => array()
-            ),
-            array(
+                'attributes' => [],
+            ],
+            [
                 'id' => 856,
                 'name' => 'Sample Item 3',
                 'price' => 50.25,
                 'quantity' => 4,
-                'attributes' => array()
-            ),
-        );
+                'attributes' => [],
+            ],
+        ];
 
         $this->cart1->add($itemsForCart1);
 
@@ -84,15 +86,15 @@ class CartTestMultipleInstances extends PHPUnit\Framework\TestCase {
         $this->assertEquals('shopping', $this->cart1->getInstanceName(), 'Cart 1 should have instance name of "shopping"');
 
         // add 1 item on cart 2
-        $itemsForCart2 = array(
-            array(
+        $itemsForCart2 = [
+            [
                 'id' => 456,
                 'name' => 'Sample Item 1',
                 'price' => 67.99,
                 'quantity' => 4,
-                'attributes' => array()
-            ),
-        );
+                'attributes' => [],
+            ],
+        ];
 
         $this->cart2->add($itemsForCart2);
 

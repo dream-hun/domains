@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\Order\ProcessOrderAfterPaymentAction;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\IdempotencyService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Log;
 
 final class PawaPayWebhookController extends Controller
 {
+    public function __construct(private readonly IdempotencyService $idempotency) {}
+
     public function handle(Request $request): JsonResponse
     {
         try {
@@ -57,18 +60,16 @@ final class PawaPayWebhookController extends Controller
                 return response()->json(['error' => 'Order not found'], 404);
             }
 
-            if ($payment->isSuccessful() && $order->isPaid()) {
-                Log::info('PawaPay webhook: already processed', ['payment_id' => $payment->id]);
+            $idempotencyKey = 'pawapay:'.$depositId.':'.$status;
 
-                return response()->json(['status' => 'already_processed']);
-            }
-
-            match ($status) {
-                'COMPLETED' => $this->handleCompleted($payment, $order, $data),
-                'FAILED', 'TIMED_OUT' => $this->handleFailed($payment, $order, $data, (string) $status),
-                'DUPLICATE_IGNORED' => Log::info('PawaPay webhook: duplicate ignored', ['depositId' => $depositId]),
-                default => Log::info('PawaPay webhook: unhandled status', ['status' => $status, 'depositId' => $depositId]),
-            };
+            $this->idempotency->once($idempotencyKey, function () use ($payment, $order, $data, $status, $depositId): void {
+                match ($status) {
+                    'COMPLETED' => $this->handleCompleted($payment, $order, $data),
+                    'FAILED', 'TIMED_OUT' => $this->handleFailed($payment, $order, $data, (string) $status),
+                    'DUPLICATE_IGNORED' => Log::info('PawaPay webhook: duplicate ignored', ['depositId' => $depositId]),
+                    default => Log::info('PawaPay webhook: unhandled status', ['status' => $status, 'depositId' => $depositId]),
+                };
+            });
 
             return response()->json(['status' => 'ok']);
 
@@ -87,9 +88,9 @@ final class PawaPayWebhookController extends Controller
         $secret = config('services.payment.pawapay.webhook_secret');
 
         if (! $secret) {
-            Log::warning('PawaPay webhook secret not configured — skipping signature verification');
+            Log::error('PawaPay webhook secret not configured — rejecting request');
 
-            return true;
+            return false;
         }
 
         $signature = $request->header('X-PawaPay-Signature') ?? $request->header('Signature');
@@ -98,14 +99,20 @@ final class PawaPayWebhookController extends Controller
             return false;
         }
 
-        $expected = hash_hmac('sha256', $request->getContent(), $secret);
+        $expected = hash_hmac('sha256', $request->getContent(), (string) $secret);
 
         return hash_equals($expected, $signature);
     }
 
     private function handleCompleted(Payment $payment, Order $order, array $data): void
     {
-        DB::transaction(function () use ($payment, $order, $data): void {
+        DB::transaction(function () use ($payment, &$order, $data): void {
+            $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+
+            if ($order->payment_status === 'paid') {
+                return;
+            }
+
             $payment->update([
                 'status' => 'succeeded',
                 'paid_at' => now(),
@@ -143,11 +150,11 @@ final class PawaPayWebhookController extends Controller
                 'payment_id' => $payment->id,
                 'order_id' => $order->id,
             ]);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('PawaPay webhook: order processing failed', [
                 'payment_id' => $payment->id,
                 'order_id' => $order->id,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }

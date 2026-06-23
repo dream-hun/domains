@@ -10,7 +10,6 @@ use App\Models\Domain;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Subscription;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 final readonly class OrderProcessingService
@@ -41,9 +40,6 @@ final readonly class OrderProcessingService
 
             return;
         }
-
-        $records = [];
-        $now = now()->toDateTimeString();
 
         foreach ($items as $item) {
             $attributes = $item['attributes'] ?? [];
@@ -120,10 +116,9 @@ final readonly class OrderProcessingService
                 $itemMetadata['years'] = $attributes['years'];
             }
 
-            // For renewals, quantity represents years.
             $years = $itemType === 'renewal' ? $itemQuantity : ($attributes['years'] ?? $itemQuantity);
 
-            $records[] = [
+            OrderItem::query()->create([
                 'order_id' => $order->id,
                 'domain_name' => $domainName,
                 'domain_type' => $itemType,
@@ -134,13 +129,9 @@ final readonly class OrderProcessingService
                 'quantity' => $itemQuantity,
                 'years' => $years,
                 'total_amount' => $itemTotal,
-                'metadata' => json_encode($itemMetadata),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+                'metadata' => $itemMetadata,
+            ]);
         }
-
-        DB::table('order_items')->insert($records);
 
         Log::info('Created OrderItem records from order JSON', [
             'order_id' => $order->id,

@@ -1,4 +1,8 @@
-<?php namespace Darryldecode\Cart;
+<?php
+
+declare(strict_types=1);
+
+namespace Darryldecode\Cart;
 
 /**
  * Created by PhpStorm.
@@ -12,24 +16,30 @@ use Illuminate\Support\Collection;
 
 class ItemCollection extends Collection
 {
-
     /**
      * Sets the config parameters.
-     *
-     * @var
      */
     protected $config;
 
     /**
      * ItemCollection constructor.
-     * @param array|mixed $items
-     * @param $config
+     *
+     * @param  array|mixed  $items
      */
     public function __construct($items, $config = [])
     {
         parent::__construct($items);
 
         $this->config = $config;
+    }
+
+    public function __get($name)
+    {
+        if ($this->has($name) || $name === 'model') {
+            return ! is_null($this->get($name)) ? $this->get($name) : $this->getAssociatedModel();
+        }
+
+        return null;
     }
 
     /**
@@ -42,30 +52,6 @@ class ItemCollection extends Collection
         return Helpers::formatValue($this->price * $this->quantity, $this->config['format_numbers'], $this->config);
     }
 
-    public function __get($name)
-    {
-        if ($this->has($name) || $name == 'model') {
-            return !is_null($this->get($name)) ? $this->get($name) : $this->getAssociatedModel();
-        }
-        return null;
-    }
-
-    /**
-     * return the associated model of an item
-     *
-     * @return bool
-     */
-    protected function getAssociatedModel()
-    {
-        if (!$this->has('associatedModel')) {
-            return null;
-        }
-
-        $associatedModel = $this->get('associatedModel');
-
-        return with(new $associatedModel())->find($this->get('id'));
-    }
-
     /**
      * check if item has conditions
      *
@@ -73,12 +59,16 @@ class ItemCollection extends Collection
      */
     public function hasConditions()
     {
-        if (!isset($this['conditions'])) return false;
+        if (! isset($this['conditions'])) {
+            return false;
+        }
         if (is_array($this['conditions'])) {
             return count($this['conditions']) > 0;
         }
-        $conditionInstance = "Darryldecode\\Cart\\CartCondition";
-        if ($this['conditions'] instanceof $conditionInstance) return true;
+        $conditionInstance = 'Darryldecode\\Cart\\CartCondition';
+        if ($this['conditions'] instanceof $conditionInstance) {
+            return true;
+        }
 
         return false;
     }
@@ -90,13 +80,17 @@ class ItemCollection extends Collection
      */
     public function getConditions()
     {
-        if (!$this->hasConditions()) return [];
+        if (! $this->hasConditions()) {
+            return [];
+        }
+
         return $this['conditions'];
     }
 
     /**
      * get the single price in which conditions are already applied
-     * @param bool $formatted
+     *
+     * @param  bool  $formatted
      * @return mixed|null
      */
     public function getPriceWithConditions($formatted = true)
@@ -118,16 +112,34 @@ class ItemCollection extends Collection
 
             return Helpers::formatValue($newPrice, $formatted, $this->config);
         }
+
         return Helpers::formatValue($originalPrice, $formatted, $this->config);
     }
 
     /**
      * get the sum of price in which conditions are already applied
-     * @param bool $formatted
+     *
+     * @param  bool  $formatted
      * @return mixed|null
      */
     public function getPriceSumWithConditions($formatted = true)
     {
         return Helpers::formatValue($this->getPriceWithConditions(false) * $this->quantity, $formatted, $this->config);
+    }
+
+    /**
+     * return the associated model of an item
+     *
+     * @return bool
+     */
+    protected function getAssociatedModel()
+    {
+        if (! $this->has('associatedModel')) {
+            return null;
+        }
+
+        $associatedModel = $this->get('associatedModel');
+
+        return with(new $associatedModel())->find($this->get('id'));
     }
 }

@@ -6,14 +6,14 @@ namespace App\Console\Commands;
 
 use App\Jobs\FetchDomainsJob;
 use App\Services\Domain\NamecheapDomainService;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Description('Fetch domains from Namecheap')]
+#[Signature('domains:fetch')]
 final class FetchDomainsCommand extends Command
 {
-    protected $signature = 'domains:fetch';
-
-    protected $description = 'Fetch domains from Namecheap';
-
     public function handle(NamecheapDomainService $domainService): void
     {
         $this->info('Starting domain fetch...');

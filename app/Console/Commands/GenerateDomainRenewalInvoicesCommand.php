@@ -5,25 +5,15 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Services\DomainInvoiceGenerationService;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Description('Generate renewal invoices for domains due for renewal')]
+#[Signature('domains:generate-renewal-invoices
+                            {--days=7 : Number of days before renewal to generate invoice}')]
 final class GenerateDomainRenewalInvoicesCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'domains:generate-renewal-invoices
-                            {--days=7 : Number of days before renewal to generate invoice}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Generate renewal invoices for domains due for renewal';
-
     /**
      * Execute the console command.
      */

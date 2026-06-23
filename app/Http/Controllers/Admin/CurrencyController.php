@@ -17,6 +17,7 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 final class CurrencyController extends Controller
@@ -67,7 +68,9 @@ final class CurrencyController extends Controller
 
             return to_route('admin.currencies.index')->with('success', 'Currency deleted successfully.');
         } catch (Exception $exception) {
-            return to_route('admin.currencies.index')->with('error', $exception->getMessage());
+            Log::error('Failed to delete currency', ['currency_id' => $currency->id, 'error' => $exception->getMessage()]);
+
+            return to_route('admin.currencies.index')->with('error', 'Failed to delete currency. It may be in use.');
         }
     }
 }

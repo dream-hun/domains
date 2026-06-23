@@ -70,7 +70,7 @@ test('home TLD component updates prices when currency changes', function (): voi
     expect($htmlUsd)->toContain('12');
 
     session(['selected_currency' => 'RWF']);
-    $component->dispatch('currency-changed', currency: 'RWF');
+    $component->dispatch('currencyChanged', currency: 'RWF');
     $htmlRwf = $component->html();
     expect($htmlRwf)->toContain('15');
 });

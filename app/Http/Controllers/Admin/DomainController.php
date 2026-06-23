@@ -447,7 +447,7 @@ final class DomainController extends Controller
                 'error' => $exception->getMessage(),
             ]);
 
-            return back()->withErrors(['error' => 'Failed to reactivate domain: '.$exception->getMessage()]);
+            return back()->withErrors(['error' => 'Failed to reactivate domain. Please check the logs for details.']);
         }
     }
 

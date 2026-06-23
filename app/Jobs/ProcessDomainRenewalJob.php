@@ -10,36 +10,60 @@ use App\Models\Domain;
 use App\Models\Order;
 use App\Notifications\DomainAutoRenewalFailedNotification;
 use App\Notifications\DomainRenewalNotification;
+use App\Services\IdempotencyService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Backoff;
+use Illuminate\Queue\Attributes\Timeout;
+use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Support\Facades\Log;
 
+#[Backoff(60)]
+#[Timeout(120)]
+#[Tries(3)]
 final class ProcessDomainRenewalJob implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * The number of times the job may be attempted.
-     */
-    public int $tries = 3;
-
-    /**
-     * The number of seconds to wait before retrying the job.
-     */
-    public int $backoff = 60;
-
-    /**
-     * Create a new job instance.
-     */
     public function __construct(
         public Order $order
-    ) {}
+    ) {
+        $this->onQueue('critical');
+    }
 
     /**
      * Execute the job.
      */
-    public function handle(RenewDomainAction $renewAction): void
+    public function handle(RenewDomainAction $renewAction, IdempotencyService $idempotency): void
+    {
+        $idempotency->once('domain-renewal:order-'.$this->order->id, function () use ($renewAction): void {
+            $this->process($renewAction);
+        });
+    }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(?Exception $exception): void
+    {
+        Log::error('ProcessDomainRenewalJob failed after all retries', [
+            'order_id' => $this->order->id,
+            'order_number' => $this->order->order_number,
+            'error' => $exception?->getMessage() ?? 'Unknown error',
+        ]);
+
+        // Update order status to failed
+        $this->order->update([
+            'status' => 'failed',
+            'notes' => 'Renewal processing failed after multiple attempts: '.($exception?->getMessage() ?? 'Unknown error'),
+        ]);
+
+        // TODO: Send notification to admin about failed job
+        // TODO: Consider creating a support ticket
+    }
+
+    private function process(RenewDomainAction $renewAction): void
     {
         try {
             $this->notifyUserRenewalProcessing();
@@ -64,15 +88,8 @@ final class ProcessDomainRenewalJob implements ShouldQueue
                     continue;
                 }
 
-                // Get domain ID from attributes (where it's stored for renewals)
-                // Fallback to item ID if domain_id is not in attributes (for backward compatibility)
-                $domainId = $item['attributes']['domain_id'] ?? $item['id'];
+                $domainId = $this->resolveDomainIdFromItem($item);
                 $years = $item['attributes']['years'] ?? $item['quantity'];
-
-                // If domain_id is still a string like "renewal-6", extract the numeric part
-                if (is_string($domainId) && str_starts_with($domainId, 'renewal-')) {
-                    $domainId = (int) str_replace('renewal-', '', $domainId);
-                }
 
                 // Find the domain (bypass global scopes since we're in a job context)
                 $domain = Domain::query()->withoutGlobalScopes()->find($domainId);
@@ -161,27 +178,6 @@ final class ProcessDomainRenewalJob implements ShouldQueue
     }
 
     /**
-     * Handle a job failure.
-     */
-    public function failed(?Exception $exception): void
-    {
-        Log::error('ProcessDomainRenewalJob failed after all retries', [
-            'order_id' => $this->order->id,
-            'order_number' => $this->order->order_number,
-            'error' => $exception?->getMessage() ?? 'Unknown error',
-        ]);
-
-        // Update order status to failed
-        $this->order->update([
-            'status' => 'failed',
-            'notes' => 'Renewal processing failed after multiple attempts: '.($exception?->getMessage() ?? 'Unknown error'),
-        ]);
-
-        // TODO: Send notification to admin about failed job
-        // TODO: Consider creating a support ticket
-    }
-
-    /**
      * @return array<int, array{name: string, years: int}>
      */
     private function renewalItems(): array
@@ -198,6 +194,17 @@ final class ProcessDomainRenewalJob implements ShouldQueue
             })
             ->values()
             ->all();
+    }
+
+    private function resolveDomainIdFromItem(array $item): int
+    {
+        $id = $item['attributes']['domain_id'] ?? $item['id'];
+
+        if (is_string($id) && str_starts_with($id, 'renewal-')) {
+            $id = (int) str_replace('renewal-', '', $id);
+        }
+
+        return (int) $id;
     }
 
     /**

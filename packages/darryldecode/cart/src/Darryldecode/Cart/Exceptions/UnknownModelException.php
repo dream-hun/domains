@@ -1,6 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Darryldecode\Cart\Exceptions;
 
-class UnknownModelException extends \Exception
-{ }
+use Exception;
+
+class UnknownModelException extends Exception {}

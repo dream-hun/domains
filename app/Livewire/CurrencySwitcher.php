@@ -67,7 +67,6 @@ final class CurrencySwitcher extends Component
             'currency_code' => $currencyCode,
         ]);
 
-        $this->dispatch('currency-changed', currency: $currencyCode);
         $this->dispatch('currencyChanged', currency: $currencyCode);
         $this->dispatch('refreshCart');
     }

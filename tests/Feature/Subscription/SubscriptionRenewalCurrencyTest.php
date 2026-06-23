@@ -20,7 +20,7 @@ uses(RefreshDatabase::class);
 // ---------------------------------------------------------------------------
 
 test('getRenewalPriceInCurrency returns the stored price for the requested currency', function (): void {
-    $rwf = Currency::where('code', 'RWF')->firstOrFail();
+    $rwf = Currency::query()->where('code', 'RWF')->firstOrFail();
     $plan = HostingPlan::factory()->create();
 
     HostingPlanPrice::factory()->create([
@@ -41,7 +41,7 @@ test('getRenewalPriceInCurrency returns the stored price for the requested curre
 });
 
 test('getRenewalPriceInCurrency falls back to the base price when no row exists for the currency', function (): void {
-    $usd = Currency::where('code', 'USD')->firstOrFail();
+    $usd = Currency::query()->where('code', 'USD')->firstOrFail();
     $plan = HostingPlan::factory()->create();
 
     $usdPrice = HostingPlanPrice::factory()->create([
@@ -80,7 +80,7 @@ test('getRenewalPriceInCurrency returns custom_price regardless of requested cur
 // ---------------------------------------------------------------------------
 
 test('getMonthlyRenewalPrice returns monthly plan price in the requested currency', function (): void {
-    $rwf = Currency::where('code', 'RWF')->firstOrFail();
+    $rwf = Currency::query()->where('code', 'RWF')->firstOrFail();
     $plan = HostingPlan::factory()->create();
 
     HostingPlanPrice::factory()->create([
@@ -116,7 +116,7 @@ test('getMonthlyRenewalPrice divides custom annual price by 12 for monthly equiv
 // ---------------------------------------------------------------------------
 
 test('extendSubscription accepts a valid non-USD payment matched to the stored currency price', function (): void {
-    $rwf = Currency::where('code', 'RWF')->firstOrFail();
+    $rwf = Currency::query()->where('code', 'RWF')->firstOrFail();
     $plan = HostingPlan::factory()->create();
 
     HostingPlanPrice::factory()->create([
@@ -144,7 +144,7 @@ test('extendSubscription accepts a valid non-USD payment matched to the stored c
 });
 
 test('extendSubscription rejects a USD amount when the invoice was in RWF', function (): void {
-    $rwf = Currency::where('code', 'RWF')->firstOrFail();
+    $rwf = Currency::query()->where('code', 'RWF')->firstOrFail();
     $plan = HostingPlan::factory()->create();
 
     HostingPlanPrice::factory()->create([
@@ -174,7 +174,7 @@ test('extendSubscription rejects a USD amount when the invoice was in RWF', func
 // ---------------------------------------------------------------------------
 
 test('extendSubscriptionByMonths accepts correct multi-month total in non-USD currency', function (): void {
-    $rwf = Currency::where('code', 'RWF')->firstOrFail();
+    $rwf = Currency::query()->where('code', 'RWF')->firstOrFail();
     $plan = HostingPlan::factory()->create();
 
     HostingPlanPrice::factory()->create([
@@ -201,7 +201,7 @@ test('extendSubscriptionByMonths accepts correct multi-month total in non-USD cu
 });
 
 test('extendSubscriptionByMonths rejects an underpayment in non-USD currency', function (): void {
-    $rwf = Currency::where('code', 'RWF')->firstOrFail();
+    $rwf = Currency::query()->where('code', 'RWF')->firstOrFail();
     $plan = HostingPlan::factory()->create();
 
     HostingPlanPrice::factory()->create([
@@ -228,7 +228,7 @@ test('extendSubscriptionByMonths rejects an underpayment in non-USD currency', f
 // ---------------------------------------------------------------------------
 
 test('SubscriptionRenewalService renews successfully when the order item is in a non-USD currency', function (): void {
-    $rwf = Currency::where('code', 'RWF')->firstOrFail();
+    $rwf = Currency::query()->where('code', 'RWF')->firstOrFail();
     $plan = HostingPlan::factory()->create();
 
     $rwfPrice = HostingPlanPrice::factory()->create([
@@ -275,7 +275,7 @@ test('SubscriptionRenewalService renews successfully when the order item is in a
 });
 
 test('SubscriptionRenewalService fails when the paid amount does not match the stored RWF price', function (): void {
-    $rwf = Currency::where('code', 'RWF')->firstOrFail();
+    $rwf = Currency::query()->where('code', 'RWF')->firstOrFail();
     $plan = HostingPlan::factory()->create();
 
     $rwfPrice = HostingPlanPrice::factory()->create([

@@ -9,9 +9,7 @@ use App\Models\Domain;
 use App\Models\Nameserver;
 use App\Models\Tld;
 use App\Notifications\DomainRegisteredNotification;
-use App\Services\Domain\DomainRegistrationServiceInterface;
-use App\Services\Domain\EppDomainService;
-use App\Services\Domain\NamecheapDomainService;
+use App\Services\Domain\DomainRouter;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -19,15 +17,9 @@ use Throwable;
 
 readonly class RegisterDomainAction
 {
-    private DomainRegistrationServiceInterface $eppDomainService;
-
-    private DomainRegistrationServiceInterface $namecheapDomainService;
-
-    public function __construct()
-    {
-        $this->eppDomainService = resolve('epp_domain_service');
-        $this->namecheapDomainService = resolve('namecheap_domain_service');
-    }
+    public function __construct(
+        private DomainRouter $domainRouter,
+    ) {}
 
     /**
      * Register a domain using the appropriate service based on TLD
@@ -39,13 +31,13 @@ readonly class RegisterDomainAction
                 return [
                     'success' => false,
                     'message' => 'Cannot create domain: No user ID provided and no authenticated user found.',
-                    'service' => $this->inferServiceName($domainName),
+                    'service' => $this->domainRouter->serviceName($domainName),
                 ];
             }
 
             $serviceName = null;
-            $domainService = $this->getDomainService($domainName);
-            $serviceName = $domainService === $this->eppDomainService ? 'EPP' : 'Namecheap';
+            $domainService = $this->domainRouter->resolveForDomain($domainName);
+            $serviceName = $this->domainRouter->serviceName($domainName);
 
             Log::info(sprintf('Starting domain registration with %s service', $serviceName), [
                 'domain' => $domainName,
@@ -56,7 +48,7 @@ readonly class RegisterDomainAction
 
             $processedContacts = $this->processContactsForService($contactInfo, $useSingleContact);
             // Prepare contacts for the specific domain service
-            $serviceContacts = $this->ensureContactsInEppRegistry($domainService, $processedContacts);
+            $serviceContacts = $this->ensureContactsInEppRegistry($processedContacts, $domainName);
 
             $result = $domainService->registerDomain($domainName, $serviceContacts, $years);
 
@@ -123,48 +115,36 @@ readonly class RegisterDomainAction
     }
 
     /**
-     * Determine which domain service to use based on TLD
-     */
-    private function getDomainService(string $domainName): DomainRegistrationServiceInterface
-    {
-        $tld = $this->extractTld($domainName);
-        if (mb_strtolower($tld) === '.rw') {
-            return $this->eppDomainService;
-        }
-
-        return $this->namecheapDomainService;
-    }
-
-    private function inferServiceName(string $domainName): string
-    {
-        return mb_strtolower($this->extractTld($domainName)) === '.rw' ? 'EPP' : 'Namecheap';
-    }
-
-    /**
      * Process contacts for the specific service
      */
     private function processContactsForService(
         array $contactInfo,
         bool $useSingleContact
     ): array {
-        $processedContacts = [];
+        $types = ['registrant', 'admin', 'technical', 'billing'];
 
         if ($useSingleContact && isset($contactInfo['registrant'])) {
-            $registrantContact = $contactInfo['registrant'];
-            foreach (['registrant', 'admin', 'technical', 'billing'] as $type) {
-                $processedContacts[$type] = $registrantContact;
+            return array_fill_keys($types, $contactInfo['registrant']);
+        }
+
+        $processedContacts = [];
+        foreach ($types as $type) {
+            if (isset($contactInfo[$type])) {
+                $processedContacts[$type] = $contactInfo[$type];
             }
-        } else {
-            foreach (['registrant', 'admin', 'technical', 'billing'] as $type) {
-                if (isset($contactInfo[$type])) {
-                    $processedContacts[$type] = $contactInfo[$type];
-                } else {
-                    $processedContacts[$type] = $processedContacts['registrant'] ??
-                        $processedContacts['admin'] ??
-                        $processedContacts['technical'] ??
-                        $processedContacts['billing'];
-                }
-            }
+        }
+
+        // Resolve a fallback for any missing contact type in a single pass
+        // after all provided contacts are collected, avoiding the sequential
+        // null-propagation bug from the previous loop-based approach.
+        $fallback = $processedContacts['registrant']
+            ?? $processedContacts['admin']
+            ?? $processedContacts['technical']
+            ?? $processedContacts['billing']
+            ?? null;
+
+        foreach ($types as $type) {
+            $processedContacts[$type] ??= $fallback;
         }
 
         return $processedContacts;
@@ -175,20 +155,13 @@ readonly class RegisterDomainAction
      *
      * @throws Exception
      */
-    private function ensureContactsInEppRegistry(DomainRegistrationServiceInterface $domainService, array $contacts): array
+    private function ensureContactsInEppRegistry(array $contacts, string $domainName): array
     {
-        // For EPP service, ensure contacts exist in EPP registry and return contact_ids
-        if ($domainService instanceof EppDomainService) {
+        if ($this->domainRouter->isLocalTld($domainName)) {
             return $this->prepareEppContacts($contacts);
         }
 
-        // For Namecheap service, return full contact data arrays
-        if ($domainService instanceof NamecheapDomainService) {
-            return $this->prepareNamecheapContacts($contacts);
-        }
-
-        // Default: return contacts as-is
-        return $contacts;
+        return $this->prepareNamecheapContacts($contacts);
     }
 
     /**
@@ -274,7 +247,7 @@ readonly class RegisterDomainAction
      */
     private function createDomainRecord(string $domainName, int $years, array $contacts, ?int $userId = null): Domain
     {
-        $tldString = $this->extractTld($domainName);
+        $tldString = $this->domainRouter->extractTld($domainName);
         $tld = Tld::query()
             ->with(['currentTldPricings' => fn (mixed $q) => $q->with('currency')])
             ->where('name', $tldString)
@@ -369,16 +342,6 @@ readonly class RegisterDomainAction
     }
 
     /**
-     * Extract TLD from domain name
-     */
-    private function extractTld(string $domainName): string
-    {
-        $parts = explode('.', $domainName);
-
-        return '.'.end($parts);
-    }
-
-    /**
      * Create a contact in the EPP registry
      *
      * @throws Exception
@@ -419,8 +382,7 @@ readonly class RegisterDomainAction
             'email' => $contact->email,
         ];
 
-        // Create contact in EPP registry using the EPP service
-        $result = $this->eppDomainService->createContacts($eppContactData);
+        $result = $this->domainRouter->eppService()->createContacts($eppContactData);
 
         if (empty($result['contact_id'])) {
             throw new Exception('Failed to create contact in EPP registry: '.($result['message'] ?? 'Unknown error'));

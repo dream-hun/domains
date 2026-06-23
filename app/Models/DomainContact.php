@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
@@ -17,13 +19,11 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property-read Domain $domain
  * @property-read User|null $user
  */
+#[Table(name: 'domain_contacts')]
+#[WithoutTimestamps]
 final class DomainContact extends Pivot
 {
     use HasFactory;
-
-    public $timestamps = false;
-
-    protected $table = 'domain_contacts';
 
     protected $guarded = [];
 

@@ -6,6 +6,7 @@ namespace App\Livewire;
 
 use App\Helpers\CurrencyHelper;
 use App\Services\CartPriceConverter;
+use App\Traits\CalculatesCartDiscount;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
 use Illuminate\Contracts\View\Factory;
@@ -18,6 +19,8 @@ use Throwable;
 
 final class CartSummary extends Component
 {
+    use CalculatesCartDiscount;
+
     public string $currency;
 
     public float $discountAmount = 0;
@@ -59,7 +62,7 @@ final class CartSummary extends Component
             $subtotal = 0;
         }
 
-        $this->discountAmount = $this->calculateDiscount($subtotal);
+        $this->discountAmount = $this->calculateSessionDiscount($subtotal, $this->currency);
         $total = max(0, $subtotal - $this->discountAmount);
 
         return CurrencyHelper::formatMoney($total, $this->currency);
@@ -74,45 +77,5 @@ final class CartSummary extends Component
     public function render(): Factory|Application|View|\Illuminate\View\View
     {
         return view('livewire.cart-summary');
-    }
-
-    /**
-     * Calculate discount from session coupon data
-     */
-    private function calculateDiscount(float $subtotal): float
-    {
-        if (! session()->has('coupon')) {
-            return 0;
-        }
-
-        $couponData = session('coupon');
-        $couponCurrency = $couponData['currency'] ?? 'USD';
-        $discountAmount = $couponData['discount_amount'] ?? 0;
-
-        if ($couponCurrency !== $this->currency) {
-            try {
-                $discountAmount = CurrencyHelper::convert(
-                    $discountAmount
-                );
-            } catch (Exception) {
-
-                $type = $couponData['type'] ?? 'percentage';
-                $value = $couponData['value'] ?? 0;
-
-                if ($type === 'percentage') {
-                    $discountAmount = $subtotal * ($value / 100);
-                } elseif ($type === 'fixed') {
-                    try {
-                        $discountAmount = CurrencyHelper::convert(
-                            $value
-                        );
-                    } catch (Exception) {
-                        $discountAmount = $value;
-                    }
-                }
-            }
-        }
-
-        return min($discountAmount, $subtotal);
     }
 }

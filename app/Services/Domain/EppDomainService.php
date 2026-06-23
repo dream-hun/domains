@@ -55,7 +55,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
         'separators' => ['', '-', '.', '_'],
     ];
 
-    public function __construct()
+    public function __construct(private readonly CircuitBreaker $circuitBreaker = new CircuitBreaker())
     {
         $this->config = config('services.epp', []);
     }
@@ -80,24 +80,26 @@ class EppDomainService implements DomainRegistrationServiceInterface
     public function checkAvailability(array $domains): array
     {
         try {
-            $results = $this->checkDomain($domains);
-            $formattedResults = [];
+            return $this->circuitBreaker->call('epp', function () use ($domains): array {
+                $results = $this->checkDomain($domains);
+                $formattedResults = [];
 
-            foreach ($domains as $domain) {
-                if (isset($results[$domain])) {
-                    $formattedResults[$domain] = [
-                        'available' => $results[$domain]->available ?? false,
-                        'reason' => $results[$domain]->reason ?? 'Domain check completed',
-                    ];
-                } else {
-                    $formattedResults[$domain] = [
-                        'available' => false,
-                        'reason' => 'Domain check failed',
-                    ];
+                foreach ($domains as $domain) {
+                    if (isset($results[$domain])) {
+                        $formattedResults[$domain] = [
+                            'available' => $results[$domain]->available ?? false,
+                            'reason' => $results[$domain]->reason ?? 'Domain check completed',
+                        ];
+                    } else {
+                        $formattedResults[$domain] = [
+                            'available' => false,
+                            'reason' => 'Domain check failed',
+                        ];
+                    }
                 }
-            }
 
-            return $formattedResults;
+                return $formattedResults;
+            });
         } catch (Exception $exception) {
             Log::error('Domain availability check failed', [
                 'domains' => $domains,
@@ -186,43 +188,44 @@ class EppDomainService implements DomainRegistrationServiceInterface
     public function registerDomain(string $domain, array $contactInfo, int $years): array
     {
         try {
-            $this->ensureConnection();
+            return $this->circuitBreaker->call('epp', function () use ($domain, $contactInfo, $years): array {
+                $this->ensureConnection();
 
-            $registrantContactId = $contactInfo['registrant'] ?? null;
-            $adminContactId = $contactInfo['admin'] ?? null;
-            $technicalContactId = $contactInfo['technical'] ?? null;
-            $billingContactId = $contactInfo['billing'] ?? null;
+                $registrantContactId = $contactInfo['registrant'] ?? null;
+                $adminContactId = $contactInfo['admin'] ?? null;
+                $technicalContactId = $contactInfo['technical'] ?? null;
+                $billingContactId = $contactInfo['billing'] ?? null;
 
-            throw_if(! $registrantContactId || ! $adminContactId || ! $technicalContactId || ! $billingContactId, Exception::class, 'All contact IDs are required for domain registration');
+                throw_if(! $registrantContactId || ! $adminContactId || ! $technicalContactId || ! $billingContactId, Exception::class, 'All contact IDs are required for domain registration');
 
-            // Create domain frame using existing contact IDs
-            $period = $years.'y';
-            $nameservers = $contactInfo['nameservers'] ?? ['ns1.example.com', 'ns2.example.com'];
+                // Create domain frame using existing contact IDs
+                $period = $years.'y';
+                $nameservers = $contactInfo['nameservers'] ?? ['ns1.example.com', 'ns2.example.com'];
 
-            $frame = $this->createDomain(
-                $domain,
-                $period,
-                $nameservers,
-                $registrantContactId,
-                $adminContactId,
-                $technicalContactId,
-                $billingContactId
-            );
+                $frame = $this->createDomain(
+                    $domain,
+                    $period,
+                    $nameservers,
+                    $registrantContactId,
+                    $adminContactId,
+                    $technicalContactId,
+                    $billingContactId
+                );
 
-            // Send registration request
-            $response = $this->client->request($frame);
+                // Send registration request
+                $response = $this->client->request($frame);
 
-            if (! $response || ! $response->success()) {
-                $message = $response ? $response->message() : 'Unknown error';
-                throw new Exception('Domain registration failed: '.$message);
-            }
+                if (! $response || ! $response->success()) {
+                    $message = $response ? $response->message() : 'Unknown error';
+                    throw new Exception('Domain registration failed: '.$message);
+                }
 
-            return [
-                'success' => true,
-                'domain' => $domain,
-                'message' => 'Domain registered successfully with EPP registry',
-            ];
-
+                return [
+                    'success' => true,
+                    'domain' => $domain,
+                    'message' => 'Domain registered successfully with EPP registry',
+                ];
+            });
         } catch (Exception $exception) {
             Log::error('Domain registration failed', [
                 'domain' => $domain,
@@ -246,51 +249,52 @@ class EppDomainService implements DomainRegistrationServiceInterface
     public function renewDomainRegistration(string $domain, int $years): array
     {
         try {
-            $this->ensureConnection();
+            return $this->circuitBreaker->call('epp', function () use ($domain, $years): array {
+                $this->ensureConnection();
 
-            // Get current domain info
-            $domainInfo = $this->getDomainInfo($domain);
-            if (! $domainInfo['success']) {
-                $message = $domainInfo['message'] ?? 'Unknown error';
-                throw new Exception('Failed to get domain information: '.$message);
-            }
+                // Get current domain info
+                $domainInfo = $this->getDomainInfo($domain);
+                if (! $domainInfo['success']) {
+                    $message = $domainInfo['message'] ?? 'Unknown error';
+                    throw new Exception('Failed to get domain information: '.$message);
+                }
 
-            // Use expiry_date from domain info - this is the exact format expected by the registry
-            $currentExpiry = $domainInfo['expiry_date'] ?? null;
-            throw_unless($currentExpiry, Exception::class, 'Failed to get current expiry date from domain info');
+                // Use expiry_date from domain info - this is the exact format expected by the registry
+                $currentExpiry = $domainInfo['expiry_date'] ?? null;
+                throw_unless($currentExpiry, Exception::class, 'Failed to get current expiry date from domain info');
 
-            $period = $years.'y';
+                $period = $years.'y';
 
-            // Create renewal frame
-            $frame = $this->renewDomain($domain, $currentExpiry, $period);
+                // Create renewal frame
+                $frame = $this->renewDomain($domain, $currentExpiry, $period);
 
-            // Send renewal request
-            $response = $this->client->request($frame);
+                // Send renewal request
+                $response = $this->client->request($frame);
 
-            if (! $response || ! $response->success()) {
-                $message = $response ? $response->message() : 'Unknown error';
-                throw new Exception('Domain renewal failed: '.$message);
-            }
+                if (! $response || ! $response->success()) {
+                    $message = $response ? $response->message() : 'Unknown error';
+                    throw new Exception('Domain renewal failed: '.$message);
+                }
 
-            // Update domain record in database
-            $domainModel = Domain::query()->where('name', $domain)->first();
+                // Update domain record in database
+                $domainModel = Domain::query()->where('name', $domain)->first();
 
-            if ($domainModel) {
-                $domainModel->update([
-                    'expires_at' => $domainModel->expires_at->addYears($years),
-                    'last_renewed_at' => now(),
-                ]);
-            }
+                if ($domainModel) {
+                    $domainModel->update([
+                        'expires_at' => $domainModel->expires_at->addYears($years),
+                        'last_renewed_at' => now(),
+                    ]);
+                }
 
-            $newExpiry = ($domainModel !== null && $domainModel->expires_at !== null) ? $domainModel->expires_at : now()->addYears($years);
+                $newExpiry = ($domainModel !== null && $domainModel->expires_at !== null) ? $domainModel->expires_at : now()->addYears($years);
 
-            return [
-                'success' => true,
-                'domain' => $domain,
-                'expiry_date' => $newExpiry->format('Y-m-d'),
-                'message' => 'Domain renewed successfully',
-            ];
-
+                return [
+                    'success' => true,
+                    'domain' => $domain,
+                    'expiry_date' => $newExpiry->format('Y-m-d'),
+                    'message' => 'Domain renewed successfully',
+                ];
+            });
         } catch (Exception $exception) {
             Log::error('Domain renewal failed', [
                 'domain' => $domain,
@@ -1364,7 +1368,7 @@ class EppDomainService implements DomainRegistrationServiceInterface
                 if ($checkResponse->code() === 1000) {
 
                     $responseXml = (string) $checkResponse;
-                    if (mb_strpos($responseXml, '<host:name avail="1">') !== false && mb_strpos($ns, $domain) !== false) {
+                    if (str_contains($responseXml, '<host:name avail="1">') && str_contains($ns, $domain)) {
                         Log::info('Creating subordinate host: '.$ns);
 
                         $createFrame = new CreateHost;

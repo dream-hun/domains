@@ -8,7 +8,7 @@ use App\Livewire\DomainSearchPage;
 use App\Models\Currency;
 use App\Models\Tld;
 use App\Models\TldPricing;
-use App\Services\Domain\DomainRegistrationServiceInterface;
+use App\Services\Domain\EppDomainService;
 use App\Services\Domain\NamecheapDomainService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -141,7 +141,7 @@ test('domain search returns connection error message when EPP server is unreacha
         'status' => TldStatus::Active,
     ]);
 
-    $this->mock(DomainRegistrationServiceInterface::class)
+    $this->mock(EppDomainService::class)
         ->shouldReceive('searchDomains')
         ->andThrow(new ConnectionException('Connection timed out'));
 

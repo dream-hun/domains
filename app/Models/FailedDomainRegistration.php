@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,23 +28,22 @@ use Illuminate\Support\Carbon;
  * @property-read Order $order
  * @property-read OrderItem $orderItem
  */
+#[Fillable([
+    'order_id',
+    'order_item_id',
+    'domain_name',
+    'failure_reason',
+    'retry_count',
+    'max_retries',
+    'last_attempted_at',
+    'next_retry_at',
+    'resolved_at',
+    'status',
+    'contact_ids',
+])]
 final class FailedDomainRegistration extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'order_id',
-        'order_item_id',
-        'domain_name',
-        'failure_reason',
-        'retry_count',
-        'max_retries',
-        'last_attempted_at',
-        'next_retry_at',
-        'resolved_at',
-        'status',
-        'contact_ids',
-    ];
 
     public function order(): BelongsTo
     {

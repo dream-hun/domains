@@ -13,6 +13,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Notifications\SubscriptionAutoRenewalFailedNotification;
+use App\Services\IdempotencyService;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ use Throwable;
 
 final class StripeWebhookController extends Controller
 {
-    public function __construct()
+    public function __construct(private readonly IdempotencyService $idempotency)
     {
         Stripe::setApiKey(config('services.payment.stripe.secret_key'));
     }
@@ -60,19 +61,20 @@ final class StripeWebhookController extends Controller
                 'event_id' => $event->id,
             ]);
 
-            // Handle the event
-            match ($event->type) {
-                'checkout.session.completed' => $this->handleCheckoutSessionCompleted($event->data->object),
-                'payment_intent.succeeded' => $this->handlePaymentIntentSucceeded($event->data->object),
-                'payment_intent.payment_failed' => $this->handlePaymentIntentFailed($event->data->object),
-                'charge.refunded' => $this->handleChargeRefunded($event->data->object),
-                'charge.succeeded' => $this->handleChargeSucceeded($event->data->object),
-                'charge.updated' => $this->handleChargeUpdated($event->data->object),
-                'invoice.payment_succeeded' => $this->handleInvoicePaymentSucceeded($event->data->object),
-                'invoice.payment_failed' => $this->handleInvoicePaymentFailed($event->data->object),
-                'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event->data->object),
-                default => Log::info('Unhandled webhook event type', ['type' => $event->type]),
-            };
+            $this->idempotency->once('stripe:'.$event->id, function () use ($event): void {
+                match ($event->type) {
+                    'checkout.session.completed' => $this->handleCheckoutSessionCompleted($event->data->object),
+                    'payment_intent.succeeded' => $this->handlePaymentIntentSucceeded($event->data->object),
+                    'payment_intent.payment_failed' => $this->handlePaymentIntentFailed($event->data->object),
+                    'charge.refunded' => $this->handleChargeRefunded($event->data->object),
+                    'charge.succeeded' => $this->handleChargeSucceeded($event->data->object),
+                    'charge.updated' => $this->handleChargeUpdated($event->data->object),
+                    'invoice.payment_succeeded' => $this->handleInvoicePaymentSucceeded($event->data->object),
+                    'invoice.payment_failed' => $this->handleInvoicePaymentFailed($event->data->object),
+                    'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event->data->object),
+                    default => Log::info('Unhandled webhook event type', ['type' => $event->type]),
+                };
+            });
 
             return response('Webhook handled', 200);
 

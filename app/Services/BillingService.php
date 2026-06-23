@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Helpers\CurrencyHelper;
-use App\Livewire\CartComponent;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
-use Darryldecode\Cart\Facades\CartFacade as Cart;
+use App\Services\Cart\CartPreparationService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +16,10 @@ use Throwable;
 
 final readonly class BillingService
 {
+    public function __construct(
+        private CartPreparationService $cartPreparationService,
+    ) {}
+
     /**
      * Create an order from cart items
      *
@@ -143,15 +146,8 @@ final readonly class BillingService
         }
 
         Log::info('Preparing cart data from Cart facade for order creation');
-        $cartItems = Cart::getContent();
 
-        throw_if($cartItems->isEmpty(), Exception::class, 'Cart is empty');
-
-        // Instantiate CartComponent to use its prepareCartForPayment method
-        $cartComponent = new CartComponent;
-        $cartComponent->mount();
-
-        return $cartComponent->prepareCartForPayment();
+        return $this->cartPreparationService->buildFromCartFacade();
     }
 
     /**

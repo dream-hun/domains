@@ -9,6 +9,20 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+const TEST_PAWAPAY_WEBHOOK_SECRET = 'test-webhook-secret';
+
+beforeEach(function (): void {
+    config(['services.payment.pawapay.webhook_secret' => TEST_PAWAPAY_WEBHOOK_SECRET]);
+});
+
+function pawaPayWebhookPost(mixed $test, string $route, array $payload): Illuminate\Testing\TestResponse
+{
+    $body = json_encode($payload);
+    $signature = hash_hmac('sha256', $body, TEST_PAWAPAY_WEBHOOK_SECRET);
+
+    return $test->postJson($route, $payload, ['X-PawaPay-Signature' => $signature]);
+}
+
 test('webhook marks payment as succeeded on COMPLETED status', function (): void {
     $user = User::factory()->create();
     $order = Order::factory()->pending()->create(['user_id' => $user->id]);
@@ -20,7 +34,7 @@ test('webhook marks payment as succeeded on COMPLETED status', function (): void
         'pawapay_deposit_id' => 'test-deposit-123',
     ]);
 
-    $response = $this->postJson(route('webhooks.pawapay'), [
+    $response = pawaPayWebhookPost($this, route('webhooks.pawapay'), [
         'depositId' => 'test-deposit-123',
         'status' => 'COMPLETED',
         'amount' => '5000',
@@ -49,7 +63,7 @@ test('webhook marks payment as failed on FAILED status', function (): void {
         'pawapay_deposit_id' => 'test-deposit-456',
     ]);
 
-    $response = $this->postJson(route('webhooks.pawapay'), [
+    $response = pawaPayWebhookPost($this, route('webhooks.pawapay'), [
         'depositId' => 'test-deposit-456',
         'status' => 'FAILED',
     ]);
@@ -74,7 +88,7 @@ test('webhook marks payment as failed on TIMED_OUT status', function (): void {
         'pawapay_deposit_id' => 'test-deposit-789',
     ]);
 
-    $this->postJson(route('webhooks.pawapay'), [
+    pawaPayWebhookPost($this, route('webhooks.pawapay'), [
         'depositId' => 'test-deposit-789',
         'status' => 'TIMED_OUT',
     ])->assertStatus(200);
@@ -84,7 +98,7 @@ test('webhook marks payment as failed on TIMED_OUT status', function (): void {
 });
 
 test('webhook returns 404 for unknown deposit ID', function (): void {
-    $this->postJson(route('webhooks.pawapay'), [
+    pawaPayWebhookPost($this, route('webhooks.pawapay'), [
         'depositId' => 'nonexistent-deposit',
         'status' => 'COMPLETED',
     ])->assertStatus(404);
@@ -100,17 +114,17 @@ test('webhook is idempotent for already processed payments', function (): void {
         'pawapay_deposit_id' => 'test-deposit-idempotent',
     ]);
 
-    $response = $this->postJson(route('webhooks.pawapay'), [
+    $response = pawaPayWebhookPost($this, route('webhooks.pawapay'), [
         'depositId' => 'test-deposit-idempotent',
         'status' => 'COMPLETED',
     ]);
 
     $response->assertStatus(200);
-    $response->assertJsonFragment(['status' => 'already_processed']);
+    $response->assertJsonFragment(['status' => 'ok']);
 });
 
 test('webhook returns 400 when depositId is missing', function (): void {
-    $this->postJson(route('webhooks.pawapay'), [
+    pawaPayWebhookPost($this, route('webhooks.pawapay'), [
         'status' => 'COMPLETED',
     ])->assertStatus(400);
 });
@@ -126,7 +140,7 @@ test('webhook handles DUPLICATE_IGNORED status without error', function (): void
         'pawapay_deposit_id' => 'test-deposit-dup',
     ]);
 
-    $this->postJson(route('webhooks.pawapay'), [
+    pawaPayWebhookPost($this, route('webhooks.pawapay'), [
         'depositId' => 'test-deposit-dup',
         'status' => 'DUPLICATE_IGNORED',
     ])->assertStatus(200)->assertJsonFragment(['status' => 'ok']);

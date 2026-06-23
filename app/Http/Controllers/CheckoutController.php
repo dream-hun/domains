@@ -75,9 +75,7 @@ final class CheckoutController extends Controller
             return redirect()->away($session->url);
 
         } catch (Exception $exception) {
-            if ($paymentAttempt !== null) {
-                $this->failPaymentAttempt($paymentAttempt, $exception->getMessage());
-            }
+            $this->failPaymentAttempt($paymentAttempt, $exception->getMessage());
 
             if ($order !== null) {
                 $this->transactionLogger->logFailure(
@@ -104,6 +102,9 @@ final class CheckoutController extends Controller
      */
     public function success(Request $request, string $order): RedirectResponse
     {
+        $orderNumber = $order;
+        $orderModel = null;
+
         try {
             $sessionId = $request->query('session_id');
 
@@ -113,17 +114,17 @@ final class CheckoutController extends Controller
             }
 
             // Retrieve the order with eager loaded relationships to avoid N+1 queries
-            $order = Order::query()
+            $orderModel = Order::query()
                 ->with('orderItems')
-                ->where('order_number', $order)
+                ->where('order_number', $orderNumber)
                 ->firstOrFail();
 
             // Verify order belongs to current user
-            abort_if($order->user_id !== auth()->id(), 403);
+            abort_if($orderModel->user_id !== auth()->id(), 403);
 
             $session = Session::retrieve($sessionId);
 
-            $paymentAttempt = $order->payments()
+            $paymentAttempt = $orderModel->payments()
                 ->where(function (Builder $query) use ($sessionId, $session): void {
                     $query->where('stripe_session_id', $sessionId);
 
@@ -137,15 +138,15 @@ final class CheckoutController extends Controller
 
             if (! $paymentAttempt) {
                 Log::warning('Checkout success without matching payment attempt', [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
+                    'order_id' => $orderModel->id,
+                    'order_number' => $orderModel->order_number,
                     'session_id' => $sessionId,
                     'payment_intent' => $session->payment_intent,
                 ]);
             }
 
             if ($session->payment_status !== 'paid') {
-                $this->markPaymentAttemptFailed($order, $sessionId, $session->last_payment_error->message ?? 'Payment was not successful.');
+                $this->markPaymentAttemptFailed($orderModel, $sessionId, $session->last_payment_error->message ?? 'Payment was not successful.');
 
                 return to_route('checkout.cancel')
                     ->with('error', 'Payment was not successful.');
@@ -154,50 +155,56 @@ final class CheckoutController extends Controller
             DB::beginTransaction();
 
             try {
-                $order->update([
-                    'payment_status' => 'paid',
-                    'status' => 'processing',
-                    'processed_at' => now(),
-                    'stripe_payment_intent_id' => $session->payment_intent,
-                ]);
+                $orderModel = Order::query()->lockForUpdate()->findOrFail($orderModel->id);
 
-                if ($paymentAttempt && ! $paymentAttempt->isSuccessful()) {
-                    $paymentAttempt->update([
-                        'status' => 'succeeded',
+                if ($orderModel->payment_status === 'paid') {
+                    DB::commit();
+                } else {
+                    $orderModel->update([
+                        'payment_status' => 'paid',
+                        'status' => 'processing',
+                        'processed_at' => now(),
                         'stripe_payment_intent_id' => $session->payment_intent,
-                        'paid_at' => now(),
-                        'metadata' => array_merge($paymentAttempt->metadata ?? [], [
-                            'stripe_payment_status' => $session->payment_status,
-                        ]),
-                        'last_attempted_at' => now(),
                     ]);
-                }
 
-                DB::commit();
+                    if ($paymentAttempt && ! $paymentAttempt->isSuccessful()) {
+                        $paymentAttempt->update([
+                            'status' => 'succeeded',
+                            'stripe_payment_intent_id' => $session->payment_intent,
+                            'paid_at' => now(),
+                            'metadata' => array_merge($paymentAttempt->metadata ?? [], [
+                                'stripe_payment_status' => $session->payment_status,
+                            ]),
+                            'last_attempted_at' => now(),
+                        ]);
+                    }
+
+                    DB::commit();
+                }
 
                 // Process order after payment (idempotent)
                 $processOrderAction = resolve(ProcessOrderAfterPaymentAction::class);
-                $processOrderAction->handle($order, [], true);
+                $processOrderAction->handle($orderModel, [], true);
 
-                $order->refresh();
+                $orderModel->refresh();
                 $paymentAttempt?->refresh();
 
                 $this->transactionLogger->logSuccess(
-                    order: $order,
+                    order: $orderModel,
                     method: 'stripe',
                     transactionId: (string) $session->payment_intent,
-                    amount: (float) ($paymentAttempt->amount ?? $order->total_amount),
+                    amount: (float) ($paymentAttempt->amount ?? $orderModel->total_amount),
                     payment: $paymentAttempt
                 );
 
                 Log::info('Renewal order completed', [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'user_id' => $order->user_id,
+                    'order_id' => $orderModel->id,
+                    'order_number' => $orderModel->order_number,
+                    'user_id' => $orderModel->user_id,
                 ]);
 
-                $message = $this->getSuccessMessage($order);
-                $redirectUrl = $this->orderProcessingService->getServiceDetailsRedirectUrl($order);
+                $message = $this->getSuccessMessage($orderModel);
+                $redirectUrl = $this->orderProcessingService->getServiceDetailsRedirectUrl($orderModel);
 
                 return redirect($redirectUrl)
                     ->with('success', $message);
@@ -213,11 +220,13 @@ final class CheckoutController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            $this->markPaymentAttemptFailed(
-                $order,
-                (string) $request->query('session_id', ''),
-                $exception->getMessage()
-            );
+            if ($orderModel instanceof Order) {
+                $this->markPaymentAttemptFailed(
+                    $orderModel,
+                    (string) $request->query('session_id', ''),
+                    $exception->getMessage()
+                );
+            }
 
             return to_route('dashboard')
                 ->with('error', 'An error occurred while processing your payment.');

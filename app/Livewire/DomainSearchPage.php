@@ -31,7 +31,6 @@ final class DomainSearchPage extends Component
     public bool $isSearching = false;
 
     protected $listeners = [
-        'currency-changed' => 'handleCurrencyChanged',
         'currencyChanged' => 'handleCurrencyChanged',
     ];
 

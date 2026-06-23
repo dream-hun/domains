@@ -7,27 +7,17 @@ namespace App\Console\Commands;
 use App\Models\Domain;
 use App\Notifications\DomainExpiringNotification;
 use Exception;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
 
+#[Description('Check for expiring domains and send reminder notifications')]
+#[Signature('domains:check-expiring
+                            {--days=7 : Number of days before expiry to send notification}')]
 final class CheckExpiringDomainsCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'domains:check-expiring
-                            {--days=7 : Number of days before expiry to send notification}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Check for expiring domains and send reminder notifications';
-
     /**
      * Execute the console command.
      */

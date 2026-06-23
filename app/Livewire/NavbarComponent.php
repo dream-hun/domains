@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Traits\CalculatesCartDiscount;
 use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -14,6 +15,7 @@ use Livewire\Component;
 
 final class NavbarComponent extends Component
 {
+    use CalculatesCartDiscount;
     use HasCurrency;
 
     public string $selectedCurrency = '';
@@ -24,7 +26,7 @@ final class NavbarComponent extends Component
 
     protected $listeners = [
         'refreshCart' => 'refreshCart',
-        'currency-changed' => 'handleCurrencyChanged',
+        'currencyChanged' => 'handleCurrencyChanged',
         'couponApplied' => 'refreshCart',
         'couponRemoved' => 'refreshCart',
     ];
@@ -71,7 +73,7 @@ final class NavbarComponent extends Component
         }
 
         // Apply discount from session if coupon is applied
-        $this->discountAmount = $this->calculateDiscount($subtotal);
+        $this->discountAmount = $this->calculateSessionDiscount($subtotal, $this->selectedCurrency);
         $total = max(0, $subtotal - $this->discountAmount);
 
         return $this->formatCurrency($total, $this->selectedCurrency);
@@ -86,50 +88,6 @@ final class NavbarComponent extends Component
     public function render(): Factory|View
     {
         return view('livewire.navbar-component');
-    }
-
-    private function calculateDiscount(float $subtotal): float
-    {
-        if (! session()->has('coupon')) {
-            return 0;
-        }
-
-        $couponData = session('coupon');
-        $couponCurrency = $couponData['currency'] ?? 'USD';
-        $discountAmount = $couponData['discount_amount'] ?? 0;
-
-        // Convert discount to current currency if different
-        if ($couponCurrency !== $this->selectedCurrency) {
-            try {
-                $discountAmount = $this->convertCurrency(
-                    $discountAmount,
-                    $couponCurrency,
-                    $this->selectedCurrency
-                );
-            } catch (Exception) {
-                // Fallback to recalculating discount
-                $type = $couponData['type'] ?? 'percentage';
-                $value = $couponData['value'] ?? 0;
-
-                if ($type === 'percentage') {
-                    $discountAmount = $subtotal * ($value / 100);
-                } elseif ($type === 'fixed') {
-                    // Convert fixed amount to current currency
-                    try {
-                        $discountAmount = $this->convertCurrency(
-                            $value,
-                            $couponCurrency,
-                            $this->selectedCurrency
-                        );
-                    } catch (Exception) {
-                        $discountAmount = $value;
-                    }
-                }
-            }
-        }
-
-        // Ensure discount doesn't exceed subtotal
-        return min($discountAmount, $subtotal);
     }
 
     private function updateFormattedTotal(): void

@@ -8,6 +8,7 @@ use App\Enums\Hosting\HostingPlanPriceStatus;
 use App\Enums\Hosting\HostingPlanStatus;
 use App\Models\HostingPlan;
 use App\Models\HostingPlanPrice;
+use App\Traits\CalculatesCartDiscount;
 use App\Traits\HasCurrency;
 use Darryldecode\Cart\Facades\CartFacade as Cart;
 use Exception;
@@ -19,6 +20,7 @@ use Livewire\Component;
 
 final class HostingUpsell extends Component
 {
+    use CalculatesCartDiscount;
     use HasCurrency;
 
     public array $plans = [];
@@ -284,21 +286,5 @@ final class HostingUpsell extends Component
                 'prices' => $prices->all(),
             ];
         })->all();
-    }
-
-    /**
-     * Get billing cycle duration in months
-     */
-    private function getBillingCycleMonths(string $billingCycle): int
-    {
-        return match ($billingCycle) {
-            'monthly' => 1,
-            'quarterly' => 3,
-            'semi-annually' => 6,
-            'annually' => 12,
-            'biennially' => 24,
-            'triennially' => 36,
-            default => 1,
-        };
     }
 }

@@ -17,8 +17,8 @@ final readonly class PawaPayService
 
     public function __construct()
     {
-        $this->baseUrl = config('services.payment.pawapay.base_url') ?? '';
-        $this->token = config('services.payment.pawapay.token') ?? '';
+        $this->baseUrl = (string) (config('services.payment.pawapay.base_url') ?? '');
+        $this->token = (string) (config('services.payment.pawapay.token') ?? '');
     }
 
     // -------------------------------------------------------
@@ -68,7 +68,7 @@ final readonly class PawaPayService
 
         return $this->client()
             ->post('/v2/deposits', $payload)
-            ->throwIfServerError()
+            ->throw()
             ->json();
     }
 
@@ -79,7 +79,7 @@ final readonly class PawaPayService
     public function checkDepositStatus(string $depositId): array
     {
         return $this->client()
-            ->get("/v2/deposits/$depositId")
+            ->get('/v2/deposits/'.$depositId)
             ->throw()
             ->json();
     }
@@ -123,7 +123,7 @@ final readonly class PawaPayService
     public function checkPayoutStatus(string $payoutId): array
     {
         return $this->client()
-            ->get("/v2/payouts/$payoutId")
+            ->get('/v2/payouts/'.$payoutId)
             ->throw()
             ->json();
     }
@@ -135,7 +135,7 @@ final readonly class PawaPayService
     public function cancelEnqueuedPayout(string $payoutId): array
     {
         return $this->client()
-            ->post("/v2/payouts/fail-enqueued/$payoutId")
+            ->post('/v2/payouts/fail-enqueued/'.$payoutId)
             ->throw()
             ->json();
     }
@@ -170,7 +170,7 @@ final readonly class PawaPayService
     public function checkRefundStatus(string $refundId): array
     {
         return $this->client()
-            ->get("/v2/refunds/$refundId")
+            ->get('/v2/refunds/'.$refundId)
             ->throw()
             ->json();
     }

@@ -7,6 +7,8 @@ namespace App\Models;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -28,26 +30,24 @@ use Throwable;
  * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $unreadNotifications
  * @property-read string $name
  */
+#[Fillable([
+    'uuid',
+    'first_name',
+    'last_name',
+    'email',
+    'password',
+    'client_code',
+    'stripe_id',
+])]
+#[Hidden([
+    'client_code',
+    'password',
+    'remember_token',
+])]
 final class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory;
     use Notifiable;
-
-    protected $fillable = [
-        'uuid',
-        'first_name',
-        'last_name',
-        'email',
-        'password',
-        'client_code',
-        'stripe_id',
-    ];
-
-    protected $hidden = [
-        'client_code',
-        'password',
-        'remember_token',
-    ];
 
     /**
      * @throws Exception|Throwable

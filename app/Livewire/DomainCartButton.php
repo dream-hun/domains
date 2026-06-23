@@ -26,7 +26,7 @@ final class DomainCartButton extends Component
 
     public string $currency;
 
-    protected $listeners = ['refreshCart' => '$refresh', 'currency-changed' => 'updateCurrency', 'currencyChanged' => 'updateCurrency'];
+    protected $listeners = ['refreshCart' => '$refresh', 'currencyChanged' => 'updateCurrency'];
 
     public function mount(string $domain, mixed $price, bool $available = true, mixed $domainPrice = null, ?string $currency = null, ?int $tldId = null): void
     {

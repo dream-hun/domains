@@ -9,6 +9,7 @@ use App\Helpers\CurrencyHelper;
 use Carbon\CarbonInterface;
 use Database\Factories\HostingPlanPriceFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,12 +30,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
  */
+#[Table(name: 'hosting_plan_pricing')]
 class HostingPlanPrice extends Model
 {
     /** @use HasFactory<HostingPlanPriceFactory> */
     use HasFactory;
-
-    protected $table = 'hosting_plan_pricing';
 
     protected $guarded = [];
 

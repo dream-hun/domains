@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Database\Factories\HostingFeatureFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,24 +28,23 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read FeatureCategory|null $featureCategory
  */
+#[Fillable([
+    'uuid',
+    'name',
+    'slug',
+    'description',
+    'icon',
+    'category',
+    'feature_category_id',
+    'value_type',
+    'unit',
+    'sort_order',
+    'is_highlighted',
+])]
 class HostingFeature extends Model
 {
     /** @use HasFactory<HostingFeatureFactory> */
     use HasFactory;
-
-    protected $fillable = [
-        'uuid',
-        'name',
-        'slug',
-        'description',
-        'icon',
-        'category',
-        'feature_category_id',
-        'value_type',
-        'unit',
-        'sort_order',
-        'is_highlighted',
-    ];
 
     protected $casts = [
         'is_highlighted' => 'boolean',

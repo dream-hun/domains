@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,11 +27,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
  */
+#[Table(name: 'tld_pricing')]
 class TldPricing extends Model
 {
     use HasFactory;
-
-    protected $table = 'tld_pricing';
 
     protected $guarded = [];
 
