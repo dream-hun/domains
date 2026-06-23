@@ -97,7 +97,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'admin', 'as' =>
     Route::resource('permissions', PermissionsController::class);
     Route::resource('roles', RolesController::class);
     Route::resource('users', UsersController::class);
-    Route::resource('prices', TldController::class)->except(['show']);
+    // Note: 'tlds' resource (line above) covers all TLD routes; 'prices' alias removed to avoid duplicate.
     Route::resource('currencies', CurrencyController::class);
     Route::resource('settings', SettingController::class);
     Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');

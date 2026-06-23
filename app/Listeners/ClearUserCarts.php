@@ -17,34 +17,42 @@ final class ClearUserCarts
      */
     public function handle(ExchangeRatesUpdated $event): void
     {
-        $sessions = DB::table('sessions')->select(['id', 'payload'])->get();
         $clearedCount = 0;
 
-        foreach ($sessions as $session) {
-            try {
-                $payload = unserialize(base64_decode((string) $session->payload, true));
-                if (! is_array($payload)) {
-                    continue;
+        DB::table('sessions')
+            ->select(['id', 'payload'])
+            ->orderBy('id')
+            ->chunk(500, function ($sessions) use (&$clearedCount): void {
+                $updates = [];
+
+                foreach ($sessions as $session) {
+                    try {
+                        $decoded = base64_decode((string) $session->payload, true);
+                        if ($decoded === false) {
+                            continue;
+                        }
+
+                        $payload = unserialize($decoded);
+                        if (! is_array($payload) || ! isset($payload['cart'])) {
+                            continue;
+                        }
+
+                        unset($payload['cart'], $payload['coupon']);
+
+                        $updates[] = [
+                            'id' => $session->id,
+                            'payload' => base64_encode(serialize($payload)),
+                        ];
+                        $clearedCount++;
+                    } catch (Exception) {
+                        continue;
+                    }
                 }
 
-                if (! isset($payload['cart'])) {
-                    continue;
+                if ($updates !== []) {
+                    DB::table('sessions')->upsert($updates, ['id'], ['payload']);
                 }
-
-                // Remove cart and related data
-                unset($payload['cart'], $payload['coupon']);
-
-                // Save updated session
-                DB::table('sessions')
-                    ->where('id', $session->id)
-                    ->update(['payload' => base64_encode(serialize($payload))]);
-
-                $clearedCount++;
-            } catch (Exception) {
-                // Skip invalid sessions
-                continue;
-            }
-        }
+            });
 
         Log::info(sprintf('Cleared carts from %d user sessions after exchange rate update', $clearedCount), [
             'currencies_updated' => $event->updatedCount,

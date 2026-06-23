@@ -52,13 +52,13 @@ final class Tld extends Model
     }
 
     /**
-     * Current (active) pricing rows per currency.
+     * Current (active) pricing rows per currency, with currency eagerly loaded.
      *
      * @return HasMany<TldPricing, static>
      */
     public function currentTldPricings(): HasMany
     {
-        return $this->hasMany(TldPricing::class)->current();
+        return $this->hasMany(TldPricing::class)->with('currency')->current();
     }
 
     public function isLocalTld(): bool

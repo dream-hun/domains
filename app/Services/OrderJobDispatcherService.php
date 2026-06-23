@@ -24,7 +24,15 @@ final readonly class OrderJobDispatcherService
     {
         $this->orderProcessingService->createOrderItemsFromJson($order);
 
-        if (! in_array($order->type, ['renewal', 'subscription_renewal'], true) && $contactIds !== []) {
+        // Single query replaces 3 separate EXISTS checks.
+        $itemTypes = $order->orderItems()
+            ->whereIn('domain_type', ['hosting', 'renewal', 'subscription_renewal'])
+            ->distinct()
+            ->pluck('domain_type');
+
+        $isRenewalOrder = in_array($order->type, ['renewal', 'subscription_renewal'], true);
+
+        if (! $isRenewalOrder && $contactIds !== []) {
             dispatch(new ProcessDomainRegistrationJob($order, $contactIds));
             Log::info('Dispatched domain registration job', [
                 'order_id' => $order->id,
@@ -32,11 +40,7 @@ final readonly class OrderJobDispatcherService
             ]);
         }
 
-        $hasHostingItems = $order->orderItems()
-            ->where('domain_type', 'hosting')
-            ->exists();
-
-        if ($hasHostingItems && ! in_array($order->type, ['renewal', 'subscription_renewal'], true)) {
+        if (! $isRenewalOrder && $itemTypes->contains('hosting')) {
             dispatch(new ProcessSubscriptionActivationJob($order));
             Log::info('Dispatched subscription activation job', [
                 'order_id' => $order->id,
@@ -44,47 +48,17 @@ final readonly class OrderJobDispatcherService
             ]);
         }
 
-        if ($this->orderHasRenewalItems($order)) {
-            $this->dispatchRenewalJobs($order);
-        }
-    }
-
-    /**
-     * Whether the order has any domain or subscription renewal items (supports mixed renewal orders)
-     */
-    private function orderHasRenewalItems(Order $order): bool
-    {
-        return $order->orderItems()
-            ->whereIn('domain_type', ['renewal', 'subscription_renewal'])
-            ->exists();
-    }
-
-    /**
-     * Dispatch renewal jobs based on order item types (not order type)
-     * Supports mixed orders: dispatches both jobs when order contains both domain and subscription renewals.
-     * Renewal jobs are processed synchronously to ensure immediate processing after payment.
-     */
-    private function dispatchRenewalJobs(Order $order): void
-    {
-        $hasDomainRenewals = $order->orderItems()
-            ->where('domain_type', 'renewal')
-            ->exists();
-
-        $hasSubscriptionRenewals = $order->orderItems()
-            ->where('domain_type', 'subscription_renewal')
-            ->exists();
-
-        if ($hasDomainRenewals) {
-            dispatch_sync(new ProcessDomainRenewalJob($order));
-            Log::info('Processed domain renewal job synchronously', [
+        if ($itemTypes->contains('renewal')) {
+            dispatch(new ProcessDomainRenewalJob($order));
+            Log::info('Dispatched domain renewal job', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
             ]);
         }
 
-        if ($hasSubscriptionRenewals) {
-            dispatch_sync(new ProcessSubscriptionRenewalJob($order));
-            Log::info('Processed subscription renewal job synchronously', [
+        if ($itemTypes->contains('subscription_renewal')) {
+            dispatch(new ProcessSubscriptionRenewalJob($order));
+            Log::info('Dispatched subscription renewal job', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
             ]);

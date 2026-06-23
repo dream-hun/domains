@@ -8,6 +8,7 @@ enum OrderStatus: string
 {
     case Paid = 'paid';
     case Pending = 'pending';
+    case Processing = 'processing';
     case Failed = 'failed';
     case Cancelled = 'cancelled';
     case Refunded = 'refunded';

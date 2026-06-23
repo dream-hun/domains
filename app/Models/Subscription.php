@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Hosting\BillingCycle;
-use App\Helpers\CurrencyHelper;
 use Exception;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -130,17 +129,57 @@ class Subscription extends Model
     }
 
     /**
-     * Get renewal price in specified currency
+     * Get renewal price in the specified currency.
+     * Looks up the stored per-currency price from HostingPlanPrice; falls back to the base price.
      */
     public function getRenewalPriceInCurrency(string $currency): float
     {
-        $basePrice = $this->getRenewalPrice();
-
-        if ($currency === 'USD') {
-            return $basePrice;
+        if ($this->is_custom_price && $this->custom_price !== null) {
+            return (float) $this->custom_price;
         }
 
-        return CurrencyHelper::convert($basePrice);
+        $planPrice = HostingPlanPrice::query()
+            ->where('hosting_plan_id', $this->hosting_plan_id)
+            ->where('billing_cycle', $this->billing_cycle->value)
+            ->where('is_current', true)
+            ->whereHas('currency', fn (Builder $q) => $q->where('code', $currency))
+            ->first();
+
+        if ($planPrice instanceof HostingPlanPrice) {
+            return $planPrice->getPriceInBaseCurrency('renewal_price');
+        }
+
+        return $this->getRenewalPrice();
+    }
+
+    /**
+     * Get the per-month renewal price in the specified currency.
+     * Prefers an exact currency match; falls back to any active monthly price in one query.
+     */
+    public function getMonthlyRenewalPrice(string $currency = 'USD'): float
+    {
+        if ($this->is_custom_price && $this->custom_price !== null) {
+            $price = (float) $this->custom_price;
+
+            return $this->billing_cycle === BillingCycle::Monthly
+                ? $price
+                : $price / $this->billing_cycle->toMonths();
+        }
+
+        $planPrice = HostingPlanPrice::query()
+            ->join('currencies', 'hosting_plan_pricing.currency_id', '=', 'currencies.id')
+            ->where('hosting_plan_pricing.hosting_plan_id', $this->hosting_plan_id)
+            ->where('hosting_plan_pricing.billing_cycle', BillingCycle::Monthly->value)
+            ->where('hosting_plan_pricing.status', 'active')
+            ->orderByRaw('CASE WHEN currencies.code = ? THEN 0 ELSE 1 END', [$currency])
+            ->select('hosting_plan_pricing.*')
+            ->first();
+
+        if ($planPrice instanceof HostingPlanPrice) {
+            return $planPrice->getPriceInBaseCurrency('renewal_price');
+        }
+
+        return $this->getRenewalPriceInCurrency($currency) / $this->billing_cycle->toMonths();
     }
 
     /**
@@ -217,29 +256,7 @@ class Subscription extends Model
         ?string $paidCurrency = null
     ): void {
         if ($validatePayment && $paidAmount !== null && ! $isComp) {
-            if ($this->is_custom_price && $this->custom_price !== null) {
-                // getRenewalPrice() handles currency conversion for custom prices
-                $expectedAmount = $this->getRenewalPrice();
-            } else {
-                $planPrice = HostingPlanPrice::query()
-                    ->with('currency')
-                    ->where('hosting_plan_id', $this->hosting_plan_id)
-                    ->where('billing_cycle', $billingCycle->value)
-                    ->where('status', 'active')
-                    ->first();
-
-                if (! $planPrice) {
-                    throw new Exception(
-                        sprintf('No active pricing found for plan %s with billing cycle %s', $this->hosting_plan_id, $billingCycle->value)
-                    );
-                }
-
-                $expectedAmount = $planPrice->getPriceInBaseCurrency('renewal_price');
-            }
-
-            if ($paidCurrency !== null && $paidCurrency !== 'USD') {
-                $paidAmount = CurrencyHelper::convert($paidAmount);
-            }
+            $expectedAmount = $this->resolveExpectedRenewalPrice($billingCycle, $paidCurrency ?? 'USD');
 
             if (abs($paidAmount - $expectedAmount) > 0.01) {
                 throw new Exception(
@@ -310,25 +327,9 @@ class Subscription extends Model
         ?string $paidCurrency = null
     ): void {
         if ($paidAmount !== null && ! $isComp) {
-            if ($this->is_custom_price && $this->custom_price !== null) {
-                // getRenewalPrice() returns price in USD and handles currency conversion
-                $renewalPrice = $this->getRenewalPrice();
-
-                // If billing cycle is annual, divide by 12 to get monthly price
-                // If monthly, use the price directly
-                $expectedMonthlyPrice = $this->billing_cycle === BillingCycle::Monthly ? $renewalPrice : $renewalPrice / 12;
-            } else {
-                $expectedMonthlyPrice = $this->getRenewalPrice();
-            }
-
+            $expectedMonthlyPrice = $this->getMonthlyRenewalPrice($paidCurrency ?? 'USD');
             $expectedTotalAmount = $expectedMonthlyPrice * $months;
 
-            if ($paidCurrency !== null && $paidCurrency !== 'USD') {
-                $paidAmount = CurrencyHelper::convert($paidAmount);
-            }
-
-            // Use a more lenient tolerance (0.50) to account for currency conversion rounding
-            // Currency conversions can introduce small rounding differences (typically 0.01-0.05)
             $tolerance = 0.50;
             $difference = abs($paidAmount - $expectedTotalAmount);
 
@@ -385,5 +386,35 @@ class Subscription extends Model
     {
         return $query->where('auto_renew', true)
             ->where('status', 'active');
+    }
+
+    /**
+     * Resolve the expected renewal price for a given billing cycle in the specified currency.
+     * Prefers an exact currency match; falls back to any active price for the cycle in one query.
+     *
+     * @throws Exception
+     */
+    private function resolveExpectedRenewalPrice(BillingCycle $billingCycle, string $currency): float
+    {
+        if ($this->is_custom_price && $this->custom_price !== null) {
+            return (float) $this->custom_price;
+        }
+
+        $planPrice = HostingPlanPrice::query()
+            ->join('currencies', 'hosting_plan_pricing.currency_id', '=', 'currencies.id')
+            ->where('hosting_plan_pricing.hosting_plan_id', $this->hosting_plan_id)
+            ->where('hosting_plan_pricing.billing_cycle', $billingCycle->value)
+            ->where('hosting_plan_pricing.status', 'active')
+            ->orderByRaw('CASE WHEN currencies.code = ? THEN 0 ELSE 1 END', [$currency])
+            ->select('hosting_plan_pricing.*')
+            ->first();
+
+        if (! $planPrice instanceof HostingPlanPrice) {
+            throw new Exception(
+                sprintf('No active pricing found for plan %s with billing cycle %s', $this->hosting_plan_id, $billingCycle->value)
+            );
+        }
+
+        return $planPrice->getPriceInBaseCurrency('renewal_price');
     }
 }

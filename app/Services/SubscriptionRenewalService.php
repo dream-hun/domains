@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\Hosting\BillingCycle;
-use App\Helpers\CurrencyHelper;
 use App\Models\HostingPlanPrice;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -30,12 +29,23 @@ final readonly class SubscriptionRenewalService
 
         $order->load('orderItems');
 
-        /** @var OrderItem $orderItem */
-        foreach ($order->orderItems as $orderItem) {
-            if ($orderItem->domain_type !== 'subscription_renewal') {
-                continue;
-            }
+        $renewalItems = $order->orderItems->filter(
+            fn (OrderItem $item): bool => $item->domain_type === 'subscription_renewal'
+        );
 
+        // Pre-load all referenced subscriptions in one query to avoid N+1.
+        $subscriptionIds = $renewalItems
+            ->map(fn (OrderItem $item) => $item->metadata['subscription_id'] ?? null)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $subscriptions = Subscription::query()
+            ->findMany($subscriptionIds)
+            ->keyBy('id');
+
+        /** @var OrderItem $orderItem */
+        foreach ($renewalItems as $orderItem) {
             $subscriptionId = $orderItem->metadata['subscription_id'] ?? null;
 
             if (! $subscriptionId) {
@@ -51,7 +61,7 @@ final readonly class SubscriptionRenewalService
                 continue;
             }
 
-            $subscription = Subscription::query()->find($subscriptionId);
+            $subscription = $subscriptions->get($subscriptionId);
 
             if (! $subscription) {
                 Log::error('Subscription not found for renewal', [
@@ -78,12 +88,6 @@ final readonly class SubscriptionRenewalService
                 $quantityMonths = $billingCycle->toMonths();
             }
 
-            if ($orderItemCurrency !== 'USD') {
-                $paidAmount = CurrencyHelper::convert(
-                    $paidAmount
-                );
-            }
-
             Log::info('Processing renewal for subscription', [
                 'subscription_id' => $subscription->id,
                 'subscription_uuid' => $subscription->uuid,
@@ -91,16 +95,12 @@ final readonly class SubscriptionRenewalService
                 'stored_billing_cycle' => $subscription->billing_cycle->value,
                 'order_billing_cycle' => $billingCycleValue,
                 'quantity_months' => $quantityMonths,
-                'paid_amount_usd' => $paidAmount,
+                'paid_amount' => $paidAmount,
                 'order_item_currency' => $orderItemCurrency,
             ]);
 
             try {
-                // getRenewalPrice() returns price in USD for the subscription's billing cycle
-                // Convert to monthly price for calculation
-                $renewalPrice = $subscription->getRenewalPrice();
-                $expectedMonthlyPrice = $subscription->billing_cycle === BillingCycle::Annually ? $renewalPrice / 12 : $renewalPrice;
-
+                $expectedMonthlyPrice = $subscription->getMonthlyRenewalPrice($orderItemCurrency);
                 $expectedTotalAmount = $expectedMonthlyPrice * $quantityMonths;
 
                 // Use a more lenient tolerance (0.50) to account for currency conversion rounding
@@ -168,9 +168,7 @@ final readonly class SubscriptionRenewalService
                     paidCurrency: $orderItemCurrency
                 );
 
-                $subscription->refresh();
-
-                // Update billing cycle if it's different from the order item's billing cycle
+                // update() syncs attributes in memory; no refresh() needed.
                 if (isset($orderItem->metadata['billing_cycle']) && $billingCycle !== $subscription->billing_cycle) {
                     $subscription->update(['billing_cycle' => $billingCycle->value]);
                 }
@@ -211,12 +209,6 @@ final readonly class SubscriptionRenewalService
 
     private function resolveBillingCycle(string $cycle): BillingCycle
     {
-        foreach (BillingCycle::cases() as $case) {
-            if ($case->value === $cycle) {
-                return $case;
-            }
-        }
-
-        return BillingCycle::Monthly;
+        return BillingCycle::tryFrom($cycle) ?? BillingCycle::Monthly;
     }
 }

@@ -110,10 +110,10 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function isAdmin(): bool
     {
         if ($this->relationLoaded('roles')) {
-            return $this->roles->contains(fn (Role $role): bool => (int) $role->id === 1);
+            return $this->roles->contains(fn (Role $role): bool => $role->title === 'Admin');
         }
 
-        return $this->roles()->where('roles.id', 1)->exists();
+        return $this->roles()->where('roles.title', 'Admin')->exists();
     }
 
     /**

@@ -22,6 +22,10 @@ final class AuthGates
             return $next($request);
         }
 
+        // Pre-load once per request so gate closures never fire extra queries.
+        $user->loadMissing('roles');
+        $userRoleIds = $user->roles->pluck('id')->all();
+
         $roles = Cache::remember('auth_gates_roles', 300, fn () => Role::with('permissions')->get());
         $permissionsArray = [];
 
@@ -32,8 +36,8 @@ final class AuthGates
             }
         }
 
-        foreach ($permissionsArray as $title => $roles) {
-            Gate::define($title, fn (User $user): bool => array_intersect($user->roles->pluck('id')->toArray(), $roles) !== []);
+        foreach ($permissionsArray as $title => $roleIds) {
+            Gate::define($title, fn (User $u): bool => array_intersect($userRoleIds, $roleIds) !== []);
         }
 
         return $next($request);

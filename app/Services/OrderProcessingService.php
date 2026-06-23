@@ -10,6 +10,7 @@ use App\Models\Domain;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Subscription;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 final readonly class OrderProcessingService
@@ -41,6 +42,9 @@ final readonly class OrderProcessingService
             return;
         }
 
+        $records = [];
+        $now = now()->toDateTimeString();
+
         foreach ($items as $item) {
             $attributes = $item['attributes'] ?? [];
             $itemType = $attributes['type'] ?? 'registration';
@@ -51,19 +55,14 @@ final readonly class OrderProcessingService
             $domainId = $attributes['domain_id'] ?? null;
             $domainName = $attributes['domain_name'] ?? $item['name'] ?? 'Unknown';
 
-            $exchangeRate = 1.0;
-
-            // Build metadata from attributes
             $itemMetadata = $attributes['metadata'] ?? [];
 
-            // For subscription renewals, ensure subscription_id and billing_cycle are in metadata
             if ($itemType === 'subscription_renewal') {
                 $subscriptionId = $attributes['subscription_id'] ?? null;
                 if ($subscriptionId) {
                     $itemMetadata['subscription_id'] = $subscriptionId;
                 }
 
-                // CRITICAL: Ensure billing_cycle is stored in metadata
                 $billingCycle = $attributes['billing_cycle'] ?? null;
                 if ($billingCycle) {
                     $itemMetadata['billing_cycle'] = $billingCycle;
@@ -76,13 +75,10 @@ final readonly class OrderProcessingService
                     ]);
                 }
 
-                if (isset($attributes['duration_months'])) {
-                    $itemMetadata['duration_months'] = (int) $attributes['duration_months'];
-                } else {
-                    $itemMetadata['duration_months'] = $itemQuantity;
-                }
+                $itemMetadata['duration_months'] = isset($attributes['duration_months'])
+                    ? (int) $attributes['duration_months']
+                    : $itemQuantity;
 
-                // Also include other subscription-related attributes
                 if (isset($attributes['subscription_uuid'])) {
                     $itemMetadata['subscription_uuid'] = $attributes['subscription_uuid'];
                 }
@@ -98,11 +94,9 @@ final readonly class OrderProcessingService
             }
 
             if ($itemType === 'hosting') {
-                if (isset($attributes['duration_months'])) {
-                    $itemMetadata['duration_months'] = (int) $attributes['duration_months'];
-                } else {
-                    $itemMetadata['duration_months'] = $itemQuantity;
-                }
+                $itemMetadata['duration_months'] = isset($attributes['duration_months'])
+                    ? (int) $attributes['duration_months']
+                    : $itemQuantity;
 
                 if (isset($attributes['billing_cycle'])) {
                     $itemMetadata['billing_cycle'] = $attributes['billing_cycle'];
@@ -122,32 +116,31 @@ final readonly class OrderProcessingService
                 }
             }
 
-            // For domain renewals, include years in metadata if present
             if ($itemType === 'renewal' && isset($attributes['years'])) {
                 $itemMetadata['years'] = $attributes['years'];
             }
 
-            // For renewal items, ensure years matches quantity to prevent renewal for wrong duration
-            $years = $attributes['years'] ?? $itemQuantity;
-            if ($itemType === 'renewal') {
-                // For renewals, quantity represents years, so use quantity to ensure accuracy
-                $years = $itemQuantity;
-            }
+            // For renewals, quantity represents years.
+            $years = $itemType === 'renewal' ? $itemQuantity : ($attributes['years'] ?? $itemQuantity);
 
-            OrderItem::query()->create([
+            $records[] = [
                 'order_id' => $order->id,
                 'domain_name' => $domainName,
                 'domain_type' => $itemType,
                 'domain_id' => $domainId,
                 'price' => $itemPrice,
                 'currency' => $itemCurrency,
-                'exchange_rate' => $exchangeRate,
+                'exchange_rate' => 1.0,
                 'quantity' => $itemQuantity,
                 'years' => $years,
                 'total_amount' => $itemTotal,
-                'metadata' => $itemMetadata,
-            ]);
+                'metadata' => json_encode($itemMetadata),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
+
+        DB::table('order_items')->insert($records);
 
         Log::info('Created OrderItem records from order JSON', [
             'order_id' => $order->id,
@@ -176,19 +169,19 @@ final readonly class OrderProcessingService
         }
 
         if ($hasDomainRenewals) {
-            Log::info('Processing ProcessDomainRenewalJob synchronously', [
+            dispatch(new ProcessDomainRenewalJob($order));
+            Log::info('Dispatched domain renewal job', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
             ]);
-            dispatch_sync(new ProcessDomainRenewalJob($order));
         }
 
         if ($hasSubscriptionRenewals) {
-            Log::info('Processing ProcessSubscriptionRenewalJob synchronously', [
+            dispatch(new ProcessSubscriptionRenewalJob($order));
+            Log::info('Dispatched subscription renewal job', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
             ]);
-            dispatch_sync(new ProcessSubscriptionRenewalJob($order));
         }
 
         if (! $hasDomainRenewals && ! $hasSubscriptionRenewals) {

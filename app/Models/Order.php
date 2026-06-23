@@ -119,52 +119,48 @@ final class Order extends Model
     // Payment Status Methods
     public function isPaid(): bool
     {
-        return $this->payment_status === 'paid';
+        return $this->payment_status === OrderStatus::Paid->value;
     }
 
     public function isPending(): bool
     {
-        return $this->payment_status === 'pending';
+        return $this->payment_status === OrderStatus::Pending->value;
     }
 
     public function isFailed(): bool
     {
-        return $this->payment_status === 'failed';
+        return $this->payment_status === OrderStatus::Failed->value;
     }
 
     public function isCancelled(): bool
     {
-        return $this->payment_status === 'cancelled';
+        return $this->payment_status === OrderStatus::Cancelled->value;
     }
 
     public function isRefunded(): bool
     {
-        return $this->payment_status === 'refunded';
+        return $this->payment_status === OrderStatus::Refunded->value;
     }
 
     public function canRetryPayment(): bool
     {
-        if ($this->isPending()) {
-            return true;
-        }
-
-        return $this->isFailed();
+        return $this->isPending() || $this->isFailed();
     }
 
     // Order Status Methods
     public function isCompleted(): bool
     {
-        return $this->status === 'completed';
+        return $this->status === OrderStatus::Completed->value;
     }
 
     public function isProcessing(): bool
     {
-        return $this->status === 'processing';
+        return $this->status === OrderStatus::Processing->value;
     }
 
     public function requiresAttention(): bool
     {
-        return $this->status === 'requires_attention';
+        return $this->status === OrderStatus::Attention->value;
     }
 
     public function isPartiallyCompleted(): bool

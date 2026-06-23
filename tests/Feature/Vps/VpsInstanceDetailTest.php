@@ -12,7 +12,9 @@ use Illuminate\Http\Request;
 
 function createVpsDetailUser(array $permissions = ['vps_access', 'vps_show']): User
 {
-    $role = Role::query()->create(['title' => 'VpsDetailUser-'.uniqid()]);
+    // VpsController::authorizeAdmin() requires isAdmin(), which checks role title === 'Admin'.
+    // Specific vps_* permissions provide fine-grained control within the admin group.
+    $role = Role::query()->firstOrCreate(['title' => 'Admin']);
     foreach ($permissions as $permission) {
         $role->permissions()->attach(
             Permission::query()->where('title', $permission)->first()?->id

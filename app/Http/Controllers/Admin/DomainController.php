@@ -70,7 +70,9 @@ final class DomainController extends Controller
 
         $subscriptions = Subscription::query()
             ->with(['user:id,first_name,last_name,email', 'plan:id,name'])
-            ->where('status', 'active')->latest()
+            ->where('status', 'active')
+            ->latest()
+            ->limit(500)
             ->get();
 
         $currencies = Currency::getActiveCurrencies();
@@ -121,6 +123,7 @@ final class DomainController extends Controller
             ->with(['user:id,first_name,last_name,email', 'plan:id,name'])
             ->where('status', 'active')
             ->latest()
+            ->limit(500)
             ->get();
 
         $currencies = Currency::getActiveCurrencies();
@@ -248,7 +251,7 @@ final class DomainController extends Controller
         $domain->load(['owner']);
 
         $users = User::query()->with('roles')->whereHas('roles', function (Builder $query): void {
-            $query->where('roles.id', '!=', 1);
+            $query->where('roles.title', '!=', 'Admin');
         })->where('id', '!=', $domain->owner_id)->get();
 
         return view('admin.domains.owner', ['domain' => $domain, 'users' => $users]);
