@@ -8,6 +8,15 @@
         "framework"
     ],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./packages/darryldecode/cart",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
     "require": {
         "php": "^8.2",
         "ext-intl": "*",
